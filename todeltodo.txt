@@ -1,0 +1,61 @@
+
+// YES TODO
+- follow functions (with trail)
+- on dot hover / click
+- filled shapes
+- rotate shape
+
+- fix scaling
+
+- features showcase (test page)
+- documentation
+
+// ADJUSTMENTS / PERFORMANCE ?
+- ex: adotshape, move shape pos when dot moves? see similar situations
+- refractor common attributes into new Obj class
+- infinite animation
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let d = test2.dots.last(), w = 400, h = 50, freq = 4, ix=d.x, iy=d.y
+d.queueAnim(new Anim((prog)=>{
+    if (prog < 0.5) {
+        d.x = ix + w * prog
+        d.y = iy + Math.sin((d.x-ix)*(Math.PI/(w/freq)))*h
+    } else {
+        d.x = (ix+w) - w * prog
+        d.y = iy + Math.sin((d.x-ix)*(Math.PI/(w/freq))+Math.PI)*h
+    }
+    CVS.add(new Dot([d.x, d.y], 2, [255,0,0,1]),true)
+}, 3000, (x)=>x))
+ 
+
+
+
+- make another dedicated repos for this project
+
+// MAYBE
+- non square grid sources
+- ratioPos depending on multiple pos
+- simple collision / reflections
+- some sort of shape editor ~
+- something like gd frame animation for ratioPos
+- keyboard implementations
+- module version?
+- make the ratioPos object (mouse or anything else) have all the mouse's current infos?
