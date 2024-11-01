@@ -3,30 +3,30 @@
 // Please don't use or credit this code as your own.
 //
 
-const DEFAULT_FRAME_SKIPPING_DELAY = 13; DEFAULT_CVSDE_ATTR = "_CVSDE", DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F", DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue"}, TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame, CIRC = 2*Math.PI, DEFAULT_COLOR = "aliceblue", DEFAULT_RGBA=[255,255,255,1], DEFAULT_RADIUS = 5, DEFAULT_CANVAS_WIDTH = 800, DEFAULT_CANVAS_HEIGHT = 800, DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}, DEFAULT_MOUSE_DECELERATION = 0.8, DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1, DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
+const DEFAULT_MAX_DELTATIME= 0.13, DEFAULT_CVSDE_ATTR = "_CVSDE", DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F", DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue"}, TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame, CIRC = 2*Math.PI, DEFAULT_COLOR = "aliceblue", DEFAULT_RGBA=[255,255,255,1], DEFAULT_RADIUS = 5, DEFAULT_CANVAS_WIDTH = 800, DEFAULT_CANVAS_HEIGHT = 800, DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}, DEFAULT_MOUSE_DECELERATION = 0.8, DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1, DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
 let idGiver = 0
 
 class Canvas {
     //privates
-    #lastFrame = 0  // for delta time
-    #frameSkipsOffset = null // for
+    #lastFrame = 0  // used for delta time calcultions
+    #deltaTimeCap = DEFAULT_MAX_DELTATIME // used to prevent significant delta time gaps
+    #frameSkipsOffset = null // used to prevent significant frame gaps
+    #timeStamp = null  // requestanimationframe timestamp in ms
 
     constructor(cvs, loopingCallback, frame, settings=DEFAULT_CTX_SETTINGS) {
         this._cvs = cvs                                         //html canvas el
         this._frame = frame??cvs?.parentElement                 //html parent el
         this._cvs.setAttribute(DEFAULT_CVSDE_ATTR, true)        //styles selector
         this._frame.setAttribute(DEFAULT_CVSFRAMEDE_ATTR, true) //styles selector
-        this._ctx = this._cvs.getContext("2d", {})              //ctx
+        this._ctx = this._cvs.getContext("2d")                  //ctx
         this._settings = this.updateSettings(settings)          //ctx settings
 
         this._els={refs:[], defs:[]}                            //arrs of objects to .draw() | refs: [{Object._arrName:Object}], defs: [regular drawable objects]
 
         this._looping = false                                   //loop state
-        this._cb=loopingCallback                                //callback called along with the loop() fn
+        this._cb = loopingCallback                              //custom callback called along with the loop() function
 
-        this._maxDeltaTime = 0.1                                //max delta time in seconds
         this._deltaTime = null                                  //useable delta time in seconds
-        this._timeStamp = null                                  //requestanimationframe timestamp in ms
         this._fixedTimeStamp = null                             //fixed (offsets lag spikes) requestanimationframe timestamp in ms
 
         this._windowListeners = this.initWindowListeners()      //[onresize, onvisibilitychange]
@@ -67,23 +67,25 @@ class Canvas {
     }
 
     loop(time) {
-        let delay = Math.abs((time-this._timeStamp)-this.deltaTime*1000)
+        let delay = Math.abs((time-this.#timeStamp)-this.deltaTime*1000)
         if (this._fixedTimeStamp==0) this._fixedTimeStamp = time-this.#frameSkipsOffset
-        if (time && this._fixedTimeStamp && delay < DEFAULT_FRAME_SKIPPING_DELAY) {
+        if (time && this._fixedTimeStamp && delay < DEFAULT_MAX_DELTATIME*1000) {
+
             this.calcMouseSpeed()
 
             this.clear()
             this.draw()
             
-            if (this._cb) this._cb() //custom callback
+            if (typeof this._cb == "function") this._cb()
 
             this._fixedTimeStamp = 0
+
         } else if (time) {
-            this._fixedTimeStamp = time-(this.#frameSkipsOffset += DEFAULT_FRAME_SKIPPING_DELAY)
-            this.#frameSkipsOffset += DEFAULT_FRAME_SKIPPING_DELAY
+            this._fixedTimeStamp = time-(this.#frameSkipsOffset += DEFAULT_MAX_DELTATIME*1000)
+            this.#frameSkipsOffset += DEFAULT_MAX_DELTATIME*1000
         }
 
-        this._timeStamp = time
+        this.#timeStamp = time
         this.calcDeltaTime(time)
         if (this._looping) TIMEOUT_FN(this.loop.bind(this))
     }
@@ -93,7 +95,7 @@ class Canvas {
     }
 
     calcDeltaTime(time=0) {
-        this._deltaTime = Math.min((time-this.#lastFrame)/1000, this._maxDeltaTime)
+        this._deltaTime = Math.min((time-this.#lastFrame)/1000, this.#deltaTimeCap)
         this.#lastFrame = time
     }
 
@@ -102,7 +104,7 @@ class Canvas {
             let o=Object.entries(x)
             return o[0][1][o[0][0]]
         })].forEach(el=>{
-            if (el.draw) el.draw(this._ctx, this._fixedTimeStamp||this._timeStamp)
+            if (el.draw) el.draw(this._ctx, this.timeStamp)
         })
     }
 
@@ -240,9 +242,10 @@ class Canvas {
 	get cb() {return this._cb}
 	get looping() {return this._looping}
 	get deltaTime() {return this._deltaTime}
-	get maxDeltaTime() {return this._maxDeltaTime}
+	get deltaTimeCap() {return this.#deltaTimeCap}
 	get windowListeners() {return this._windowListeners}
-	get timestamp() {return this._timeStamp}
+	get timeStamp() {return this._fixedTimeStamp||this.#timeStamp}
+	get timeStampRaw() {return this.#timeStamp}
 	get els() {return this._els}
 	get mouse() {return this._mouse}
 	get offset() {return this._offset}

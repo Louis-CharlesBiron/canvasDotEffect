@@ -8,8 +8,8 @@ class Dot {
         this._id = idGiver++
         this._initPos = pos||[0,0]
         this._pos = this._initPos
-        this._radius = radius??DEFAULT_RADIUS
-        this._rgba = rgba||DEFAULT_RGBA
+        this._radius = radius
+        this._rgba = rgba
         this._parent = null
         this._anims = []
         this._connections = []    
@@ -22,9 +22,9 @@ class Dot {
     }
 
     draw(ctx, time) {
-        ctx.fillStyle = formatColor(this._rgba)
+        ctx.fillStyle = formatColor(this._rgba||DEFAULT_RGBA)
         ctx.beginPath()
-        ctx.arc(this.x, this.y, this._radius, 0, CIRC)
+        ctx.arc(this.x, this.y, this._radius??DEFAULT_RADIUS, 0, CIRC)
         ctx.fill()
 
         if (typeof this.drawEffectCB == "function") {

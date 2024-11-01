@@ -1,17 +1,15 @@
 
 // YES TODO
-- follow functions (with trail)
-- on dot hover / click
-- filled shapes
-- rotate shape
+-- on dot hover / click
+-- filled shapes
 
-- fix scaling
+- rotate shape
+- scale shape
 
 - features showcase (test page)
 - documentation
 
 // ADJUSTMENTS / PERFORMANCE ?
-- ex: adotshape, move shape pos when dot moves? see similar situations
 - refractor common attributes into new Obj class
 - infinite animation
 
@@ -59,3 +57,4 @@ d.queueAnim(new Anim((prog)=>{
 - keyboard implementations
 - module version?
 - make the ratioPos object (mouse or anything else) have all the mouse's current infos?
+- kinda fix follow functions

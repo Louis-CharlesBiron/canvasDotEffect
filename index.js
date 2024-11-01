@@ -30,23 +30,22 @@ let test2 = new Shape((shape, dots)=>{
     dots[0].addConnection(dots.last())
     dots[1].addConnection(dots.last(1))
     return [100,100]
-},[new Dot((dot, shape)=>[shape.x,20]),new Dot([80,40]),new Dot([150,60]),new Dot([250,80])], DEFAULT_RADIUS, DEFAULT_RGBA, 100, (ctx, dot, ratio)=>{
-    dot.a = mod(1, ratio, 0.8)
+},[new Dot((dot, shape)=>[shape.x,20]),new Dot([80,40]),new Dot([150,60]),new Dot([250,80])], 8, DEFAULT_RGBA, 100, (ctx, dot, ratio)=>{
     dot.radius = mod(DEFAULT_RADIUS*2, ratio, DEFAULT_RADIUS*2*0.8)
 
-    _drawOuterRing(dot, [255,255,255,0.2], 1.5)
     _drawDotConnections(dot, [255,0,0,mod(1, ratio, 0.8)])
 }, undefined, (shape)=>{
     let dx=400, dy=200, dot = shape.dots.last()
+    dot.g = dot.b = 0
     dot.follow(3000, null, (prog, obj)=>{
-        let d = new Dot(obj.pos_, 3)
+        let d = new Dot(obj.pos_, 4)
             d.queueAnim(new Anim((progress)=>{
-                d.a=1-progress-0.8
+                d.a=1-progress
                 if (progress==1) d.remove()
             }, 1000))
-        
-            CVS.add(d, true)
-    }, {0:(prog, obj)=>[dx*prog, 0]}, {0.5:(prog, fprog)=>[dx*0.5, dy*fprog]})
+
+            shape.add(d, true)
+    }, {0:(prog)=>[dx*prog, 0]}, {0.5:(prog, fprog)=>[dx*0.5, dy*fprog]})
 })
 
 

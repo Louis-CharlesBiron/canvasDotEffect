@@ -40,7 +40,7 @@ class Shape {
     add(dot) {
         this._dots.push(...[dot].flat().map(x=>{
             x.rgba = [...this._rgba]
-            x.radius = this._radius
+            x.radius ??= this._radius
             x.parent = this
             return x
         }))
