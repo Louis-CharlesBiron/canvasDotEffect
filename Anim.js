@@ -10,25 +10,20 @@ class Anim {
         this._startTime = null                      //start time
         this._progress = 0                          //animation progress
         this._hasEnded = false                      //if animation has ended
-
-        this._frame = 0                             //current frame count
     }
 
     getFrame(time) {//run in loop
         if (!this._hasEnded) {
             // SET START TIME
-            if (this._startTime==null) this._startTime = time
+            if (!this._startTime) this._startTime = time
             // PLAY ANIMATION
-            if (time<this._startTime+this._duration) {
-                this._frame++
-                this._animation(this._progress = this._easing((time-this._startTime)/this._duration))}
+            else if (time<this._startTime+this._duration) this._animation(this._progress = this._easing((time-this._startTime)/this._duration))
             // END
             else this.end()
         }
     }
 
     end() {
-        this._frame++
         this._animation(1)
         this._hasEnded = true
         if (typeof this._endCallback == "function") this._endCallback()
@@ -54,12 +49,36 @@ class Anim {
 	set easing(_easing) {return this._easing = _easing}
 	set endCallback(_endCallback) {return this._endCallback = _endCallback}
 
-
+    // Easings from: https://easings.net/
     static get easeInOutQuad() {
-        return (x)=>x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2
+        return (x) => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2
     }
 
     static get easeOutQuad() {
-        return (x)=>1 - (1 - x) * (1 - x)
+        return (x) => 1 - (1 - x) * (1 - x)
+    }
+
+    static get easeOutBounce() {
+        return (x) => {
+            if (x < 1 / 2.75) return 7.5625 * x * x
+            else if (x < 2 / 2.75) return 7.5625 * (x -= 1.5 / 2.75) * x + 0.75
+            else if (x < 2.5 / 2.75) return 7.5625 * (x -= 2.25 / 2.75) * x + 0.9375
+            else return 7.5625 * (x -= 2.625 / 2.75) * x + 0.984375
+        }
+    }
+
+    static get easeInOutBounce() {
+        return (x) =>x < 0.5 ? (1 - this.easeOutBounce(1 - 2 * x)) / 2: (1 + this.easeOutBounce(2 * x - 1)) / 2
+    }
+
+    static get easeInOutBack() {
+        return (x) => x < 0.5? (Math.pow(2 * x, 2) * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) / 2 : (Math.pow(2 * x - 2, 2) * ((1.70158 * 1.525 + 1) * (x * 2 - 2) + 1.70158 * 1.525) + 2) / 2
+    }
+
+    static get easeInOutElastic() {
+        return (x) => x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 + 1;
+    }
+    static get linear() {
+        return x=>x
     }
 }

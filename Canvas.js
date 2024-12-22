@@ -3,7 +3,7 @@
 // Please don't use or credit this code as your own.
 //
 
-const DEFAULT_MAX_DELTATIME= 0.13, DEFAULT_CVSDE_ATTR = "_CVSDE", DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F", DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue"}, TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame, CIRC = 2*Math.PI, DEFAULT_COLOR = "aliceblue", DEFAULT_RGBA=[255,255,255,1], DEFAULT_RADIUS = 5, DEFAULT_CANVAS_WIDTH = 800, DEFAULT_CANVAS_HEIGHT = 800, DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}, DEFAULT_MOUSE_DECELERATION = 0.8, DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1, DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
+const DEFAULT_MAX_DELTATIME= 0.13, DEFAULT_CVSDE_ATTR = "_CVSDE", DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F", DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue"}, TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame, CIRC = 2*Math.PI, DEFAULT_COLOR = "aliceblue", DEFAULT_RGBA=[255,255,255,1], DEFAULT_POS = [0,0], DEFAULT_RADIUS = 5, DEFAULT_CANVAS_WIDTH = 800, DEFAULT_CANVAS_HEIGHT = 800, DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
 let idGiver = 0
 
 class Canvas {
@@ -35,7 +35,7 @@ class Canvas {
         this.setSize(frameCBR.width, frameCBR.height)           //init size
         this.initStyles()                                       //init styles
 
-        this._mouse = {}                                        //mouse info
+        this._mouse = new Mouse(this)                           //mouse info
         this._offset = this.updateOffset()                      //cvs page offset
     }
 
@@ -71,7 +71,7 @@ class Canvas {
         if (this._fixedTimeStamp==0) this._fixedTimeStamp = time-this.#frameSkipsOffset
         if (time && this._fixedTimeStamp && delay < DEFAULT_MAX_DELTATIME*1000) {
 
-            this.calcMouseSpeed()
+            this._mouse.calcSpeed(this._deltaTime)
 
             this.clear()
             this.draw()
@@ -104,7 +104,7 @@ class Canvas {
             let o=Object.entries(x)
             return o[0][1][o[0][0]]
         })].forEach(el=>{
-            if (el.draw) el.draw(this._ctx, this.timeStamp)
+            if (el.draw) el.draw(this._ctx, this.timeStamp, this._deltaTime, this._mouse)
         })
     }
 
@@ -130,17 +130,18 @@ class Canvas {
         return this._settings=st
     }
 
-    add(objs, isDef) {
+    add(objs, isDef, omniscient) {
         let l = objs.length??1
         for (let i=0;i<l;i++) {
             let o = objs[i]??objs
             if (!isDef) {
                 let ref = Object.values(o)[0]
                 ref.cvs = this
-                ref.initialize()
+                if (typeof ref.initialize=="function") ref.initialize()
             } else {
                 o.parent = this
-                o.initialize()
+                if (omniscient) o.cvs = this
+                if (typeof o.initialize=="function") o.initialize()
             }
             this._els[isDef?"defs":"refs"].push(o)
         }
@@ -159,39 +160,23 @@ class Canvas {
         return this._els.defs.filter(x=>x instanceof instance)
     }
 
-    calcMouseSpeed() {
-        // MOUSE SPEED
-        if (isFinite(this._mouse.lastX) && isFinite(this._mouse.lastY) && this._deltaTime) {
-            this._mouse.speed = this._mouse.speed*DEFAULT_MOUSE_DECELERATION+(getDist(this._mouse.x, this._mouse.y, this._mouse.lastX, this._mouse.lastY)/this._deltaTime)*(1-DEFAULT_MOUSE_DECELERATION)
-            if (this._mouse.speed < DEFAULT_MOUSE_MOVE_TRESHOLD) this._mouse.speed = 0
-        } else this._mouse.speed = 0
-
-        this._mouse.lastX = this._mouse.x
-        this._mouse.lastY = this._mouse.y
-    }
-
     #mouseMovements(cb, e) {
+        // update ratioPos to mouse pos if not overwritten
         this.refs.forEach(r=>{
-            if (r.ratioPosCB===undefined) r.ratioPos=[this._mouse.x,this._mouse.y]
+            if (r.ratioPosCB===undefined) r.ratioPos=this._mouse.pos
         })
+        // custom move callback
         if (typeof cb == "function") cb(this._mouse, e)
+
+        // check mouse pos validity
+        this._mouse.checkValid()
     }
 
     setmousemove(cb) {
         const onmousemove=e=>{
-            // MOUSE POS
-            this._mouse.x = e.x-this._offset.x,
-            this._mouse.y = e.y-this._offset.y
-
-            // MOUSE ANGLE
-            let dx = this._mouse.x-this._mouse.lastX, dy = this._mouse.y-this._mouse.lastY
-            if (isFinite(dx) && isFinite(dy) && (dx||dy)) {
-                    let angle = (-toDeg(Math.atan2(dy, dx))+360)%360
-                    let diff = angle-this._mouse.dir
-                    diff += (360*(diff<-180))-(360*(diff>180))
-
-                    this._mouse.dir = (this._mouse.dir+diff*DEFAULT_MOUSE_ANGULAR_DECELERATION+360)%360
-            } else this._mouse.dir = 0
+            // update pos and direction angle
+            this._mouse.updatePos(e, this._offset)
+            this._mouse.calcAngle()            
 
             this.#mouseMovements(cb, e)
         }
@@ -201,36 +186,34 @@ class Canvas {
 
     setmouseleave(cb) {
         const onmouseleave=e=>{
-            this._mouse = {x:Infinity, y:Infinity}
+            // invalidate mouse
+            this._mouse.invalidate()
             this.#mouseMovements(cb, e)
         }
         this._frame.addEventListener("mouseleave", onmouseleave)
         return ()=>this._frame.removeEventListener("mouseleave", onmouseleave)
     }
 
-    #mouseClicks(cb, e) {
-        let v = e.type=="mousedown"
-        if (e.button==0) this._mouse.clicked = v
-        else if (e.button==1) this._mouse.scrollClicked = v
-        else if (e.button==2) this._mouse.rightClicked = v
-        else if (e.button==3) this._mouse.extraBackClicked = v
-        else if (e.button==4) this._mouse.extraForwardClicked = v
 
+    #mouseClicks(cb, e) {
+        this._mouse.setMouseClicks(e)
         if (typeof cb == "function") cb(this._mouse, e)
     }
 
     setmousedown(cb) {
         const onmousedown=e=>this.#mouseClicks(cb, e)
-        
         this._frame.addEventListener("mousedown", onmousedown)
         return ()=>this._frame.removeEventListener("mousedown", onmousedown)
     }
 
     setmouseup(cb) {
         const onmouseup=e=>this.#mouseClicks(cb, e)
-        
         this._frame.addEventListener("mouseup", onmouseup)
         return ()=>this._frame.removeEventListener("mouseup", onmouseup)
+    }
+
+    getCenter() {
+        return [this.width/2, this.height/2]
     }
     
 	get cvs() {return this._cvs}
@@ -256,5 +239,4 @@ class Canvas {
 	set cb(_cb) {return this._cb = _cb}
 	set width(w) {this.setSize(w, null)}
 	set height(h) {this.setSize(null, h)}
-	set mouse(m) {this._mouse = m}
 }

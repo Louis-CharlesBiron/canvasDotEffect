@@ -1,19 +1,27 @@
 
 // YES TODO
--- on dot hover / click
--- filled shapes
+-- filled shapes (FilledShape.js)
 
+- move shape
 - rotate shape
 - scale shape
 
-- features showcase (test page)
-- documentation
 
 // ADJUSTMENTS / PERFORMANCE ?
-- refractor common attributes into new Obj class
 - infinite animation
+- put utilities generics in static class
 
+// MAYBE COOL
+compacted gridAssests
 
+// DEPLOY
+- features showcase (test page)
+
+- documented "stack trace" like what runs after what
+- documentation for code
+- documentation of the features / how to's
+
+- bundler
 
 
 
@@ -49,6 +57,7 @@ d.queueAnim(new Anim((prog)=>{
 - make another dedicated repos for this project
 
 // MAYBE
+- custom errors
 - non square grid sources
 - ratioPos depending on multiple pos
 - simple collision / reflections

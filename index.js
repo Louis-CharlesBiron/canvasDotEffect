@@ -53,6 +53,9 @@ let mouseup = false, adotShapeAnim
 let adotShape = new Shape([10,10],[new Dot([10,10])], null, null, null, (ctx, dot, ratio, m, dist)=>{
 
     dot.radius = mod(DEFAULT_RADIUS*2, ratio, DEFAULT_RADIUS*2*0.5)
+    
+    if (dot.isWithin([m.x, m.y])) dot.rgba = [0, 255, 0, 1]
+    else dot.rgba = [255, 255, 255, 1]
 
     _drawOuterRing(dot, [255,255,255,mod(0.3, ratio)], 3)
 

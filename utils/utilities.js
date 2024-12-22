@@ -43,6 +43,15 @@ function getDist(x1, y1, x2, y2) {
     return Math.sqrt((x1-x2)**2 + (y1-y2)**2)
 }
 
+/**
+ * Returns the interpolated number between (max) and (max-range) 
+ * @param {Number} max: the max value to return
+ * @param {Number} ratio: the linear interpolation progress (0 to 1)
+ * @param {Number} range: defines the range of the max value to be used, inverts direction when negated
+                          [if range=max, then (0 to max) will be used] or
+                          [if range=max/2, only (max/2 to max) will be used] or
+                          [if range=0, only (max to max) will be used]
+ */
 function mod(max, ratio, range) {
     range??=max
     return max-ratio*range+max*((range>=0)-1)

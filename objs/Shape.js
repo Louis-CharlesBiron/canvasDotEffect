@@ -3,21 +3,16 @@
 // Please don't use or credit this code as your own.
 //
 
-class Shape {
+class Shape extends Obj {
     constructor(pos, dots, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
-        this._cvs
-        this._id = idGiver++
-        this._initPos = pos || [0,0]            // initial shape center pos declaration / setup
-        this._pos = this._initPos               // current shape center pos
-        this._radius = radius??DEFAULT_RADIUS   // dots' radius
-        this._rgba = rgba||DEFAULT_RGBA         // dots' rgba
+        super(pos, radius, rgba, setupCB)
+        this._cvs = null
         this._limit = limit||100                // dots' limit
         this._initDots = dots                   // initial dots declaration
         this._dots = []                         // current dots
         this._ratioPos = [Infinity,Infinity]    // position of ratio target object 
         this._drawEffectCB = drawEffectCB       // (ctx, Dot, ratio, mouse, distance, rawRatio)=>
         this._ratioPosCB = ratioPosCB           // custom ratio pos target (Shape, dots)=>
-        this._setupCB = setupCB                 // custom ratio pos target (Shape, dots)=>
         this._fragile = fragile||false          // whether the shape resets on document visibility change 
     }
 
@@ -26,14 +21,13 @@ class Shape {
         else if (typeof this._initDots == "function") this._initDots(this, this._cvs, this._pos)
         else if (this._initDots?.length) this.add(this._initDots)
         
-        if (typeof this._initPos == "function") this._pos = this._initPos(this, this._dots)
+        super.initialize()
 
-        if (typeof this._setupCB == "function") this._setupCB(this)
-        
         this._dots.forEach(d=>d.initialize())
     }
 
     draw() {
+        //super.draw()
         if (typeof this._ratioPosCB == "function") this._ratioPos = this._ratioPosCB(this)
     }
 
@@ -127,29 +121,16 @@ class Shape {
 
     get cvs() {return this._cvs}
     get ctx() {return this._cvs.ctx}
-    get id() {return this._id}
-	get pos() {return this._pos}
-    get x() {return this._pos[0]}
-    get y() {return this._pos[1]}
     get dots() {return this._dots}
-    get rgba() {return this._rgba}
-    get radius() {return this._radius}
     get limit() {return this._limit}
 	get initDots() {return this._initDots}
-    get r() {return this._rgba[0]}
-    get g() {return this._rgba[1]}
-    get b() {return this._rgba[2]}
-    get a() {return this._rgba[3]}
     get drawEffectCB() {return this._drawEffectCB}
     get ratioPos() {return this._ratioPos}
-    static get childrenPath() {return "dots"}
     get ratioPosCB() {return this._ratioPosCB}
-    get setupCB() {return this._setupCB}
+    static get childrenPath() {return "dots"}
 
     set cvs(cvs) {this._cvs = cvs}
-	set pos(_pos) {return this._pos = _pos}
     set ratioPos(ratioPos) {this._ratioPos = ratioPos}
     set drawEffectCB(cb) {this._drawEffectCB = cb}
     set ratioPosCB(cb) {this._ratioPosCB = cb}
-    set setupCB(cb) {this._setupCB = cb}
 }
