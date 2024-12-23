@@ -6,7 +6,7 @@
 class Shape extends Obj {
     constructor(pos, dots, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
         super(pos, radius, rgba, setupCB)
-        this._cvs = null
+        this._cvs = null                        // C
         this._limit = limit||100                // dots' limit
         this._initDots = dots                   // initial dots declaration
         this._dots = []                         // current dots
@@ -26,8 +26,8 @@ class Shape extends Obj {
         this._dots.forEach(d=>d.initialize())
     }
 
-    draw() {
-        //super.draw()
+    draw(ctx, time) {
+        super.draw(ctx, time)
         if (typeof this._ratioPosCB == "function") this._ratioPos = this._ratioPosCB(this)
     }
 
@@ -48,8 +48,8 @@ class Shape extends Obj {
         let dots = []
         str.split("\n").filter(x=>x).forEach((x,i)=>{
             let [atX, atY] = topLeftPos
-            atY+=i*gaps[1];
-            [...x].forEach(c=>{
+            atY+=i*gaps[1]
+            ;[...x].forEach(c=>{
                 if (c==dotChar) dots.push(new Dot(atX+gaps[0]/2, atY+gaps[1]/2))
                 atX+=gaps[0]
             })
@@ -72,19 +72,31 @@ class Shape extends Obj {
         this._dots.forEach(x=>x.limit=limit)
     }
 
-    moveBy(x, y) {// to fix
-        this._dots.forEach(d=>{
-            if (x) d.x += x
-            if (y) d.y += y
+    moveBy(pos) {
+        super.moveBy(pos)
+        this._dots.forEach(dot=>{
+            if (pos[0] !== null) dot.x += pos[0]
+            if (pos[1] !== null) dot.y += pos[1]
         })
     }
 
-    move(x, y) {
+    moveAt(pos) {
+        const dx = pos[0]-this.x, dy = pos[1]-this.y
         this._dots.forEach(d=>{
-            if (x && x!==this._pos[0]) d.x += x-this._pos[0]
-            if (y && y!==this._pos[1]) d.y += y-this._pos[1]
+            if (dx) d.x += dx
+            if (dy) d.y += dy
         })
-        this._pos = [x??this._pos[0], y??this._pos[1]]
+        super.moveAt(pos)
+    }
+
+    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad) {
+        let rDir = toRad(dir), ix = this.x, iy = this.y,
+            dx = getAcceptableDif(force*Math.cos(rDir), ACCEPTABLE_DIF),
+            dy = getAcceptableDif(force*Math.sin(rDir), ACCEPTABLE_DIF)
+        
+        return this.queueAnim(new Anim((prog)=>{
+            this.moveAt([ix+dx*prog, iy-dy*prog])
+        }, time, easing, ()=>this._anims.shift()), true)
     }
 
     scale(scale, dotRelative) {// to fix

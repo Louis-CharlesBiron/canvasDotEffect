@@ -2,14 +2,12 @@
 // YES TODO
 -- filled shapes (FilledShape.js)
 
-- move shape
 - rotate shape
 - scale shape
 
 
-// ADJUSTMENTS / PERFORMANCE ?
+
 - infinite animation
-- put utilities generics in static class
 
 // MAYBE COOL
 compacted gridAssests
@@ -21,14 +19,18 @@ compacted gridAssests
 - documentation for code
 - documentation of the features / how to's
 
+- CDE project template
+
 - bundler
 
+- check for todo / commented code
 
 
 
 
 
-
+// ADJUSTMENTS / PERFORMANCE ?
+- base dot pos on shape center (shape center is now the reference point[0,0] and all its dots are position from this reference)
 
 
 

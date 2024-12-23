@@ -104,7 +104,7 @@ class Canvas {
             let o=Object.entries(x)
             return o[0][1][o[0][0]]
         })].forEach(el=>{
-            if (el.draw) el.draw(this._ctx, this.timeStamp, this._deltaTime, this._mouse)
+            if (el.draw) el.draw(this._ctx, this.timeStamp, this._deltaTime)
         })
     }
 
@@ -234,7 +234,8 @@ class Canvas {
 	get offset() {return this._offset}
     get defs() {return this._els.defs}
     get refs() {return this._els.refs.flatMap(x=>Object.values(x))}
-    get allEls() {return this.defs.concat(this.refs)}
+    get allDefsAndRefs() {return this.defs.concat(this.refs)}
+    get allEls() {return this.allDefsAndRefs.flatMap(x=>x.dots||x)}
 
 	set cb(_cb) {return this._cb = _cb}
 	set width(w) {this.setSize(w, null)}

@@ -38,6 +38,7 @@ class FPSCounter {
 }
 
 Array.prototype.last=function(index=0){return this[this.length-1-index]}
+Array.prototype.addAt=function(el, index=0){return this.slice(0,index).concat(...[el, this.slice(index, this.length)])}
 
 function getDist(x1, y1, x2, y2) {
     return Math.sqrt((x1-x2)**2 + (y1-y2)**2)
@@ -86,32 +87,35 @@ function toggleCenter(shape, radius=5, color=[255,0,0,1]) {
 }
 
 // GENERICS //
-function _drawDotConnections(dot, rgba=[255,255,255,1], isSourceOver=false) {
-    let ctx = dot.ctx
-    if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
-    if (dot.connections.length) dot.connections.forEach(c=>{
-         ctx.strokeStyle = formatColor(rgba)
-         ctx.beginPath()
-         ctx.moveTo(dot.x, dot.y)
-         ctx.lineTo(c.x, c.y)
-         ctx.stroke()
-     })
-     if (!isSourceOver) ctx.globalCompositeOperation = "source-over"
-}
+class CvsUtils {
 
-function _drawOuterRing(dot, rgba=[255,255,255,1], multiplier) {
-    let ctx = dot.ctx
-    ctx.strokeStyle = formatColor(rgba)
-    ctx.beginPath()
-    ctx.arc(dot.x, dot.y, dot.radius*multiplier, 0, CIRC)
-    ctx.stroke()
-}
-
-function _drawConnections(dot, rgba=[255,255,255,1], sourcePos) {
-    let ctx = dot.ctx
-    ctx.strokeStyle = formatColor(rgba)
-    ctx.beginPath()
-    ctx.moveTo(sourcePos[0], sourcePos[1])
-    ctx.lineTo(dot.x, dot.y)
-    ctx.stroke()
+    static drawDotConnections(dot, rgba=[255,255,255,1], isSourceOver=false) {
+        let ctx = dot.ctx
+        if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
+        if (dot.connections.length) dot.connections.forEach(c=>{
+             ctx.strokeStyle = formatColor(rgba)
+             ctx.beginPath()
+             ctx.moveTo(dot.x, dot.y)
+             ctx.lineTo(c.x, c.y)
+             ctx.stroke()
+         })
+         if (!isSourceOver) ctx.globalCompositeOperation = "source-over"
+    }
+    
+    static drawOuterRing(dot, rgba=[255,255,255,1], multiplier) {
+        let ctx = dot.ctx
+        ctx.strokeStyle = formatColor(rgba)
+        ctx.beginPath()
+        ctx.arc(dot.x, dot.y, dot.radius*multiplier, 0, CIRC)
+        ctx.stroke()
+    }
+    
+    static drawConnections(dot, rgba=[255,255,255,1], sourcePos) {
+        let ctx = dot.ctx
+        ctx.strokeStyle = formatColor(rgba)
+        ctx.beginPath()
+        ctx.moveTo(sourcePos[0], sourcePos[1])
+        ctx.lineTo(dot.x, dot.y)
+        ctx.stroke()
+    }
 }

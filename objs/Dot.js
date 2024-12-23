@@ -40,17 +40,6 @@ class Dot extends Obj {
         this._connections = this._connections.filter(d=>typeof dotId=="number"?d.id!==dotId:d.id!==dotId.id)
     }
 
-    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad) {
-        let rDir = toRad(dir), ix = this.x, iy = this.y,
-            dx = getAcceptableDif(force*Math.cos(rDir), ACCEPTABLE_DIF),
-            dy = getAcceptableDif(force*Math.sin(rDir), ACCEPTABLE_DIF)
-        
-        return this.queueAnim(new Anim((prog)=>{
-            this.x = ix+dx*prog
-            this.y = iy-dy*prog
-        }, time, easing, ()=>this._anims.shift()), true)
-    }
-
     follow(duration, easing, action, ...progressSeparations) {
         let [ix, iy] = this._pos
         this.queueAnim(new Anim((prog)=>{

@@ -58,6 +58,18 @@ class Obj {
         }, time, easing, ()=>this._anims.shift()), force)
     }
 
+    // moves the obj in specified direction at specified distance(force)
+    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad) {
+        let rDir = toRad(dir), ix = this.x, iy = this.y,
+            dx = getAcceptableDif(force*Math.cos(rDir), ACCEPTABLE_DIF),
+            dy = getAcceptableDif(force*Math.sin(rDir), ACCEPTABLE_DIF)
+        
+        return this.queueAnim(new Anim((prog)=>{
+            this.x = ix+dx*prog
+            this.y = iy-dy*prog
+        }, time, easing, ()=>this._anims.shift()), true)
+    }
+
     // adds an animation to the end of the backlog
     queueAnim(anim, force) {
     if (this.currentAnim && force) {

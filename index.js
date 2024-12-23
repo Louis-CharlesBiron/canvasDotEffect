@@ -5,8 +5,8 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
 })
 
 // DECLARE OBJS
- let test = new Shape([500,500],[
-     new Dot([450, 450]),
+let movementsTester = new Shape([500,500],[
+     new Dot([450, 400]),
      new Dot([450, 500]),
      new Dot([450, 550]),
      new Dot([500, 450]),
@@ -14,7 +14,7 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
      new Dot([550, 500]),
      new Dot([550, 550]),
      new Dot([500, 550]),
- ], DEFAULT_RADIUS, DEFAULT_RGBA, 100, (ctx, dot, ratio)=>{
+ ], DEFAULT_RADIUS, DEFAULT_RGBA, 100, (ctx, dot, ratio, m, dist)=>{
      dot.a = mod(1, ratio, 0.8)
      //dot.r = mod(255, ratio, -255)
      //dot.g = mod(255, ratio, -255)
@@ -22,9 +22,10 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
      //dot.x += random(-idk, idk)
      //dot.y += random(-idk, idk)
      dot.radius = mod(DEFAULT_RADIUS*2, ratio, DEFAULT_RADIUS*2*0.8)
-     _drawOuterRing(dot, [255,255,255,0.2], 5)
+     CvsUtils.drawOuterRing(dot, [255,255,255,0.2], 5)
+
  })
-toggleCenter(test)
+toggleCenter(movementsTester)
 
 let test2 = new Shape((shape, dots)=>{
     dots[0].addConnection(dots.last())
@@ -33,7 +34,7 @@ let test2 = new Shape((shape, dots)=>{
 },[new Dot((dot, shape)=>[shape.x,20]),new Dot([80,40]),new Dot([150,60]),new Dot([250,80])], 8, DEFAULT_RGBA, 100, (ctx, dot, ratio)=>{
     dot.radius = mod(DEFAULT_RADIUS*2, ratio, DEFAULT_RADIUS*2*0.8)
 
-    _drawDotConnections(dot, [255,0,0,mod(1, ratio, 0.8)])
+    CvsUtils.drawDotConnections(dot, [255,0,0,mod(1, ratio, 0.8)])
 }, undefined, (shape)=>{
     let dx=400, dy=200, dot = shape.dots.last()
     dot.g = dot.b = 0
@@ -57,7 +58,7 @@ let adotShape = new Shape([10,10],[new Dot([10,10])], null, null, null, (ctx, do
     if (dot.isWithin([m.x, m.y])) dot.rgba = [0, 255, 0, 1]
     else dot.rgba = [255, 255, 255, 1]
 
-    _drawOuterRing(dot, [255,255,255,mod(0.3, ratio)], 3)
+    CvsUtils.drawOuterRing(dot, [255,255,255,mod(0.3, ratio)], 3)
 
     // drag
     if (m.clicked && dist < 50) {
@@ -74,15 +75,15 @@ let adotShape = new Shape([10,10],[new Dot([10,10])], null, null, null, (ctx, do
 let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (ctx, dot, ratio, m, dist)=>{
     dot.radius = mod(DEFAULT_RADIUS, ratio, DEFAULT_RADIUS)
     if (dist < 200) {
-        _drawConnections(dot, [dot.r,dot.g,dot.b,mod(0.5, ratio)], dot.ratioPos)
+        CvsUtils.drawConnections(dot, [dot.r,dot.g,dot.b,mod(0.5, ratio)], dot.ratioPos)
     }
 
-   _drawDotConnections(dot, [255,0,0,1])
+   CvsUtils.drawDotConnections(dot, [255,0,0,1])
 }, ()=>adotShape.dots[0].pos)
 
 
 CVS.add(adotShape.asSource())
-CVS.add(test.asSource())
+CVS.add(movementsTester.asSource())
 CVS.add(le.asSource())
 CVS.add(test2.asSource())
 
