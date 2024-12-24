@@ -14,6 +14,8 @@ class Shape extends Obj {
         this._drawEffectCB = drawEffectCB       // (ctx, Dot, ratio, mouse, distance, rawRatio)=>
         this._ratioPosCB = ratioPosCB           // custom ratio pos target (Shape, dots)=>
         this._fragile = fragile||false          // whether the shape resets on document visibility change 
+
+        this._rotation = 0                      // the shape's rotation in degrees 
     }
 
     initialize() {
@@ -56,7 +58,7 @@ class Shape extends Obj {
         })
         return dots
     }
-
+ 
     setRadius(radius) {
         this._radius = radius
         this._dots.forEach(x=>x.radius=radius)
@@ -99,6 +101,22 @@ class Shape extends Obj {
         }, time, easing, ()=>this._anims.shift()), true)
     }
 
+    rotateBy(deg) {// clock-wise, from the top
+        this._dots.forEach(dot=>{
+            let x = dot.x-this.x, y = dot.y-this.y,
+                cosV = Math.cos(toRad(deg)), sinV = Math.sin(toRad(deg))
+                
+            dot.x = (x*cosV-y*sinV)+this.x
+            dot.y = (x*sinV + y*cosV)+this.y
+        })
+
+        this._rotation = (this._rotation+deg)%360
+    }
+
+    rotateAt(deg) {
+        this.rotateBy(360-(this._rotation-deg))
+    }
+
     scale(scale, dotRelative) {// to fix
         //let distX = (this._pos[0]-this._dots[0].x)*(scale[0]??scale), distY = (this._pos[1]-this._dots[0].y)*(scale[1]??scale)
         //this._dots.forEach(d=>{
@@ -139,6 +157,7 @@ class Shape extends Obj {
     get drawEffectCB() {return this._drawEffectCB}
     get ratioPos() {return this._ratioPos}
     get ratioPosCB() {return this._ratioPosCB}
+    get rotation() {return this._rotation}
     static get childrenPath() {return "dots"}
 
     set cvs(cvs) {this._cvs = cvs}
