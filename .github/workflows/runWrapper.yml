@@ -26,13 +26,27 @@ jobs:
         run: |
           powershell -ExecutionPolicy Bypass -File ./deploy/wrapper.ps1
 
-      - name: updateDist
+      - name: Squash bot commit with mine
         run: |
           git add dist/*
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git commit --amend --no-edit
-          git push --force
+
+          # Find the bot's commit hash by looking for 'GitHub Actions' as the author
+          BOT_COMMIT=$(git log --author="GitHub Actions" --pretty=format:"%h" -n 1)
+
+          # If there is a bot commit squash it with the new commit
+          if [ ! -z "$BOT_COMMIT" ]; then
+            # Perform a soft reset to the previous commit
+            git reset --soft HEAD^1
+
+            git add dist/*
+            git commit --amend --no-edit --date "$(date)"
+          else
+            git commit -m "Update dist files"
+          fi
+
+          git push
 
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
