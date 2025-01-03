@@ -1,0 +1,38 @@
+name: runWrapper
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-script:
+    runs-on: windows-latest
+
+    steps:
+      - name: checkoutCode
+        uses: actions/checkout@v3
+
+      - name: setupNode
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
+      - name: installTerser
+        run: npm i
+        working-directory: ./deploy
+
+      - name: Run PowerShell script
+        run: |
+          powershell -ExecutionPolicy Bypass -File ./deploy/wrapper.ps1
+
+      - name: updateDist
+        run: |
+          git add dist/*
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git commit --amend --no-edit
+          git push --force
+
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

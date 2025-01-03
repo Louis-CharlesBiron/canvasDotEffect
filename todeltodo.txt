@@ -1,0 +1,26 @@
+// MAYBE
+- keyboard implementations
+
+- simple collision / reflections
+
+- custom errors
+
+- non square grid sources
+
+- image stuff,   mask
+
+- 3d
+
+
+- ratioPos depending on multiple pos
+
+- something like gd frame animation for ratioPos
+
+- some sort of shape editor ~
+
+- module version?
+
+
+
+
+- follow function for everyone
