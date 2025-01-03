@@ -22,11 +22,11 @@ jobs:
         run: npm i
         working-directory: ./deploy
 
-      - name: Run PowerShell script
+      - name: runWrapper
         run: |
           powershell -ExecutionPolicy Bypass -File ./deploy/wrapper.ps1
 
-      - name: Squash bot commit with mine
+      - name: mergeCommits
         run: |
           git add dist/*
           git config user.name "GitHub Actions"
