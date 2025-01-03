@@ -24,7 +24,7 @@ class Shape extends Obj {
     initialize() {
         if (typeof this._initDots == "string") this.createFromString(this._initDots)
         else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))
-        else if (this._initDots?.length) this.add(this._initDots)
+        else if (this._initDots?.length || this._initDots instanceof Dot) this.add(this._initDots)
         
         super.initialize()
 

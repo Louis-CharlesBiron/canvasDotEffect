@@ -792,15 +792,90 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 - **extraBackClicked** -> Whether the extra back button of the mouse is active (not present on every mouse).
 
 #### Example use 1:
-###### - idk mouse exemaple
+###### - Making a dot throwable, and changing its color on mouse hover and click
 ```js
-    TODO maybe
+    // Using the getDraggableDotCB utility function to get a dragCallback
+    const dragCallback = CvsUtils.getDraggableDotCB()
+    
+    // Creating a mostly default shape, with a single dot
+    const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null, 
+        (ctx, dot, ratio, m, dist, shape)=>{// drawEffect callback
+    
+            // Changing the dot's size based on mouse distance for an additional small effect
+            dot.radius = mod(shape.radius*2, ratio, shape.radius*2*0.5)
+            
+            // Checking if the mouse is hovering the dot
+            const isMouseOver = dot.isWithin(m.pos, true)
+            
+            // if mouse is over and clicked, set the dot's color to red
+            if (isMouseOver && m.clicked) {
+                dot.rgba = [255, 0, 0, 1]
+            }
+            // if mouse is only over, set the dot's color to green
+            else if (isMouseOver) {
+                dot.rgba = [0, 255, 0, 1]
+            }
+            // if mouse is neither over or clicked, set the dot's color to white
+            else {
+                dot.rgba = [255, 255, 255, 1]
+            }
+        
+            // Calling the dragCallback to make the dragging and throwing effet
+            dragCallback(shape.dots[0], m, dist, ratio)
+        }
+    )
+    
+    // Adding the shape
+    CVS.add(throwableDot)
 ```
 
+ 
 
 # Utilities 
 
 # Execution Order
+
+### Level 1: Static setup
+- Canvas instance creation
+- Initial canvas objects creation (shapes, dots)
+- Adding the initial canvas objects to the canvas
+- Settings mouse events
+- Starting the main loop
+
+### Level 2: Adding canvas objects to the canvas
+- Sets the *cvs* or *parent* attributes for *references* and *definitions* respectively
+- Runs the initializes() function for both *references* and *definitions*
+- Adds them as *references* or *definitions* in the canvas
+
+### Level 3: Reference initialization
+- Creates / adds all of the shapes' dots and sets some of their attributes
+- Runs the initialize() function for each dot contained in the shape. (After getting its initialize() function called, the shape calls the initialize() of all its dots.)
+
+**Runs the follwing on references (*shapes*):**
+- if `initDots` is a string -> `createFromString(initDots)`
+- if `initDots` is a callback -> `initDots(this, cvs)`
+- if `initPos` is a callback -> `initPos(cvs, dots)`
+- `setupCB(this)`
+- if the Shape is a FilledShape and if `rgbaFill` is a callback -> `initRgbaFill(ctx, this)`
+
+### Level 4: Children initialization
+- All the dots are now initialized.
+
+**Runs the follwing on referenced dots (*dots in shapes*):**
+- if `initPos` is a callback -> `initPos(cvs, parent)`
+- `setupCB(this, parent)`
+
+### Level 5: Drawing stage
+
+
+WHEN
+anim.getFrame ~> in Obj.draw()
+drawEffectCB ~> in dot.draw()
+ratioPosCB  ~> in shape.draw()
+draw?
+
+
+
 
 
 # Best Practices

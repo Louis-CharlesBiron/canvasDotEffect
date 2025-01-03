@@ -26,9 +26,6 @@ $c.wrapOrder.split(" ") | ForEach-Object {
 #CREATE MERGED FILE
 $toMinifyPath = New-Item "$dist\canvasDotEffect.js" -Value $mergedCode -Force
 
-write-host $toMinifyPath
-write-host $at
-
 #CREATE MINIFIED MERGED FILE
 if (-not (Test-Path $terser)) {
     Set-Location $deploy
@@ -36,5 +33,3 @@ if (-not (Test-Path $terser)) {
     Set-Location $at
 }
 & $terser $toMinifyPath -o "$dist\canvasDotEffect.min.js" --compress
-
-write-host (get-Item "$dist\canvasDotEffect.min.js")

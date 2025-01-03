@@ -81,7 +81,7 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], DEFAULT_RADIUS, n
 
     dot.radius = mod(dot.parent.radius*2, ratio, dot.parent.radius*2*0.5)
     
-    let mouseOn = dot.isWithin([m.x, m.y], true)
+    let mouseOn = dot.isWithin(m.pos, true)
     if (mouseOn && m.clicked) dot.rgba = [255, 0, 0, 1]
     else if (mouseOn) dot.rgba = [0, 255, 0, 1]
     else dot.rgba = [255, 255, 255, 1]
