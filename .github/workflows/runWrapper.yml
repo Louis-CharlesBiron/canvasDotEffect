@@ -40,6 +40,9 @@ jobs:
             # Perform a soft reset to the previous commit
             git reset --soft HEAD^1
 
+            echo found
+            echo $BOT_COMMIT
+
             git add dist/*
             git commit --amend --no-edit --date "$(date)"
           } else {

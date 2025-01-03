@@ -1,0 +1,41 @@
+[33mcommit 3424a731bf42a70dfe72fde5eb9ddd5ce7c1af0f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Louis-Charles Biron <louirlesbiron6@gmail.com>
+Date:   Fri Jan 3 14:43:06 2025 -0500
+
+    Fix pipeline
+
+[33mcommit 6e0ddb3271229bd662493c3e2c4df09315cc0f69[m
+Author: Louis-Charles Biron <louirlesbiron6@gmail.com>
+Date:   Fri Jan 3 14:39:55 2025 -0500
+
+    Update
+
+[33mcommit d493e51816a08ef3e22454f4f312c1833d5a7d67[m
+Author: Louis-Charles Biron <louirlesbiron6@gmail.com>
+Date:   Fri Jan 3 14:30:28 2025 -0500
+
+    Update wrapper
+
+[33mcommit 8318db65d3c2671001ff2cc0480130fc1c0cbb6c[m
+Author: Louis-Charles Biron <louirlesbiron6@gmail.com>
+Date:   Fri Jan 3 14:27:05 2025 -0500
+
+    Update runWrapper
+
+[33mcommit b4f92d30b85b397ec47f8f037743013f1235c0b0[m
+Author: Louis-Charles Biron <louirlesbiron6@gmail.com>
+Date:   Fri Jan 3 14:24:58 2025 -0500
+
+    Gitignore dist/
+
+[33mcommit 651806927ea24eb84eabb35cff5d64f7ada4838e[m
+Author: Louis-Charles Biron <125144415+Louis-CharlesBiron@users.noreply.github.com>
+Date:   Fri Jan 3 14:24:04 2025 -0500
+
+    Update runWrapper.yml
+
+[33mcommit 120383bf965c775bf16a04d62672721787e2ac0b[m
+Author: Louis-Charles Biron <louirlesbiron6@gmail.com>
+Date:   Fri Jan 3 14:15:54 2025 -0500
+
+    Updated wrapper.ps1

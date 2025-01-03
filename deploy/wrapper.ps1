@@ -36,3 +36,5 @@ if (-not (Test-Path $terser)) {
     Set-Location $at
 }
 & $terser $toMinifyPath -o "$dist\canvasDotEffect.min.js" --compress
+
+write-host (get-Item "$dist\canvasDotEffect.min.js")
