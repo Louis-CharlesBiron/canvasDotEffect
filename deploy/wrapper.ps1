@@ -5,7 +5,6 @@ function getAt() {$inv=$global:MyInvocation.MyCommand;if($inv.CommandType -eq "E
 
 #GET LOCATIONS
 $at = getAt
-write-host $at
 $root = Split-Path -Path $at -Parent
 $dist = "$root\dist"
 $deploy = "$root\deploy"
