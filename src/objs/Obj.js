@@ -22,8 +22,14 @@ class Obj {
 
     // Runs when the object gets added to a canvas instance
     initialize() {
-        if (typeof this._initPos=="function") this._pos = this._initPos(this._cvs, this?.parent??this?.dots)
+        this.moveAtInitPos()
         if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
+    }
+
+    // sets the current pos to the value of the inital pos
+    moveAtInitPos() {
+        if (typeof this._initPos=="function") this._pos = [...this._initPos(this._cvs, this?.parent??this?.dots)]
+        else this._pos = [...this._initPos]
     }
 
     // Runs every frame
@@ -59,9 +65,10 @@ class Obj {
 
     // Smoothly moves to coords in set time
     moveTo(pos, time=1000, easing=Anim.easeInOutQuad, force=true, initPos=[this.x, this.y]) {
-        let [ix, iy] = initPos, [fx, fy] = this.adjustInputPos(pos)
-        dx = fx-ix,
-        dy = fy-iy
+        let [ix, iy] = initPos, 
+            [fx, fy] = this.adjustInputPos(pos),
+            dx = fx-ix,
+            dy = fy-iy
 
         return this.queueAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
