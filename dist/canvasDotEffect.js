@@ -184,8 +184,6 @@ class CvsUtils {
 
 }
 // all sources should be built with "D", this object provides all the cardinal and intercardinal directions that should link the dots to create symbols
-const D = [["t","-ar"],["r",1],["b","ar"],["l",-1],["tr","1-ar"],["br","ar+1"],["bl","ar-1"],["tl","-ar-1"]].reduce((a,[b,d],i)=>(a.places.push([a[b]=1<<i,(ar)=>new Function("ar",`return ${d}`)(ar)]),a),{places:[]})
-
 // Any source should contain: the width and height of all its symbols, and the symbols definitions (key in uppercase)
 /* To create a symbol: [...[index, directions]]
  * A symbol is composed of a main array, containing the sub-arrays
@@ -224,169 +222,180 @@ const D = [["t","-ar"],["r",1],["b","ar"],["l",-1],["tr","1-ar"],["br","ar+1"],[
  *   - Leaving a sub-array's connections parameter empty (ex: [2]), will make it so the dot does not initiate any connection
  *   - Leaving a sub-array completely empty (ex: []) logically implies that a dot will be created at the next horizontal index and that it won't initiate connections
  */ 
-const fontSource5x5 = {
-    width:5,
-    height:5,
-    A: [
-        [2,D.bl+D.br],
-        [1,D.bl],[3,D.br],
-        [0,D.r+D.b],[1,D.r],[2,D.r],[3,D.r],[4,D.b],
-        [0,D.b],[4,D.b],
-        [0],[4]
-    ],
-    B: [
-        [0,D.r+D.b],[,D.r],[,D.r],[,D.br],
-        [0,D.b],[4,D.bl],
-        [0,D.r+D.b],[,D.r],[,D.r],[,D.br],
-        [0,D.b],[4,D.bl],
-        [0,D.r],[,D.r],[,D.r],[]
-    ],
-    C: [
-        [1,D.r+D.bl],[,D.r],[,D.r],[],
-        [0,D.b],
-        [0,D.b],
-        [0,D.br],
-        [-1,D.r],[2,D.r],[,D.r],[]
-      ],
-    D: [
-        [0,D.r+D.b],[,D.r],[,D.r],[,D.br],
-        [0,D.b],[4,D.b],
-        [0,D.b],[4,D.b],
-        [0,D.b],[4,D.bl],
-        [0,D.r],[,D.r],[,D.r],[]
-    ],E: [
-        [0,D.r+D.b],[,D.r],[,D.r],[,D.r],[],
-        [0,D.b],
-        [0,D.b+D.r],[,D.r],[,D.r],[,D.r],
-        [0,D.b],
-        [0,D.r],[,D.r],[,D.r],[,D.r],[]
-    ],F: [
-        [0,D.r+D.b],[,D.r],[,D.r],[,D.r],[],
-        [0,D.b],
-        [0,D.b+D.r],[,D.r],[,D.r],[],
-        [0,D.b],
-        [0]
-    ],G: [
-        [1,D.r+D.bl],[,D.r],[,D.r],[],
-        [0,D.b],
-        [0,D.b],[3,D.r],[4,D.b],
-        [0,D.br],[4,D.b],
-        [1,D.r],[,D.r],[,D.r],[]
-    ],H: [
-        [0,D.r+D.b],[4,D.b],
-        [0,D.b],[4,D.b],
-        [0,D.b+D.r],[,D.r],[,D.r],[,D.r],[,D.b],
-        [0,D.b],[4,D.b],
-        [0],[4]
-    ],I: [
-        [1,D.r],[,D.b+D.r],[],
-        [2,D.b],
-        [2,D.b],
-        [2,D.b],
-        [1,D.r],[,D.r],[]
-    ],J: [
-        [1,D.r],[,D.r],[,D.b+D.r],[],
-        [3,D.b],
-        [3,D.b],
-        [0,D.br],[3,D.bl],
-        [1,D.r],[,D.r]
-    ],K: [
-        [0,D.b],[3,D.bl],
-        [0,D.b],[2,D.bl],
-        [0,D.b+D.r],[,D.r+D.br],
-        [0,D.b],[2,D.br],
-        [0],[3,D.r]
-    ],L: [
-        [0,D.b],
-        [0,D.b],
-        [0,D.b],
-        [0,D.b],
-        [0,D.r],[,D.r],[,D.r],[,D.r]
-    ],M: [
-        [0,D.b+D.br],[4,D.b+D.bl],
-        [0,D.b],[,D.br],[3,D.bl],[4,D.b],
-        [0,D.b],[2],[4,D.b],
-        [0,D.b],[4,D.b],
-        [0],[4]
-    ],N: [
-        [0,D.b+D.br],[4,D.b],
-        [0,D.b],[,D.br],[4,D.b],
-        [0,D.b],[2,D.br],[4,D.b],
-        [0,D.b],[3,D.br],[4,D.b],
-        [0],[4]
-    ],O: [
-        [1,D.bl+D.r],[,D.r],[,D.br],
-        [0,D.b],[4,D.b],
-        [0,D.b],[4,D.b],
-        [0,D.b+D.br],[4,D.b+D.bl],
-        [1,D.r],[,D.r],[,D.r]
-    ],P: [
-        [0,D.r+D.b],[,D.r],[,D.br],
-        [0,D.b],[3,D.bl],
-        [0,D.b+D.r],[,D.r],[],
-        [0,D.b],
-        [0]
-    ],Q: [
-        [1,D.bl+D.r],[,D.r],[,D.br],
-        [0,D.b],[4,D.b],
-        [0,D.b],[4,D.b],
-        [0,D.b+D.br],[3,D.br],[,D.bl],
-        [1,D.r],[,D.r],[],[]
-    ],R: [
-        [0,D.r+D.b],[,D.r],[,D.br],
-        [0,D.b],[3,D.bl],
-        [0,D.b+D.r],[,D.r+D.br],[],
-        [0,D.b],[2,D.br],
-        [0],[3]
-    ],S: [
-        [1,D.r+D.bl],[,D.r],[,D.r],[],
-        [0,D.br],
-        [-1,D.r],[2,D.r],[,D.br],
-        [-4,D.bl],
-        [0,D.r+D.bl],[,D.r],[,D.r],[]
-    ],T: [
-        [0,D.r],[,D.r],[,D.b+D.r],[,D.r],[],
-        [2,D.b],
-        [2,D.b],
-        [2,D.b],
-        [2]
-    ],U: [
-        [0,D.r+D.b],[4,D.b],
-        [0,D.b],[4,D.b],
-        [0,D.b+D.r],[4,D.b],
-        [0,D.br],[4,D.bl],
-        [1,D.r],[,D.r],[,D.r]
-    ],V: [
-        [0,D.r+D.b],[4,D.b],
-        [0,D.b],[4,D.b],
-        [0,D.br],[4,D.bl],
-        [1,D.br],[3,D.bl],
-        [2,D.r],
-    ],W: [
-        [0,D.b+D.br],[4,D.b+D.bl],
-        [0,D.b],[4,D.b],
-        [0,D.b],[2,D.bl+D.br],[4,D.b],
-        [0,D.b],[,D.bl],[3,D.br],[4,D.b],
-        [0],[4]
-    ],X: [
-        [0,D.br],[4,D.bl],
-        [1,D.br],[3,D.bl],
-        [2,D.br+D.bl],
-        [1,D.bl],[3,D.br],
-        [0],[4]
-    ],Y: [
-        [0,D.br],[4,D.bl],
-        [1,D.br],[3,D.bl],
-        [2,D.b],
-        [2,D.b],
-        [2]
-    ],Z: [
-        [0,D.r],[,D.r],[,D.r],[,D.r],[,D.bl],
-        [3,D.bl],
-        [2,D.bl],
-        [1,D.bl],
-        [0,D.r],[,D.r],[,D.r],[,D.r],[]
-    ]
+
+class GridAssets {
+    static D = [["t","-ar"],["r",1],["b","ar"],["l",-1],["tr","1-ar"],["br","ar+1"],["bl","ar-1"],["tl","-ar-1"]].reduce((a,[b,d],i)=>(a.places.push([a[b]=1<<i,(ar)=>new Function("ar",`return ${d}`)(ar)]),a),{places:[]})
+
+    static get fontSource5x5() {
+        const D = GridAssets.D
+        return {
+            width:5,
+            height:5,
+            A: [
+                [2,D.bl+D.br],
+                [1,D.bl],[3,D.br],
+                [0,D.r+D.b],[1,D.r],[2,D.r],[3,D.r],[4,D.b],
+                [0,D.b],[4,D.b],
+                [0],[4]
+            ],
+            B: [
+                [0,D.r+D.b],[,D.r],[,D.r],[,D.br],
+                [0,D.b],[4,D.bl],
+                [0,D.r+D.b],[,D.r],[,D.r],[,D.br],
+                [0,D.b],[4,D.bl],
+                [0,D.r],[,D.r],[,D.r],[]
+            ],
+            C: [
+                [1,D.r+D.bl],[,D.r],[,D.r],[],
+                [0,D.b],
+                [0,D.b],
+                [0,D.br],
+                [-1,D.r],[2,D.r],[,D.r],[]
+              ],
+            D: [
+                [0,D.r+D.b],[,D.r],[,D.r],[,D.br],
+                [0,D.b],[4,D.b],
+                [0,D.b],[4,D.b],
+                [0,D.b],[4,D.bl],
+                [0,D.r],[,D.r],[,D.r],[]
+            ],E: [
+                [0,D.r+D.b],[,D.r],[,D.r],[,D.r],[],
+                [0,D.b],
+                [0,D.b+D.r],[,D.r],[,D.r],[,D.r],
+                [0,D.b],
+                [0,D.r],[,D.r],[,D.r],[,D.r],[]
+            ],F: [
+                [0,D.r+D.b],[,D.r],[,D.r],[,D.r],[],
+                [0,D.b],
+                [0,D.b+D.r],[,D.r],[,D.r],[],
+                [0,D.b],
+                [0]
+            ],G: [
+                [1,D.r+D.bl],[,D.r],[,D.r],[],
+                [0,D.b],
+                [0,D.b],[3,D.r],[4,D.b],
+                [0,D.br],[4,D.b],
+                [1,D.r],[,D.r],[,D.r],[]
+            ],H: [
+                [0,D.r+D.b],[4,D.b],
+                [0,D.b],[4,D.b],
+                [0,D.b+D.r],[,D.r],[,D.r],[,D.r],[,D.b],
+                [0,D.b],[4,D.b],
+                [0],[4]
+            ],I: [
+                [1,D.r],[,D.b+D.r],[],
+                [2,D.b],
+                [2,D.b],
+                [2,D.b],
+                [1,D.r],[,D.r],[]
+            ],J: [
+                [1,D.r],[,D.r],[,D.b+D.r],[],
+                [3,D.b],
+                [3,D.b],
+                [0,D.br],[3,D.bl],
+                [1,D.r],[,D.r]
+            ],K: [
+                [0,D.b],[3,D.bl],
+                [0,D.b],[2,D.bl],
+                [0,D.b+D.r],[,D.r+D.br],
+                [0,D.b],[2,D.br],
+                [0],[3,D.r]
+            ],L: [
+                [0,D.b],
+                [0,D.b],
+                [0,D.b],
+                [0,D.b],
+                [0,D.r],[,D.r],[,D.r],[,D.r]
+            ],M: [
+                [0,D.b+D.br],[4,D.b+D.bl],
+                [0,D.b],[,D.br],[3,D.bl],[4,D.b],
+                [0,D.b],[2],[4,D.b],
+                [0,D.b],[4,D.b],
+                [0],[4]
+            ],N: [
+                [0,D.b+D.br],[4,D.b],
+                [0,D.b],[,D.br],[4,D.b],
+                [0,D.b],[2,D.br],[4,D.b],
+                [0,D.b],[3,D.br],[4,D.b],
+                [0],[4]
+            ],O: [
+                [1,D.bl+D.r],[,D.r],[,D.br],
+                [0,D.b],[4,D.b],
+                [0,D.b],[4,D.b],
+                [0,D.b+D.br],[4,D.b+D.bl],
+                [1,D.r],[,D.r],[,D.r]
+            ],P: [
+                [0,D.r+D.b],[,D.r],[,D.br],
+                [0,D.b],[3,D.bl],
+                [0,D.b+D.r],[,D.r],[],
+                [0,D.b],
+                [0]
+            ],Q: [
+                [1,D.bl+D.r],[,D.r],[,D.br],
+                [0,D.b],[4,D.b],
+                [0,D.b],[4,D.b],
+                [0,D.b+D.br],[3,D.br],[,D.bl],
+                [1,D.r],[,D.r],[],[]
+            ],R: [
+                [0,D.r+D.b],[,D.r],[,D.br],
+                [0,D.b],[3,D.bl],
+                [0,D.b+D.r],[,D.r+D.br],[],
+                [0,D.b],[2,D.br],
+                [0],[3]
+            ],S: [
+                [1,D.r+D.bl],[,D.r],[,D.r],[],
+                [0,D.br],
+                [-1,D.r],[2,D.r],[,D.br],
+                [-4,D.bl],
+                [0,D.r+D.bl],[,D.r],[,D.r],[]
+            ],T: [
+                [0,D.r],[,D.r],[,D.b+D.r],[,D.r],[],
+                [2,D.b],
+                [2,D.b],
+                [2,D.b],
+                [2]
+            ],U: [
+                [0,D.r+D.b],[4,D.b],
+                [0,D.b],[4,D.b],
+                [0,D.b+D.r],[4,D.b],
+                [0,D.br],[4,D.bl],
+                [1,D.r],[,D.r],[,D.r]
+            ],V: [
+                [0,D.r+D.b],[4,D.b],
+                [0,D.b],[4,D.b],
+                [0,D.br],[4,D.bl],
+                [1,D.br],[3,D.bl],
+                [2,D.r],
+            ],W: [
+                [0,D.b+D.br],[4,D.b+D.bl],
+                [0,D.b],[4,D.b],
+                [0,D.b],[2,D.bl+D.br],[4,D.b],
+                [0,D.b],[,D.bl],[3,D.br],[4,D.b],
+                [0],[4]
+            ],X: [
+                [0,D.br],[4,D.bl],
+                [1,D.br],[3,D.bl],
+                [2,D.br+D.bl],
+                [1,D.bl],[3,D.br],
+                [0],[4]
+            ],Y: [
+                [0,D.br],[4,D.bl],
+                [1,D.br],[3,D.bl],
+                [2,D.b],
+                [2,D.b],
+                [2]
+            ],Z: [
+                [0,D.r],[,D.r],[,D.r],[,D.r],[,D.bl],
+                [3,D.bl],
+                [2,D.bl],
+                [1,D.bl],
+                [0,D.r],[,D.r],[,D.r],[,D.r],[]
+            ]
+        }
+    }
+
+
+    
 }
 const DEFAULT_MOUSE_DECELERATION = 0.8, DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1, DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
 
@@ -492,7 +501,7 @@ class Mouse {
 // Please don't use or credit this code as your own.
 //
 
-const DEFAULT_MAX_DELTATIME= 0.13, DEFAULT_LIMIT = 100, DEFAULT_CVSDE_ATTR = "_CVSDE", DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F", DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue"}, TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame, CIRC = 2*Math.PI, DEFAULT_COLOR = "aliceblue", DEFAULT_RGBA=[255,255,255,1], DEFAULT_POS = [0,0], DEFAULT_RADIUS = 5, DEFAULT_CANVAS_WIDTH = 800, DEFAULT_CANVAS_HEIGHT = 800, DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
+const DEFAULT_MAX_DELTATIME= 0.13, CANVAS_ACTIVE_AREA_PADDING = 20, DEFAULT_LIMIT = 100, DEFAULT_CVSDE_ATTR = "_CVSDE", DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F", DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue"}, TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame, CIRC = 2*Math.PI, DEFAULT_COLOR = "aliceblue", DEFAULT_RGBA=[255,255,255,1], DEFAULT_POS = [0,0], DEFAULT_RADIUS = 5, DEFAULT_CANVAS_WIDTH = 800, DEFAULT_CANVAS_HEIGHT = 800, DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
 let idGiver = 0
 
 // Represents a html canvas element
@@ -601,7 +610,7 @@ class Canvas {
 
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
-            if (!el.draw || !this.isWithin(el.pos)) continue
+            if (!el.draw || !this.isWithin(el.pos, CANVAS_ACTIVE_AREA_PADDING)) continue
             el.draw(this._ctx, this.timeStamp, this._deltaTime)
         }
     }
@@ -729,9 +738,9 @@ class Canvas {
         return [this.width/2, this.height/2]
     }
 
-    isWithin(pos) {
+    isWithin(pos, padding=0) {
         let [x,y]=pos
-        return x >= 0 && x <= this.width && y >= 0 && y <= this.height
+        return x >= -padding && x <= this.width+padding && y >= -padding && y <= this.height+padding
     }
     
 	get cvs() {return this._cvs}
@@ -889,26 +898,28 @@ class Obj {
 
     // Teleports to given coords
     moveAt(pos) {
-        if (pos[0] !== null) this.x = pos[0]
-        if (pos[1] !== null) this.y = pos[1]
+        let [x, y] = pos
+        if (x !== null && x !== undefined) this.x = x
+        if (y !== null && y !== undefined) this.y = y
     }
 
     // Teleports to incremented coords
     moveBy(pos) {
-        if (pos[0] !== null) this.x += pos[0]
-        if (pos[1] !== null) this.y += pos[1]
+        let [x, y] = pos
+        if (x !== null && x !== undefined) this.x += x
+        if (y !== null && y !== undefined) this.y += y
     }
 
     // Smoothly moves to coords in set time
     moveTo(pos, time=1000, easing=Anim.easeInOutQuad, force=true, initPos=[this.x, this.y]) {
-        let [ix, iy] = initPos,
-        dx = pos[0]-ix,
-        dy = pos[1]-iy
+        let [ix, iy] = initPos, [fx, fy] = this.adjustInputPos(pos)
+        dx = fx-ix,
+        dy = fy-iy
 
         return this.queueAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
             this.y = iy+dy*prog
-        }, time, easing, ()=>this._anims.shift()), force)
+        }, time, easing), force)
     }
 
     // moves the obj in specified direction at specified distance(force)
@@ -920,7 +931,7 @@ class Obj {
         return this.queueAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
             this.y = iy-dy*prog
-        }, time, easing, ()=>this._anims.shift()), true)
+        }, time, easing), true)
     }
 
     // adds an animation to the end of the backlog
@@ -929,9 +940,21 @@ class Obj {
             this.currentAnim.end()
             this._anims.addAt(anim, 1)
         }
-        if (!anim.endCallback) anim.endCallback=()=>this._anims.shift()
+        let initEndCB = anim.endCallback
+        anim.endCallback=()=>{
+            this._anims.shift()
+            if (typeof initEndCB=="function") initEndCB()
+        }
         this._anims.push(anim)
         return anim
+    }
+
+    // allows flexible pos declarations
+    adjustInputPos(pos) {
+        let [x, y] = pos
+        if (x === null || x === undefined) x = this.x
+        if (y === null || y === undefined) y = this.y
+        return [x, y]
     }
 
 	get id() {return this._id}
@@ -995,7 +1018,7 @@ class Shape extends Obj {
     initialize() {
         if (typeof this._initDots == "string") this.createFromString(this._initDots)
         else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))
-        else if (this._initDots?.length) this.add(this._initDots)
+        else if (this._initDots?.length || this._initDots instanceof Dot) this.add(this._initDots)
         
         super.initialize()
 
@@ -1075,21 +1098,19 @@ class Shape extends Obj {
         
         return this.queueAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy-dy*prog])
-        }, time, easing, ()=>this._anims.shift()), true)
+        }, time, easing), true)
     }
 
     // Teleports the shape and all its dots to incremented coords
     moveBy(pos) {
         super.moveBy(pos)
-        this._dots.forEach(dot=>{
-            if (pos[0] !== null && pos[0] !== undefined) dot.x += pos[0]
-            if (pos[1] !== null && pos[1] !== undefined) dot.y += pos[1]
-        })
+        let d_ll = this._dots.length
+        for (let i=0;i<d_ll;i++) this._dots[i].moveBy(pos)
     }
 
     // Teleports the shape and all its dots to given coords
     moveAt(pos) {
-        const dx = pos[0]-this.x, dy = pos[1]-this.y
+        let [fx, fy] = this.adjustInputPos(pos), dx = fx-this.x, dy = fy-this.y
         this._dots.forEach(d=>{
             if (dx) d.x += dx
             if (dy) d.y += dy
@@ -1105,7 +1126,7 @@ class Shape extends Obj {
 
         return this.queueAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy+dy*prog])
-        }, time, easing, ()=>this._anims.shift()), force)
+        }, time, easing), force)
     }
 
     // Rotates the dots by a specified degree increment around a specified center point
@@ -1133,7 +1154,7 @@ class Shape extends Obj {
 
         return this.queueAnim(new Anim((prog)=>{
             this.rotateAt(ir+dr*prog, centerPos)
-        }, time, easing, ()=>this._anims.shift()), force)
+        }, time, easing), force)
     }
 
     // Scales the dots by a specified amount [scaleX, scaleY] from a specified center point
@@ -1158,7 +1179,7 @@ class Shape extends Obj {
 
         return this.queueAnim(new Anim(prog=>{
             this.scaleAt([is[0]+dsX*prog, is[1]+dsY*prog], centerPos)
-        }, time, easing, ()=>this._anims.shift()), force)
+        }, time, easing), force)
     }
 
     // Empties the shapes of all its dots
@@ -1318,7 +1339,6 @@ class FilledShape extends Shape {
             let currentDotPos = this.dotsPositions
             if (currentDotPos !== this.#lastDotsPos) {
                 this.#lastDotsPos = currentDotPos
-                console.log("TODO tofix, filledShape.moevBy([100]), then call this")
 
                 this._path = new Path2D()
                 this._path.moveTo(...this.dots[0].pos)
@@ -1342,12 +1362,14 @@ class FilledShape extends Shape {
 
 // Allows the creation of symbols/text based on specific source
 class Grid extends Shape {
-    constructor(keys, gaps=[25, 25], spacing, source, pos, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
+    static DEFAULT_GAPS = [25, 25]
+
+    constructor(keys, gaps, spacing, source, pos, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
         super(pos, null, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
 
-        this._keys = keys                      // keys to convert to source's values 
-        this._gaps = gaps ?? [25, 25]          // [x, y] gap length within the dots
-        this._source = source ?? fontSource5x5 // symbols' source 
+        this._keys = keys                                 // keys to convert to source's values 
+        this._gaps = gaps ?? Grid.DEFAULT_GAPS            // [x, y] gap length within the dots
+        this._source = source ?? GridAssets.fontSource5x5 // symbols' source
         this._spacing = spacing ?? this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
 
         if (this._keys) super.add(this.createGrid())
