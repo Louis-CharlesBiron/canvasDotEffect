@@ -453,7 +453,7 @@ The Grid class is a derivate of the Shape class. It allows the creation of dot-b
     dummyGrid.setSpacing(0)
     
     // This will change the current source to the default fontSource5x5, which contains only A-Z letters.   (Some key definitions may not be supported depanding of which source or keys you're using)
-    dummyGrid.setSource(fontSource5x5)
+    dummyGrid.setSource(GridAssets.fontSource5x5)
 ```
 
 #### Example use 1:
@@ -464,7 +464,7 @@ The Grid class is a derivate of the Shape class. It allows the creation of dot-b
         "abcdefg\nhijklm\nnopqrs\ntuvwxyz", // the keys corresponding to the alphabet letters, with some line breaks
         [5, 5],                             // equal gaps, this will make the alphabet look a bit square-ish
         50,                                 // 50px letter spacing
-        fontSource5x5,                      // default source
+        GridAssets.fontSource5x5,                      // default source
         [10,10],                            // the shape position (The text will start from this point, as its top-left corner)
         2,                                  // 2px dot radius
         null,                               // rgba is left undefined, the shape will assigned it the default value ([255,255,255,1])
@@ -612,7 +612,7 @@ A symbol has this structure: `[...[index, directions]]`. It is composed of a mai
 ### **In the end, the example source should look like this:**
 
 ```js
-const fontSource5x5 = {
+{
     width:5,
     height:5,
     
@@ -625,6 +625,7 @@ const fontSource5x5 = {
     ],
     
     // Other symbols ...
+}
 ```
 
  

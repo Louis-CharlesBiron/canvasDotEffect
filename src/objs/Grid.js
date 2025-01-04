@@ -5,12 +5,14 @@
 
 // Allows the creation of symbols/text based on specific source
 class Grid extends Shape {
-    constructor(keys, gaps=[25, 25], spacing, source, pos, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
+    static DEFAULT_GAPS = [25, 25]
+
+    constructor(keys, gaps, spacing, source, pos, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
         super(pos, null, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
 
-        this._keys = keys                      // keys to convert to source's values 
-        this._gaps = gaps ?? [25, 25]          // [x, y] gap length within the dots
-        this._source = source ?? fontSource5x5 // symbols' source 
+        this._keys = keys                                 // keys to convert to source's values 
+        this._gaps = gaps ?? Grid.DEFAULT_GAPS            // [x, y] gap length within the dots
+        this._source = source ?? GridAssets.fontSource5x5 // symbols' source
         this._spacing = spacing ?? this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
 
         if (this._keys) super.add(this.createGrid())
