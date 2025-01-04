@@ -104,7 +104,7 @@ class Shape extends Obj {
         
         return this.queueAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy-dy*prog])
-        }, time, easing, ()=>this._anims.shift()), true)
+        }, time, easing), true)
     }
 
     // Teleports the shape and all its dots to incremented coords
@@ -134,7 +134,7 @@ class Shape extends Obj {
 
         return this.queueAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy+dy*prog])
-        }, time, easing, ()=>this._anims.shift()), force)
+        }, time, easing), force)
     }
 
     // Rotates the dots by a specified degree increment around a specified center point
@@ -162,7 +162,7 @@ class Shape extends Obj {
 
         return this.queueAnim(new Anim((prog)=>{
             this.rotateAt(ir+dr*prog, centerPos)
-        }, time, easing, ()=>this._anims.shift()), force)
+        }, time, easing), force)
     }
 
     // Scales the dots by a specified amount [scaleX, scaleY] from a specified center point
@@ -187,7 +187,7 @@ class Shape extends Obj {
 
         return this.queueAnim(new Anim(prog=>{
             this.scaleAt([is[0]+dsX*prog, is[1]+dsY*prog], centerPos)
-        }, time, easing, ()=>this._anims.shift()), force)
+        }, time, easing), force)
     }
 
     // Empties the shapes of all its dots

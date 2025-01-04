@@ -709,7 +709,7 @@ The Anim class allows the creation of smooth animations and the use of easings.
 - **animation** -> Callback containing the animation code `(progress)=>{...}`.
 - **duration** -> The duration in miliseconds. (Negative values will make the animation repeat infinitly).
 - **easing** -> The easing function to be used `(x)=>{... return x}`.
-- **endCallback**? -> Custom callback ran upon the animation ending. **/!\ IF DEFINED, it is VERY STRONGLY recommended to include a line to clear the current animation of the object, such as `this._anims.shift()` (litteraly just copy and paste it)**.
+- **endCallback**? -> Custom callback ran upon the animation ending.
 
 ### **To play an animation:** 
 Use the queueAnim() function on any canvas object. Animations get added to the end of the animation queue of an object and are played once they're at the first index of this queue. You can terminate the current animation and instantly replace it with another one by putting `true` as the second parameter.

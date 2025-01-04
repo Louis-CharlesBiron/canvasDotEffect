@@ -11,6 +11,8 @@
 
 - 3d
 
+- mutiple anim at same time
+
 
 - ratioPos depending on multiple pos
 

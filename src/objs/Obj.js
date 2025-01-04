@@ -55,7 +55,7 @@ class Obj {
         return this.queueAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
             this.y = iy+dy*prog
-        }, time, easing, ()=>this._anims.shift()), force)
+        }, time, easing), force)
     }
 
     // moves the obj in specified direction at specified distance(force)
@@ -67,7 +67,7 @@ class Obj {
         return this.queueAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
             this.y = iy-dy*prog
-        }, time, easing, ()=>this._anims.shift()), true)
+        }, time, easing), true)
     }
 
     // adds an animation to the end of the backlog
@@ -76,7 +76,11 @@ class Obj {
             this.currentAnim.end()
             this._anims.addAt(anim, 1)
         }
-        if (!anim.endCallback) anim.endCallback=()=>this._anims.shift()
+        let initEndCB = anim.endCallback
+        anim.endCallback=()=>{
+            this._anims.shift()
+            if (typeof initEndCB=="function") initEndCB()
+        }
         this._anims.push(anim)
         return anim
     }

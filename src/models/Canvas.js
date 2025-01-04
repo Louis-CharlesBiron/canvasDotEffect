@@ -3,7 +3,7 @@
 // Please don't use or credit this code as your own.
 //
 
-const DEFAULT_MAX_DELTATIME= 0.13, DEFAULT_LIMIT = 100, DEFAULT_CVSDE_ATTR = "_CVSDE", DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F", DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue"}, TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame, CIRC = 2*Math.PI, DEFAULT_COLOR = "aliceblue", DEFAULT_RGBA=[255,255,255,1], DEFAULT_POS = [0,0], DEFAULT_RADIUS = 5, DEFAULT_CANVAS_WIDTH = 800, DEFAULT_CANVAS_HEIGHT = 800, DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
+const DEFAULT_MAX_DELTATIME= 0.13, CANVAS_ACTIVE_AREA_PADDING = 20, DEFAULT_LIMIT = 100, DEFAULT_CVSDE_ATTR = "_CVSDE", DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F", DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue"}, TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame, CIRC = 2*Math.PI, DEFAULT_COLOR = "aliceblue", DEFAULT_RGBA=[255,255,255,1], DEFAULT_POS = [0,0], DEFAULT_RADIUS = 5, DEFAULT_CANVAS_WIDTH = 800, DEFAULT_CANVAS_HEIGHT = 800, DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
 let idGiver = 0
 
 // Represents a html canvas element
@@ -112,7 +112,7 @@ class Canvas {
 
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
-            if (!el.draw || !this.isWithin(el.pos)) continue
+            if (!el.draw || !this.isWithin(el.pos, CANVAS_ACTIVE_AREA_PADDING)) continue
             el.draw(this._ctx, this.timeStamp, this._deltaTime)
         }
     }
@@ -240,9 +240,9 @@ class Canvas {
         return [this.width/2, this.height/2]
     }
 
-    isWithin(pos) {
+    isWithin(pos, padding=0) {
         let [x,y]=pos
-        return x >= 0 && x <= this.width && y >= 0 && y <= this.height
+        return x >= -padding && x <= this.width+padding && y >= -padding && y <= this.height+padding
     }
     
 	get cvs() {return this._cvs}
