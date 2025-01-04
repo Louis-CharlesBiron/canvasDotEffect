@@ -40,7 +40,6 @@ class FilledShape extends Shape {
             let currentDotPos = this.dotsPositions
             if (currentDotPos !== this.#lastDotsPos) {
                 this.#lastDotsPos = currentDotPos
-                console.log("TODO tofix, filledShape.moevBy([100]), then call this")
 
                 this._path = new Path2D()
                 this._path.moveTo(...this.dots[0].pos)

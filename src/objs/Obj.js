@@ -36,21 +36,23 @@ class Obj {
 
     // Teleports to given coords
     moveAt(pos) {
-        if (pos[0] !== null) this.x = pos[0]
-        if (pos[1] !== null) this.y = pos[1]
+        let [x, y] = pos
+        if (x !== null && x !== undefined) this.x = x
+        if (y !== null && y !== undefined) this.y = y
     }
 
     // Teleports to incremented coords
     moveBy(pos) {
-        if (pos[0] !== null) this.x += pos[0]
-        if (pos[1] !== null) this.y += pos[1]
+        let [x, y] = pos
+        if (x !== null && x !== undefined) this.x += x
+        if (y !== null && y !== undefined) this.y += y
     }
 
     // Smoothly moves to coords in set time
     moveTo(pos, time=1000, easing=Anim.easeInOutQuad, force=true, initPos=[this.x, this.y]) {
-        let [ix, iy] = initPos,
-        dx = pos[0]-ix,
-        dy = pos[1]-iy
+        let [ix, iy] = initPos, [fx, fy] = this.adjustInputPos(pos)
+        dx = fx-ix,
+        dy = fy-iy
 
         return this.queueAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
@@ -83,6 +85,14 @@ class Obj {
         }
         this._anims.push(anim)
         return anim
+    }
+
+    // allows flexible pos declarations
+    adjustInputPos(pos) {
+        let [x, y] = pos
+        if (x === null || x === undefined) x = this.x
+        if (y === null || y === undefined) y = this.y
+        return [x, y]
     }
 
 	get id() {return this._id}

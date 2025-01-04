@@ -110,15 +110,13 @@ class Shape extends Obj {
     // Teleports the shape and all its dots to incremented coords
     moveBy(pos) {
         super.moveBy(pos)
-        this._dots.forEach(dot=>{
-            if (pos[0] !== null && pos[0] !== undefined) dot.x += pos[0]
-            if (pos[1] !== null && pos[1] !== undefined) dot.y += pos[1]
-        })
+        let d_ll = this._dots.length
+        for (let i=0;i<d_ll;i++) this._dots[i].moveBy(pos)
     }
 
     // Teleports the shape and all its dots to given coords
     moveAt(pos) {
-        const dx = pos[0]-this.x, dy = pos[1]-this.y
+        let [fx, fy] = this.adjustInputPos(pos), dx = fx-this.x, dy = fy-this.y
         this._dots.forEach(d=>{
             if (dx) d.x += dx
             if (dy) d.y += dy
