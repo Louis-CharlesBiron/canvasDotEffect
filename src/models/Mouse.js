@@ -1,7 +1,13 @@
-const DEFAULT_MOUSE_DECELERATION = 0.8, DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1, DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
+// JS
+// Canvas Dot Effect by Louis-Charles Biron
+// Please don't use or credit this code as your own.
+//
 
 // Represents the user's mouse
 class Mouse {
+    static DEFAULT_MOUSE_DECELERATION = 0.8
+    static DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1
+    static DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
 
     constructor() {
         this._valid = false               // whether the mouse pos is valid (is inside the canvas and initialized)
@@ -21,8 +27,8 @@ class Mouse {
     // calculates and sets the current mouse speed (loop every frame)
     calcSpeed(deltaTime) {
         if (isFinite(this._lastX) && isFinite(this._lastY) && deltaTime) {
-            this._speed = this._speed*DEFAULT_MOUSE_DECELERATION+(getDist(this._x, this._y, this._lastX, this._lastY)/deltaTime)*(1-DEFAULT_MOUSE_DECELERATION)
-            if (this._speed < DEFAULT_MOUSE_MOVE_TRESHOLD) this._speed = 0
+            this._speed = this._speed*Mouse.DEFAULT_MOUSE_DECELERATION+(CDEUtils.getDist(this._x, this._y, this._lastX, this._lastY)/deltaTime)*(1-Mouse.DEFAULT_MOUSE_DECELERATION)
+            if (this._speed < Mouse.DEFAULT_MOUSE_MOVE_TRESHOLD) this._speed = 0
         } else this._speed = 0
 
         this._lastX = this._x
@@ -33,10 +39,10 @@ class Mouse {
     calcAngle() {
         let dx = this._x-this._lastX, dy = this._y-this._lastY
         if (isFinite(dx) && isFinite(dy) && (dx||dy)) {
-            let angle = (-toDeg(Math.atan2(dy, dx))+360)%360, diff = angle-this._dir
+            let angle = (-CDEUtils.toDeg(Math.atan2(dy, dx))+360)%360, diff = angle-this._dir
             diff += (360*(diff<-180))-(360*(diff>180))
 
-            this._dir = (this._dir+diff*DEFAULT_MOUSE_ANGULAR_DECELERATION+360)%360
+            this._dir = (this._dir+diff*Mouse.DEFAULT_MOUSE_ANGULAR_DECELERATION+360)%360
         } else this._dir = 0
     }
 

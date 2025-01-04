@@ -13,9 +13,9 @@ class Dot extends Obj {
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
     draw(ctx, time) {
-        ctx.fillStyle = formatColor(this._rgba||DEFAULT_RGBA)
+        ctx.fillStyle = formatColor(this._rgba)
         ctx.beginPath()
-        ctx.arc(this.x, this.y, this._radius??DEFAULT_RADIUS, 0, CIRC)
+        ctx.arc(this.x, this.y, this._radius, 0, CDEUtils.CIRC)
         ctx.fill()
 
         // runs parent drawEffect callback if defined
@@ -29,7 +29,7 @@ class Dot extends Obj {
 
     // returns pythagorian distance between the ratio defining position and the dot
     getDistance(fx,fy) {
-        return getDist(fx??this.ratioPos[0], fy??this.ratioPos[1], this.x, this.y)
+        return CDEUtils.getDist(fx??this.ratioPos[0], fy??this.ratioPos[1], this.x, this.y)
     }
 
     // calculates the ratio based on distance and parent's limit

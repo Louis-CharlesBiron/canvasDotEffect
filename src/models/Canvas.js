@@ -3,21 +3,30 @@
 // Please don't use or credit this code as your own.
 //
 
-const DEFAULT_MAX_DELTATIME= 0.13, CANVAS_ACTIVE_AREA_PADDING = 20, DEFAULT_LIMIT = 100, DEFAULT_CVSDE_ATTR = "_CVSDE", DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F", DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue"}, TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame, CIRC = 2*Math.PI, DEFAULT_COLOR = "aliceblue", DEFAULT_RGBA=[255,255,255,1], DEFAULT_POS = [0,0], DEFAULT_RADIUS = 5, DEFAULT_CANVAS_WIDTH = 800, DEFAULT_CANVAS_HEIGHT = 800, DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
-let idGiver = 0
+const CDE_CANVAS_DEFAULT_TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame
 
 // Represents a html canvas element
 class Canvas {
+    static ELEMENT_ID_GIVER = 0
+    static DEFAULT_MAX_DELTATIME= 0.13
+    static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
+    static DEFAULT_CVSDE_ATTR = "_CVSDE"
+    static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
+    static DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue"}
+    static DEFAULT_CANVAS_WIDTH = 800
+    static DEFAULT_CANVAS_HEIGHT = 800
+    static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
+
     #lastFrame = 0  // used for delta time calcultions
-    #deltaTimeCap = DEFAULT_MAX_DELTATIME // used to prevent significant delta time gaps
+    #deltaTimeCap = Canvas.DEFAULT_MAX_DELTATIME // used to prevent significant delta time gaps
     #frameSkipsOffset = null // used to prevent significant frame gaps
     #timeStamp = null  // requestanimationframe timestamp in ms
 
-    constructor(cvs, loopingCallback, frame, settings=DEFAULT_CTX_SETTINGS) {
+    constructor(cvs, loopingCallback, frame, settings=Canvas.DEFAULT_CTX_SETTINGS) {
         this._cvs = cvs                                         //html canvas element
         this._frame = frame??cvs?.parentElement                 //html parent of canvas element
-        this._cvs.setAttribute(DEFAULT_CVSDE_ATTR, true)        //set styles selector
-        this._frame.setAttribute(DEFAULT_CVSFRAMEDE_ATTR, true) //set styles selector
+        this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)        //set styles selector
+        this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true) //set styles selector
         this._ctx = this._cvs.getContext("2d")                  //canvas context
         this._settings = this.updateSettings(settings)          //set context settings
 
@@ -31,7 +40,7 @@ class Canvas {
 
         this._windowListeners = this.#initWindowListeners()      //[onresize, onvisibilitychange]
         
-        let frameCBR = this._frame?.getBoundingClientRect()??{width:DEFAULT_CANVAS_WIDTH, height:DEFAULT_CANVAS_HEIGHT}
+        let frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
         this.setSize(frameCBR.width, frameCBR.height)           //init size
         this.#initStyles()                                       //init styles
 
@@ -42,7 +51,7 @@ class Canvas {
     // sets css styles on the canvas and the parent
     #initStyles() {
         let style = document.createElement("style")
-        style.appendChild(document.createTextNode(`[${DEFAULT_CVSFRAMEDE_ATTR}]{position:relative !important;}canvas[${DEFAULT_CVSDE_ATTR}]{${Object.entries(DEFAULT_CANVAS_STYLES).reduce((a,b)=>a+=`${b[0]}:${b[1]};`,"")}}`))
+        style.appendChild(document.createTextNode(`[${Canvas.DEFAULT_CVSFRAMEDE_ATTR}]{position:relative !important;}canvas[${Canvas.DEFAULT_CVSDE_ATTR}]{${Object.entries(Canvas.DEFAULT_CANVAS_STYLES).reduce((a,b)=>a+=`${b[0]}:${b[1]};`,"")}}`))
         this._cvs.appendChild(style)
     }
 
@@ -74,7 +83,7 @@ class Canvas {
     #loop(time) {
         let delay = Math.abs((time-this.#timeStamp)-this.deltaTime*1000)
         if (this._fixedTimeStamp==0) this._fixedTimeStamp = time-this.#frameSkipsOffset
-        if (time && this._fixedTimeStamp && delay < DEFAULT_MAX_DELTATIME*1000) {
+        if (time && this._fixedTimeStamp && delay < Canvas.DEFAULT_MAX_DELTATIME*1000) {
 
             this._mouse.calcSpeed(this._deltaTime)
 
@@ -86,13 +95,13 @@ class Canvas {
             this._fixedTimeStamp = 0
 
         } else if (time) {
-            this._fixedTimeStamp = time-(this.#frameSkipsOffset += DEFAULT_MAX_DELTATIME*1000)
-            this.#frameSkipsOffset += DEFAULT_MAX_DELTATIME*1000
+            this._fixedTimeStamp = time-(this.#frameSkipsOffset += Canvas.DEFAULT_MAX_DELTATIME*1000)
+            this.#frameSkipsOffset += Canvas.DEFAULT_MAX_DELTATIME*1000
         }
 
         this.#timeStamp = time
         this.#calcDeltaTime(time)
-        if (this._looping) TIMEOUT_FN(this.#loop.bind(this))
+        if (this._looping) CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
     }
 
     // stops the loop
@@ -112,7 +121,7 @@ class Canvas {
 
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
-            if (!el.draw || !this.isWithin(el.pos, CANVAS_ACTIVE_AREA_PADDING)) continue
+            if (!el.draw || !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING)) continue
             el.draw(this._ctx, this.timeStamp, this._deltaTime)
         }
     }

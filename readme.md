@@ -136,7 +136,7 @@ The Canvas class is the core of the projet. It manages the main loop, the window
 ###### - Creating a Canvas instance that display fps
 ```js
     // Creating a FPSCounter instance
-    const fpsCounter = new FPSCounter()
+    const fpsCounter = new CDEUtils.FPSCounter()
     
     const CVS = new Canvas(
         document.getElementById("canvas"),  // The html canvas element to link to
@@ -242,7 +242,7 @@ Its other attributes are:
             new Dot([150, 100]),
             new Dot([150, 150]),
             new Dot([100, 150])
-    ], DEFAULT_RADIUS, DEFAULT_COLOR)
+    ], Obj.DEFAULT_RADIUS, Obj.DEFAULT_COLOR)
     
     // Add the shape along with all of its dots as a single unit. (reference)
     CVS.add(squareLikeFormation)
@@ -474,12 +474,12 @@ The Grid class is a derivate of the Shape class. It allows the creation of dot-b
             // This will make a nice proximity effect when the mouse is close.
             // The mod() function and the ratio allow us to modify the dot radius with
             // a linear interpolation based on distance between the ratioPos (the mouse) and the current dot.
-            dot.radius = mod(DEFAULT_RADIUS, ratio, DEFAULT_RADIUS)         // DEFAULT_RADIUS = 5
+            dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS, ratio, Obj.DEFAULT_RADIUS)     // DEFAULT_RADIUS = 5
             
             
             // By default, no connections are drawn between the dots of a grid.
             // We can use the drawDotConnections() function to draw them easily.
-            CvsUtils.drawDotConnections(dot, [255,0,0,1])
+            CanvasUtils.drawDotConnections(dot, [255,0,0,1])
         }
     )
     
@@ -796,14 +796,14 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 ###### - Making a dot throwable, and changing its color on mouse hover and click
 ```js
     // Using the getDraggableDotCB utility function to get a dragCallback
-    const dragCallback = CvsUtils.getDraggableDotCB()
+    const dragCallback = CanvasUtils.getDraggableDotCB()
     
     // Creating a mostly default shape, with a single dot
     const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null, 
         (ctx, dot, ratio, m, dist, shape)=>{// drawEffect callback
     
             // Changing the dot's size based on mouse distance for an additional small effect
-            dot.radius = mod(shape.radius*2, ratio, shape.radius*2*0.5)
+            dot.radius = CDEUtils.mod(shape.radius*2, ratio, shape.radius*2*0.5)
             
             // Checking if the mouse is hovering the dot
             const isMouseOver = dot.isWithin(m.pos, true)

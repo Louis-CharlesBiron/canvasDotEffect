@@ -1,14 +1,23 @@
+// JS
+// Canvas Dot Effect by Louis-Charles Biron
+// Please don't use or credit this code as your own.
+//
+
 // Abstract canvas obj class
 class Obj {
+    static DEFAULT_COLOR = "aliceblue"
+    static DEFAULT_RGBA=[255,255,255,1]
+    static DEFAULT_POS = [0,0]
+    static DEFAULT_RADIUS = 5
 
     constructor(pos, radius, rgba, setupCB) {
-        this._id = idGiver++                  // canvas obj id
-        this._initPos = pos||DEFAULT_POS      // initial position : [x,y] || (Canvas)=>{return [x,y]}
-        this._pos = this._initPos             // current position from the center of the object : [x,y]
-        this._radius = radius??DEFAULT_RADIUS // object's radius
-        this._rgba = rgba||DEFAULT_RGBA       // object's rgba
-        this._setupCB = setupCB               // called on object's initialization (this, this.parent)=>
-        this._anims = []                      // backlogs of animations to play
+        this._id = Canvas.ELEMENT_ID_GIVER++      // canvas obj id
+        this._initPos = pos||Obj.DEFAULT_POS      // initial position : [x,y] || (Canvas)=>{return [x,y]}
+        this._pos = this._initPos                 // current position from the center of the object : [x,y]
+        this._radius = radius??Obj.DEFAULT_RADIUS // object's radius
+        this._rgba = rgba||Obj.DEFAULT_RGBA       // object's rgba
+        this._setupCB = setupCB                   // called on object's initialization (this, this.parent)=>
+        this._anims = []                          // backlogs of animations to play
     }
 
     // Runs when the object gets added to a canvas instance
@@ -25,7 +34,7 @@ class Obj {
     // (bool) returns whether the provided pos is inside the obj
     isWithin(pos, circularDetection) {
         let [x,y]=pos
-        return circularDetection ? getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom
+        return circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom
     }
 
     // Returns the [top, right, bottom, left] distances between the canvas limits, according to the object's size
@@ -62,9 +71,9 @@ class Obj {
 
     // moves the obj in specified direction at specified distance(force)
     addForce(force, dir, time=1000, easing=Anim.easeInOutQuad) {
-        let rDir = toRad(dir), ix = this.x, iy = this.y,
-            dx = getAcceptableDif(force*Math.cos(rDir), ACCEPTABLE_DIF),
-            dy = getAcceptableDif(force*Math.sin(rDir), ACCEPTABLE_DIF)
+        let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
+            dx = CDEUtils.getAcceptableDif(force*Math.cos(rDir), CDEUtils.ACCEPTABLE_DIF),
+            dy = CDEUtils.getAcceptableDif(force*Math.sin(rDir), CDEUtils.ACCEPTABLE_DIF)
         
         return this.queueAnim(new Anim((prog)=>{
             this.x = ix+dx*prog

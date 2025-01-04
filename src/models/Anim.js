@@ -1,17 +1,23 @@
-let animIdGiver = 0
+// JS
+// Canvas Dot Effect by Louis-Charles Biron
+// Please don't use or credit this code as your own.
+//
 
 // Allows the creation of smooth progress based animations 
 class Anim {
-    constructor(animation, duration, easing, endCallback) {
-        this._id = animIdGiver++         // animation id
-        this._animation = animation      // the main animation (progress, playCount)=>
-        this._duration = duration??1000  // duration in ms, negative values make the animation repeat infinitly
-        this._easing = easing||(x=>x)    // easing function (x)=>
-        this._endCallback = endCallback  // function called when animation is over
+    static ANIM_ID_GIVER = 0
+    static DEFAULT_DURATION = 1000
 
-        this._startTime = null           // start time
-        this._progress = 0               // animation progress
-        this._playCount = 0              // how many time the animation has played
+    constructor(animation, duration, easing, endCallback) {
+        this._id = Anim.ANIM_ID_GIVER++                         // animation id
+        this._animation = animation                      // the main animation (progress, playCount)=>
+        this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
+        this._easing = easing||(x=>x)                    // easing function (x)=>
+        this._endCallback = endCallback                  // function called when animation is over
+
+        this._startTime = null // start time
+        this._progress = 0     // animation progress
+        this._playCount = 0    // how many time the animation has played
     }
     
     // progresses the animation 1 frame fowards (loop each frame) 
@@ -58,35 +64,23 @@ class Anim {
 	set endCallback(_endCallback) {return this._endCallback = _endCallback}
 
     // Easings from: https://easings.net/
-    static get easeInOutQuad() {
-        return (x) => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2
-    }
+    static easeInOutQuad = (x) => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2
 
-    static get easeOutQuad() {
-        return (x) => 1 - (1 - x) * (1 - x)
-    }
+    static easeOutQuad = (x) => 1 - (1 - x) * (1 - x)
 
-    static get easeOutBounce() {
-        return (x) => {
+    static easeOutBounce = (x) => {
             if (x < 1 / 2.75) return 7.5625 * x * x
             else if (x < 2 / 2.75) return 7.5625 * (x -= 1.5 / 2.75) * x + 0.75
             else if (x < 2.5 / 2.75) return 7.5625 * (x -= 2.25 / 2.75) * x + 0.9375
             else return 7.5625 * (x -= 2.625 / 2.75) * x + 0.984375
-        }
     }
 
-    static get easeInOutBounce() {
-        return (x) =>x < 0.5 ? (1 - this.easeOutBounce(1 - 2 * x)) / 2: (1 + this.easeOutBounce(2 * x - 1)) / 2
-    }
+    static easeInOutBounce = (x) => x < 0.5 ? (1 - this.easeOutBounce(1 - 2 * x)) / 2: (1 + this.easeOutBounce(2 * x - 1)) / 2
 
-    static get easeInOutBack() {
-        return (x) => x < 0.5? (Math.pow(2 * x, 2) * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) / 2 : (Math.pow(2 * x - 2, 2) * ((1.70158 * 1.525 + 1) * (x * 2 - 2) + 1.70158 * 1.525) + 2) / 2
-    }
+    static easeInOutBack = (x) => x < 0.5? (Math.pow(2 * x, 2) * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) / 2 : (Math.pow(2 * x - 2, 2) * ((1.70158 * 1.525 + 1) * (x * 2 - 2) + 1.70158 * 1.525) + 2) / 2
 
-    static get easeInOutElastic() {
-        return (x) => x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 + 1;
-    }
-    static get linear() {
-        return x=>x
-    }
+    static easeInOutElastic = (x) => x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 + 1;
+    
+    static linear = (x) => x
+    
 }

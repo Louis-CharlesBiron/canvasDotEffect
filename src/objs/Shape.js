@@ -4,11 +4,13 @@
 //
 
 // Contains and controls a group of dots
-class Shape extends Obj {    
+class Shape extends Obj {
+    static DEFAULT_LIMIT = 100
+
     constructor(pos, dots, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
         super(pos, radius, rgba, setupCB)
         this._cvs = null                        // CVS instance
-        this._limit = limit||DEFAULT_LIMIT      // the delimiter radius within which the drawEffect can take Effect
+        this._limit = limit||Shape.DEFAULT_LIMIT// the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                   // initial dots declaration
         this._dots = []                         // array containing current dots in the shape
         this._ratioPos = [Infinity,Infinity]    // position of ratio target object 
@@ -98,9 +100,9 @@ class Shape extends Obj {
 
     // moves the shape and all its dots in specified direction at specified distance(force)
     addForce(force, dir, time=1000, easing=Anim.easeInOutQuad) {
-        let rDir = toRad(dir), ix = this.x, iy = this.y,
-            dx = getAcceptableDif(force*Math.cos(rDir), ACCEPTABLE_DIF),
-            dy = getAcceptableDif(force*Math.sin(rDir), ACCEPTABLE_DIF)
+        let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
+            dx = CDEUtils.getAcceptableDif(force*Math.cos(rDir), CDEUtils.ACCEPTABLE_DIF),
+            dy = CDEUtils.getAcceptableDif(force*Math.sin(rDir), CDEUtils.ACCEPTABLE_DIF)
         
         return this.queueAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy-dy*prog])
@@ -140,7 +142,7 @@ class Shape extends Obj {
         let [cx, cy] = centerPos
         this._dots.forEach(dot=>{
             let x = dot.x-cx, y = dot.y-cy,
-                cosV = Math.cos(toRad(deg)), sinV = Math.sin(toRad(deg))
+                cosV = Math.cos(CDEUtils.toRad(deg)), sinV = Math.sin(CDEUtils.toRad(deg))
                 
             dot.x = (x*cosV-y*sinV)+cx
             dot.y = (x*sinV+y*cosV)+cy

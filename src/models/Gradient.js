@@ -1,3 +1,8 @@
+// JS
+// Canvas Dot Effect by Louis-Charles Biron
+// Please don't use or credit this code as your own.
+//
+
 // Allows the creation of custom gradients
 class Gradient {
     #lastDotsPos = null
@@ -32,14 +37,14 @@ class Gradient {
                 this.#lastDotsPos = currentDotPos
                 this.#lastRotation = this._isLinear
 
-                const rangeX = getMinMax(shape.dots, "x"), rangeY = getMinMax(shape.dots, "y"),
+                const rangeX = CDEUtils.getMinMax(shape.dots, "x"), rangeY = CDEUtils.getMinMax(shape.dots, "y"),
                     smallestX = rangeX[0], smallestY = rangeY[0],
                     biggestX = rangeX[1], biggestY = rangeY[1],
                     cx = smallestX+(biggestX-smallestX)/2, cy = smallestY+(biggestY-smallestY)/2
 
                 if (this.#getFormatedIsLinear() !== false) {
                     let x = smallestX-cx, y = smallestY-cy, x2 = biggestX-cx, y2 = biggestY-cy,
-                        cosV = Math.cos(toRad(this.#getFormatedIsLinear())), sinV = Math.sin(toRad(this.#getFormatedIsLinear()))
+                        cosV = Math.cos(CDEUtils.toRad(this.#getFormatedIsLinear())), sinV = Math.sin(CDEUtils.toRad(this.#getFormatedIsLinear()))
                     return [[(x*cosV-y*sinV)+cx, (x*sinV+y*cosV)+cy], [(x2*cosV-y2*sinV)+cx, (x2*sinV+y2*cosV)+cy]]
                 } else {
                     let coverRadius = Math.max(biggestX-smallestX, biggestY-smallestY)
