@@ -879,7 +879,12 @@ draw?
 
 
 
-# Best Practices
+# Intended Practices
+
+- shape declaration file(s)
+- null = default value
+- use mod fn
+- use prebuit event listeners
 
 # General
 

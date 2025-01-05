@@ -1,10 +1,4 @@
-// MAYBE
-- keyboard implementations
-
-- simple collision / reflections
-
-- custom errors
-
+// MAYBE LIKELY
 - non square grid sources
 
 - image stuff,   mask
@@ -13,16 +7,21 @@
 
 - mutiple anim at same time
 
+- dot generation (like tp web)
 
+- bezier curves implementations
+
+- explicit z-index?
+
+
+
+// LESS LIKELY
 - ratioPos depending on multiple pos
 
 - something like gd frame animation for ratioPos
 
-- some sort of shape editor ~
+// LESSER LIKELY
+- some sort of shape editor? ~
 
 - module version?
 
-
-
-
-- follow function for everyone

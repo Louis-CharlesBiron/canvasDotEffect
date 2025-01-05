@@ -3,12 +3,19 @@
 // Please don't use or credit this code as your own.
 //
 
+// Represents a color value
 class Color {
     constructor() {
+        // rgba
+        // hex
+        // plain text
 
+        // gradient
     }
 
+    getConvertions(color="? color idk yet") {
 
+    }
 
 }
 
