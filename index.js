@@ -5,6 +5,8 @@ const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//lo
     mouseAngle.textContent = CVS?.mouse?.dir?.toFixed(2)+" deg"
 })
 
+// can do color channels now with Color class
+
 // DECLARE OBJS
 let movementsTester = new Shape([500,500],[
      new Dot([450, 400]),
@@ -32,12 +34,12 @@ let movementsTester2 = new Shape([50,50],[new Dot([50, 50])])
 
 let dragAnim2 = CanvasUtils.getDraggableDotCB()
 let filledShapeTester = new FilledShape(
-    (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, new Color("purple")], [0.267, new Color([250,0,0,1])], new Color([1, "#ABC123"])]),
+    (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, new Color("purple")], [0.267, new Color([250,0,0,1])], [1, new Color("#ABC123")]]),
     true, [150, 450], [new Dot([100, 400]), new Dot([100, 450]), new Dot([150, 450]),new Dot([150, 400]),new Dot([125,325])], null, null, null, (ctx, dot, ratio, m, dist, shape)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
 })
-filledShapeTester.queueAnim(new Anim((prog)=>filledShapeTester.fillColorObject.rotation=360*prog, -750))
+filledShapeTester.queueAnim(new Anim((prog)=>filledShapeTester.fillColorObject.colorRaw.rotation=360*prog, -750))
 CVS.add(filledShapeTester)
 
 let animTesterDx = 200

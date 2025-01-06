@@ -126,7 +126,6 @@ class Obj {
     get currentAnim() {return this._anims[0]}
     get colorObject() {return this._color}
     get color() {return this._color.color}
-    get color_() {return this._color.color} // COLOR TODO (prop put in filledShape?)
     get anims() {return this._anims}
     get currentAnim() {return this._anims[0]}
     get setupCB() {return this._setupCB}
@@ -136,7 +135,7 @@ class Obj {
     set pos(pos) {this._pos = pos}
     set radius(radius) {this._radius = radius}
     set color(color) {
-        return new Color()// TODO COLOR
+        this._color = Color.adjust(color)
     }
     set setupCB(cb) {this._setupCB = cb}
 }

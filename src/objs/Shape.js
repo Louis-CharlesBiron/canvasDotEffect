@@ -42,7 +42,7 @@ class Shape extends Obj {
     // adds a or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
-            dot.color = this.color_ // todo color
+            dot.color = this.color
             dot.radius ??= this._radius
             dot.parent = this
             return dot
@@ -88,7 +88,7 @@ class Shape extends Obj {
 
     // updates the color of all the shape's dots
     setColor(color) {
-        // TODO color (copy obj setter)
+        color = Color.adjust(color)
         this._color = color
         this._dots.forEach(x=>x.color=color)
     }

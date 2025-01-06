@@ -8,7 +8,7 @@ class FilledShape extends Shape {
     #lastDotsPos = null
     constructor(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
         super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
-        this._initFillColor = new Color(fillColor)                // color value
+        this._initFillColor = fillColor                           // color value
         this._fillColor = this._initFillColor                     // the current color or gradient of the filled shape
         this._path = null                                         // path perimeter delimiting the surface to fill
         this._dynamicUpdates = dynamicUpdates                     // whether the shape's filling checks for updates every frame
@@ -19,7 +19,6 @@ class FilledShape extends Shape {
         super.initialize()
         if (typeof this._initFillColor=="function") this.fillColor = this._initFillColor(this.ctx, this)
         this.updatePath()
-        console.log(this.fillColor)
     }
 
     // runs every frame, draws the shape if it is at least containing 3 dots
@@ -28,7 +27,7 @@ class FilledShape extends Shape {
         
         if (this.dots.length > 2) {
             if (this._dynamicUpdates) this.updatePath()
-            ctx.fillStyle = this.fillColor // TODO COLOR
+            ctx.fillStyle = this.fillColor
             ctx.fill(this._path)
         }
     }
@@ -55,9 +54,7 @@ class FilledShape extends Shape {
 	get dynamicUpdates() {return this._dynamicUpdates}
 
 	set fillColor(fillColor) {
-        // COLOR TODO
-        console.log(fillColor)
-        this._fillColor = new Color(fillColor)
+        this._fillColor = fillColor instanceof Color ? fillColor : new Color(fillColor)
     }
 	set dynamicUpdates(_dynamicUpdates) {return this._dynamicUpdates = _dynamicUpdates}
 }
