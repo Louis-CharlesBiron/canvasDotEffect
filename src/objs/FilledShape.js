@@ -6,19 +6,20 @@
 // Regular shape with a filled area defined by its dots
 class FilledShape extends Shape {
     #lastDotsPos = null
-    constructor(rgbaFill, dynamicUpdates, pos, dots, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
-        super(pos, dots, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
-        this._initRgbaFill = rgbaFill         // [r,g,b,a] rgba array or a Gradient instance
-        this._rgbaFill = this._initRgbaFill   // the current color or gradient of the filled shape
-        this._path = null                     // path perimeter delimiting the surface to fill
-        this._dynamicUpdates = dynamicUpdates // whether the shape's filling checks for updates every frame
+    constructor(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
+        super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
+        this._initFillColor = new Color(fillColor)                // color value
+        this._fillColor = this._initFillColor                     // the current color or gradient of the filled shape
+        this._path = null                                         // path perimeter delimiting the surface to fill
+        this._dynamicUpdates = dynamicUpdates                     // whether the shape's filling checks for updates every frame
     }
 
     // initializes the filled shape and creates its path
     initialize() {
         super.initialize()
-        if (typeof this._initRgbaFill=="function") this._rgbaFill = this._initRgbaFill(this.ctx, this)
+        if (typeof this._initFillColor=="function") this.fillColor = this._initFillColor(this.ctx, this)
         this.updatePath()
+        console.log(this.fillColor)
     }
 
     // runs every frame, draws the shape if it is at least containing 3 dots
@@ -27,8 +28,7 @@ class FilledShape extends Shape {
         
         if (this.dots.length > 2) {
             if (this._dynamicUpdates) this.updatePath()
-
-            ctx.fillStyle = this._rgbaFill.gradient||formatColor(this._rgbaFill)
+            ctx.fillStyle = this.fillColor // TODO COLOR
             ctx.fill(this._path)
         }
     }
@@ -49,10 +49,15 @@ class FilledShape extends Shape {
         }
     }
 
-    get rgbaFill() {return this._rgbaFill}
+    get fillColorObject() {return this._fillColor}
+    get fillColor() {return this._fillColor.color}
 	get path() {return this._path}
 	get dynamicUpdates() {return this._dynamicUpdates}
 
-	set rgbaFill(_rgbaFill) {return this._rgbaFill = _rgbaFill}
+	set fillColor(fillColor) {
+        // COLOR TODO
+        console.log(fillColor)
+        this._fillColor = new Color(fillColor)
+    }
 	set dynamicUpdates(_dynamicUpdates) {return this._dynamicUpdates = _dynamicUpdates}
 }

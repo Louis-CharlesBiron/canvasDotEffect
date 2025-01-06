@@ -7,8 +7,8 @@
 class Shape extends Obj {
     static DEFAULT_LIMIT = 100
 
-    constructor(pos, dots, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
-        super(pos, radius, rgba, setupCB)
+    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
+        super(pos, radius, color, setupCB)
         this._cvs = null                        // CVS instance
         this._limit = limit||Shape.DEFAULT_LIMIT// the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                   // initial dots declaration
@@ -42,7 +42,7 @@ class Shape extends Obj {
     // adds a or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
-            dot.rgba = [...this._rgba]
+            dot.color = this.color_ // todo color
             dot.radius ??= this._radius
             dot.parent = this
             return dot
@@ -86,10 +86,11 @@ class Shape extends Obj {
         this._dots.forEach(x=>x.radius=radius)
     }
 
-    // updates the rgba of all the shape's dots
-    setRGBA(rgba) {
-        this._rgba = rgba
-        this._dots.forEach(x=>x.rgba=rgba)
+    // updates the color of all the shape's dots
+    setColor(color) {
+        // TODO color (copy obj setter)
+        this._color = color
+        this._dots.forEach(x=>x.color=color)
     }
 
     // updates the limit of all the shape's dots

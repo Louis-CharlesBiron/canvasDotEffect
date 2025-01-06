@@ -5,17 +5,15 @@
 
 // Abstract canvas obj class
 class Obj {
-    static DEFAULT_COLOR = "aliceblue"
-    static DEFAULT_RGBA=[255,255,255,1]
     static DEFAULT_POS = [0,0]
     static DEFAULT_RADIUS = 5
 
-    constructor(pos, radius, rgba, setupCB) {
+    constructor(pos, radius, color, setupCB) {
         this._id = Canvas.ELEMENT_ID_GIVER++      // canvas obj id
         this._initPos = pos||Obj.DEFAULT_POS      // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = this._initPos                 // current position from the center of the object : [x,y]
         this._radius = radius??Obj.DEFAULT_RADIUS // object's radius
-        this._rgba = rgba||Obj.DEFAULT_RGBA       // object's rgba
+        this._color = new Color(color)            // object's color value
         this._setupCB = setupCB                   // called on object's initialization (this, this.parent)=>
         this._anims = []                          // backlogs of animations to play
     }
@@ -126,11 +124,9 @@ class Obj {
     get width() {return this._radius*2}
     get height() {return this._radius*2}
     get currentAnim() {return this._anims[0]}
-    get rgba() {return this._rgba}
-    get r() {return this._rgba[0]}
-    get g() {return this._rgba[1]}
-    get b() {return this._rgba[2]}
-    get a() {return this._rgba[3]}
+    get colorObject() {return this._color}
+    get color() {return this._color.color}
+    get color_() {return this._color.color} // COLOR TODO (prop put in filledShape?)
     get anims() {return this._anims}
     get currentAnim() {return this._anims[0]}
     get setupCB() {return this._setupCB}
@@ -139,10 +135,8 @@ class Obj {
     set y(y) {this._pos[1] = y}
     set pos(pos) {this._pos = pos}
     set radius(radius) {this._radius = radius}
-    set r(r) {this._rgba[0] = r}
-    set g(g) {this._rgba[1] = g}
-    set b(b) {this._rgba[2] = b}
-    set a(a) {this._rgba[3] = a}
-    set rgba(rgba) {this._rgba = rgba}
+    set color(color) {
+        return new Color()// TODO COLOR
+    }
     set setupCB(cb) {this._setupCB = cb}
 }

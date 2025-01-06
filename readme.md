@@ -160,7 +160,7 @@ The Obj class is the template class of any canvas object. **It should not be dir
 - **initPos** -> Initial pos declaration. Can either be a pos array `[x, y]` or a callback `(Canvas)=>{... return [x, y]}`
 - ***pos*** -> Array containing the `[x, y]` position of the object.
 - **radius** -> The radius in px object the dot (Or the radius of its dots if is a Shape).
-- **rgba** -> The red, green, blue and alpha values `[r, g, b, a]` of the object. (Or the rgba of its dots if is a Shape).
+- **color** -> The red, green, blue and alpha values `[r, g, b, a]` of the object. (Or the rgba of its dots if is a Shape). // TODO
 - **setupCB** -> Custom callback called on the object's initialization `(this, this?.parent)=>{}`
 
 **This class also defines other useful base functions**, such as:
@@ -175,8 +175,8 @@ The Obj class is the template class of any canvas object. **It should not be dir
 The dot class is **meant** to be the core of all effects. It appears as a circular dot on the canvas by default.
 
 #### **The Dot constructor takes the following parameters:**
-###### - `new Dot(pos, radius, rgba, setupCB)`
-- *pos, radius, rgba, setupCB* -> See the Obj class.
+###### - `new Dot(pos, radius, color, setupCB)`
+- *pos, radius, color, setupCB* -> See the Obj class.
 
 Its other attributes are:
 - **parent**? -> The shape in which the dot is contained, if any. 
@@ -238,11 +238,11 @@ Its other attributes are:
 ```js
     // Creating a Shape containing some dots!
     const squareLikeFormation = new Shape([0,0], [
-            new Dot([100, 100]), // Dots contained in a shape will take on some properties (rgba, radius, limit, ...) of the shape.
+            new Dot([100, 100]), // Dots contained in a shape will take on some properties (color, radius, limit, ...) of the shape.
             new Dot([150, 100]),
             new Dot([150, 150]),
             new Dot([100, 150])
-    ], Obj.DEFAULT_RADIUS, Obj.DEFAULT_COLOR)
+    ], Obj.DEFAULT_RADIUS, Color.DEFAULT_COLOR)
     
     // Add the shape along with all of its dots as a single unit. (reference)
     CVS.add(squareLikeFormation)
@@ -259,8 +259,8 @@ One of the main features is the *drawEffectCB*, this callback allows to create a
 Effects are often ratio-based, meaning the *intensity* of the effect is based on the distance between the dot and the *ratioPos*. You can control the affected distance with the *limit* parameter, and the the object to which the distance\ratio is calculated with the *ratioPosCB* parameter.
 
 #### **The Shape constructor takes the following parameters:**
-###### - `new Shape(pos, dots, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile)`
-- *pos, radius, rgba, setupCB* -> See the Obj class.
+###### - `new Shape(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)`
+- *pos, radius, color, setupCB* -> See the Obj class.
 - **initDots** -> Initial dots declaration. Can either be: an array of dots `[new Dot(...), existingDot, ...]`, a **String** (this will automatically call the shape's createFromString() function), or a callback `(Shape, Canvas)=>{... return anArrayOfDots}` 
 - ***dots*** -> Array of all the current dots the contained by the shape. 
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
@@ -318,13 +318,13 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 ```
 
 ### **To modify dots' properties all at once** with the createFromString() function:
-###### - setRadius(radius),  setRGBA(rgba), setLimit(limit)
+###### - setRadius(radius),  setColor(color), setLimit(limit)
 ```js
     // Sets the radius of all dummyShape's dots to 10
     dummyShape.setRadius(10)
     
     // Sets the color of all dummyShape's dots to red (rgba(255, 0, 0, 1)) 
-    dummyShape.setRGBA([255, 0, 0, 1])
+    dummyShape.setRGBA([255, 0, 0, 1]) // TODO
     
     // Sets the limit of all dummyShape's dots to 100
     dummyShape.setLimit(100)
@@ -383,9 +383,9 @@ The FilledShape class is a derivate of the Shape class. It allows to fill the ar
 
 
 #### **The FilledShape constructor takes the following parameters:**
-###### - `new FilledShape(rgbaFill, dynamicUpdates, pos, dots, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile)`
-- *pos, dots, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile* -> See the Shape class.
-- **rgbaFill** -> Defines the color of the shape's filling. Either a color value, a Gradient instance or a callback returning any of the previous two `(ctx, shape)=>{... return [r, g, b, a]}`.
+###### - `new FilledShape(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)`
+- *pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile* -> See the Shape class.
+- **fillColor** -> Defines the color of the shape's filling. Either a color value, a Gradient instance or a callback returning any of the previous two `(ctx, shape)=>{... return [r, g, b, a]}`.
 - **dynamicUpdates** -> Whether the shape's fill area checks for updates every frame
 
 
@@ -431,8 +431,8 @@ The FilledShape class is a derivate of the Shape class. It allows to fill the ar
 The Grid class is a derivate of the Shape class. It allows the creation of dot-based symbols / text. To create your own set of symbols (source), see the *Grid Assets* section.
 
 #### **The Grid constructor takes the following parameters:**
-###### - `new Grid(keys, gaps, spacing, source, pos, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile)`
-- *pos, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile* -> See the Shape class.
+###### - `new Grid(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)`
+- *pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile* -> See the Shape class.
 - **keys** -> A string containing the characters to create.
 - **gaps** -> The `[x, y]` distances within the dots.
 - **source** -> The source containing the symbols definitions. See *Grid Assets* section.
@@ -467,7 +467,7 @@ The Grid class is a derivate of the Shape class. It allows the creation of dot-b
         GridAssets.fontSource5x5,                      // default source
         [10,10],                            // the shape position (The text will start from this point, as its top-left corner)
         2,                                  // 2px dot radius
-        null,                               // rgba is left undefined, the shape will assigned it the default value ([255,255,255,1])
+        null,                               // color is left undefined, the shape will assigned it the default value ([255,255,255,1]) // TODO
         null,                               // limit is left udefined, default value assigned (100)
         (ctx, dot, ratio)=>{                // This is the drawEffectCB, gets call for every dot of the shape, every frame
         
@@ -632,7 +632,7 @@ A symbol has this structure: `[...[index, directions]]`. It is composed of a mai
 
 # Gradient
 
-The Gradient class allows the creation of custom linear / radial gradients. A Gradient instance can be used in the *rgba* and *rgbaFill* fields of cavnas objects. 
+The Gradient class allows the creation of custom linear / radial gradients. A Gradient instance can be used in the *color* and *fillColor* fields of cavnas objects. 
 
 #### **The Gradient constructor takes the following parameters:**
 ###### - `new Gradient(ctx, positions, isLinear, ...colorStops)`
@@ -653,13 +653,13 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
         )
 
     // Assigning the gradient to a dummy filled shape
-    dummyFilledShape.rgbaFill = customGradient
+    dummyFilledShape.fillColor = customGradient
 
     // Ex: Updating color stops
     customGradient.colorStops = [[0, "green"], [1, "pink"]]
 
     // Access the gradient assigned to the shape's filling and update it
-    dummyFilledShape.rgbaFill.updateGradient()
+    dummyFilledShape.fillColor.updateGradient()
 ```
 
 **Note:** when using a Shape instance as the 'positions' parameter, the gradient will update automatically.
@@ -688,7 +688,7 @@ const gradientShape = new FilledShape(
         new Anim((progress)=>{
         
             // Getting the gradient
-            const gradient = gradientShape.rgbaFill
+            const gradient = gradientShape.fillColor
             
             // rotating it
             gradient.rotation = 360 * progress
@@ -810,15 +810,15 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
             
             // if mouse is over and clicked, set the dot's color to red
             if (isMouseOver && m.clicked) {
-                dot.rgba = [255, 0, 0, 1]
+                dot.color = [255, 0, 0, 1]
             }
             // if mouse is only over, set the dot's color to green
             else if (isMouseOver) {
-                dot.rgba = [0, 255, 0, 1]
+                dot.color = [0, 255, 0, 1]
             }
             // if mouse is neither over or clicked, set the dot's color to white
             else {
-                dot.rgba = [255, 255, 255, 1]
+                dot.color = [255, 255, 255, 1]
             }
         
             // Calling the dragCallback to make the dragging and throwing effet
@@ -857,7 +857,7 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 - if `initDots` is a callback -> `initDots(this, cvs)`
 - if `initPos` is a callback -> `initPos(cvs, dots)`
 - `setupCB(this)`
-- if the Shape is a FilledShape and if `rgbaFill` is a callback -> `initRgbaFill(ctx, this)`
+- if the Shape is a FilledShape and if `fillColor` is a callback -> `initFillColor(ctx, this)`
 
 ### Level 4: Children initialization
 - All the dots are now initialized.

@@ -32,12 +32,12 @@ let movementsTester2 = new Shape([50,50],[new Dot([50, 50])])
 
 let dragAnim2 = CanvasUtils.getDraggableDotCB()
 let filledShapeTester = new FilledShape(
-    (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, "purple"], [0.267, [250,0,0,1]], [1, "#ABC123"]]),
+    (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, new Color("purple")], [0.267, new Color([250,0,0,1])], new Color([1, "#ABC123"])]),
     true, [150, 450], [new Dot([100, 400]), new Dot([100, 450]), new Dot([150, 450]),new Dot([150, 400]),new Dot([125,325])], null, null, null, (ctx, dot, ratio, m, dist, shape)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
 })
-filledShapeTester.queueAnim(new Anim((prog)=>filledShapeTester.rgbaFill.rotation=360*prog, -750))
+filledShapeTester.queueAnim(new Anim((prog)=>filledShapeTester.fillColorObject.rotation=360*prog, -750))
 CVS.add(filledShapeTester)
 
 let animTesterDx = 200
@@ -82,9 +82,9 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null,
     dot.radius = CDEUtils.mod(dot.parent.radius*2, ratio, dot.parent.radius*2*0.5)
     
     let mouseOn = dot.isWithin(m.pos, true)
-    if (mouseOn && m.clicked) dot.rgba = [255, 0, 0, 1]
-    else if (mouseOn) dot.rgba = [0, 255, 0, 1]
-    else dot.rgba = [255, 255, 255, 1]
+    if (mouseOn && m.clicked) dot.color = [255, 0, 0, 1]
+    else if (mouseOn) dot.color = [0, 255, 0, 1]
+    else dot.color = [255, 255, 255, 1]
 
     CanvasUtils.drawOuterRing(dot, [255,255,255,CDEUtils.mod(0.3, ratio)], 3)
 

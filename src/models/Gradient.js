@@ -13,7 +13,7 @@ class Gradient {
         this._initPositions = positions                      // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | Shape
         this._positions = this.getAutomaticPositions()       // usable positions from initPositions
 
-        this._colorStops = colorStops.flat()                 // ex: [[0..1, color], [0.5, "red"], [1, "blue"]]
+        this._colorStops = colorStops.flat()                 // ex: [[0..1, color], [0.5, "red"], [1, "blue"]] // COLOR TODO
 
         this._gradient = null                                // useable as a fillStyle
         this.updateGradient()
@@ -59,7 +59,7 @@ class Gradient {
         this._positions = this.getAutomaticPositions()
         this._gradient = this._ctx[`create${typeof this.#getFormatedIsLinear()=="number"?"Linear":"Radial"}Gradient`](...this._positions[0], ...this._positions[1])
         let cs_ll = this._colorStops.length
-        for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], formatColor(this._colorStops[i][1]))
+        for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0].color, this._colorStops[i][1].color)
         return this._gradient
     }
 
