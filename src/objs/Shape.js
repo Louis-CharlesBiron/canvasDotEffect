@@ -42,7 +42,7 @@ class Shape extends Obj {
     // adds a or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
-            dot.color = this.color
+            dot.color = this.colorObject
             dot.radius ??= this._radius
             dot.parent = this
             return dot
@@ -81,22 +81,22 @@ class Shape extends Obj {
     }
  
     // updates the radius of all the shape's dots
-    setRadius(radius) {
+    setRadius(radius=this._radius) {
         this._radius = radius
-        this._dots.forEach(x=>x.radius=radius)
+        this._dots.forEach(dot=>dot.radius=radius)
     }
 
     // updates the color of all the shape's dots
-    setColor(color) {
-        color = Color.adjust(color)
-        this._color = color
-        this._dots.forEach(x=>x.color=color)
+    setColor(color=this._color) {
+        this.color = color
+
+        this._dots.forEach(dot=>dot.color=color)
     }
 
     // updates the limit of all the shape's dots
-    setLimit(limit) {
+    setLimit(limit=this._limit) {
         this._limit = limit
-        this._dots.forEach(x=>x.limit=limit)
+        this._dots.forEach(dot=>dot.limit=limit)
     }
 
     // moves the shape and all its dots in specified direction at specified distance(force)

@@ -14,18 +14,13 @@ class Color {
 
     constructor(color) {
         this._color = color||Color.DEFAULT_COLOR // the color value declaration, in any format
-        console.log(color)
+        this._format = this.getFormat()
         this.#updateRGBA()
-        // rgba
-        // hex
-        // text
-
-        // gradient
     }
 
     // instance version
     convertTo(format=Color.FORMATS.RGBA, color=this._color) {
-        Color.convertTo(format=Color.FORMATS.RGBA, color=this._color)
+        return Color.convertTo(format, color)
     }
 
     // converts a color to another color format
@@ -34,7 +29,7 @@ class Color {
 
         if (format==Color.FORMATS.RGBA) {
             if (inputFormat==Color.FORMATS.HEX) convertedColor = Color.#hexToRgba(color)
-            else if (inputFormat==Color.FORMATS.TEXT) convertedColor = Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color] 
+            else if (inputFormat==Color.FORMATS.TEXT) convertedColor = [...Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color]]
         } else if (format==Color.FORMATS.HEX) {
             if (inputFormat==Color.FORMATS.RGBA) convertedColor = Color.#rgbaToHex(color)
             else if (inputFormat==Color.FORMATS.TEXT) convertedColor = Color.#rgbaToHex(Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color])
@@ -53,12 +48,12 @@ class Color {
 
     // returns a new instance of the same color
     duplicate() {
-        return new Color(this._color)
+        return new Color([...this.#rgba])
     }
 
     // returns the format of the provided color
     static getFormat(color) {
-        return color instanceof Color ? Color.FORMATS.COLOR : Array.isArray(color) ? Color.FORMATS.RGBA : color instanceof Gradient ? Color.FORMATS.GRADIENT : color.includes("#") ? Color.FORMATS.HEX : Color.FORMATS.TEXT
+        return color instanceof Color ? Color.FORMATS.COLOR : Array.isArray(color) ? Color.FORMATS.RGBA : color instanceof Gradient ? Color.FORMATS.GRADIENT : color.startsWith("#") ? Color.FORMATS.HEX : Color.FORMATS.TEXT
     }
 
     // converts rbga to hex
@@ -68,69 +63,49 @@ class Color {
 
     // converts hex to rgba
     static #hexToRgba(hex) {
-        return hex.match(/[a-z0-9]{2}/gi).reduce((a,b,i)=>a.concat(parseInt(b, 16)/(i&&!(i%3)?255:1)),[])
+        return hex.padEnd(9, "F").match(/[a-z0-9]{2}/gi).reduce((a,b,i)=>a.concat(parseInt(b, 16)/(i&&!(i%3)?255:1)),[])
     }
 
-    // ajust color values to Color instances
-    static adjust(color) {
-        return color instanceof Color ? color : new Color(color)
+    // ajust color values to Color instances, link gives the same instance
+    static adjust(color, link=false) {
+        return color instanceof Color ? (link?color:color.duplicate()) : new Color(color)
     }
     
+    // formats a rgba array to a usable rgba value
     static formatRgba(arrayRgba) {
         return `rgba(${arrayRgba[0]}, ${arrayRgba[1]}, ${arrayRgba[2]}, ${arrayRgba[3]})`
     }
 
-    // HSL functions!
-
-    // find in canvas
-
+    // updates the cached rgba value
     #updateRGBA() {
-        return this.#rgba = (this.getFormat() !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : this._color)
+        this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : [...this._color])
     }
 
-    // returns the value of the color
+    // returns the usable value of the color
     get color() {
-        let format = this.getFormat(), color = this._color
-        if (format == Color.FORMATS.GRADIENT) color = this._color.gradient
-        else if (format == Color.FORMATS.RGBA) color = Color.formatRgba(this._color)
+        let color = Color.formatRgba(this.#rgba)
+        if (this._format == Color.FORMATS.GRADIENT) color = this._color.gradient
         return color 
     }
 
     // returns the declaration of the color
-    get colorRaw() {
-        return this._color
-    }
+    get colorRaw() {return this._color}
+
+    get r() {return this.#rgba[0]}
+    get g() {return this.#rgba[1]}
+    get b() {return this.#rgba[2]}
+    get a() {return this.#rgba[3]}
+
 
     set color(color) {
         this._color = color
+        this._format = this.getFormat()
         this.#updateRGBA()
     }
 
-    // TODO
-    get r() {
-        return this.#rgba[0]
-    }
-    get g() {
-        return this.#rgba[0]
-    }
-    get b() {
-        return this.#rgba[0]
-    }
-    get a() {
-        return this.#rgba[0]
-    }
-
-    set r(r) {
-        this.#updateRGBA()[0] = r
-    }
-    set g(g) {
-        this.#updateRGBA()[1] = g
-    }
-    set b(b) {
-        this.#updateRGBA()[2] = b
-    }
-    set a(a) {
-        this.#updateRGBA()[3] = a
-    }
+    set r(r) {this.#rgba[0] = r}
+    set g(g) {this.#rgba[1] = g}
+    set b(b) {this.#rgba[2] = b}
+    set a(a) {this.#rgba[3] = a}
 }
 

@@ -18,6 +18,7 @@ class FilledShape extends Shape {
     initialize() {
         super.initialize()
         if (typeof this._initFillColor=="function") this.fillColor = this._initFillColor(this.ctx, this)
+        else this.fillColor = this._initFillColor
         this.updatePath()
     }
 
@@ -53,8 +54,6 @@ class FilledShape extends Shape {
 	get path() {return this._path}
 	get dynamicUpdates() {return this._dynamicUpdates}
 
-	set fillColor(fillColor) {
-        this._fillColor = fillColor instanceof Color ? fillColor : new Color(fillColor)
-    }
+	set fillColor(fillColor) {this._fillColor = Color.adjust(fillColor)}
 	set dynamicUpdates(_dynamicUpdates) {return this._dynamicUpdates = _dynamicUpdates}
 }

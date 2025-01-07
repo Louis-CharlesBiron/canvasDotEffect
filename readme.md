@@ -160,7 +160,7 @@ The Obj class is the template class of any canvas object. **It should not be dir
 - **initPos** -> Initial pos declaration. Can either be a pos array `[x, y]` or a callback `(Canvas)=>{... return [x, y]}`
 - ***pos*** -> Array containing the `[x, y]` position of the object.
 - **radius** -> The radius in px object the dot (Or the radius of its dots if is a Shape).
-- **color** -> The red, green, blue and alpha values `[r, g, b, a]` of the object. (Or the rgba of its dots if is a Shape). // TODO
+- **color** -> Either a Color instance `new Color("red")`, a string `"red"`, a hex value `#FF0000` or an rgba array `[255, 0, 0, 1]`
 - **setupCB** -> Custom callback called on the object's initialization `(this, this?.parent)=>{}`
 
 **This class also defines other useful base functions**, such as:
@@ -323,8 +323,8 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
     // Sets the radius of all dummyShape's dots to 10
     dummyShape.setRadius(10)
     
-    // Sets the color of all dummyShape's dots to red (rgba(255, 0, 0, 1)) 
-    dummyShape.setRGBA([255, 0, 0, 1]) // TODO
+    // Sets the color of all dummyShape's dots to red
+    dummyShape.setColor("red")
     
     // Sets the limit of all dummyShape's dots to 100
     dummyShape.setLimit(100)
@@ -467,7 +467,7 @@ The Grid class is a derivate of the Shape class. It allows the creation of dot-b
         GridAssets.fontSource5x5,                      // default source
         [10,10],                            // the shape position (The text will start from this point, as its top-left corner)
         2,                                  // 2px dot radius
-        null,                               // color is left undefined, the shape will assigned it the default value ([255,255,255,1]) // TODO
+        null,                               // color is left undefined, the shape will assigned it the default value (white) // TODO
         null,                               // limit is left udefined, default value assigned (100)
         (ctx, dot, ratio)=>{                // This is the drawEffectCB, gets call for every dot of the shape, every frame
         

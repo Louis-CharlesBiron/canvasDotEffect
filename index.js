@@ -8,6 +8,7 @@ const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//lo
 // can do color channels now with Color class
 
 // DECLARE OBJS
+
 let movementsTester = new Shape([500,500],[
      new Dot([450, 400]),
      new Dot([450, 500]),

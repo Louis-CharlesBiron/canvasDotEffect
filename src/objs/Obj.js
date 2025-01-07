@@ -124,18 +124,25 @@ class Obj {
     get width() {return this._radius*2}
     get height() {return this._radius*2}
     get currentAnim() {return this._anims[0]}
-    get colorObject() {return this._color}
-    get color() {return this._color.color}
     get anims() {return this._anims}
     get currentAnim() {return this._anims[0]}
     get setupCB() {return this._setupCB}
+    get colorObject() {return this._color}
+    get color() {return this._color.color}
+    get r() {return this.colorObject.r}
+    get g() {return this.colorObject.g}
+    get b() {return this.colorObject.b}
+    get a() {return this.colorObject.a}
 
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}
     set pos(pos) {this._pos = pos}
     set radius(radius) {this._radius = radius}
-    set color(color) {
-        this._color = Color.adjust(color)
-    }
+    set color(color) {this._color = Color.adjust(color)}
     set setupCB(cb) {this._setupCB = cb}
+    set r(r) {this.colorObject.r = r}
+    set g(g) {this.colorObject.g = g}
+    set b(b) {this.colorObject.b = b}
+    set a(a) {this.colorObject.a = a}
+    
 }
