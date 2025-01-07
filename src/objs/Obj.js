@@ -13,7 +13,7 @@ class Obj {
         this._initPos = pos||Obj.DEFAULT_POS      // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = this._initPos                 // current position from the center of the object : [x,y]
         this._radius = radius??Obj.DEFAULT_RADIUS // object's radius
-        this._color = new Color(color)            // object's color value
+        this._color = Color.adjust(color)         // object's color value
         this._setupCB = setupCB                   // called on object's initialization (this, this.parent)=>
         this._anims = []                          // backlogs of animations to play
     }

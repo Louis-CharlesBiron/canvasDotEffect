@@ -20,12 +20,12 @@ class CanvasUtils {
     }
 
     // Generic function to draw connection between the specified dot and the dots in its connections property
-    static drawDotConnections(dot, color=new Color(), isSourceOver=false) {
+    static drawDotConnections(dot, color=new Color("yellow"), isSourceOver=false) {
         let ctx = dot.ctx, dc_ll = dot.connections.length
         if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
         if (dc_ll) for (let i=0;i<dc_ll;i++) {
             let c = dot.connections[i]
-            ctx.strokeStyle = Color.adjust(color).color
+            ctx.strokeStyle = "white"//Color.adjust(color).color
             ctx.beginPath()
             ctx.moveTo(dot.x, dot.y)
             ctx.lineTo(c.x, c.y)
@@ -35,18 +35,18 @@ class CanvasUtils {
     }
     
     // Generic function to draw an outer ring around a dot
-    static drawOuterRing(dot, color=new Color(), radiusMultiplier) {
+    static drawOuterRing(dot, color=new Color("yellow"), radiusMultiplier) {
         let ctx = dot.ctx
-        ctx.strokeStyle = Color.adjust(color).color
+        ctx.strokeStyle = "white"//Color.adjust(color).color
         ctx.beginPath()
         ctx.arc(dot.x, dot.y, dot.radius*radiusMultiplier, 0, CDEUtils.CIRC)
         ctx.stroke()
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
-    static drawConnections(dot, color=new Color(), sourcePos) {
+    static drawConnections(dot, color=new Color("yellow"), sourcePos) {
         let ctx = dot.ctx
-        ctx.strokeStyle = Color.adjust(color).color
+        ctx.strokeStyle = "white"//Color.adjust(color).color
         ctx.beginPath()
         ctx.moveTo(sourcePos[0], sourcePos[1])
         ctx.lineTo(dot.x, dot.y)

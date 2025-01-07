@@ -9,6 +9,10 @@ const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//lo
 
 // DECLARE OBJS
 
+const colorChannelTester = new Color("blue", true)
+const normalColorTester = new Color("lime")
+
+
 let movementsTester = new Shape([500,500],[
      new Dot([450, 400]),
      new Dot([450, 500]),
@@ -18,7 +22,7 @@ let movementsTester = new Shape([500,500],[
      new Dot([550, 500]),
      new Dot([550, 550]),
      new Dot([500, 550]),
- ], null, null, 100, (ctx, dot, ratio, m, dist)=>{
+ ], null, colorChannelTester, 100, (ctx, dot, ratio, m, dist)=>{
      dot.a = CDEUtils.mod(1, ratio, 0.8)
      //dot.r = CDEUtils.mod(255, ratio, -255)
      //dot.g = CDEUtils.mod(255, ratio, -255)
@@ -60,21 +64,21 @@ let test2 = new Shape((shape, dots)=>{
     dots[0].addConnection(dots.last())
     dots[1].addConnection(dots.last(1))
     return [100,100]
-},[new Dot((dot, shape)=>[shape.x,20]),new Dot([80,40]),new Dot([150,60]),new Dot([250,80])], 8, null, 100, (ctx, dot, ratio)=>{
+},[new Dot((dot, shape)=>[shape.x,20]),new Dot([80,40]),new Dot([150,60]),new Dot([250,80])], 8, colorChannelTester, 100, (ctx, dot, ratio)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
 
     CanvasUtils.drawDotConnections(dot, [255,0,0,CDEUtils.mod(1, ratio, 0.8)])
 }, undefined, (shape)=>{
     let dx=400, dy=200, dot = shape.dots.last()
-    dot.g = dot.b = 0
+    dot.g = 0
     dot.follow(3000, null, (prog, dot)=>{
-        let d = new Dot(dot.pos_, 4)
-            d.queueAnim(new Anim((progress, a)=>{
-                d.a=1-progress
-                if (progress==1) d.remove()
-            }, 1000))
-
-            shape.add(d, true)
+        //let d = new Dot(dot.pos_, 4)
+        //    d.queueAnim(new Anim((progress, a)=>{
+        //        d.a=1-progress
+        //        if (progress==1) d.remove()
+        //    }, 1000))
+//
+        //    shape.add(d, true)
     }, [0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]])
 })
 
