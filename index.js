@@ -9,7 +9,7 @@ const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//lo
 
 // DECLARE OBJS
 
-const normalColorTester = new Color("lightblue")
+const normalColorTester = new Color("white")
 
 
 let movementsTester = new Shape([500,500],[
@@ -83,13 +83,13 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
     let dx=400, dy=200, dot = shape.dots.last()
     dot.g = 0
     dot.follow(3000, null, (prog, dot)=>{
-        //let d = new Dot(dot.pos_, 4)
-        //    d.queueAnim(new Anim((progress, a)=>{
-        //        d.a=1-progress
-        //        if (progress==1) d.remove()
-        //    }, 1000))
-//
-        //    shape.add(d, true)
+        let d = new Dot(dot.pos_, 4)
+            d.queueAnim(new Anim((progress, a)=>{
+                d.a=1-progress
+                if (progress==1) d.remove()
+            }, 1000))
+
+            //shape.add(d, true)
     }, [0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]])
 
 

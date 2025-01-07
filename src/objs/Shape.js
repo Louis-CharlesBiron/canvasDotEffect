@@ -24,16 +24,16 @@ class Shape extends Obj {
 
     // initializes the shape, adds its dots and initializes them
     initialize() {
+        super.moveAtInitPos()
+
         if (typeof this._initDots == "string") this.createFromString(this._initDots)
-        else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))// maybe redo (todo)
+        else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs)) // initDOt maybe redo callback (todo)
         else if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
 
         if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
 
         if (typeof this._initColor=="function") this.setColor(this._initColor(this.ctx, this))
-        else this.color = this._initColor
-
-        super.moveAtInitPos()
+        else this._initColor
     }
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
@@ -222,8 +222,8 @@ class Shape extends Obj {
         for (let i=0;i<d_ll;i++) currentDotPos += this.dots[i].stringPos
         return currentDotPos
     }
+    get firstDot() {return this._dots[0]}
     get asSource() {return this._dots}
-    static get childrenPath() {return "dots"}
 
     set cvs(cvs) {this._cvs = cvs}
     set ratioPos(ratioPos) {this._ratioPos = ratioPos}

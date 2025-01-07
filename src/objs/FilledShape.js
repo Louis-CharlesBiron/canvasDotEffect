@@ -52,6 +52,7 @@ class FilledShape extends Shape {
     get fillColorObject() {return this._fillColor}
     get fillColorRaw() {return this._fillColor.colorRaw}
     get fillColor() {return this._fillColor.color}
+    get initFillColor() {return this._initFillColor}
 	get path() {return this._path}
 	get dynamicUpdates() {return this._dynamicUpdates}
 
