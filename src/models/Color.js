@@ -12,7 +12,7 @@ class Color {
 
     #rgba = null
 
-    constructor(color, isChannel=false) {
+    constructor(color, isChannel=false,) {
         this._color = color instanceof Color ? color.colorRaw : color||Color.DEFAULT_COLOR // the color value declaration, in any format
         this._format = this.getFormat()
         this.#updateRGBA()
@@ -55,7 +55,7 @@ class Color {
 
     // returns the format of the provided color
     static getFormat(color) {
-        return color instanceof Color ? Color.FORMATS.COLOR : Array.isArray(color) ? Color.FORMATS.RGBA : color instanceof Gradient ? Color.FORMATS.GRADIENT : color.startsWith("#") ? Color.FORMATS.HEX : Color.FORMATS.TEXT
+        return Array.isArray(color) ? Color.FORMATS.RGBA : color instanceof Color ? Color.FORMATS.COLOR : color instanceof Gradient ? Color.FORMATS.GRADIENT : color.includes("#") ? Color.FORMATS.HEX : Color.FORMATS.TEXT
     }
 
     // converts rbga to hex
@@ -75,7 +75,7 @@ class Color {
     
     // formats a rgba array to a usable rgba value
     static formatRgba(arrayRgba) {
-        return `rgba(${arrayRgba[0]}, ${arrayRgba[1]}, ${arrayRgba[2]}, ${arrayRgba[3]})`
+        return Array.isArray(arrayRgba) ? `rgba(${arrayRgba[0]}, ${arrayRgba[1]}, ${arrayRgba[2]}, ${arrayRgba[3]})` : null
     }
 
     // updates the cached rgba value
@@ -89,8 +89,8 @@ class Color {
         if (this._format == Color.FORMATS.GRADIENT) color = this._color.gradient
         return color 
     }
+    get colorRaw() {return this._color} // returns the declaration of the color
     get isChannel() {return this._isChannel}
-    get colorRaw() {return this._color}// returns the declaration of the color
 
     get r() {return this.#rgba[0]}
     get g() {return this.#rgba[1]}

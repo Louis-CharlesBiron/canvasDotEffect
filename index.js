@@ -9,8 +9,7 @@ const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//lo
 
 // DECLARE OBJS
 
-const colorChannelTester = new Color("blue", true)
-const normalColorTester = new Color("lime")
+const normalColorTester = new Color("lightblue")
 
 
 let movementsTester = new Shape([500,500],[
@@ -22,7 +21,7 @@ let movementsTester = new Shape([500,500],[
      new Dot([550, 500]),
      new Dot([550, 550]),
      new Dot([500, 550]),
- ], null, colorChannelTester, 100, (ctx, dot, ratio, m, dist)=>{
+ ], null, normalColorTester, 100, (ctx, dot, ratio, m, dist)=>{
      dot.a = CDEUtils.mod(1, ratio, 0.8)
      //dot.r = CDEUtils.mod(255, ratio, -255)
      //dot.g = CDEUtils.mod(255, ratio, -255)
@@ -39,13 +38,29 @@ let movementsTester2 = new Shape([50,50],[new Dot([50, 50])])
 
 let dragAnim2 = CanvasUtils.getDraggableDotCB()
 let filledShapeTester = new FilledShape(
-    (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, new Color("purple")], [0.267, new Color([250,0,0,1])], [1, new Color("#ABC123")]]),
+    (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]]),
     true, [150, 450], [new Dot([100, 400]), new Dot([100, 450]), new Dot([150, 450]),new Dot([150, 400]),new Dot([125,325])], null, null, null, (ctx, dot, ratio, m, dist, shape)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
 })
-filledShapeTester.queueAnim(new Anim((prog)=>filledShapeTester.fillColorObject.colorRaw.rotation=360*prog, -750))
+filledShapeTester.queueAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
 CVS.add(filledShapeTester)
+
+let testMoreDragAnim = CanvasUtils.getDraggableDotCB()
+let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300])], 15, (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, "red"], [1, "yellow"]]), null, (ctx, dot, ratio, m, dist, shape)=>{
+    if (shape.dots[0].id == dot.id) {
+        testMoreDragAnim(shape.dots[0], m, dist, ratio)
+
+        let mouseOn = dot.isWithin(m.pos, true)
+        if (mouseOn && m.clicked) dot.radius = 50
+        else if (mouseOn) dot.radius = 25
+        else dot.radius = 15
+    }
+})
+testMore.queueAnim(new Anim((prog)=>testMore.colorRaw.rotation=-360*prog, -750))
+CVS.add(testMore)
+
+
 
 let animTesterDx = 200
 let animTester = new Shape([400,200],[
@@ -60,11 +75,7 @@ let animTester = new Shape([400,200],[
     CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)
 })
 
-let test2 = new Shape((shape, dots)=>{
-    dots[0].addConnection(dots.last())
-    dots[1].addConnection(dots.last(1))
-    return [100,100]
-},[new Dot((dot, shape)=>[shape.x,20]),new Dot([80,40]),new Dot([150,60]),new Dot([250,80])], 8, colorChannelTester, 100, (ctx, dot, ratio)=>{
+let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=>[shape.x,20]),new Dot([80,40]),new Dot([150,60]),new Dot([250,80])], 8, normalColorTester, 100, (ctx, dot, ratio)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
 
     CanvasUtils.drawDotConnections(dot, [255,0,0,CDEUtils.mod(1, ratio, 0.8)])
@@ -80,6 +91,10 @@ let test2 = new Shape((shape, dots)=>{
 //
         //    shape.add(d, true)
     }, [0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]])
+
+
+    shape.dots[0].addConnection(shape.dots.last())
+    shape.dots[1].addConnection(shape.dots.last(1))
 })
 
 

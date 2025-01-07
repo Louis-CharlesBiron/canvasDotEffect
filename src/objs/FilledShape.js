@@ -8,7 +8,7 @@ class FilledShape extends Shape {
     #lastDotsPos = null
     constructor(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
         super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
-        this._initFillColor = fillColor                           // color value
+        this._initFillColor = fillColor                           // declaration color fill value
         this._fillColor = this._initFillColor                     // the current color or gradient of the filled shape
         this._path = null                                         // path perimeter delimiting the surface to fill
         this._dynamicUpdates = dynamicUpdates                     // whether the shape's filling checks for updates every frame
@@ -50,10 +50,13 @@ class FilledShape extends Shape {
     }
 
     get fillColorObject() {return this._fillColor}
+    get fillColorRaw() {return this._fillColor.colorRaw}
     get fillColor() {return this._fillColor.color}
 	get path() {return this._path}
 	get dynamicUpdates() {return this._dynamicUpdates}
 
-	set fillColor(fillColor) {this._fillColor = Color.adjust(fillColor)}
+    set fillColor(fillColor) {
+        if (this.fillColorObject?.colorRaw?.toString() != fillColor.toString() || !this._fillColor) this._fillColor = Color.adjust(fillColor)
+        }
 	set dynamicUpdates(_dynamicUpdates) {return this._dynamicUpdates = _dynamicUpdates}
 }

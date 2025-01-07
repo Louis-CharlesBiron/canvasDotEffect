@@ -13,20 +13,23 @@ class Obj {
         this._initPos = pos||Obj.DEFAULT_POS      // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = this._initPos                 // current position from the center of the object : [x,y]
         this._radius = radius??Obj.DEFAULT_RADIUS // object's radius
-        this._color = Color.adjust(color)         // object's color value
+        this._initColor = color                   // declaration color value
+        this._color = this._initColor             // the current color or gradient of the filled shape
         this._setupCB = setupCB                   // called on object's initialization (this, this.parent)=>
         this._anims = []                          // backlogs of animations to play
     }
 
     // Runs when the object gets added to a canvas instance
     initialize() {
+        if (typeof this._initColor=="function") this.color = this._initColor(this.ctx??this.parent.ctx, this.parent||this)
+        else this.color = this._initColor
         this.moveAtInitPos()
         if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
     }
 
     // sets the current pos to the value of the inital pos
     moveAtInitPos() {
-        if (typeof this._initPos=="function") this._pos = [...this._initPos(this._cvs, this?.parent??this?.dots)]
+        if (typeof this._initPos=="function") this._pos = [...this._initPos(this._cvs, this?.parent??this)]
         else this._pos = [...this._initPos]
     }
 
@@ -128,6 +131,7 @@ class Obj {
     get currentAnim() {return this._anims[0]}
     get setupCB() {return this._setupCB}
     get colorObject() {return this._color}
+    get colorRaw() {return this._color.colorRaw}
     get color() {return this._color.color}
     get r() {return this.colorObject.r}
     get g() {return this.colorObject.g}
@@ -138,7 +142,7 @@ class Obj {
     set y(y) {this._pos[1] = y}
     set pos(pos) {this._pos = pos}
     set radius(radius) {this._radius = radius}
-    set color(color) {this._color = Color.adjust(color)}
+    set color(color) {if (this._color?.colorRaw?.toString() != color?.toString() || !this._color) this._color = Color.adjust(color)}
     set setupCB(cb) {this._setupCB = cb}
     set r(r) {this.colorObject.r = r}
     set g(g) {this.colorObject.g = g}

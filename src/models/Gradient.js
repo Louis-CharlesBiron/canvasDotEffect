@@ -13,7 +13,7 @@ class Gradient {
         this._initPositions = positions                      // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | Shape
         this._positions = this.getAutomaticPositions()       // usable positions from initPositions
 
-        this._colorStops = colorStops.flat().map(([stop, color])=>[stop, Color.adjust(color, true)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
+        this._colorStops = colorStops.flat().map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
 
         this._gradient = null                                 // useable as a fillStyle
         this.updateGradient()

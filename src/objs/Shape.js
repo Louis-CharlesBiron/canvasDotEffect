@@ -25,12 +25,15 @@ class Shape extends Obj {
     // initializes the shape, adds its dots and initializes them
     initialize() {
         if (typeof this._initDots == "string") this.createFromString(this._initDots)
-        else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))
-        else if (this._initDots?.length || this._initDots instanceof Dot) this.add(this._initDots)
-        
-        super.initialize()
+        else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))// maybe redo (todo)
+        else if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
 
-        this._dots.forEach(d=>d.initialize())
+        if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
+
+        if (typeof this._initColor=="function") this.setColor(this._initColor(this.ctx, this))
+        else this.color = this._initColor
+
+        super.moveAtInitPos()
     }
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
@@ -42,9 +45,10 @@ class Shape extends Obj {
     // adds a or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
-            dot.color = this.colorObject
-            dot.radius ??= this._radius
+            if (typeof this._initColor!=="function") dot.color = this.colorObject
+            dot.radius = !dot.radius||dot.radius==Obj.DEFAULT_RADIUS ? this._radius : dot.radius // TODO probably do an init radius too
             dot.parent = this
+            dot.initialize()
             return dot
         }))
     }
@@ -89,7 +93,6 @@ class Shape extends Obj {
     // updates the color of all the shape's dots
     setColor(color=this._color) {
         this.color = color
-
         this._dots.forEach(dot=>dot.color=color)
     }
 
