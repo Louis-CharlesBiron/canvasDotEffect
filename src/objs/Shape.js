@@ -7,8 +7,8 @@
 class Shape extends Obj {
     static DEFAULT_LIMIT = 100
 
-    constructor(pos, dots, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
-        super(pos, radius, rgba, setupCB)
+    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
+        super(pos, radius, color, setupCB)
         this._cvs = null                        // CVS instance
         this._limit = limit||Shape.DEFAULT_LIMIT// the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                   // initial dots declaration
@@ -25,12 +25,15 @@ class Shape extends Obj {
     // initializes the shape, adds its dots and initializes them
     initialize() {
         if (typeof this._initDots == "string") this.createFromString(this._initDots)
-        else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))
-        else if (this._initDots?.length || this._initDots instanceof Dot) this.add(this._initDots)
-        
-        super.initialize()
+        else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))// maybe redo (todo)
+        else if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
 
-        this._dots.forEach(d=>d.initialize())
+        if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
+
+        if (typeof this._initColor=="function") this.setColor(this._initColor(this.ctx, this))
+        else this.color = this._initColor
+
+        super.moveAtInitPos()
     }
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
@@ -42,9 +45,10 @@ class Shape extends Obj {
     // adds a or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
-            dot.rgba = [...this._rgba]
-            dot.radius ??= this._radius
+            if (typeof this._initColor!=="function") dot.color = this.colorObject
+            dot.radius = !dot.radius||dot.radius==Obj.DEFAULT_RADIUS ? this._radius : dot.radius // TODO probably do an init radius too
             dot.parent = this
+            dot.initialize()
             return dot
         }))
     }
@@ -81,21 +85,21 @@ class Shape extends Obj {
     }
  
     // updates the radius of all the shape's dots
-    setRadius(radius) {
+    setRadius(radius=this._radius) {
         this._radius = radius
-        this._dots.forEach(x=>x.radius=radius)
+        this._dots.forEach(dot=>dot.radius=radius)
     }
 
-    // updates the rgba of all the shape's dots
-    setRGBA(rgba) {
-        this._rgba = rgba
-        this._dots.forEach(x=>x.rgba=rgba)
+    // updates the color of all the shape's dots
+    setColor(color=this._color) {
+        this.color = color
+        this._dots.forEach(dot=>dot.color=color)
     }
 
     // updates the limit of all the shape's dots
-    setLimit(limit) {
+    setLimit(limit=this._limit) {
         this._limit = limit
-        this._dots.forEach(x=>x.limit=limit)
+        this._dots.forEach(dot=>dot.limit=limit)
     }
 
     // moves the shape and all its dots in specified direction at specified distance(force)

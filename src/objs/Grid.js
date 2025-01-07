@@ -7,8 +7,8 @@
 class Grid extends Shape {
     static DEFAULT_GAPS = [25, 25]
 
-    constructor(keys, gaps, spacing, source, pos, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
-        super(pos, null, radius, rgba, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
+    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
+        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
 
         this._keys = keys                                 // keys to convert to source's values 
         this._gaps = gaps ?? Grid.DEFAULT_GAPS            // [x, y] gap length within the dots
@@ -34,7 +34,7 @@ class Grid extends Shape {
         let dotGroup = [], [gx, gy] = this._gaps, xi=[0,0], yi=0, s = source[key.toUpperCase()],
         sourceRadius = Math.sqrt(source.width*source.height)
         
-        if (s) s.map((d,i)=>[new Dot([pos[0]+(xi[0]=d[0]??xi[0]+1,isNaN(Math.abs(d[0]))?xi[0]:Math.abs(d[0]))*gx, pos[1]+(yi+=(xi[0]<=xi[1]||!i)||Math.sign(1/xi[0])==-1)*gy], this.radius, this.rgba), d[1], yi*sourceRadius+(xi[1]=Math.abs(xi[0]))]).forEach(([dot, c, p],_,a)=>{
+        if (s) s.map((d,i)=>[new Dot([pos[0]+(xi[0]=d[0]??xi[0]+1,isNaN(Math.abs(d[0]))?xi[0]:Math.abs(d[0]))*gx, pos[1]+(yi+=(xi[0]<=xi[1]||!i)||Math.sign(1/xi[0])==-1)*gy], this.radius, this.colorObject), d[1], yi*sourceRadius+(xi[1]=Math.abs(xi[0]))]).forEach(([dot, c, p],_,a)=>{
             GridAssets.D.places.forEach(dir=>{c&dir[0]&&dot.addConnection(a.find(n=>n[2]==p+dir[1](sourceRadius))?.[0])}) 
             dotGroup.push(dot)
         })

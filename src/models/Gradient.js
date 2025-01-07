@@ -13,9 +13,9 @@ class Gradient {
         this._initPositions = positions                      // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | Shape
         this._positions = this.getAutomaticPositions()       // usable positions from initPositions
 
-        this._colorStops = colorStops.flat()                 // ex: [[0..1, color], [0.5, "red"], [1, "blue"]]
+        this._colorStops = colorStops.flat().map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
 
-        this._gradient = null                                // useable as a fillStyle
+        this._gradient = null                                 // useable as a fillStyle
         this.updateGradient()
     }
 
@@ -59,7 +59,7 @@ class Gradient {
         this._positions = this.getAutomaticPositions()
         this._gradient = this._ctx[`create${typeof this.#getFormatedIsLinear()=="number"?"Linear":"Radial"}Gradient`](...this._positions[0], ...this._positions[1])
         let cs_ll = this._colorStops.length
-        for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], formatColor(this._colorStops[i][1]))
+        for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], this._colorStops[i][1].color)
         return this._gradient
     }
 
@@ -75,9 +75,9 @@ class Gradient {
         if (this._initPositions instanceof Shape) this.updateGradient()
         return this._gradient
     }
-	set ctx(_ctx) {return this._ctx = _ctx}
-	set positions(_positions) {return this._positions = _positions}
-	set colorStops(_colorStops) {return this._colorStops = _colorStops}
-    set isLinear(isLinear) {return this._isLinear = isLinear}
-	set rotation(deg) {return this._isLinear = typeof deg=="number" ? deg%360 : this._isLinear}
+	set ctx(_ctx) {this._ctx = _ctx}
+	set positions(_positions) {this._positions = _positions}
+	set colorStops(_colorStops) {this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])}
+    set isLinear(isLinear) {this._isLinear = isLinear}
+	set rotation(deg) {this._isLinear = typeof deg=="number" ? deg%360 : this._isLinear}
 }
