@@ -38,7 +38,7 @@ class Obj {
         if (this._anims[0]) this._anims[0].getFrame(time)
     }
 
-    // (bool) returns whether the provided pos is inside the obj
+    // returns whether the provided pos is inside the obj
     isWithin(pos, circularDetection) {
         let [x,y]=pos
         return circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom

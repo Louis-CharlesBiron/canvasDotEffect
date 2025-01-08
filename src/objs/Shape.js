@@ -194,6 +194,20 @@ class Shape extends Obj {
         }, time, easing), force)
     }
 
+    // returns whether the provided pos is inside the area delimited by the dots permimeter
+    isWithin(pos) {
+        let d_ll = this.dots.length
+        if (d_ll > 2) {
+            let permimeter = new Path2D()
+            permimeter.moveTo(...this.dots[0].pos)
+            for (let i=1;i<d_ll;i++) permimeter.lineTo(...this.dots[i].pos)
+            permimeter.closePath()
+
+            return this.ctx.isPointInPath(permimeter, ...pos)
+        }
+        return false
+    }
+
     // Empties the shapes of all its dots
     clear() {
         this._dots = []

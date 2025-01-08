@@ -1,56 +1,27 @@
-# name: runWrapper
+name: runWrapper
 
-# on:
-#   push:
-#     branches:
-#       - main
+on:
+  workflow_dispatch:
 
-# jobs:
-#   run-script:
-#     runs-on: windows-latest
+jobs:
+  run-script:
+    runs-on: windows-latest
 
-#     steps:
-#       - name: checkoutCode
-#         uses: actions/checkout@v3
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
 
-#       - name: setupNode
-#         uses: actions/setup-node@v3
-#         with:
-#           node-version: "20"
+      - name: nodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
 
-#       - name: installTerser
-#         run: npm i
-#         working-directory: ./deploy
+      - name: installTerser
+        run: npm i
+        working-directory: ./deploy
 
-#       - name: runWrapper
-#         run: |
-#           powershell -ExecutionPolicy Bypass -File ./deploy/wrapper.ps1
-
-#       - name: mergeCommits
-#         run: |
-#           git add dist/*
-#           git config user.name "GitHub Actions"
-#           git config user.email "actions@github.com"
-
-#           # Find the bot's commit hash by looking for 'GitHub Actions' as the author
-#           $BOT_COMMIT = git log --author="GitHub Actions" --pretty=format:"%h" -n 1
-
-#           # If there is a bot commit, squash it with the new commit
-#           if ($BOT_COMMIT) {
-#             # Perform a soft reset to the previous commit
-#             git reset --soft HEAD^1
-
-#             echo found
-#             echo $BOT_COMMIT
-
-#             git add dist/*
-#             git commit --amend --no-edit --date "$(date)"
-#           } else {
-#             echo not found
-#             git commit -m "Update dist files"
-#           }
-
-#           git push
-
-#         env:
-#           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: runWrapper
+        run: |
+          powershell -ExecutionPolicy Bypass -File ./deploy/wrapper.ps1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
