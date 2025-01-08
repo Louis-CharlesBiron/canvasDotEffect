@@ -1,4 +1,4 @@
-name: runWrapper
+name: UpdateMinifiedLibrary
 
 on:
   workflow_dispatch:
