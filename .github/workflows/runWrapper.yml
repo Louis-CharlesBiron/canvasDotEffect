@@ -17,11 +17,21 @@ jobs:
           node-version: "20"
 
       - name: installTerser
-        run: npm i
+        run: npm install
         working-directory: ./deploy
 
       - name: runWrapper
         run: |
           powershell -ExecutionPolicy Bypass -File ./deploy/wrapper.ps1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - name: updateDist
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Updated minified library (dist)"
+          git push
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
