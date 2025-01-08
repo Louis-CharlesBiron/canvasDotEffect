@@ -16,7 +16,7 @@ class Obj {
         this._initColor = color                   // declaration color value
         this._color = this._initColor             // the current color or gradient of the filled shape
         this._setupCB = setupCB                   // called on object's initialization (this, this.parent)=>
-        this._anims = []                          // backlogs of animations to play
+        this._anims = {backlog:[], currents:[]}    // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
     }
 
     // Runs when the object gets added to a canvas instance
@@ -35,7 +35,10 @@ class Obj {
 
     // Runs every frame
     draw(ctx, time) {
-        if (this._anims[0]) this._anims[0].getFrame(time)
+        let anims = this._anims.currents
+        if (this._anims.backlog[0]) anims.push(this._anims.backlog[0])
+        let a_ll = anims.length
+        for (let i=0;i<a_ll;i++) anims[i].getFrame(time)
     }
 
     // returns whether the provided pos is inside the obj
@@ -65,42 +68,44 @@ class Obj {
     }
 
     // Smoothly moves to coords in set time
-    moveTo(pos, time=1000, easing=Anim.easeInOutQuad, force=true, initPos=[this.x, this.y]) {
+    moveTo(pos, time=1000, easing=Anim.easeInOutQuad, initPos=[this.x, this.y], isUnique=true, force=true) {
         let [ix, iy] = initPos, 
             [fx, fy] = this.adjustInputPos(pos),
             dx = fx-ix,
             dy = fy-iy
 
-        return this.queueAnim(new Anim((prog)=>{
+        return this.playAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
             this.y = iy+dy*prog
-        }, time, easing), force)
+        }, time, easing), isUnique, force)
     }
 
     // moves the obj in specified direction at specified distance(force)
-    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad) {
+    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
         let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
             dx = CDEUtils.getAcceptableDif(force*Math.cos(rDir), CDEUtils.ACCEPTABLE_DIF),
             dy = CDEUtils.getAcceptableDif(force*Math.sin(rDir), CDEUtils.ACCEPTABLE_DIF)
         
-        return this.queueAnim(new Anim((prog)=>{
+        return this.playAnim(new Anim(prog=>{
             this.x = ix+dx*prog
             this.y = iy-dy*prog
-        }, time, easing), true)
+        }, time, easing), isUnique, animForce)
     }
 
-    // adds an animation to the end of the backlog
-    queueAnim(anim, force) {
-    if (this.currentAnim && force) {
-            this.currentAnim.end()
-            this._anims.addAt(anim, 1)
+    // adds an animation to play. "isUnique" makes it so the animation gets queue in the backlog. "force" terminates the current backlog animation and replaces it with the specified "anim"
+    playAnim(anim, isUnique, force) {
+        if (isUnique && this.currentBacklogAnim && force) { // TOFIX
+            this.currentBacklogAnim.end()
+            this._anims.backlog.addAt(anim, 1)
         }
         let initEndCB = anim.endCallback
         anim.endCallback=()=>{
-            this._anims.shift()
+            if (isUnique) this._anims.backlog.shift()
+            else this._anims.currents = this._anims.currents.filter(a=>a.id!==anim.id)
+            
             if (typeof initEndCB=="function") initEndCB()
         }
-        this._anims.push(anim)
+        this._anims[isUnique?"backlog":"currents"].push(anim)
         return anim
     }
 
@@ -126,9 +131,8 @@ class Obj {
 	get initPos() {return this._initPos}
     get width() {return this._radius*2}
     get height() {return this._radius*2}
-    get currentAnim() {return this._anims[0]}
+    get currentBacklogAnim() {return this._anims.backlog[0]}
     get anims() {return this._anims}
-    get currentAnim() {return this._anims[0]}
     get setupCB() {return this._setupCB}
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}

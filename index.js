@@ -43,7 +43,7 @@ let filledShapeTester = new FilledShape(
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
 })
-filledShapeTester.queueAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
+filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
 CVS.add(filledShapeTester)
 
 let testMoreDragAnim = CanvasUtils.getDraggableDotCB()
@@ -57,7 +57,7 @@ let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300])], 15, 
         else dot.radius = 15
     }
 })
-testMore.queueAnim(new Anim((prog)=>testMore.colorRaw.rotation=-360*prog, -750))
+testMore.playAnim(new Anim((prog)=>testMore.colorRaw.rotation=-360*prog, -750))
 CVS.add(testMore)
 
 
@@ -65,7 +65,7 @@ CVS.add(testMore)
 let animTesterDx = 200
 let animTester = new Shape([400,200],[
     new Dot([400,200], null, null, (dot, shape)=>{
-        dot.queueAnim(new Anim((progress, playCount)=>{
+        dot.playAnim(new Anim((progress, playCount)=>{
             dot.a=1-progress
             if (playCount % 2) dot.x+=animTesterDx*progress*CVS.deltaTime
             else dot.x-=animTesterDx*progress*CVS.deltaTime
@@ -84,7 +84,7 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
     dot.g = 0
     dot.follow(3000, null, (prog, dot)=>{
         let d = new Dot(dot.pos_, 4)
-            d.queueAnim(new Anim((progress, a)=>{
+            d.playAnim(new Anim((progress, a)=>{
                 d.a=1-progress
                 if (progress==1) d.remove()
             }, 1000))
