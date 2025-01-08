@@ -22,7 +22,7 @@ class Obj {
     // Runs when the object gets added to a canvas instance
     initialize() {
         if (typeof this._initColor=="function") this.color = this._initColor(this.ctx??this.parent.ctx, this.parent||this)
-        else this.color = this._initColor
+        else if (this._initColor) this.color = this._initColor
         this.moveAtInitPos()
         if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
     }
@@ -38,7 +38,7 @@ class Obj {
         if (this._anims[0]) this._anims[0].getFrame(time)
     }
 
-    // (bool) returns whether the provided pos is inside the obj
+    // returns whether the provided pos is inside the obj
     isWithin(pos, circularDetection) {
         let [x,y]=pos
         return circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom
@@ -133,6 +133,7 @@ class Obj {
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}
     get color() {return this._color.color}
+    get initColor() {return this._initColor}
     get r() {return this.colorObject.r}
     get g() {return this.colorObject.g}
     get b() {return this.colorObject.b}
