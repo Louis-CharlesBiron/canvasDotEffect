@@ -18,6 +18,10 @@ class CDEUtils {
         return +(Math.random()*(max-min)+min).toFixed(decimals)
     }
 
+    static clamp(value, min=Infinity, max=Infinity) {
+        return value < min ? min : value > max ? max : value
+    }
+
      // Create an instance of the FPSCounter and run every frame: either getFpsRaw for raw fps AND/OR getFps for averaged fps
     static FPSCounter = class {
         constructor(avgSampleSize) {
@@ -138,12 +142,12 @@ class CanvasUtils {
             CVS.add(dot, true)
         } else {
             CVS.remove(CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id])
-            CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id] = undefined
+            delete CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]
         }
     }
 
     // Generic function to draw connection between the specified dot and the dots in its connections property
-    static drawDotConnections(dot, color, isSourceOver=false) {
+    static drawDotConnections(dot, color, isSourceOver=false) { // CAN BE OPTIMISED VIA ALPHA
         let ctx = dot.ctx, dc_ll = dot.connections.length
         if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
         if (dc_ll) for (let i=0;i<dc_ll;i++) {
@@ -178,16 +182,16 @@ class CanvasUtils {
 
     // Generic function to get a callback that can make a dot draggable and throwable
     static getDraggableDotCB(pickableRadius=50) {
-        let mouseup = false, adotShapeAnim = null
+        let mouseup = false, dragAnim = null
         return (dot, mouse, dist, ratio)=>{
             if (mouse.clicked && dist < pickableRadius) {
                 mouseup = true
-                if (dot?.currentAnim?.id == adotShapeAnim?.id && adotShapeAnim) adotShapeAnim.end()
+                if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
                 dot.x = mouse.x
                 dot.y = mouse.y
             } else if (mouseup) {
                 mouseup = false
-                adotShapeAnim = dot.addForce(Math.min(CDEUtils.mod(Math.min(mouse.speed,3000), ratio)/4, 300), mouse.dir, 750+ratio*1200, Anim.easeOutQuad)
+                dragAnim = dot.addForce(Math.min(CDEUtils.mod(Math.min(mouse.speed,3000), ratio)/4, 300), mouse.dir, 750+ratio*1200, Anim.easeOutQuad)
             }
         }
     }
@@ -817,7 +821,7 @@ class Canvas {
         let r_ll = this.refs.length
         for (let i=0;i<r_ll;i++) {
             let ref = this.refs[i]
-            if (ref.ratioPosCB===undefined) ref.ratioPos=this._mouse.pos
+            if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos=this._mouse.pos
         }
         // custom move callback
         if (typeof cb == "function") cb(this._mouse, e)
@@ -918,7 +922,7 @@ class Anim {
 
     constructor(animation, duration, easing, endCallback) {
         this._id = Anim.ANIM_ID_GIVER++                         // animation id
-        this._animation = animation                      // the main animation (progress, playCount)=>
+        this._animation = animation                      // the main animation (progress, playCount, clampedProgress)=>
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
         this._easing = easing||(x=>x)                    // easing function (x)=>
         this._endCallback = endCallback                  // function called when animation is over
@@ -935,7 +939,10 @@ class Anim {
             // SET START TIME
             if (!this._startTime) this._startTime = time
             // PLAY ANIMATION
-            else if (time<this._startTime+Math.abs(this._duration)) this._animation(this._progress = this._easing((time-this._startTime)/Math.abs(this._duration)), this._playCount)
+            else if (time<this._startTime+Math.abs(this._duration)) {
+                this._progress = this._easing((time-this._startTime)/Math.abs(this._duration))
+                this._animation(this._progress, this._playCount, this.progress)
+            }
             // REPEAT IF NEGATIVE DURATION
             else if (isInfinite) this.reset(true)
             // END
@@ -945,13 +952,13 @@ class Anim {
 
     // ends the animation
     end() {
-        this._animation(1, ++this._playCount)
+        this._animation(1, this._playCount++, 1)
         if (typeof this._endCallback == "function") this._endCallback()
     }
 
     // resets the animation
     reset(isInfiniteReset) {
-        if (isInfiniteReset) this._animation(1, ++this._playCount)
+        if (isInfiniteReset) this._animation(1, this._playCount++, 1)
         else this._playCount = 0
         this._progress = 0
         this._startTime = null
@@ -963,7 +970,8 @@ class Anim {
 	get easing() {return this._easing}
 	get endCallback() {return this._endCallback}
 	get startTime() {return this._startTime}
-	get progress() {return this._progress}
+	get progress() {return CDEUtils.clamp(this._progress, 0, 1)}
+	get progressRaw() {return this._progress}
 	get playCount() {return this._playCount}
 
 	set animation(_animation) {return this._animation = _animation}
@@ -1010,7 +1018,7 @@ class Obj {
         this._initColor = color                   // declaration color value
         this._color = this._initColor             // the current color or gradient of the filled shape
         this._setupCB = setupCB                   // called on object's initialization (this, this.parent)=>
-        this._anims = []                          // backlogs of animations to play
+        this._anims = {backlog:[], currents:[]}    // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
     }
 
     // Runs when the object gets added to a canvas instance
@@ -1029,7 +1037,10 @@ class Obj {
 
     // Runs every frame
     draw(ctx, time) {
-        if (this._anims[0]) this._anims[0].getFrame(time)
+        let anims = this._anims.currents
+        if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
+        let a_ll = anims.length
+        for (let i=0;i<a_ll;i++) anims[i].getFrame(time)
     }
 
     // returns whether the provided pos is inside the obj
@@ -1059,7 +1070,7 @@ class Obj {
     }
 
     // Smoothly moves to coords in set time
-    moveTo(pos, time=1000, easing=Anim.easeInOutQuad, force=true, initPos=[this.x, this.y]) {
+    moveTo(pos, time=1000, easing=Anim.easeInOutQuad, initPos=[this.x, this.y], isUnique=true, force=true) {
         let [ix, iy] = initPos, 
             [fx, fy] = this.adjustInputPos(pos),
             dx = fx-ix,
@@ -1068,33 +1079,35 @@ class Obj {
         return this.playAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
             this.y = iy+dy*prog
-        }, time, easing), force)
+        }, time, easing), isUnique, force)
     }
 
     // moves the obj in specified direction at specified distance(force)
-    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad) {
+    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
         let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
             dx = CDEUtils.getAcceptableDif(force*Math.cos(rDir), CDEUtils.ACCEPTABLE_DIF),
             dy = CDEUtils.getAcceptableDif(force*Math.sin(rDir), CDEUtils.ACCEPTABLE_DIF)
         
-        return this.playAnim(new Anim((prog)=>{
+        return this.playAnim(new Anim(prog=>{
             this.x = ix+dx*prog
             this.y = iy-dy*prog
-        }, time, easing), true)
+        }, time, easing), isUnique, animForce)
     }
 
-    // adds an animation to the end of the backlog
-    playAnim(anim, force) {
-    if (this.currentAnim && force) {
-            this.currentAnim.end()
-            this._anims.addAt(anim, 1)
+    // adds an animation to play. "isUnique" makes it so the animation gets queue in the backlog. "force" terminates the current backlog animation and replaces it with the specified "anim"
+    playAnim(anim, isUnique, force) {
+        if (isUnique && this.currentBacklogAnim && force) { // TOFIX
+            this.currentBacklogAnim.end()
+            this._anims.backlog.addAt(anim, 0)
         }
         let initEndCB = anim.endCallback
         anim.endCallback=()=>{
-            this._anims.shift()
+            if (isUnique) this._anims.backlog.shift()
+            else this._anims.currents = this._anims.currents.filter(a=>a.id!==anim.id)
+            
             if (typeof initEndCB=="function") initEndCB()
         }
-        this._anims.push(anim)
+        this._anims[isUnique?"backlog":"currents"].push(anim)
         return anim
     }
 
@@ -1120,9 +1133,8 @@ class Obj {
 	get initPos() {return this._initPos}
     get width() {return this._radius*2}
     get height() {return this._radius*2}
-    get currentAnim() {return this._anims[0]}
+    get currentBacklogAnim() {return this._anims.backlog[0]}
     get anims() {return this._anims}
-    get currentAnim() {return this._anims[0]}
     get setupCB() {return this._setupCB}
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}
@@ -1243,21 +1255,15 @@ class Shape extends Obj {
         this._dots.forEach(dot=>dot.color=color)
     }
 
-    // updates the limit of all the shape's dots
-    setLimit(limit=this._limit) {
-        this._limit = limit
-        this._dots.forEach(dot=>dot.limit=limit)
-    }
-
     // moves the shape and all its dots in specified direction at specified distance(force)
-    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad) {
+    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
         let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
             dx = CDEUtils.getAcceptableDif(force*Math.cos(rDir), CDEUtils.ACCEPTABLE_DIF),
             dy = CDEUtils.getAcceptableDif(force*Math.sin(rDir), CDEUtils.ACCEPTABLE_DIF)
         
         return this.playAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy-dy*prog])
-        }, time, easing), true)
+        }, time, easing), isUnique, animForce)
     }
 
     // Teleports the shape and all its dots to incremented coords
@@ -1278,14 +1284,14 @@ class Shape extends Obj {
     }
 
     // Smoothly moves the shape and all its dots to given coords in set time
-    moveTo(pos, time=1000, easing=Anim.easeInOutQuad, force=true, initPos=this.pos) {
+    moveTo(pos, time=1000, easing=Anim.easeInOutQuad, initPos=this.pos, isUnique=true, force=true) {
         let [ix, iy] = initPos,
         dx = pos[0]-ix,
         dy = pos[1]-iy
 
         return this.playAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy+dy*prog])
-        }, time, easing), force)
+        }, time, easing), isUnique, force)
     }
 
     // Rotates the dots by a specified degree increment around a specified center point
@@ -1308,12 +1314,12 @@ class Shape extends Obj {
     }
 
     // Smoothly rotates the dots to a specified degree around a specified center point
-    rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, force=true, centerPos=this.pos) {
+    rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=true, force=true) {
         let ir = this._rotation, dr = deg-this._rotation
 
         return this.playAnim(new Anim((prog)=>{
             this.rotateAt(ir+dr*prog, centerPos)
-        }, time, easing), force)
+        }, time, easing), isUnique, force)
     }
 
     // Scales the dots by a specified amount [scaleX, scaleY] from a specified center point
@@ -1333,12 +1339,12 @@ class Shape extends Obj {
     }
 
     // Smoothly scales the dots by a specified amount [scaleX, scaleY] from a specified center point
-    scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, force=true, centerPos=this.pos) {
+    scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=true, force=true) {
         let is = this._scale, dsX = scale[0]-this._scale[0], dsY = scale[1]-this._scale[1]
 
         return this.playAnim(new Anim(prog=>{
             this.scaleAt([is[0]+dsX*prog, is[1]+dsY*prog], centerPos)
-        }, time, easing), force)
+        }, time, easing), isUnique, force)
     }
 
     // returns whether the provided pos is inside the area delimited by the dots permimeter
@@ -1391,6 +1397,7 @@ class Shape extends Obj {
     set drawEffectCB(cb) {this._drawEffectCB = cb}
     set ratioPosCB(cb) {this._ratioPosCB = cb}
     set lastDotsPos(ldp) {this._lastDotsPos = ldp}
+    set limit(limit) {this._limit = limit}
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -1710,7 +1717,7 @@ class Dot extends Obj {
     get ratioPos() {return this._parent?.ratioPos}
     get connections() {return this._connections}
 
-    set limit(limit) {this._limit = limit}
+    set limit(limit) {this._parent.limit = limit}
     set parent(p) {this._parent = p}
     set connections(c) {return this._connections = c}
 }
