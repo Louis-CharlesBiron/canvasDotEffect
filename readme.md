@@ -166,7 +166,7 @@ The Obj class is the template class of any canvas object. **It should not be dir
 **This class also defines other useful base functions**, such as:
 - Movements functions (`moveBy`, `addForce`, ...)
 - Informative functions (`isWithin`, `posDistances`, ...)
-- Access to the object's animation queue (`queueAnim`)
+- Access to the object's animation play (`playAnim`)
 
  
 
@@ -683,8 +683,8 @@ const gradientShape = new FilledShape(
         ]
     )
     
-    // Creating and queueing the rotating gradient animation
-    gradientShape.queueAnim(
+    // Creating and playing the rotating gradient animation
+    gradientShape.playAnim(
         new Anim((progress)=>{
         
             // Getting the gradient
@@ -713,21 +713,21 @@ The Anim class allows the creation of smooth animations and the use of easings.
 - **endCallback**? -> Custom callback ran upon the animation ending.
 
 ### **To play an animation:** 
-Use the queueAnim() function on any canvas object. Animations get added to the end of the animation queue of an object and are played once they're at the first index of this queue. You can terminate the current animation and instantly replace it with another one by putting `true` as the second parameter.
+Use the playAnim() function on any canvas object. Animations get added to the end of the animation play of an object and are played once they're at the first index of this play. You can terminate the current animation and instantly replace it with another one by putting `true` as the second parameter.
 
-###### - queueAnim(Anim, force?)
+###### - playAnim(Anim, force?)
 ```js
     // Dummy animations
     const someAnim = new Anim(/* some parameters ... */)
     const animationThatNeedsToRunNOW = new Anim(/* some other parameters ... */)
     
     
-    // This will queue the animation to be run once all previously queued animations are completed.
-    dot.queueAnim(someAnim)
+    // This will play the animation to be run once all previously playd animations are completed.
+    dot.playAnim(someAnim)
     
     // Will terminate and replace any animation running! (After 3 seconds)
     setTimeout(()=>{
-        dot.queueAnim(animationThatNeedsToRunNOW, true)
+        dot.playAnim(animationThatNeedsToRunNOW, true)
     }, 3000)
 ```
 
@@ -752,8 +752,8 @@ Use the queueAnim() function on any canvas object. Animations get added to the e
         5000 // 5 second duration
     )
 
-    // Queueing the animation
-    dot.queueAnim(fadingAnimation)
+    // playing the animation
+    dot.playAnim(fadingAnimation)
 ```
 
 #### Example use 2:
@@ -761,7 +761,7 @@ Use the queueAnim() function on any canvas object. Animations get added to the e
 ```js
     let distance = 200
     
-    dot.queueAnim(new Anim((progress, playCount)=>{
+    dot.playAnim(new Anim((progress, playCount)=>{
         // fading the dot over 1 second
         dot.a = 1 - progress
         

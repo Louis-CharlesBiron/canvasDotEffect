@@ -1065,7 +1065,7 @@ class Obj {
             dx = fx-ix,
             dy = fy-iy
 
-        return this.queueAnim(new Anim((prog)=>{
+        return this.playAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
             this.y = iy+dy*prog
         }, time, easing), force)
@@ -1077,14 +1077,14 @@ class Obj {
             dx = CDEUtils.getAcceptableDif(force*Math.cos(rDir), CDEUtils.ACCEPTABLE_DIF),
             dy = CDEUtils.getAcceptableDif(force*Math.sin(rDir), CDEUtils.ACCEPTABLE_DIF)
         
-        return this.queueAnim(new Anim((prog)=>{
+        return this.playAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
             this.y = iy-dy*prog
         }, time, easing), true)
     }
 
     // adds an animation to the end of the backlog
-    queueAnim(anim, force) {
+    playAnim(anim, force) {
     if (this.currentAnim && force) {
             this.currentAnim.end()
             this._anims.addAt(anim, 1)
@@ -1255,7 +1255,7 @@ class Shape extends Obj {
             dx = CDEUtils.getAcceptableDif(force*Math.cos(rDir), CDEUtils.ACCEPTABLE_DIF),
             dy = CDEUtils.getAcceptableDif(force*Math.sin(rDir), CDEUtils.ACCEPTABLE_DIF)
         
-        return this.queueAnim(new Anim((prog)=>{
+        return this.playAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy-dy*prog])
         }, time, easing), true)
     }
@@ -1283,7 +1283,7 @@ class Shape extends Obj {
         dx = pos[0]-ix,
         dy = pos[1]-iy
 
-        return this.queueAnim(new Anim((prog)=>{
+        return this.playAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy+dy*prog])
         }, time, easing), force)
     }
@@ -1311,7 +1311,7 @@ class Shape extends Obj {
     rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, force=true, centerPos=this.pos) {
         let ir = this._rotation, dr = deg-this._rotation
 
-        return this.queueAnim(new Anim((prog)=>{
+        return this.playAnim(new Anim((prog)=>{
             this.rotateAt(ir+dr*prog, centerPos)
         }, time, easing), force)
     }
@@ -1336,7 +1336,7 @@ class Shape extends Obj {
     scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, force=true, centerPos=this.pos) {
         let is = this._scale, dsX = scale[0]-this._scale[0], dsY = scale[1]-this._scale[1]
 
-        return this.queueAnim(new Anim(prog=>{
+        return this.playAnim(new Anim(prog=>{
             this.scaleAt([is[0]+dsX*prog, is[1]+dsY*prog], centerPos)
         }, time, easing), force)
     }
@@ -1678,7 +1678,7 @@ class Dot extends Obj {
      */
     follow(duration, easing, action, ...progressSeparations) {
         let [ix, iy] = this._pos, ps_ll = progressSeparations.length-1
-        this.queueAnim(new Anim((prog)=>{
+        this.playAnim(new Anim((prog)=>{
             let progSep = null
             if (prog<0) prog=0
             for (let i=ps_ll;i>=0;i--) {

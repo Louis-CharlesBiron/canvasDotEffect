@@ -43,7 +43,7 @@ let filledShapeTester = new FilledShape(
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
 })
-filledShapeTester.queueAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
+filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
 CVS.add(filledShapeTester)
 
 let testMoreDragAnim = CanvasUtils.getDraggableDotCB()
@@ -57,7 +57,7 @@ let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300])], 15, 
         else dot.radius = 15
     }
 })
-testMore.queueAnim(new Anim((prog)=>testMore.colorRaw.rotation=-360*prog, -750))
+testMore.playAnim(new Anim((prog)=>testMore.colorRaw.rotation=-360*prog, -750))
 CVS.add(testMore)
 
 
@@ -65,7 +65,7 @@ CVS.add(testMore)
 let animTesterDx = 200
 let animTester = new Shape([400,200],[
     new Dot([400,200], null, null, (dot, shape)=>{
-        dot.queueAnim(new Anim((progress, playCount)=>{
+        dot.playAnim(new Anim((progress, playCount)=>{
             dot.a=1-progress
             if (playCount % 2) dot.x+=animTesterDx*progress*CVS.deltaTime
             else dot.x-=animTesterDx*progress*CVS.deltaTime
@@ -82,27 +82,36 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
 }, undefined, (shape)=>{
     let dx=400, dy=200, dot = shape.dots.last()
     dot.g = 0
-    dot.follow(3000, null, (prog, dot)=>{
-        let d = new Dot(dot.pos_, 4)
-            d.queueAnim(new Anim((progress, a)=>{
-                d.a=1-progress
-                if (progress==1) d.remove()
-            }, 1000))
-
-            //shape.add(d, true)
-    }, [0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]])
+    //dot.follow(3000, null, (prog, dot)=>{
+    //    let d = new Dot(dot.pos_, 4)
+    //        d.playAnim(new Anim((progress, a)=>{
+    //            d.a=1-progress
+    //            if (progress==1) d.remove()
+    //        }, 1000))
+//
+    //        //shape.add(d, true)
+    //}, [0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]])
 
 
     shape.dots[0].addConnection(shape.dots.last())
     shape.dots[1].addConnection(shape.dots.last(1))
 })
 
+// ALPHABET
+let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (ctx, dot, ratio, m, dist, shape)=>{
+    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS, ratio, Obj.DEFAULT_RADIUS)
 
+    if (dist < shape.limit) CanvasUtils.drawConnections(dot, [dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)], dot.ratioPos)
+
+    CanvasUtils.drawDotConnections(dot, [255,0,0,1])
+}, ()=>draggableDotTester.dots[0].pos)
+
+
+
+// SINGLE DRAGGABLE DOT
 let dragAnim1 = CanvasUtils.getDraggableDotCB()
 let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null, (ctx, dot, ratio, m, dist, shape)=>{
 
-    dot.radius = CDEUtils.mod(dot.parent.radius*2, ratio, dot.parent.radius*2*0.5)
-    
     let mouseOn = dot.isWithin(m.pos, true)
     if (mouseOn && m.clicked) dot.color = [255, 0, 0, 1]
     else if (mouseOn) dot.color = [0, 255, 0, 1]
@@ -111,16 +120,17 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null,
     CanvasUtils.drawOuterRing(dot, [255,255,255,CDEUtils.mod(0.3, ratio)], 3)
 
     dragAnim1(shape.dots[0], m, dist, ratio)
+}, null, (shape)=>{
+    let dot = shape.firstDot
+    dot.playAnim(new Anim((prog, i, cprog)=>{
+        dot.radius = i%2?25*(1-cprog):25*cprog
+        le.limit = dot.radius*5
+    }, -750, Anim.easeOutQuad))
+
+    dot.playAnim(new Anim((prog, i, cprog)=>{dot.b = i%2?255*(1-cprog):255*cprog}, -750))
 })
 
-let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (ctx, dot, ratio, m, dist)=>{
-    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS, ratio, Obj.DEFAULT_RADIUS)
-    if (dist < 200) {
-        CanvasUtils.drawConnections(dot, [dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)], dot.ratioPos)
-    }
 
-   CanvasUtils.drawDotConnections(dot, [255,0,0,1])
-}, ()=>draggableDotTester.dots[0].pos)
 
 
 CVS.add(draggableDotTester)

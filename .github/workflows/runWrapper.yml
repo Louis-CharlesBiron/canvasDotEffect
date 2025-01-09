@@ -31,7 +31,7 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "Updated minified library (dist)"
+          git commit -m "Updated minified library"
           git push
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

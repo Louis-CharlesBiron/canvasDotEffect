@@ -57,7 +57,7 @@ class Dot extends Obj {
      */
     follow(duration, easing, action, ...progressSeparations) {
         let [ix, iy] = this._pos, ps_ll = progressSeparations.length-1
-        this.queueAnim(new Anim((prog)=>{
+        this.playAnim(new Anim((prog)=>{
             let progSep = null
             if (prog<0) prog=0
             for (let i=ps_ll;i>=0;i--) {
@@ -89,7 +89,7 @@ class Dot extends Obj {
     get ratioPos() {return this._parent?.ratioPos}
     get connections() {return this._connections}
 
-    set limit(limit) {this._limit = limit}
+    set limit(limit) {this._parent.limit = limit}
     set parent(p) {this._parent = p}
     set connections(c) {return this._connections = c}
 }

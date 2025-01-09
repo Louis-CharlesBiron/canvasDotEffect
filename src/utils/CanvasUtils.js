@@ -15,12 +15,12 @@ class CanvasUtils {
             CVS.add(dot, true)
         } else {
             CVS.remove(CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id])
-            CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id] = undefined
+            delete CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]
         }
     }
 
     // Generic function to draw connection between the specified dot and the dots in its connections property
-    static drawDotConnections(dot, color, isSourceOver=false) {
+    static drawDotConnections(dot, color, isSourceOver=false) { // CAN BE OPTIMISED VIA ALPHA
         let ctx = dot.ctx, dc_ll = dot.connections.length
         if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
         if (dc_ll) for (let i=0;i<dc_ll;i++) {
@@ -55,16 +55,16 @@ class CanvasUtils {
 
     // Generic function to get a callback that can make a dot draggable and throwable
     static getDraggableDotCB(pickableRadius=50) {
-        let mouseup = false, adotShapeAnim = null
+        let mouseup = false, dragAnim = null
         return (dot, mouse, dist, ratio)=>{
             if (mouse.clicked && dist < pickableRadius) {
                 mouseup = true
-                if (dot?.currentAnim?.id == adotShapeAnim?.id && adotShapeAnim) adotShapeAnim.end()
+                if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
                 dot.x = mouse.x
                 dot.y = mouse.y
             } else if (mouseup) {
                 mouseup = false
-                adotShapeAnim = dot.addForce(Math.min(CDEUtils.mod(Math.min(mouse.speed,3000), ratio)/4, 300), mouse.dir, 750+ratio*1200, Anim.easeOutQuad)
+                dragAnim = dot.addForce(Math.min(CDEUtils.mod(Math.min(mouse.speed,3000), ratio)/4, 300), mouse.dir, 750+ratio*1200, Anim.easeOutQuad)
             }
         }
     }

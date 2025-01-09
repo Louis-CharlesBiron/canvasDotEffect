@@ -96,21 +96,15 @@ class Shape extends Obj {
         this._dots.forEach(dot=>dot.color=color)
     }
 
-    // updates the limit of all the shape's dots
-    setLimit(limit=this._limit) {
-        this._limit = limit
-        this._dots.forEach(dot=>dot.limit=limit)
-    }
-
     // moves the shape and all its dots in specified direction at specified distance(force)
-    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad) {
+    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
         let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
             dx = CDEUtils.getAcceptableDif(force*Math.cos(rDir), CDEUtils.ACCEPTABLE_DIF),
             dy = CDEUtils.getAcceptableDif(force*Math.sin(rDir), CDEUtils.ACCEPTABLE_DIF)
         
-        return this.queueAnim(new Anim((prog)=>{
+        return this.playAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy-dy*prog])
-        }, time, easing), true)
+        }, time, easing), isUnique, animForce)
     }
 
     // Teleports the shape and all its dots to incremented coords
@@ -131,14 +125,14 @@ class Shape extends Obj {
     }
 
     // Smoothly moves the shape and all its dots to given coords in set time
-    moveTo(pos, time=1000, easing=Anim.easeInOutQuad, force=true, initPos=this.pos) {
+    moveTo(pos, time=1000, easing=Anim.easeInOutQuad, initPos=this.pos, isUnique=true, force=true) {
         let [ix, iy] = initPos,
         dx = pos[0]-ix,
         dy = pos[1]-iy
 
-        return this.queueAnim(new Anim((prog)=>{
+        return this.playAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy+dy*prog])
-        }, time, easing), force)
+        }, time, easing), isUnique, force)
     }
 
     // Rotates the dots by a specified degree increment around a specified center point
@@ -161,12 +155,12 @@ class Shape extends Obj {
     }
 
     // Smoothly rotates the dots to a specified degree around a specified center point
-    rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, force=true, centerPos=this.pos) {
+    rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=true, force=true) {
         let ir = this._rotation, dr = deg-this._rotation
 
-        return this.queueAnim(new Anim((prog)=>{
+        return this.playAnim(new Anim((prog)=>{
             this.rotateAt(ir+dr*prog, centerPos)
-        }, time, easing), force)
+        }, time, easing), isUnique, force)
     }
 
     // Scales the dots by a specified amount [scaleX, scaleY] from a specified center point
@@ -186,12 +180,12 @@ class Shape extends Obj {
     }
 
     // Smoothly scales the dots by a specified amount [scaleX, scaleY] from a specified center point
-    scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, force=true, centerPos=this.pos) {
+    scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=true, force=true) {
         let is = this._scale, dsX = scale[0]-this._scale[0], dsY = scale[1]-this._scale[1]
 
-        return this.queueAnim(new Anim(prog=>{
+        return this.playAnim(new Anim(prog=>{
             this.scaleAt([is[0]+dsX*prog, is[1]+dsY*prog], centerPos)
-        }, time, easing), force)
+        }, time, easing), isUnique, force)
     }
 
     // returns whether the provided pos is inside the area delimited by the dots permimeter
@@ -244,4 +238,5 @@ class Shape extends Obj {
     set drawEffectCB(cb) {this._drawEffectCB = cb}
     set ratioPosCB(cb) {this._ratioPosCB = cb}
     set lastDotsPos(ldp) {this._lastDotsPos = ldp}
+    set limit(limit) {this._limit = limit}
 }
