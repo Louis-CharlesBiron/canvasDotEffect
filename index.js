@@ -82,15 +82,15 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
 }, undefined, (shape)=>{
     let dx=400, dy=200, dot = shape.dots.last()
     dot.g = 0
-    //dot.follow(3000, null, (prog, dot)=>{
-    //    let d = new Dot(dot.pos_, 4)
-    //        d.playAnim(new Anim((progress, a)=>{
-    //            d.a=1-progress
-    //            if (progress==1) d.remove()
-    //        }, 1000))
-//
-    //        //shape.add(d, true)
-    //}, [0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]])
+    dot.follow(3000, null, (prog, dot, cprog)=>{
+        let d = new Dot(dot.pos_, 4)
+            d.playAnim(new Anim((progress, a)=>{
+                d.a=1-progress
+                if (progress==1) d.remove()
+            }, 1000))
+
+        shape.add(d, true)
+    }, [0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]])
 
 
     shape.dots[0].addConnection(shape.dots.last())
@@ -101,7 +101,7 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
 let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (ctx, dot, ratio, m, dist, shape)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS, ratio, Obj.DEFAULT_RADIUS)
 
-    if (dist < shape.limit) CanvasUtils.drawConnections(dot, [dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)], dot.ratioPos)
+    if (dist < shape.limit) CanvasUtils.drawConnection(dot, [dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)], dot.ratioPos)
 
     CanvasUtils.drawDotConnections(dot, [255,0,0,1])
 }, ()=>draggableDotTester.dots[0].pos)

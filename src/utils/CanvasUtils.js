@@ -20,12 +20,12 @@ class CanvasUtils {
     }
 
     // Generic function to draw connection between the specified dot and the dots in its connections property
-    static drawDotConnections(dot, color, isSourceOver=false) { // CAN BE OPTIMISED VIA ALPHA
-        let ctx = dot.ctx, dc_ll = dot.connections.length
+    static drawDotConnections(dot, color, blankPadding=0, isSourceOver=false) { // CAN BE OPTIMISED VIA ALPHA
+        let ctx = dot.ctx, dc_ll = dot.connections.length, colorValue = Color.formatRgba(color)??color.color
         if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
         if (dc_ll) for (let i=0;i<dc_ll;i++) {
             let c = dot.connections[i]
-            ctx.strokeStyle = Color.formatRgba(color)??color.color
+            ctx.strokeStyle = colorValue
             ctx.beginPath()
             ctx.moveTo(dot.x, dot.y)
             ctx.lineTo(c.x, c.y)
@@ -44,7 +44,7 @@ class CanvasUtils {
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
-    static drawConnections(dot, color, sourcePos) {
+    static drawConnection(dot, color, sourcePos) {
         let ctx = dot.ctx
         ctx.strokeStyle = Color.formatRgba(color)??color.color
         ctx.beginPath()

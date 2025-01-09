@@ -13,7 +13,7 @@ class Obj {
         this._initPos = pos||Obj.DEFAULT_POS      // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = this._initPos                 // current position from the center of the object : [x,y]
         this._radius = radius??Obj.DEFAULT_RADIUS // object's radius
-        this._initColor = color                   // declaration color value
+        this._initColor = color                   // declaration color value || (ctx, this)=>{return color value}
         this._color = this._initColor             // the current color or gradient of the filled shape
         this._setupCB = setupCB                   // called on object's initialization (this, this.parent)=>
         this._anims = {backlog:[], currents:[]}    // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
@@ -21,7 +21,7 @@ class Obj {
 
     // Runs when the object gets added to a canvas instance
     initialize() {
-        if (typeof this._initColor=="function") this.color = this._initColor(this.ctx??this.parent.ctx, this.parent||this)
+        if (typeof this._initColor=="function") this.color = this._initColor(this.ctx??this.parent.ctx, this)
         else if (this._initColor) this.color = this._initColor
         this.moveAtInitPos()
         if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)

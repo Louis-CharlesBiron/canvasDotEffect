@@ -224,6 +224,7 @@ class Shape extends Obj {
     get ratioPos() {return this._ratioPos}
     get ratioPosCB() {return this._ratioPosCB}
     get rotation() {return this._rotation}
+    get rotation() {return this._scale}
     get lastDotsPos() {return this._lastDotsPos}
     get dotsPositions() {// returns a string containing all the dot's position
         let currentDotPos="", d_ll = this.dots.length
