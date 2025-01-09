@@ -190,7 +190,7 @@ class Canvas {
         let r_ll = this.refs.length
         for (let i=0;i<r_ll;i++) {
             let ref = this.refs[i]
-            if (ref.ratioPosCB===undefined) ref.ratioPos=this._mouse.pos
+            if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos=this._mouse.pos
         }
         // custom move callback
         if (typeof cb == "function") cb(this._mouse, e)

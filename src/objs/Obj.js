@@ -36,7 +36,7 @@ class Obj {
     // Runs every frame
     draw(ctx, time) {
         let anims = this._anims.currents
-        if (this._anims.backlog[0]) anims.push(this._anims.backlog[0])
+        if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         let a_ll = anims.length
         for (let i=0;i<a_ll;i++) anims[i].getFrame(time)
     }
@@ -96,7 +96,7 @@ class Obj {
     playAnim(anim, isUnique, force) {
         if (isUnique && this.currentBacklogAnim && force) { // TOFIX
             this.currentBacklogAnim.end()
-            this._anims.backlog.addAt(anim, 1)
+            this._anims.backlog.addAt(anim, 0)
         }
         let initEndCB = anim.endCallback
         anim.endCallback=()=>{

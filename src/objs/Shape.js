@@ -96,12 +96,6 @@ class Shape extends Obj {
         this._dots.forEach(dot=>dot.color=color)
     }
 
-    // updates the limit of all the shape's dots
-    setLimit(limit=this._limit) {
-        this._limit = limit
-        this._dots.forEach(dot=>dot.limit=limit)
-    }
-
     // moves the shape and all its dots in specified direction at specified distance(force)
     addForce(force, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
         let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
@@ -244,4 +238,5 @@ class Shape extends Obj {
     set drawEffectCB(cb) {this._drawEffectCB = cb}
     set ratioPosCB(cb) {this._ratioPosCB = cb}
     set lastDotsPos(ldp) {this._lastDotsPos = ldp}
+    set limit(limit) {this._limit = limit}
 }

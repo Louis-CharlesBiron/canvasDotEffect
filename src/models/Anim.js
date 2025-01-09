@@ -10,7 +10,7 @@ class Anim {
 
     constructor(animation, duration, easing, endCallback) {
         this._id = Anim.ANIM_ID_GIVER++                         // animation id
-        this._animation = animation                      // the main animation (progress, playCount)=>
+        this._animation = animation                      // the main animation (progress, playCount, clampedProgress)=>
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
         this._easing = easing||(x=>x)                    // easing function (x)=>
         this._endCallback = endCallback                  // function called when animation is over
@@ -27,7 +27,10 @@ class Anim {
             // SET START TIME
             if (!this._startTime) this._startTime = time
             // PLAY ANIMATION
-            else if (time<this._startTime+Math.abs(this._duration)) this._animation(this._progress = this._easing((time-this._startTime)/Math.abs(this._duration)), this._playCount)
+            else if (time<this._startTime+Math.abs(this._duration)) {
+                this._progress = this._easing((time-this._startTime)/Math.abs(this._duration))
+                this._animation(this._progress, this._playCount, this.progress)
+            }
             // REPEAT IF NEGATIVE DURATION
             else if (isInfinite) this.reset(true)
             // END
@@ -37,13 +40,13 @@ class Anim {
 
     // ends the animation
     end() {
-        this._animation(1, ++this._playCount)
+        this._animation(1, this._playCount++, 1)
         if (typeof this._endCallback == "function") this._endCallback()
     }
 
     // resets the animation
     reset(isInfiniteReset) {
-        if (isInfiniteReset) this._animation(1, ++this._playCount)
+        if (isInfiniteReset) this._animation(1, this._playCount++, 1)
         else this._playCount = 0
         this._progress = 0
         this._startTime = null
@@ -55,7 +58,8 @@ class Anim {
 	get easing() {return this._easing}
 	get endCallback() {return this._endCallback}
 	get startTime() {return this._startTime}
-	get progress() {return this._progress}
+	get progress() {return CDEUtils.clamp(this._progress, 0, 1)}
+	get progressRaw() {return this._progress}
 	get playCount() {return this._playCount}
 
 	set animation(_animation) {return this._animation = _animation}

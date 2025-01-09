@@ -89,7 +89,7 @@ class Dot extends Obj {
     get ratioPos() {return this._parent?.ratioPos}
     get connections() {return this._connections}
 
-    set limit(limit) {this._limit = limit}
+    set limit(limit) {this._parent.limit = limit}
     set parent(p) {this._parent = p}
     set connections(c) {return this._connections = c}
 }
