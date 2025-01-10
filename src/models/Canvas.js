@@ -117,7 +117,7 @@ class Canvas {
 
     // calls the draw function on all canvas objects
     draw() {
-        let els = this._els.defs.concat(this.refs).concat(this._els.refs.flatMap(source=>source.asSource)), els_ll = els.length
+        let els = this.refs.concat(this._els.refs.flatMap(source=>source.asSource)).concat(this._els.defs), els_ll = els.length
 
         for (let i=0;i<els_ll;i++) {
             const el = els[i]

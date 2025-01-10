@@ -7,7 +7,7 @@
 class CanvasUtils {
     static SHOW_CENTERS_DOT_ID = {}
 
-    // Can be used to display a dot at the specified shape pos (which is normally not visible) (More for debbuging purposes)
+    // DEBUG // Can be used to display a dot at the specified shape pos (which is normally not visible)
     static toggleCenter(shape, radius=5, color=[255,0,0,1]) {
         if (!CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]) {
             let dot = new Dot(()=>[shape.x, shape.y], radius, color)
@@ -19,19 +19,17 @@ class CanvasUtils {
         }
     }
 
-    // Generic function to draw connection between the specified dot and the dots in its connections property
-    static drawDotConnections(dot, color, blankPadding=0, isSourceOver=false) { // CAN BE OPTIMISED VIA ALPHA
-        let ctx = dot.ctx, dc_ll = dot.connections.length, colorValue = Color.formatRgba(color)??color.color
-        if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
-        if (dc_ll) for (let i=0;i<dc_ll;i++) {
-            let c = dot.connections[i]
-            ctx.strokeStyle = colorValue
-            ctx.beginPath()
-            ctx.moveTo(dot.x, dot.y)
-            ctx.lineTo(c.x, c.y)
-            ctx.stroke()
-        }
-        if (!isSourceOver) ctx.globalCompositeOperation = "source-over"
+    // DEBUG // Create dots at provided intersection points
+    static showIntersectionPoints(res) {
+        let s_d1 = new Dot(res.source.inner, 3, [255,0,0,1]),
+            s_d2 = new Dot(res.source.outer, 3, [255,0,0,0.45]),
+            t_d1 = new Dot(res.target.outer, 3, [255,0,0,0.45]),
+            t_d2 = new Dot(res.target.inner, 3, [255,0,0,1])
+        
+        CVS.add(s_d1, true)
+        CVS.add(s_d2, true)
+        CVS.add(t_d1, true)
+        CVS.add(t_d2, true)
     }
     
     // Generic function to draw an outer ring around a dot
@@ -44,13 +42,47 @@ class CanvasUtils {
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
-    static drawConnection(dot, color, sourcePos) {
-        let ctx = dot.ctx
+    static drawConnection(dot, color, source, radiusPaddingMultiplier=0) {
+        let ctx = dot.ctx, [sx, sy] = source.pos||source
+
+        if (color[3]==0 || color.a==0) return;
+
         ctx.strokeStyle = Color.formatRgba(color)??color.color
         ctx.beginPath()
-        ctx.moveTo(sourcePos[0], sourcePos[1])
-        ctx.lineTo(dot.x, dot.y)
+        if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
+            let res = dot.getLinearIntersectPoints(source, source.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
+            ctx.moveTo(res.source.inner[0], res.source.inner[1])
+            ctx.lineTo(res.target.inner[0], res.target.inner[1])
+        } else {
+            ctx.moveTo(sx, sy)
+            ctx.lineTo(dot.x, dot.y)
+        }
         ctx.stroke()
+    }
+
+    // Generic function to draw connections between the specified dot and all the dots in its connections property
+    static drawDotConnections(dot, color, radiusPaddingMultiplier=0, isSourceOver=false) {// CAN BE OPTIMIZED VIA ALPHA
+        let ctx = dot.ctx, dc_ll = dot.connections.length, colorValue = Color.formatRgba(color)??color.color
+
+        if (color[3]==0 || color.a==0) return;
+
+        if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
+
+        if (dc_ll) for (let i=0;i<dc_ll;i++) {
+            let c = dot.connections[i]
+            ctx.strokeStyle = colorValue
+            ctx.beginPath()
+            if (radiusPaddingMultiplier) {
+                let res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
+                ctx.moveTo(res.source.inner[0], res.source.inner[1])
+                ctx.lineTo(res.target.inner[0], res.target.inner[1])
+            } else {
+                ctx.moveTo(dot.x, dot.y)
+                ctx.lineTo(c.x, c.y)
+            }
+            ctx.stroke()
+        }
+        if (!isSourceOver) ctx.globalCompositeOperation = "source-over"
     }
 
     // Generic function to get a callback that can make a dot draggable and throwable

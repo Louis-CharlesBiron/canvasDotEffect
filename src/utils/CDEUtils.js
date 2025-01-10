@@ -56,6 +56,12 @@ class CDEUtils {
     static getDist(x1, y1, x2, y2) {
         return Math.sqrt((x1-x2)**2 + (y1-y2)**2)
     }
+
+    // Returns the "a", "b" and "function" values formed by a line between 2 positions
+    static getLinearFn(pos1, pos2) {
+        let a = (pos2[1]-pos1[1])/(pos2[0]-pos1[0]), b = -(a*pos1[0]-pos1[1])
+        return [a, b, (x)=>a*x+b]
+    }
     
     /**
     * Returns the interpolated number between (max) and (max - range) 
