@@ -122,8 +122,8 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null,
     dragAnim1(shape.dots[0], m, dist, ratio)
 }, null, (shape)=>{
     let dot = shape.firstDot
-    dot.playAnim(new Anim((prog, i, cprog)=>{
-        dot.radius = i%2?25*(1-cprog):25*cprog
+    dot.playAnim(new Anim((prog, i)=>{
+        dot.radius = i%2?25*(1-prog):25*prog
         le.limit = dot.radius*5
     }, -750, Anim.easeOutQuad))
 

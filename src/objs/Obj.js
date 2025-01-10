@@ -146,7 +146,7 @@ class Obj {
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}
     set pos(pos) {this._pos = pos}
-    set radius(radius) {this._radius = radius}
+    set radius(radius) {this._radius = radius<0?0:radius}
     set color(color) {if (this._color?.colorRaw?.toString() != color?.toString() || !this._color) this._color = Color.adjust(color)}
     set setupCB(cb) {this._setupCB = cb}
     set r(r) {this.colorObject.r = r}

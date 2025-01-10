@@ -10,7 +10,7 @@ class Anim {
 
     constructor(animation, duration, easing, endCallback) {
         this._id = Anim.ANIM_ID_GIVER++                         // animation id
-        this._animation = animation                      // the main animation (progress, playCount, clampedProgress)=>
+        this._animation = animation                      // the main animation (clampedProgress, playCount, progress)=>
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
         this._easing = easing||(x=>x)                    // easing function (x)=>
         this._endCallback = endCallback                  // function called when animation is over
@@ -29,7 +29,7 @@ class Anim {
             // PLAY ANIMATION
             else if (time<this._startTime+Math.abs(this._duration)) {
                 this._progress = this._easing((time-this._startTime)/Math.abs(this._duration))
-                this._animation(this._progress, this._playCount, this.progress)
+                this._animation(this.progress, this._playCount, this._progress)
             }
             // REPEAT IF NEGATIVE DURATION
             else if (isInfinite) this.reset(true)
