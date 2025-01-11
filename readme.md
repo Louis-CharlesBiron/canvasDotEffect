@@ -467,7 +467,7 @@ The Grid class is a derivate of the Shape class. It allows the creation of dot-b
         GridAssets.fontSource5x5,                      // default source
         [10,10],                            // the shape position (The text will start from this point, as its top-left corner)
         2,                                  // 2px dot radius
-        null,                               // color is left undefined, the shape will assigned it the default value (white) // TODO
+        null,                               // color is left undefined, the shape will assigned it the default value (aliceblue)
         null,                               // limit is left udefined, default value assigned (100)
         (ctx, dot, ratio)=>{                // This is the drawEffectCB, gets call for every dot of the shape, every frame
         

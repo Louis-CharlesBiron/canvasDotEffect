@@ -12,8 +12,8 @@ class Anim {
         this._id = Anim.ANIM_ID_GIVER++                         // animation id
         this._animation = animation                      // the main animation (clampedProgress, playCount, progress)=>
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
-        this._easing = easing||(x=>x)                    // easing static (x)=>
-        this._endCallback = endCallback                  // static called when animation is over
+        this._easing = easing||(x=>x)                    // easing function (x)=>
+        this._endCallback = endCallback                  // function called when animation is over
 
         this._startTime = null // start time
         this._progress = 0     // animation progress
@@ -41,7 +41,7 @@ class Anim {
     // ends the animation
     end() {
         this._animation(1, this._playCount++, 1)
-        if (typeof this._endCallback == "static") this._endCallback()
+        if (typeof this._endCallback == "function") this._endCallback()
     }
 
     // resets the animation

@@ -8,7 +8,7 @@ class Shape extends Obj {
     static DEFAULT_LIMIT = 100
 
     constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
-        super(pos, radius, color, setupCB)
+        super(pos, radius??Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB)
         this._cvs = null                         // CVS instance
         this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                    // initial dots declaration
@@ -24,16 +24,16 @@ class Shape extends Obj {
 
     // initializes the shape, adds its dots and initializes them
     initialize() {
-        super.moveAtInitPos()
+        this._pos = this.getInitPos()
 
-        if (typeof this._initDots == "string") this.createFromString(this._initDots)
-        else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs)) // initDOt maybe redo callback (todo)
+        if (typeof this._initDots == "string") this.add(this.createFromString(this._initDots))
+        else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))
         else if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
 
-        if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
+        this.setRadius(this.getInitRadius(), true)
+        this.setColor(this.getInitColor(), true)
 
-        if (typeof this._initColor=="function") this.setColor(this._initColor(this.ctx, this))
-        else this._initColor
+        if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
     }
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
@@ -45,8 +45,8 @@ class Shape extends Obj {
     // adds a or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
-            if (typeof this._initColor!=="function") dot.color = this.colorObject
-            dot.radius = !dot.radius||dot.radius==Obj.DEFAULT_RADIUS ? this._radius : dot.radius // TODO probably do an init radius too
+            if (typeof this._initColor!=="function") {dot.color = this.colorObject} // tocheck (todo)
+            dot.radius = !dot.radius ? this._radius : dot.radius
             dot.parent = this
             dot.initialize()
             return dot
@@ -84,16 +84,38 @@ class Shape extends Obj {
         return dots
     }
  
-    // updates the radius of all the shape's dots
-    setRadius(radius=this._radius) {
+    // updates the radius of all the shape's dots. If "onlyReplaceDefaults" is true, it only sets the dot's radius if it was not initialy set
+    setRadius(radius=this._radius, onlyReplaceDefaults) {
         this._radius = radius
-        this._dots.forEach(dot=>dot.radius=radius)
+        let d_ll = this._dots.length
+        for (let i=0;i<d_ll;i++) {
+            let dot = this._dots[i]
+            if (onlyReplaceDefaults && dot.initRadius==null) {
+                dot.radius = radius
+                dot.initRadius = radius
+            }
+            else if (!onlyReplaceDefaults) {
+                dot.radius = radius
+                if (!dot.initRadius) dot.initRadius = radius
+            }
+        }
     }
 
-    // updates the color of all the shape's dots
-    setColor(color=this._color) {
+    // updates the color of all the shape's dots. If "onlyReplaceDefaults" is true, it only sets the dot's color if it was not initialy set
+    setColor(color=this._color, onlyReplaceDefaults) {
         this.color = color
-        this._dots.forEach(dot=>dot.color=color)
+        let d_ll = this._dots.length
+        for (let i=0;i<d_ll;i++) {
+            let dot = this._dots[i]
+            if (onlyReplaceDefaults && !dot.initColor) {
+                dot.color = color
+                dot.initColor = color
+            }
+            else if (!onlyReplaceDefaults) {
+                dot.color = color
+                if (!dot.initColor) dot.initColor = color
+            }
+        }
     }
 
     // moves the shape and all its dots in specified direction at specified distance(force)

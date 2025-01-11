@@ -9,28 +9,38 @@ class Obj {
     static DEFAULT_RADIUS = 5
 
     constructor(pos, radius, color, setupCB) {
-        this._id = Canvas.ELEMENT_ID_GIVER++      // canvas obj id
-        this._initPos = pos||Obj.DEFAULT_POS      // initial position : [x,y] || (Canvas)=>{return [x,y]}
-        this._pos = this._initPos                 // current position from the center of the object : [x,y]
-        this._radius = radius??Obj.DEFAULT_RADIUS // object's radius
-        this._initColor = color                   // declaration color value || (ctx, this)=>{return color value}
-        this._color = this._initColor             // the current color or gradient of the filled shape
-        this._setupCB = setupCB                   // called on object's initialization (this, this.parent)=>
-        this._anims = {backlog:[], currents:[]}    // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
+        this._id = Canvas.ELEMENT_ID_GIVER++    // canvas obj id
+        this._initPos = pos                     // initial position : [x,y] || (Canvas)=>{return [x,y]}
+        this._pos = pos                         // current position from the center of the object : [x,y]
+        this._initRadius = radius               // initial object's radius
+        this._radius = this._initRadius         // current object's radius
+        this._initColor = color                 // declaration color value || (ctx, this)=>{return color value}
+        this._color = this._initColor           // the current color or gradient of the filled shape
+        this._setupCB = setupCB                 // called on object's initialization (this, this.parent)=>
+        this._anims = {backlog:[], currents:[]} // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
     }
 
     // Runs when the object gets added to a canvas instance
     initialize() {
-        if (typeof this._initColor=="function") this.color = this._initColor(this.ctx??this.parent.ctx, this)
-        else if (this._initColor) this.color = this._initColor
-        this.moveAtInitPos()
+        this._pos = this.getInitPos()||Obj.DEFAULT_POS
+        this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
+        this.color = this.getInitColor()
         if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
     }
 
-    // sets the current pos to the value of the inital pos
-    moveAtInitPos() {
-        if (typeof this._initPos=="function") this._pos = [...this._initPos(this._cvs, this?.parent??this)]
-        else this._pos = [...this._initPos]
+    // returns the value of the inital color declaration
+    getInitColor() {
+        return typeof this._initColor=="function" ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor
+    }
+
+    // returns the value of the inital radius declaration
+    getInitRadius() {
+        return typeof this._initRadius=="function" ? this._initRadius(this) : this._initRadius
+    }
+
+    // returns the value of the inital pos declaration
+    getInitPos() {
+        return typeof this._initPos=="function" ? [...this._initPos(this._cvs, this?.parent??this)] : [...this._initPos]
     }
 
     // Runs every frame
@@ -138,6 +148,7 @@ class Obj {
     get colorRaw() {return this._color.colorRaw}
     get color() {return this._color.color}
     get initColor() {return this._initColor}
+    get initRadius() {return this._initRadius}
     get r() {return this.colorObject.r}
     get g() {return this.colorObject.g}
     get b() {return this.colorObject.b}
@@ -153,5 +164,8 @@ class Obj {
     set g(g) {this.colorObject.g = g}
     set b(b) {this.colorObject.b = b}
     set a(a) {this.colorObject.a = a}
+    set initPos(ip) {this._initPos = ip}
+    set initRadius(ir) {this._initRadius = ir}
+    set initColor(ic) {this._initColor = ic}
     
 }

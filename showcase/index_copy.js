@@ -45,12 +45,12 @@ CVS.add(logoBG)
 logoBG.scaleAt([1.15, 1.15])
 
 let textGrad = new Color(new Gradient(CVS.ctx, [[410, 325],[310,400]], 90, [[0, "#AFB0E3"], [1, "#9ADBE4"]]))
-let logoLetters = new Grid("CDE", [5, 5], 38, null, [308,372], 0, null, null, (ctx, dot, ratio, m, dist, shape)=>{
+let logoLetters = new Grid("CDE", [5, 5], 38, null, [308,372], 0, null, 100, (ctx, dot, ratio, m, dist, shape)=>{
     CanvasUtils.drawDotConnections(dot, textGrad, 0, true)
 })
 
 logoLetters.rotateAt(-25)
-//CVS.add(logoLetters)
+CVS.add(logoLetters)
 
 
 
