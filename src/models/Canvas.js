@@ -38,11 +38,11 @@ class Canvas {
         this._deltaTime = null                                  //useable delta time in seconds
         this._fixedTimeStamp = null                             //fixed (offsets lag spikes) requestanimationframe timestamp in ms
 
-        this._windowListeners = this.#initWindowListeners()      //[onresize, onvisibilitychange]
+        this._windowListeners = this.#initWindowListeners()     //[onresize, onvisibilitychange]
         
         let frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
         this.setSize(frameCBR.width, frameCBR.height)           //init size
-        this.#initStyles()                                       //init styles
+        this.#initStyles()                                      //init styles
 
         this._mouse = new Mouse()                               //mouse info
         this._offset = this.updateOffset()                      //cvs page offset

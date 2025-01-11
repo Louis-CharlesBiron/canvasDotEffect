@@ -56,6 +56,12 @@ class CDEUtils {
     static getDist(x1, y1, x2, y2) {
         return Math.sqrt((x1-x2)**2 + (y1-y2)**2)
     }
+
+    // Returns the "a", "b" and "function" values formed by a line between 2 positions
+    static getLinearFn(pos1, pos2) {
+        let a = (pos2[1]-pos1[1])/(pos2[0]-pos1[0]), b = -(a*pos1[0]-pos1[1])
+        return [a, b, (x)=>a*x+b]
+    }
     
     /**
     * Returns the interpolated number between (max) and (max - range) 
@@ -134,7 +140,7 @@ class CDEUtils {
 class CanvasUtils {
     static SHOW_CENTERS_DOT_ID = {}
 
-    // Can be used to display a dot at the specified shape pos (which is normally not visible) (More for debbuging purposes)
+    // DEBUG // Can be used to display a dot at the specified shape pos (which is normally not visible)
     static toggleCenter(shape, radius=5, color=[255,0,0,1]) {
         if (!CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]) {
             let dot = new Dot(()=>[shape.x, shape.y], radius, color)
@@ -146,19 +152,17 @@ class CanvasUtils {
         }
     }
 
-    // Generic function to draw connection between the specified dot and the dots in its connections property
-    static drawDotConnections(dot, color, isSourceOver=false) { // CAN BE OPTIMISED VIA ALPHA
-        let ctx = dot.ctx, dc_ll = dot.connections.length
-        if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
-        if (dc_ll) for (let i=0;i<dc_ll;i++) {
-            let c = dot.connections[i]
-            ctx.strokeStyle = Color.formatRgba(color)??color.color
-            ctx.beginPath()
-            ctx.moveTo(dot.x, dot.y)
-            ctx.lineTo(c.x, c.y)
-            ctx.stroke()
-        }
-        if (!isSourceOver) ctx.globalCompositeOperation = "source-over"
+    // DEBUG // Create dots at provided intersection points
+    static showIntersectionPoints(res) {
+        let s_d1 = new Dot(res.source.inner, 3, [255,0,0,1]),
+            s_d2 = new Dot(res.source.outer, 3, [255,0,0,0.45]),
+            t_d1 = new Dot(res.target.outer, 3, [255,0,0,0.45]),
+            t_d2 = new Dot(res.target.inner, 3, [255,0,0,1])
+        
+        CVS.add(s_d1, true)
+        CVS.add(s_d2, true)
+        CVS.add(t_d1, true)
+        CVS.add(t_d2, true)
     }
     
     // Generic function to draw an outer ring around a dot
@@ -171,13 +175,47 @@ class CanvasUtils {
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
-    static drawConnections(dot, color, sourcePos) {
-        let ctx = dot.ctx
+    static drawConnection(dot, color, source, radiusPaddingMultiplier=0) {
+        let ctx = dot.ctx, [sx, sy] = source.pos||source
+
+        if (color[3]==0 || color.a==0) return;
+
         ctx.strokeStyle = Color.formatRgba(color)??color.color
         ctx.beginPath()
-        ctx.moveTo(sourcePos[0], sourcePos[1])
-        ctx.lineTo(dot.x, dot.y)
+        if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
+            let res = dot.getLinearIntersectPoints(source, source.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
+            ctx.moveTo(res.source.inner[0], res.source.inner[1])
+            ctx.lineTo(res.target.inner[0], res.target.inner[1])
+        } else {
+            ctx.moveTo(sx, sy)
+            ctx.lineTo(dot.x, dot.y)
+        }
         ctx.stroke()
+    }
+
+    // Generic function to draw connections between the specified dot and all the dots in its connections property
+    static drawDotConnections(dot, color, radiusPaddingMultiplier=0, isSourceOver=false) {// CAN BE OPTIMIZED VIA ALPHA
+        let ctx = dot.ctx, dc_ll = dot.connections.length, colorValue = Color.formatRgba(color)??color.color
+
+        if (color[3]==0 || color.a==0) return;
+
+        if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
+
+        if (dc_ll) for (let i=0;i<dc_ll;i++) {
+            let c = dot.connections[i]
+            ctx.strokeStyle = colorValue
+            ctx.beginPath()
+            if (radiusPaddingMultiplier) {
+                let res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
+                ctx.moveTo(res.source.inner[0], res.source.inner[1])
+                ctx.lineTo(res.target.inner[0], res.target.inner[1])
+            } else {
+                ctx.moveTo(dot.x, dot.y)
+                ctx.lineTo(c.x, c.y)
+            }
+            ctx.stroke()
+        }
+        if (!isSourceOver) ctx.globalCompositeOperation = "source-over"
     }
 
     // Generic function to get a callback that can make a dot draggable and throwable
@@ -205,6 +243,7 @@ class CanvasUtils {
 
 // Represents a color value
 class Color {
+    static DEFAULT_TEMPERANCE = 0
     static DEFAULT_COLOR = "aliceblue"
     static CSS_COLOR_TO_RGBA_CONVERTIONS = {aliceblue:[240,248,255,1],antiquewhite:[250,235,215,1],aqua:[0,255,255,1],aquamarine:[127,255,212,1],azure:[240,255,255,1],beige:[245,245,220,1],bisque:[255,228,196,1],black:[0,0,0,1],blanchedalmond:[255,235,205,1],blue:[0,0,255,1],blueviolet:[138,43,226,1],brown:[165,42,42,1],burlywood:[222,184,135,1],cadetblue:[95,158,160,1],chartreuse:[127,255,0,1],chocolate:[210,105,30,1],coral:[255,127,80,1],cornflowerblue:[100,149,237,1],cornsilk:[255,248,220,1],crimson:[220,20,60,1],cyan:[0,255,255,1],darkblue:[0,0,139,1],darkcyan:[0,139,139,1],darkgoldenrod:[184,134,11,1],darkgray:[169,169,169,1],darkgreen:[0,100,0,1],darkkhaki:[189,183,107,1],darkmagenta:[139,0,139,1],darkolivegreen:[85,107,47,1],darkorange:[255,140,0,1],darkorchid:[153,50,204,1],darkred:[139,0,0,1],darksalmon:[233,150,122,1],darkseagreen:[143,188,143,1],darkslateblue:[72,61,139,1],darkslategray:[47,79,79,1],darkturquoise:[0,206,209,1],darkviolet:[148,0,211,1],deeppink:[255,20,147,1],deepskyblue:[0,191,255,1],dimgray:[105,105,105,1],dodgerblue:[30,144,255,1],firebrick:[178,34,34,1],floralwhite:[255,250,240,1],forestgreen:[34,139,34,1],fuchsia:[255,0,255,1],gainsboro:[220,220,220,1],ghostwhite:[248,248,255,1],gold:[255,215,0,1],goldenrod:[218,165,32,1],gray:[128,128,128,1],green:[0,128,0,1],greenyellow:[173,255,47,1],honeydew:[240,255,240,1],hotpink:[255,105,180,1],indianred:[205,92,92,1],indigo:[75,0,130,1],ivory:[255,255,240,1],khaki:[240,230,140,1],lavender:[230,230,250,1],lavenderblush:[255,240,245,1],lawngreen:[124,252,0,1],lemonchiffon:[255,250,205,1],lightblue:[173,216,230,1],lightcoral:[240,128,128,1],lightcyan:[224,255,255,1],lightgoldenrodyellow:[250,250,210,1],lightgray:[211,211,211,1],lightgreen:[144,238,144,1],lightpink:[255,182,193,1],lightsalmon:[255,160,122,1],lightseagreen:[32,178,170,1],lightskyblue:[135,206,250,1],lightslategray:[119,136,153,1],lightsteelblue:[176,224,230,1],lightyellow:[255,255,224,1],lime:[0,255,0,1],limegreen:[50,205,50,1],linen:[250,240,230,1],magenta:[255,0,255,1],maroon:[128,0,0,1],mediumaquamarine:[102,205,170,1],mediumblue:[0,0,205,1],mediumorchid:[186,85,211,1],mediumpurple:[147,112,219,1],mediumseagreen:[60,179,113,1],mediumslateblue:[123,104,238,1],mediumspringgreen:[0,250,154,1],mediumturquoise:[72,209,204,1],mediumvioletred:[199,21,133,1],midnightblue:[25,25,112,1],mintcream:[245,255,250,1],mistyrose:[255,228,225,1],moccasin:[255,228,181,1],navajowhite:[255,222,173,1],navy:[0,0,128,1],oldlace:[253,245,230,1],olive:[128,128,0,1],olivedrab:[107,142,35,1],orange:[255,165,0,1],orangered:[255,69,0,1],orchid:[218,112,214,1],palegoldenrod:[238,232,170,1],palegreen:[152,251,152,1],paleturquoise:[175,238,238,1],palevioletred:[219,112,147,1],papayawhip:[255,239,213,1],peachpuff:[255,218,185,1],peru:[205,133,63,1],pink:[255,192,203,1],plum:[221,160,221,1],powderblue:[176,224,230,1],purple:[128,0,128,1],rebeccapurple:[102,51,153,1],red:[255,0,0,1],rosybrown:[188,143,143,1],royalblue:[65,105,225,1],saddlebrown:[139,69,19,1],salmon:[250,128,114,1],sandybrown:[244,164,96,1],seagreen:[46,139,87,1],seashell:[255,245,238,1],sienna:[160,82,45,1],silver:[192,192,192,1],skyblue:[135,206,235,1],slateblue:[106,90,205,1],slategray:[112,128,144,1],snow:[255,250,250,1],springgreen:[0,255,127,1],steelblue:[70,130,180,1],tan:[210,180,140,1],teal:[0,128,128,1],thistle:[216,191,216,1],tomato:[255,99,71,1],turquoise:[64,224,208,1],violet:[238,130,238,1],wheat:[245,222,179,1],white:[255,255,255,1],whitesmoke:[245,245,245,1],yellow:[255,255,0,1],yellowgreen:[154,205,50,1]}
     static RGBA_TO_CSS_COLOR_CONVERTIONS = {"240,248,255,1":"aliceblue","250,235,215,1":"antiquewhite","0,255,255,1":"aqua","127,255,212,1":"aquamarine","240,255,255,1":"azure","245,245,220,1":"beige","255,228,196,1":"bisque","0,0,0,1":"black","255,235,205,1":"blanchedalmond","0,0,255,1":"blue","138,43,226,1":"blueviolet","165,42,42,1":"brown","222,184,135,1":"burlywood","95,158,160,1":"cadetblue","127,255,0,1":"chartreuse","210,105,30,1":"chocolate","255,127,80,1":"coral","100,149,237,1":"cornflowerblue","255,248,220,1":"cornsilk","220,20,60,1":"crimson","0,0,139,1":"darkblue","0,139,139,1":"darkcyan","184,134,11,1":"darkgoldenrod","169,169,169,1":"darkgray","0,100,0,1":"darkgreen","189,183,107,1":"darkkhaki","139,0,139,1":"darkmagenta","85,107,47,1":"darkolivegreen","255,140,0,1":"darkorange","153,50,204,1":"darkorchid","139,0,0,1":"darkred","233,150,122,1":"darksalmon","143,188,143,1":"darkseagreen","72,61,139,1":"darkslateblue","47,79,79,1":"darkslategray","0,206,209,1":"darkturquoise","148,0,211,1":"darkviolet","255,20,147,1":"deeppink","0,191,255,1":"deepskyblue","105,105,105,1":"dimgray","30,144,255,1":"dodgerblue","178,34,34,1":"firebrick","255,250,240,1":"floralwhite","34,139,34,1":"forestgreen","220,220,220,1":"gainsboro","248,248,255,1":"ghostwhite","255,215,0,1":"gold","218,165,32,1":"goldenrod","128,128,128,1":"gray","0,128,0,1":"green","173,255,47,1":"greenyellow","240,255,240,1":"honeydew","255,105,180,1":"hotpink","205,92,92,1":"indianred","75,0,130,1":"indigo","255,255,240,1":"ivory","240,230,140,1":"khaki","230,230,250,1":"lavender","255,240,245,1":"lavenderblush","124,252,0,1":"lawngreen","255,250,205,1":"lemonchiffon","173,216,230,1":"lightblue","240,128,128,1":"lightcoral","224,255,255,1":"lightcyan","250,250,210,1":"lightgoldenrodyellow","211,211,211,1":"lightgray","144,238,144,1":"lightgreen","255,182,193,1":"lightpink","255,160,122,1":"lightsalmon","32,178,170,1":"lightseagreen","135,206,250,1":"lightskyblue","119,136,153,1":"lightslategray","176,224,230,1":"lightsteelblue","255,255,224,1":"lightyellow","0,255,0,1":"lime","50,205,50,1":"limegreen","250,240,230,1":"linen","255,0,255,1":"magenta","128,0,0,1":"maroon","102,205,170,1":"mediumaquamarine","0,0,205,1":"mediumblue","186,85,211,1":"mediumorchid","147,112,219,1":"mediumpurple","60,179,113,1":"mediumseagreen","123,104,238,1":"mediumslateblue","0,250,154,1":"mediumspringgreen","72,209,204,1":"mediumturquoise","199,21,133,1":"mediumvioletred","25,25,112,1":"midnightblue","245,255,250,1":"mintcream","255,228,225,1":"mistyrose","255,228,181,1":"moccasin","255,222,173,1":"navajowhite","0,0,128,1":"navy","253,245,230,1":"oldlace","128,128,0,1":"olive","107,142,35,1":"olivedrab","255,165,0,1":"orange","255,69,0,1":"orangered","218,112,214,1":"orchid","238,232,170,1":"palegoldenrod","152,251,152,1":"palegreen","175,238,238,1":"paleturquoise","219,112,147,1":"palevioletred","255,239,213,1":"papayawhip","255,218,185,1":"peachpuff","205,133,63,1":"peru","255,192,203,1":"pink","221,160,221,1":"plum","128,0,128,1":"purple","102,51,153,1":"rebeccapurple","255,0,0,1":"red","188,143,143,1":"rosybrown","65,105,225,1":"royalblue","139,69,19,1":"saddlebrown","250,128,114,1":"salmon","244,164,96,1":"sandybrown","46,139,87,1":"seagreen","255,245,238,1":"seashell","160,82,45,1":"sienna","192,192,192,1":"silver","135,206,235,1":"skyblue","106,90,205,1":"slateblue","112,128,144,1":"slategray","255,250,250,1":"snow","0,255,127,1":"springgreen","70,130,180,1":"steelblue","210,180,140,1":"tan","0,128,128,1":"teal","216,191,216,1":"thistle","255,99,71,1":"tomato","64,224,208,1":"turquoise","238,130,238,1":"violet","245,222,179,1":"wheat","255,255,255,1":"white","245,245,245,1":"whitesmoke","255,255,0,1":"yellow","154,205,50,1":"yellowgreen"}
@@ -219,9 +258,14 @@ class Color {
         this._isChannel = isChannel // if true, this instance will be used as a color channel and will not duplicate
     }
 
-    // instance version
-    convertTo(format=Color.FORMATS.RGBA, color=this._color) {
-        return Color.convertTo(format, color)
+    // returns a new instance of the same color
+    duplicate() {
+        return new Color([...this.#rgba])
+    }
+
+    // updates the cached rgba value
+    #updateRGBA() {
+        this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : [...this._color])
     }
 
     // converts a color to another color format
@@ -241,20 +285,18 @@ class Color {
 
         return convertedColor
     }
-
     // instance version
-    getFormat(color=this._color) {
-        return Color.getFormat(color)
-    }
-
-    // returns a new instance of the same color
-    duplicate() {
-        return new Color([...this.#rgba])
+    convertTo(format=Color.FORMATS.RGBA, color=this._color) {
+        return Color.convertTo(format, color)
     }
 
     // returns the format of the provided color
     static getFormat(color) {
         return Array.isArray(color) ? Color.FORMATS.RGBA : color instanceof Color ? Color.FORMATS.COLOR : color instanceof Gradient ? Color.FORMATS.GRADIENT : color.includes("#") ? Color.FORMATS.HEX : Color.FORMATS.TEXT
+    }
+    // instance version
+    getFormat(color=this._color) {
+        return Color.getFormat(color)
     }
 
     // converts rbga to hex
@@ -277,9 +319,35 @@ class Color {
         return Array.isArray(arrayRgba) ? `rgba(${arrayRgba[0]}, ${arrayRgba[1]}, ${arrayRgba[2]}, ${arrayRgba[3]})` : null
     }
 
-    // updates the cached rgba value
-    #updateRGBA() {
-        this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : [...this._color])
+    static SEARCH_START = {TOP_LEFT:"TOP_LEFT", BOTTOM_RIGHT:"BOTTOM_RIGHT"}
+    static DEFAULT_SEARCH_START = Color.SEARCH_START.TOP_LEFT
+    static findFirstPos(canvas, color, useAlpha=false, temperance=Color.DEFAULT_TEMPERANCE, searchStart=Color.DEFAULT_SEARCH_START, areaSize=[]) {
+        let width = areaSize[0]??canvas.width, height = areaSize[1]??canvas.height,
+            data = canvas.ctx.getImageData(0, 0, width, height).data,
+            x, y, yi, xi, currentR, currentG, currentB, currentA, ow = 4*width,
+            r = color.r, g = color.g, b = color.b, a = color.a*255,
+            br = r-temperance, bg = g-temperance, bb = b-temperance, ba = a,
+            tr = r+temperance, tg = g+temperance, tb = b+temperance, ta = a,
+            isSearchTL = searchStart==Color.SEARCH_START.TOP_LEFT,
+            startX = isSearchTL?0:width-1, endX = isSearchTL?width:-1, stepX = isSearchTL?1:-1,
+            startY = isSearchTL?0:height-1, endY = isSearchTL?height:-1, stepY = isSearchTL?1:-1
+
+            for (y=startY;y!=endY;y+=stepY) {
+                yi = y*ow
+                for (x=startX;x!=endX;x+=stepX) {
+                    xi = yi+x*4
+                    currentR = data[xi] 
+                    if (temperance) {
+                        if (currentR >= br && currentR <= tr) {
+                            currentG = data[xi+1]
+                            currentB = data[xi+2]
+                            if (currentG >= bg && currentG <= tg && currentB >= bb && currentB <= tb && (!useAlpha || (currentA >= ba && currentA <= ta))) return [x, y]
+                        }
+                    } else if (currentR == r) if (data[xi+1] == g && data[xi+2] == b && (!useAlpha || data[xi+3] == a)) return [x, y]
+                }
+            }
+
+        return null
     }
 
     // returns the usable value of the color
@@ -643,7 +711,7 @@ class Canvas {
     static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
     static DEFAULT_CVSDE_ATTR = "_CVSDE"
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
-    static DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue"}
+    static DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue", "willReadFrequently":false}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
@@ -653,12 +721,12 @@ class Canvas {
     #frameSkipsOffset = null // used to prevent significant frame gaps
     #timeStamp = null  // requestanimationframe timestamp in ms
 
-    constructor(cvs, loopingCallback, frame, settings=Canvas.DEFAULT_CTX_SETTINGS) {
+    constructor(cvs, loopingCallback, frame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                         //html canvas element
         this._frame = frame??cvs?.parentElement                 //html parent of canvas element
         this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)        //set styles selector
         this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true) //set styles selector
-        this._ctx = this._cvs.getContext("2d")                  //canvas context
+        this._ctx = this._cvs.getContext("2d", {willReadFrequently})   //canvas context
         this._settings = this.updateSettings(settings)          //set context settings
 
         this._els={refs:[], defs:[]}                            //arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
@@ -669,11 +737,11 @@ class Canvas {
         this._deltaTime = null                                  //useable delta time in seconds
         this._fixedTimeStamp = null                             //fixed (offsets lag spikes) requestanimationframe timestamp in ms
 
-        this._windowListeners = this.#initWindowListeners()      //[onresize, onvisibilitychange]
+        this._windowListeners = this.#initWindowListeners()     //[onresize, onvisibilitychange]
         
         let frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
         this.setSize(frameCBR.width, frameCBR.height)           //init size
-        this.#initStyles()                                       //init styles
+        this.#initStyles()                                      //init styles
 
         this._mouse = new Mouse()                               //mouse info
         this._offset = this.updateOffset()                      //cvs page offset
@@ -748,7 +816,7 @@ class Canvas {
 
     // calls the draw function on all canvas objects
     draw() {
-        let els = this._els.defs.concat(this.refs).concat(this._els.refs.flatMap(source=>source.asSource)), els_ll = els.length
+        let els = this.refs.concat(this._els.refs.flatMap(source=>source.asSource)).concat(this._els.defs), els_ll = els.length
 
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
@@ -922,10 +990,10 @@ class Anim {
 
     constructor(animation, duration, easing, endCallback) {
         this._id = Anim.ANIM_ID_GIVER++                         // animation id
-        this._animation = animation                      // the main animation (progress, playCount, clampedProgress)=>
+        this._animation = animation                      // the main animation (clampedProgress, playCount, progress)=>
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
-        this._easing = easing||(x=>x)                    // easing function (x)=>
-        this._endCallback = endCallback                  // function called when animation is over
+        this._easing = easing||(x=>x)                    // easing static (x)=>
+        this._endCallback = endCallback                  // static called when animation is over
 
         this._startTime = null // start time
         this._progress = 0     // animation progress
@@ -941,7 +1009,7 @@ class Anim {
             // PLAY ANIMATION
             else if (time<this._startTime+Math.abs(this._duration)) {
                 this._progress = this._easing((time-this._startTime)/Math.abs(this._duration))
-                this._animation(this._progress, this._playCount, this.progress)
+                this._animation(this.progress, this._playCount, this._progress)
             }
             // REPEAT IF NEGATIVE DURATION
             else if (isInfinite) this.reset(true)
@@ -953,7 +1021,7 @@ class Anim {
     // ends the animation
     end() {
         this._animation(1, this._playCount++, 1)
-        if (typeof this._endCallback == "function") this._endCallback()
+        if (typeof this._endCallback == "static") this._endCallback()
     }
 
     // resets the animation
@@ -980,25 +1048,52 @@ class Anim {
 	set endCallback(_endCallback) {return this._endCallback = _endCallback}
 
     // Easings from: https://easings.net/
+    static easeInSine = (x) => 1 - Math.cos((x * Math.PI) / 2)
+    static easeOutSine = (x) => Math.sin((x * Math.PI) / 2)
+    static easeInOutSine = (x) => -(Math.cos(Math.PI * x) - 1) / 2
+
+    static easeInCubic = (x) => x * x * x
+    static easeOutCubic = (x) => 1 - Math.pow(1 - x, 3)
+    static easeInOutCubic = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+    
+    static easeInQuint = (x) => x*x*x*x*x
+    static easeOutQuint = (x) => 1 - Math.pow(1 - x, 5)
+    static easeInOutQuint = (x) => x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2
+
+    static easeInCirc = (x) => 1 - Math.sqrt(1 - Math.pow(x, 2))
+    static easeOutCirc = (x) => Math.sqrt(1 - Math.pow(x - 1, 2))
+    static easeInOutCirc = (x) => x < 0.5 ? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2 : (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2
+
+    static easeInElastic = (x) => x === 0 ? 0 : x === 1 ? 1 : -Math.pow(2, 10 * x - 10) * Math.sin((x * 10 - 10.75) * ((2 * Math.PI) / 3))
+    static easeOutElastic = (x) => x === 0 ? 0 : x === 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * ((2 * Math.PI) / 3)) + 1
+    static easeInOutElastic = (x) => x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 + 1
+    
+    static easeInQuad = (x) => x * x
+    static easeOutQuad = (x) => 1 - (1 - x) * (1 - x)
     static easeInOutQuad = (x) => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2
 
-    static easeOutQuad = (x) => 1 - (1 - x) * (1 - x)
+    static easeInQuart = (x) => x * x * x * x
+    static easeOutQuart = (x) => 1 - Math.pow(1 - x, 4)
+    static easeInOutQuart = (x) => x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2
 
+    static easeInExpo = (x) => x === 0 ? 0 : Math.pow(2, 10 * x - 10)
+    static easeOutExpo = (x) => x === 1 ? 1 : 1 - Math.pow(2, -10 * x)
+    static easeInOutExpo = (x) => x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? Math.pow(2, 20 * x - 10) / 2 : (2 - Math.pow(2, -20 * x + 10)) / 2
+    
+    static easeInBack = (x) => (1.70158 + 1) * x * x * x - 1.70158 * x * x
+    static easeOutBack = (x) => 1 + (1.70158 + 1) * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2)
+    static easeInOutBack = (x) => x < 0.5? (Math.pow(2 * x, 2) * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) / 2 : (Math.pow(2 * x - 2, 2) * ((1.70158 * 1.525 + 1) * (x * 2 - 2) + 1.70158 * 1.525) + 2) / 2
+
+    static easeInBounce = (x) => 1 - easeOutBounce(1 - x)
     static easeOutBounce = (x) => {
             if (x < 1 / 2.75) return 7.5625 * x * x
             else if (x < 2 / 2.75) return 7.5625 * (x -= 1.5 / 2.75) * x + 0.75
             else if (x < 2.5 / 2.75) return 7.5625 * (x -= 2.25 / 2.75) * x + 0.9375
             else return 7.5625 * (x -= 2.625 / 2.75) * x + 0.984375
     }
-
     static easeInOutBounce = (x) => x < 0.5 ? (1 - this.easeOutBounce(1 - 2 * x)) / 2: (1 + this.easeOutBounce(2 * x - 1)) / 2
-
-    static easeInOutBack = (x) => x < 0.5? (Math.pow(2 * x, 2) * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) / 2 : (Math.pow(2 * x - 2, 2) * ((1.70158 * 1.525 + 1) * (x * 2 - 2) + 1.70158 * 1.525) + 2) / 2
-
-    static easeInOutElastic = (x) => x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 + 1;
     
     static linear = (x) => x
-    
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -1015,7 +1110,7 @@ class Obj {
         this._initPos = pos||Obj.DEFAULT_POS      // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = this._initPos                 // current position from the center of the object : [x,y]
         this._radius = radius??Obj.DEFAULT_RADIUS // object's radius
-        this._initColor = color                   // declaration color value
+        this._initColor = color                   // declaration color value || (ctx, this)=>{return color value}
         this._color = this._initColor             // the current color or gradient of the filled shape
         this._setupCB = setupCB                   // called on object's initialization (this, this.parent)=>
         this._anims = {backlog:[], currents:[]}    // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
@@ -1023,7 +1118,7 @@ class Obj {
 
     // Runs when the object gets added to a canvas instance
     initialize() {
-        if (typeof this._initColor=="function") this.color = this._initColor(this.ctx??this.parent.ctx, this.parent||this)
+        if (typeof this._initColor=="function") this.color = this._initColor(this.ctx??this.parent.ctx, this)
         else if (this._initColor) this.color = this._initColor
         this.moveAtInitPos()
         if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
@@ -1148,7 +1243,7 @@ class Obj {
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}
     set pos(pos) {this._pos = pos}
-    set radius(radius) {this._radius = radius}
+    set radius(radius) {this._radius = radius<0?0:radius}
     set color(color) {if (this._color?.colorRaw?.toString() != color?.toString() || !this._color) this._color = Color.adjust(color)}
     set setupCB(cb) {this._setupCB = cb}
     set r(r) {this.colorObject.r = r}
@@ -1168,17 +1263,17 @@ class Shape extends Obj {
 
     constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
         super(pos, radius, color, setupCB)
-        this._cvs = null                        // CVS instance
-        this._limit = limit||Shape.DEFAULT_LIMIT// the delimiter radius within which the drawEffect can take Effect
-        this._initDots = dots                   // initial dots declaration
-        this._dots = []                         // array containing current dots in the shape
-        this._ratioPos = [Infinity,Infinity]    // position of ratio target object 
-        this._drawEffectCB = drawEffectCB       // (ctx, Dot, ratio, mouse, distance, parent, rawRatio)=>
-        this._ratioPosCB = ratioPosCB           // custom ratio pos target (Shape, dots)=>
-        this._fragile = fragile||false          // whether the shape resets on document visibility change 
+        this._cvs = null                         // CVS instance
+        this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
+        this._initDots = dots                    // initial dots declaration
+        this._dots = []                          // array containing current dots in the shape
+        this._ratioPos = [Infinity,Infinity]     // position of ratio target object 
+        this._drawEffectCB = drawEffectCB        // (ctx, Dot, ratio, mouse, distance, parent, rawRatio)=>
+        this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>
+        this._fragile = fragile||false           // whether the shape resets on document visibility change 
 
-        this._rotation = 0                      // the shape's rotation in degrees 
-        this._scale = [1,1]                     // the shape's scale factor: [scaleX, scaleY] 
+        this._rotation = 0                       // the shape's rotation in degrees 
+        this._scale = [1,1]                      // the shape's scale factor: [scaleX, scaleY] 
     }
 
     // initializes the shape, adds its dots and initializes them
@@ -1383,6 +1478,7 @@ class Shape extends Obj {
     get ratioPos() {return this._ratioPos}
     get ratioPosCB() {return this._ratioPosCB}
     get rotation() {return this._rotation}
+    get rotation() {return this._scale}
     get lastDotsPos() {return this._lastDotsPos}
     get dotsPositions() {// returns a string containing all the dot's position
         let currentDotPos="", d_ll = this.dots.length
@@ -1408,15 +1504,16 @@ class Shape extends Obj {
 class Gradient {
     #lastDotsPos = null
     #lastRotation = null
+    #lastDotPos = null
     constructor(ctx, positions, isLinear=0, ...colorStops) {
-        this._ctx = ctx                                      // canvas context
-        this._isLinear = this.#getFormatedIsLinear(isLinear) // whether the gradient is linear or radial (if a number, acts as the rotation in degrees of linear gradient)
-        this._initPositions = positions                      // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | Shape
-        this._positions = this.getAutomaticPositions()       // usable positions from initPositions
+        this._ctx = ctx                                                     // canvas context
+        this._isLinear = this.#getFormatedIsLinear(isLinear)                // whether the gradient is linear or radial (if a number, acts as the rotation in degrees of linear gradient)
+        this._initPositions = positions                                     // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | Shape
+        this._positions = this.getAutomaticPositions()??this._initPositions // usable positions from initPositions
 
         this._colorStops = colorStops.flat().map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
 
-        this._gradient = null                                 // useable as a fillStyle
+        this._gradient = null // useable as a fillStyle
         this.updateGradient()
     }
 
@@ -1427,18 +1524,14 @@ class Gradient {
 
     /**
      * Given a shape, returns automatic positions values for linear or radial gradients
-     * @param {Shape} shape: Instance of Shape or inheriting shape 
+     * @param {Shape} obj: Instance of Shape or inheriting shape 
      * @param {boolean} optimize: if enabled recalculates positions only when a dot changes pos (disable only for manual usage of this function) 
      * @returns the new calculated positions or the current value of this._positions if the parameter 'shape' isn't an instance of Shape
      */
-    getAutomaticPositions(shape=this._initPositions, optimize=true) {
-        if (shape instanceof Shape) {
-            let currentDotPos = optimize ? shape.dotsPositions : null
-            if (!optimize || this.#lastRotation !== this._isLinear || currentDotPos !== this.#lastDotsPos) {
-                this.#lastDotsPos = currentDotPos
-                this.#lastRotation = this._isLinear
-
-                const rangeX = CDEUtils.getMinMax(shape.dots, "x"), rangeY = CDEUtils.getMinMax(shape.dots, "y"),
+    getAutomaticPositions(obj=this._initPositions, optimize=true) {
+        if (obj instanceof Shape) {
+            if (!optimize || this.#hasShapeChanged(obj)) {
+                const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"),
                     smallestX = rangeX[0], smallestY = rangeY[0],
                     biggestX = rangeX[1], biggestY = rangeY[1],
                     cx = smallestX+(biggestX-smallestX)/2, cy = smallestY+(biggestY-smallestY)/2
@@ -1452,7 +1545,37 @@ class Gradient {
                     return [[cx, cy, coverRadius],[cx, cy, coverRadius*0.25]]
                 }
             } else return this._positions
-        } else return this._positions
+        } else if (obj instanceof Dot) {
+            if (!optimize || this.#hasDotChanged(obj)) {
+                if (this.#getFormatedIsLinear() !== false) {
+                    let x = obj.left-obj.x, y = obj.top-obj.y, x2 = obj.right-obj.x, y2 = obj.bottom-obj.y,
+                        cosV = Math.cos(CDEUtils.toRad(this.#getFormatedIsLinear())), sinV = Math.sin(CDEUtils.toRad(this.#getFormatedIsLinear()))
+                    return [[(x*cosV-y*sinV)+obj.x, (x*sinV+y*cosV)+obj.y], [(x2*cosV-y2*sinV)+obj.x, (x2*sinV+y2*cosV)+obj.y]]
+                } else {
+                    let coverRadius = obj.radius*1
+                    return [[obj.x, obj.y, coverRadius],[obj.x, obj.y, coverRadius*0.25]]
+                }
+            } return this._positions
+        } 
+        else return this._positions
+    }
+
+    #hasShapeChanged(shape) {
+        let currentDotsPos = shape.dotsPositions
+        if (this.#lastRotation !== this._isLinear || currentDotsPos !== this.#lastDotsPos) {
+            this.#lastDotsPos = currentDotsPos
+            this.#lastRotation = this._isLinear
+            return true
+        } else return false
+    }
+    
+    #hasDotChanged(dot) {
+        let currentDotPos = dot.stringPos
+        if (this.#lastRotation !== this._isLinear || currentDotPos !== this.#lastDotPos) {
+            this.#lastDotPos = currentDotPos
+            this.#lastRotation = this._isLinear
+            return true
+        } else return false
     }
 
     // Creates and returns the gradient. Updates it if the initPositions is a Shape instance
@@ -1473,7 +1596,7 @@ class Gradient {
 	get rotation() {return typeof this.#getFormatedIsLinear()=="number" ? this._isLinear : null}
     get gradient() {
         // Automatic dynamic positions updates when using a shape instance
-        if (this._initPositions instanceof Shape) this.updateGradient()
+        if (this._initPositions instanceof Shape || this._initPositions instanceof Dot) this.updateGradient()
         return this._gradient
     }
 	set ctx(_ctx) {this._ctx = _ctx}
@@ -1673,6 +1796,31 @@ class Dot extends Obj {
     // removes a Dot from the connection array
     removeConnection(dotOrId) {
         this._connections = this._connections.filter(d=>typeof dotOrId=="number"?d.id!==dotOrId:d.id!==dotOrId.id)
+    }
+
+    /**
+     * Calculates the 4 intersection points between two dots and a direct line between them.
+     * @param {Dot | pos} target: a Dot or a pos [x,y] (Defaults to the first Dot in this object's connections list)
+     * @param {Number} targetPadding: the padding radius of the target (Defaults to the target radius if it's a Dot, or 5)
+     * @param {Dot | pos} source: a Dot or a pos [x,y] (Defaults to this object)
+     * @param {Number} sourcePadding: the padding radius of the source (Defaults to the source radius if it's a Dot, or 5)
+     * @returns {
+     *      source: [ [x, y], [x, y] ]
+     *      target: [ [x, y], [x, y] ]
+     * } The 2 intersection points for the target and for the source
+     */
+    getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {
+        let [tx, ty] = target.pos||target, [sx, sy] = source.pos||source,
+            [a, b, lfn] = CDEUtils.getLinearFn([sx,sy], [tx,ty]), t_r = targetPadding**2, s_r = sourcePadding**2,
+            qA = (1+a**2)*2,
+            s_qB = -(2*a*(b-sy)-2*sx),
+            s_qD = Math.sqrt(s_qB**2-(4*(qA/2)*((b-sy)**2+sx**2-s_r))),
+            t_qB = -(2*a*(b-ty)-2*tx),
+            t_qD = Math.sqrt(t_qB**2-(4*(qA/2)*((b-ty)**2+tx**2-t_r))),
+            s_x1 = (s_qB+s_qD)/qA, s_x2 = (s_qB-s_qD)/qA, t_x1 = (t_qB+t_qD)/qA, t_x2 = (t_qB-t_qD)/qA,
+            s_y1 = lfn(s_x1), s_y2 = lfn(s_x2), t_y1 = lfn(t_x1), t_y2 = lfn(t_x2)
+    
+        return {source:{inner:[s_x1, s_y1], outer:[s_x2, s_y2]}, target:{outer:[t_x1, t_y1], inner:[t_x2, t_y2]}}
     }
 
     /**

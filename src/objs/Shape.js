@@ -9,17 +9,17 @@ class Shape extends Obj {
 
     constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
         super(pos, radius, color, setupCB)
-        this._cvs = null                        // CVS instance
-        this._limit = limit||Shape.DEFAULT_LIMIT// the delimiter radius within which the drawEffect can take Effect
-        this._initDots = dots                   // initial dots declaration
-        this._dots = []                         // array containing current dots in the shape
-        this._ratioPos = [Infinity,Infinity]    // position of ratio target object 
-        this._drawEffectCB = drawEffectCB       // (ctx, Dot, ratio, mouse, distance, parent, rawRatio)=>
-        this._ratioPosCB = ratioPosCB           // custom ratio pos target (Shape, dots)=>
-        this._fragile = fragile||false          // whether the shape resets on document visibility change 
+        this._cvs = null                         // CVS instance
+        this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
+        this._initDots = dots                    // initial dots declaration
+        this._dots = []                          // array containing current dots in the shape
+        this._ratioPos = [Infinity,Infinity]     // position of ratio target object 
+        this._drawEffectCB = drawEffectCB        // (ctx, Dot, ratio, mouse, distance, parent, rawRatio)=>
+        this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>
+        this._fragile = fragile||false           // whether the shape resets on document visibility change 
 
-        this._rotation = 0                      // the shape's rotation in degrees 
-        this._scale = [1,1]                     // the shape's scale factor: [scaleX, scaleY] 
+        this._rotation = 0                       // the shape's rotation in degrees 
+        this._scale = [1,1]                      // the shape's scale factor: [scaleX, scaleY] 
     }
 
     // initializes the shape, adds its dots and initializes them

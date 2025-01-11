@@ -12,8 +12,8 @@ class Anim {
         this._id = Anim.ANIM_ID_GIVER++                         // animation id
         this._animation = animation                      // the main animation (clampedProgress, playCount, progress)=>
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
-        this._easing = easing||(x=>x)                    // easing function (x)=>
-        this._endCallback = endCallback                  // function called when animation is over
+        this._easing = easing||(x=>x)                    // easing static (x)=>
+        this._endCallback = endCallback                  // static called when animation is over
 
         this._startTime = null // start time
         this._progress = 0     // animation progress
@@ -41,7 +41,7 @@ class Anim {
     // ends the animation
     end() {
         this._animation(1, this._playCount++, 1)
-        if (typeof this._endCallback == "function") this._endCallback()
+        if (typeof this._endCallback == "static") this._endCallback()
     }
 
     // resets the animation
@@ -68,23 +68,45 @@ class Anim {
 	set endCallback(_endCallback) {return this._endCallback = _endCallback}
 
     // Easings from: https://easings.net/
-    static easeInOutQuad = (x) => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2
+    static easeInSine=x=>1-Math.cos(x*Math.PI/2)
+    static easeOutSine=x=>Math.sin(x*Math.PI/2)
+    static easeInOutSine=x=>-(Math.cos(Math.PI*x)-1)/2
 
-    static easeOutQuad = (x) => 1 - (1 - x) * (1 - x)
+    static easeInCubic=x=>x*x*x
+    static easeOutCubic=x=>1-Math.pow(1-x,3)
+    static easeInOutCubic=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2
 
-    static easeOutBounce = (x) => {
-            if (x < 1 / 2.75) return 7.5625 * x * x
-            else if (x < 2 / 2.75) return 7.5625 * (x -= 1.5 / 2.75) * x + 0.75
-            else if (x < 2.5 / 2.75) return 7.5625 * (x -= 2.25 / 2.75) * x + 0.9375
-            else return 7.5625 * (x -= 2.625 / 2.75) * x + 0.984375
-    }
+    static easeInQuint=x=>x*x*x*x*x
+    static easeOutQuint=x=>1-Math.pow(1-x,5)
+    static easeInOutQuint=x=>x<.5?16*x*x*x*x*x:1-Math.pow(-2*x+2,5)/2
 
-    static easeInOutBounce = (x) => x < 0.5 ? (1 - this.easeOutBounce(1 - 2 * x)) / 2: (1 + this.easeOutBounce(2 * x - 1)) / 2
+    static easeInCirc=x=>1-Math.sqrt(1-Math.pow(x,2))
+    static easeOutCirc=x=>Math.sqrt(1-Math.pow(x-1,2))
+    static easeInOutCirc=x=>x<.5?(1-Math.sqrt(1-Math.pow(2*x,2)))/2:(Math.sqrt(1-Math.pow(-2*x+2,2))+1)/2
 
-    static easeInOutBack = (x) => x < 0.5? (Math.pow(2 * x, 2) * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) / 2 : (Math.pow(2 * x - 2, 2) * ((1.70158 * 1.525 + 1) * (x * 2 - 2) + 1.70158 * 1.525) + 2) / 2
+    static easeInElastic=x=>0===x?0:1===x?1:-Math.pow(2,10*x-10)*Math.sin((10*x-10.75)*(2*Math.PI/3))
+    static easeOutElastic=x=>0===x?0:1===x?1:Math.pow(2,-10*x)*Math.sin((10*x-.75)*(2*Math.PI/3))+1
+    static easeInOutElastic=x=>0===x?0:1===x?1:x<.5?-Math.pow(2,20*x-10)*Math.sin((20*x-11.125)*(2*Math.PI)/4.5)/2:Math.pow(2,-20*x+10)*Math.sin((20*x-11.125)*(2*Math.PI)/4.5)/2+1
 
-    static easeInOutElastic = (x) => x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 + 1;
-    
-    static linear = (x) => x
-    
+    static easeInQuad=x=>x*x
+    static easeOutQuad=x=>1-(1-x)*(1-x)
+    static easeInOutQuad=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2
+
+    static easeInQuart=x=>x*x*x*x
+    static easeOutQuart=x=>1-Math.pow(1-x,4)
+    static easeInOutQuart=x=>x<.5?8*x*x*x*x:1-Math.pow(-2*x+2,4)/2
+
+    static easeInExpo=x=>0===x?0:Math.pow(2,10*x-10)
+    static easeOutExpo=x=>1===x?1:1-Math.pow(2,-10*x)
+    static easeInOutExpo=x=>0===x?0:1===x?1:x<.5?Math.pow(2,20*x-10)/2:(2-Math.pow(2,-20*x+10))/2
+
+    static easeInBack=x=>2.70158*x*x*x-1.70158*x*x
+    static easeOutBack=x=>1+2.70158*Math.pow(x-1,3)+1.70158*Math.pow(x-1,2)
+    static easeInOutBack=x=>x<.5?Math.pow(2*x,2)*(7.189819*x-2.5949095)/2:(Math.pow(2*x-2,2)*(3.5949095*(2*x-2)+2.5949095)+2)/2
+
+    static easeInBounce=x=>1-easeOutBounce(1-x)
+    static easeOutBounce=x=>x<1/2.75?7.5625*x*x:x<2/2.75?7.5625*(x-=1.5/2.75)*x+.75:x<2.5/2.75?7.5625*(x-=2.25/2.75)*x+.9375:7.5625*(x-=2.625/2.75)*x+.984375
+    static easeInOutBounce=x=>x<.5?(1-this.easeOutBounce(1-2*x))/2:(1+this.easeOutBounce(2*x-1))/2
+
+    static linear=x=>x
 }
