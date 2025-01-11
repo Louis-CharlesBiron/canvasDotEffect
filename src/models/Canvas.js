@@ -22,12 +22,12 @@ class Canvas {
     #frameSkipsOffset = null // used to prevent significant frame gaps
     #timeStamp = null  // requestanimationframe timestamp in ms
 
-    constructor(cvs, loopingCallback, frame, settings=Canvas.DEFAULT_CTX_SETTINGS) {
+    constructor(cvs, loopingCallback, frame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                         //html canvas element
         this._frame = frame??cvs?.parentElement                 //html parent of canvas element
         this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)        //set styles selector
         this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true) //set styles selector
-        this._ctx = this._cvs.getContext("2d")                  //canvas context
+        this._ctx = this._cvs.getContext("2d", {willReadFrequently})   //canvas context
         this._settings = this.updateSettings(settings)          //set context settings
 
         this._els={refs:[], defs:[]}                            //arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]

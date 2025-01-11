@@ -83,49 +83,33 @@ class Color {
 
     static SEARCH_START = {TOP_LEFT:"TOP_LEFT", BOTTOM_RIGHT:"BOTTOM_RIGHT"}
     static DEFAULT_SEARCH_START = Color.SEARCH_START.TOP_LEFT
-    static findFirstPos(canvas, color, temperance=Color.DEFAULT_TEMPERANCE, searchStart=Color.DEFAULT_SEARCH_START, areaSize=[]) {
+    static findFirstPos(canvas, color, useAlpha=false, temperance=Color.DEFAULT_TEMPERANCE, searchStart=Color.DEFAULT_SEARCH_START, areaSize=[]) {
         let width = areaSize[0]??canvas.width, height = areaSize[1]??canvas.height,
             data = canvas.ctx.getImageData(0, 0, width, height).data,
-            x, y, yi, xi, currentR,
-            r = color.r, g = color.g, b = color.b,
-            br = r-temperance, bg = g-temperance, bb = b-temperance,
-            tr = r+temperance, tg = g+temperance, tb = b+temperance,
-            v = null
+            x, y, yi, xi, currentR, currentG, currentB, currentA, ow = 4*width,
+            r = color.r, g = color.g, b = color.b, a = color.a*255,
+            br = r-temperance, bg = g-temperance, bb = b-temperance, ba = a,
+            tr = r+temperance, tg = g+temperance, tb = b+temperance, ta = a,
+            isSearchTL = searchStart==Color.SEARCH_START.TOP_LEFT,
+            startX = isSearchTL?0:width-1, endX = isSearchTL?width:-1, stepX = isSearchTL?1:-1,
+            startY = isSearchTL?0:height-1, endY = isSearchTL?height:-1, stepY = isSearchTL?1:-1
 
-            if (searchStart==Color.SEARCH_START.TOP_LEFT) 
-                for (y=0;y<height;y++) {
-                        yi = y*4*width
-                        for (x=0;x<width;x++) {
-                            xi = yi+x*4
-                            currentR = data[xi]
-                            if (temperance) if (currentR >= br && currentR <= tr) if (data[xi+1] >= bg && data[xi+1] <= tg && data[xi+2] >= bb && data[xi+2] <= tb) {
-                                v = [x, y]
-                                break
-                            } else if (currentR == r) if (data[xi+1] == g && data[xi+2] == b) {
-                                v = [x, y]
-                                break
-                            }
+            for (y=startY;y!=endY;y+=stepY) {
+                yi = y*ow
+                for (x=startX;x!=endX;x+=stepX) {
+                    xi = yi+x*4
+                    currentR = data[xi] 
+                    if (temperance) {
+                        if (currentR >= br && currentR <= tr) {
+                            currentG = data[xi+1]
+                            currentB = data[xi+2]
+                            if (currentG >= bg && currentG <= tg && currentB >= bb && currentB <= tb && (!useAlpha || (currentA >= ba && currentA <= ta))) return [x, y]
                         }
-                    if (v) break
-                } 
-            else if (searchStart==Color.SEARCH_START.BOTTOM_RIGHT)
-                for (y=height;y>=0;y--) {
-                    yi = y*4*width
-                    for (x=width;x>=0;x--) {
-                        xi = yi+x*4
-                        currentR = data[xi]
-                        if (temperance) if (currentR >= br && currentR <= tr) if (data[xi+1] >= bg && data[xi+1] <= tg && data[xi+2] >= bb && data[xi+2] <= tb) {
-                            v = [x, y]
-                            break
-                        } else if (currentR == r) if (data[xi+1] == g && data[xi+2] == b) {
-                            v = [x, y]
-                            break
-                        }
-                    }
-                    if (v) break
+                    } else if (currentR == r) if (data[xi+1] == g && data[xi+2] == b && (!useAlpha || data[xi+3] == a)) return [x, y]
                 }
-        
-        return v// ? v : null
+            }
+
+        return null
     }
 
     // returns the usable value of the color
