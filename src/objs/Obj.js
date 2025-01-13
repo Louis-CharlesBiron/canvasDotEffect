@@ -90,6 +90,32 @@ class Obj {
         }, time, easing), isUnique, force)
     }
 
+    /**
+    * Used to make the dot follow a custom path
+    * @param {Number} duration: duration of the animation in ms
+    * @param {Function} easing: easing function 
+    * @param {Function?} action: custom callback that can be called in addition to the movement                                                        //newProg is 'prog' - the progress delimeter of the range
+    * @param {...Array[Number, Function]} progressSeparations: list of callback paired with a progress range, the callback must return a position (prog, newProg, initX, initY)=>return [x,y]
+    * progressSeparations example: [0:(prog)=>[x1, y1]], [0.5:(prog, fprog)=>[x2, y2]] -> from 0% to 49% the pos from 1st callback is applied, from 50%-100% the pos from 2nd callback is applied  
+    */
+    follow(duration, easing, action, ...progressSeparations) {
+        let [ix, iy] = this._pos, ps_ll = progressSeparations.length-1
+        this.playAnim(new Anim((prog)=>{
+            let progSep = null
+            if (prog<0) prog=0
+            for (let i=ps_ll;i>=0;i--) {
+                let progressSepIndex = progressSeparations[i]
+                if (progressSepIndex[0] <= prog) {
+                    progSep = progressSepIndex
+                    break
+                }
+            }
+            const [nx, ny] = progSep[1](prog, prog-progSep[0], this, ix, iy)
+            this.moveAt([ix+nx, iy+ny])
+            if (typeof action == "function") action(prog, this)
+        }, duration, easing))
+    }
+
     // moves the obj in specified direction at specified distance(force)
     addForce(force, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
         let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
