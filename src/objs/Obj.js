@@ -149,10 +149,15 @@ class Obj {
     get color() {return this._color.color}
     get initColor() {return this._initColor}
     get initRadius() {return this._initRadius}
+    get rgba() {return this.colorObject.rgba}
     get r() {return this.colorObject.r}
     get g() {return this.colorObject.g}
     get b() {return this.colorObject.b}
     get a() {return this.colorObject.a}
+    get hsv() {return this.colorObject.hsv}
+    get hue() {return this.colorObject.hue}
+    get saturation() {return this.colorObject.saturation}
+    get brightness() {return this.colorObject.brightness}
 
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}
@@ -164,6 +169,9 @@ class Obj {
     set g(g) {this.colorObject.g = g}
     set b(b) {this.colorObject.b = b}
     set a(a) {this.colorObject.a = a}
+    set hue(hue) {return this.colorObject.hue = hue}
+    set saturation(saturation) {return this.colorObject.saturation = saturation}
+    set brightness(brightness) {return this.colorObject.brightness = brightness}
     set initPos(ip) {this._initPos = ip}
     set initRadius(ir) {this._initRadius = ir}
     set initColor(ic) {this._initColor = ic}

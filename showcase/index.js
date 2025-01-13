@@ -46,7 +46,7 @@ filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotat
 CVS.add(filledShapeTester)
 
 let testMoreDragAnim = CanvasUtils.getDraggableDotCB()
-let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300])], 15, (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, "red"], [1, "yellow"]]), null, (ctx, dot, ratio, m, dist, shape)=>{
+let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, "blue")], 15, (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, "red"], [1, "yellow"]]), null, (ctx, dot, ratio, m, dist, shape)=>{
     if (shape.dots[0].id == dot.id) {
         testMoreDragAnim(shape.dots[0], m, dist, ratio)
 
