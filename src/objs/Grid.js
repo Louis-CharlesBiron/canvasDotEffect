@@ -14,9 +14,12 @@ class Grid extends Shape {
         this._gaps = gaps ?? Grid.DEFAULT_GAPS            // [x, y] gap length within the dots
         this._source = source ?? GridAssets.fontSource5x5 // symbols' source
         this._spacing = spacing ?? this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
-
-        if (this._keys) this.add(this.createGrid())
     }
+
+    initialize() {
+        super.initialize()
+        if (this._keys) this.add(this.createGrid())
+        }
 
     // Creates a formation of symbols
     createGrid(keys=this._keys, pos=super.pos, gaps=this._gaps, spacing=this._spacing, source=this._source) {

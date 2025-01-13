@@ -42,7 +42,7 @@ class Shape extends Obj {
         if (typeof this._ratioPosCB == "function") this._ratioPos = this._ratioPosCB(this)
     }
 
-    // adds a or many dots to the shape
+    // adds one or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
             if (typeof this._initColor!=="function") {dot.color = this.colorObject} // tocheck (todo)
@@ -51,16 +51,19 @@ class Shape extends Obj {
             dot.initialize()
             return dot
         }))
+        this._cvs.updateCachedAllEls()
     }
 
     // remove a dot from the shape by its id or by its instance
     removeDot(idOrDot) {
         this._dots = this._dots.filter(dot=>dot.id!==(idOrDot?.id??idOrDot))
+        this._cvs.updateCachedAllEls()
     }
 
     // remove the shape and all its dots
     remove() {
         this._cvs.remove(this._id)
+        this._cvs.updateCachedAllEls()
     }
 
     /**
@@ -227,6 +230,7 @@ class Shape extends Obj {
     // Empties the shapes of all its dots
     clear() {
         this._dots = []
+        this._cvs.updateCachedAllEls()
     }
 
     // Rerenders the shape to its original form

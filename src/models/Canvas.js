@@ -21,6 +21,7 @@ class Canvas {
     #deltaTimeCap = Canvas.DEFAULT_MAX_DELTATIME // used to prevent significant delta time gaps
     #frameSkipsOffset = null // used to prevent significant frame gaps
     #timeStamp = null  // requestanimationframe timestamp in ms
+    #cachedEls = [] // cached canvas elements to draw
 
     constructor(cvs, loopingCallback, frame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                         //html canvas element
@@ -115,10 +116,13 @@ class Canvas {
         this.#lastFrame = time
     }
 
+    updateCachedAllEls() {
+        this.#cachedEls = this.refs.concat(this._els.refs.flatMap(source=>source.asSource)).concat(this._els.defs)
+    }
+
     // calls the draw function on all canvas objects
     draw() {
-        let els = this.refs.concat(this._els.refs.flatMap(source=>source.asSource)).concat(this._els.defs), els_ll = els.length
-
+        let els = this.#cachedEls, els_ll = els.length
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
             if (!el.draw || !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING)) continue
@@ -166,12 +170,14 @@ class Canvas {
             }
             this._els[isDef?"defs":"refs"].push(obj)
         }
+        this.updateCachedAllEls()
     }
 
     // removes any element from the canvas by id
     remove(id) {
         this._els.defs = this._els.defs.filter(el=>el.id!==id)
         this._els.refs = this._els.refs.filter(source=>source.id!==id)
+        this.updateCachedAllEls()
     }
 
     // get any element from the canvas by id

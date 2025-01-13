@@ -131,7 +131,6 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null,
 
 
 
-
 CVS.add(draggableDotTester)
 CVS.add(movementsTester)
 CVS.add(animTester)
