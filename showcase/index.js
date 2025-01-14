@@ -41,7 +41,7 @@ let filledShapeTester = new FilledShape(
     true, [150, 450], [new Dot([100, 400]), new Dot([100, 450]), new Dot([150, 450]),new Dot([150, 400]),new Dot([125,325])], null, null, null, (ctx, dot, ratio, m, dist, shape)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
-})
+},)
 filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
 CVS.add(filledShapeTester)
 
@@ -82,13 +82,13 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
     let dx=400, dy=200, dot = shape.dots.last()
     dot.g = 0
     dot.follow(3000, null, (prog, dot, cprog)=>{
-        let d = new Dot(dot.pos_, 4)
-            d.playAnim(new Anim((progress, a)=>{
-                d.a=1-progress
-                if (progress==1) d.remove()
-            }, 1000))
-
-        shape.add(d, true)
+        //let d = new Dot(dot.pos_, 4)
+        //    d.playAnim(new Anim((progress, a)=>{
+        //        d.a=1-progress
+        //        if (progress==1) d.remove()
+        //    }, 1000))
+//
+        //shape.add(d, true)
     }, [0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]])
 
 
@@ -113,7 +113,7 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null,
 
     let mouseOn = dot.isWithin(m.pos, true)
     if (mouseOn && m.clicked) dot.color = [255, 0, 0, 1]
-    else if (mouseOn) dot.color = [0, 255, 0, 1]
+    else if (mouseOn) dot.color = [0, 254, 0, 1]
     else dot.color = [255, 255, 255, 1]
 
     CanvasUtils.drawOuterRing(dot, [255,255,255,CDEUtils.mod(0.3, ratio)], 3)

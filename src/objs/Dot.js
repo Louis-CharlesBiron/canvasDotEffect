@@ -9,6 +9,7 @@ class Dot extends Obj {
         super(pos, radius, color, setupCB)
         this._parent = null               // the instance containing the dot's parent (Shape)
         this._connections = []            // array of Dot to draw a connecting line to
+        this._initialized = false
     }
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
@@ -25,6 +26,12 @@ class Dot extends Obj {
         }
 
         super.draw(ctx, time)
+    }
+
+    
+    // returns a separate copy of this Dot (only initialized for objects)
+    duplicate() {
+        return this.initialized ? new Dot(this.pos_, this.radius, this.colorObject.duplicate(), this.setupCB) : null
     }
 
     // returns pythagorian distance between the ratio defining position and the dot

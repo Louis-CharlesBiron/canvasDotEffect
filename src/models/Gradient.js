@@ -25,6 +25,12 @@ class Gradient {
         return typeof isLinear=="number" ? isLinear : isLinear==true ? 0 : false
     }
 
+    // returns a separate copy of the Gradient
+    duplicate(positions=this._positions) {
+        console.log(positions,  Array.isArray(positions)?"manual":"auto")
+        return new Gradient(this._ctx, Array.isArray(positions) ? [...positions] : positions, this._isLinear, [...this._colorStops])
+    }
+
     /**
      * Given a shape, returns automatic positions values for linear or radial gradients
      * @param {Shape} obj: Instance of Shape or inheriting shape 

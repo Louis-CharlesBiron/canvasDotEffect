@@ -22,14 +22,18 @@ class Color {
     }
 
     // returns a new instance of the same color
-    duplicate() {
-        return new Color([...this.#rgba])
+    duplicate(gradientPositions) {
+        if (this._format == Color.FORMATS.GRADIENT) return new Color(this._color.duplicate(gradientPositions))
+        else return new Color([...this.#rgba])
     }
 
     // updates the cached rgba value
     #updateCache() {
-        this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : [...this._color])
-        this.#hsv = Color.convertTo(Color.FORMATS.HSV, this.#rgba)
+        if (this._format == Color.FORMATS.GRADIENT) this.#rgba = this.#hsv = []
+        else {
+            this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : [...this._color])
+            this.#hsv = Color.convertTo(Color.FORMATS.HSV, this.#rgba)
+        }
     }
 
     // converts a color to another color format

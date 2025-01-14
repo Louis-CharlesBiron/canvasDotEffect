@@ -34,12 +34,18 @@ class Shape extends Obj {
         this.setColor(this.getInitColor(), true)
 
         if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
+        this.initialized = true
     }
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
     draw(ctx, time) {
         super.draw(ctx, time)
         if (typeof this._ratioPosCB == "function") this._ratioPos = this._ratioPosCB(this)
+    }
+
+    // returns a separate copy of this Shape (only initialized for objects)
+    duplicate() {
+        return this.initialized ? new Shape(this.pos_, this._dots.map(d=>d.duplicate()), this.radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
     }
 
     // adds one or many dots to the shape

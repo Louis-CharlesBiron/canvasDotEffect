@@ -156,8 +156,8 @@ class Canvas {
         return this._settings=st
     }
 
-    // add 1 or many objects, as a (def)inition or as a (ref)erence (source)
-    add(objs, isDef) {
+    // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "active" is false, it only initializes the obj, without adding it to the canvas
+    add(objs, isDef, active=true) {
         let l = objs.length??1
         for (let i=0;i<l;i++) {
             let obj = objs[i]??objs
@@ -168,7 +168,8 @@ class Canvas {
                 obj.parent = this
                 if (typeof obj.initialize=="function") obj.initialize()
             }
-            this._els[isDef?"defs":"refs"].push(obj)
+
+            if (active) this._els[isDef?"defs":"refs"].push(obj)
         }
         this.updateCachedAllEls()
     }

@@ -10,16 +10,21 @@ class Grid extends Shape {
     constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
         super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
 
-        this._keys = keys                                 // keys to convert to source's values 
+        this._keys = keys                                 // keys to convert to source's values as a string
         this._gaps = gaps ?? Grid.DEFAULT_GAPS            // [x, y] gap length within the dots
-        this._source = source ?? GridAssets.fontSource5x5 // symbols' source
         this._spacing = spacing ?? this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
+        this._source = source ?? GridAssets.fontSource5x5 // symbols' source
     }
 
     initialize() {
         super.initialize()
         if (this._keys) this.add(this.createGrid())
-        }
+    }
+
+    // returns a separate copy of this Grid (only initialized for objects)
+    duplicate() {
+        return this.initialized ? new Grid(this._keys, [...this._gaps], this._spacing, this._source, this.pos_, this.radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
+    }
 
     // Creates a formation of symbols
     createGrid(keys=this._keys, pos=super.pos, gaps=this._gaps, spacing=this._spacing, source=this._source) {

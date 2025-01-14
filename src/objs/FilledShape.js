@@ -33,6 +33,11 @@ class FilledShape extends Shape {
         }
     }
 
+    // returns a separate copy of this FilledShape (only initialized for objects)
+    duplicate() {
+        return this.initialized ? new FilledShape((_,shape)=>this.fillColorRaw instanceof Gradient?this.fillColorRaw.duplicate(Array.isArray(this.fillColorRaw.initPositions)?null:shape):this.fillColorObject.duplicate(), this._dynamicUpdates, this.pos_, this._dots.map(d=>d.duplicate()), this.radius, (_,shape)=>this.colorRaw instanceof Gradient?this.colorRaw.duplicate(Array.isArray(this.colorRaw.initPositions)?null:shape):this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
+    }
+
     // updates the path perimeter if the dots pos have changed
     updatePath() {
         let d_ll = this.dots.length
@@ -58,6 +63,6 @@ class FilledShape extends Shape {
 
     set fillColor(fillColor) {
         if (this.fillColorObject?.colorRaw?.toString() != fillColor.toString() || !this._fillColor) this._fillColor = Color.adjust(fillColor)
-        }
+    }
 	set dynamicUpdates(_dynamicUpdates) {return this._dynamicUpdates = _dynamicUpdates}
 }

@@ -18,6 +18,7 @@ class Obj {
         this._color = this._initColor           // the current color or gradient of the filled shape
         this._setupCB = setupCB                 // called on object's initialization (this, this.parent)=>
         this._anims = {backlog:[], currents:[]} // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
+        this._initialized = false               // whether the shape has been initialized yet
     }
 
     // Runs when the object gets added to a canvas instance
@@ -26,6 +27,7 @@ class Obj {
         this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
         this.color = this.getInitColor()
         if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
+        this._initialized = true
     }
 
     // returns the value of the inital color declaration
@@ -51,10 +53,10 @@ class Obj {
         for (let i=0;i<a_ll;i++) anims[i].getFrame(time)
     }
 
-    // returns whether the provided pos is inside the obj
+    // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the dot's radius)
     isWithin(pos, circularDetection) {
         let [x,y]=pos
-        return circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom
+        return  (x!=null&&y!=null) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
     }
 
     // Returns the [top, right, bottom, left] distances between the canvas limits, according to the object's size
@@ -184,6 +186,7 @@ class Obj {
     get hue() {return this.colorObject.hue}
     get saturation() {return this.colorObject.saturation}
     get brightness() {return this.colorObject.brightness}
+    get initialized() {return this._initialized}
 
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}
@@ -201,5 +204,6 @@ class Obj {
     set initPos(ip) {this._initPos = ip}
     set initRadius(ir) {this._initRadius = ir}
     set initColor(ic) {this._initColor = ic}
+    set initialized(init) {this._initialized = init}
     
 }
