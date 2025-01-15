@@ -101,5 +101,9 @@ class CanvasUtils {
         }
     }
 
+    // Generic function to rotate the gradient of an object
+    static rotateGradient(obj, duration, speed=1) {
+        return obj.playAnim(new Anim((prog)=>obj.colorRaw.rotation=-speed*360*prog, duration))
+    }
 
 }

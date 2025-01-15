@@ -1,11 +1,7 @@
-// MAYBE LIKELY
+// YEAH MAYBE LIKELY
 - non square grid sources
 
-- image stuff,   mask
-
-- 3d
-
-- mutiple anim at same time
+- image stuff, mask/"green screen"
 
 - dot generation (like tp web)
 
@@ -18,6 +14,8 @@
 
 // LESS LIKELY
 - ratioPos depending on multiple pos
+
+- 3d
 
 - something like gd frame animation for ratioPos
 

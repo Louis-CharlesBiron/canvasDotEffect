@@ -5,6 +5,8 @@
 
 // Allows the creation of custom gradients
 class Gradient {
+    static PLACEHOLDER = "PLACERHOLDER" // can be used to instantiate a Gradient without positions, and apply that of the object on assignement
+
     #lastDotsPos = null
     #lastRotation = null
     #lastDotPos = null
@@ -27,7 +29,6 @@ class Gradient {
 
     // returns a separate copy of the Gradient
     duplicate(positions=this._positions) {
-        console.log(positions,  Array.isArray(positions)?"manual":"auto")
         return new Gradient(this._ctx, Array.isArray(positions) ? [...positions] : positions, this._isLinear, [...this._colorStops])
     }
 
@@ -87,15 +88,16 @@ class Gradient {
         } else return false
     }
 
-    // Creates and returns the gradient. Updates it if the initPositions is a Shape instance
+    // Creates and returns the gradient. Updates it if the initPositions is a Shape/Dot instance
     updateGradient() {
-        this._positions = this.getAutomaticPositions()
-        this._gradient = this._ctx[`create${typeof this.#getFormatedIsLinear()=="number"?"Linear":"Radial"}Gradient`](...this._positions[0], ...this._positions[1])
-        let cs_ll = this._colorStops.length
-        for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], this._colorStops[i][1].color)
-        return this._gradient
+        if (this._initPositions !== Gradient.PLACEHOLDER) {
+            this._positions = this.getAutomaticPositions()
+            this._gradient = this._ctx[`create${typeof this.#getFormatedIsLinear()=="number"?"Linear":"Radial"}Gradient`](...this._positions[0], ...this._positions[1])
+            let cs_ll = this._colorStops.length
+            for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], this._colorStops[i][1].color)
+            return this._gradient
+        }
     }
-
 
     get ctx() {return this._ctx}
     get initPositions() {return this._initPositions}
@@ -109,6 +111,7 @@ class Gradient {
         return this._gradient
     }
 	set ctx(_ctx) {this._ctx = _ctx}
+    set initPositions(initPositions) {this._initPositions = initPositions}
 	set positions(_positions) {this._positions = _positions}
 	set colorStops(_colorStops) {this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])}
     set isLinear(isLinear) {this._isLinear = isLinear}
