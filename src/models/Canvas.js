@@ -125,7 +125,7 @@ class Canvas {
         let els = this.#cachedEls, els_ll = els.length
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
-            if (!el.draw || !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING)) continue
+            if (!el.draw || (!el.alwaysActive && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING))) continue
             el.draw(this._ctx, this.timeStamp, this._deltaTime)
         }
     }
@@ -161,13 +161,10 @@ class Canvas {
         let l = objs.length??1
         for (let i=0;i<l;i++) {
             let obj = objs[i]??objs
-            if (!isDef) {
-                obj.cvs = this
-                if (typeof obj.initialize=="function") obj.initialize()
-            } else {
-                obj.parent = this
-                if (typeof obj.initialize=="function") obj.initialize()
-            }
+            if (!isDef) obj.cvs = this
+            else obj.parent = this
+            
+            if (typeof obj.initialize=="function") obj.initialize()
 
             if (active) this._els[isDef?"defs":"refs"].push(obj)
         }

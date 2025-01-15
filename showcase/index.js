@@ -41,7 +41,7 @@ let filledShapeTester = new FilledShape(
     true, [150, 450], [new Dot([100, 400]), new Dot([100, 450]), new Dot([150, 450]),new Dot([150, 400]),new Dot([125,325])], null, null, null, (ctx, dot, ratio, m, dist, shape)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
-},)
+}, null, null, true)
 filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
 CVS.add(filledShapeTester)
 

@@ -5,11 +5,10 @@
 
 // The main component to create Effect, can be used on it's on, but designed to be contained by a Shape instance
 class Dot extends Obj {
-    constructor(pos, radius, color, setupCB) {
-        super(pos, radius, color, setupCB)
+    constructor(pos, radius, color, setupCB, alwaysActive) {
+        super(pos, radius, color, setupCB, alwaysActive)
         this._parent = null               // the instance containing the dot's parent (Shape)
         this._connections = []            // array of Dot to draw a connecting line to
-        this._initialized = false
     }
 
     // runs every frame, draws the dot and runs its parent drawEffect callback

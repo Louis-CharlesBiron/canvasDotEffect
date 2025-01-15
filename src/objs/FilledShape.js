@@ -6,8 +6,8 @@
 // Regular shape with a filled area defined by its dots
 class FilledShape extends Shape {
     #lastDotsPos = null
-    constructor(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
-        super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
+    constructor(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, alwaysActive, fragile) {
+        super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, alwaysActive, fragile)
         this._initFillColor = fillColor                           // declaration color fill value
         this._fillColor = this._initFillColor                     // the current color or gradient of the filled shape
         this._path = null                                         // path perimeter delimiting the surface to fill

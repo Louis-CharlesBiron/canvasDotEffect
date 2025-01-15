@@ -8,17 +8,18 @@ class Obj {
     static DEFAULT_POS = [0,0]
     static DEFAULT_RADIUS = 5
 
-    constructor(pos, radius, color, setupCB) {
-        this._id = Canvas.ELEMENT_ID_GIVER++    // canvas obj id
-        this._initPos = pos                     // initial position : [x,y] || (Canvas)=>{return [x,y]}
-        this._pos = pos                         // current position from the center of the object : [x,y]
-        this._initRadius = radius               // initial object's radius
-        this._radius = this._initRadius         // current object's radius
-        this._initColor = color                 // declaration color value || (ctx, this)=>{return color value}
-        this._color = this._initColor           // the current color or gradient of the filled shape
-        this._setupCB = setupCB                 // called on object's initialization (this, this.parent)=>
-        this._anims = {backlog:[], currents:[]} // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
-        this._initialized = false               // whether the shape has been initialized yet
+    constructor(pos, radius, color, setupCB, alwaysActive) {
+        this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
+        this._initPos = pos                      // initial position : [x,y] || (Canvas)=>{return [x,y]}
+        this._pos = pos                          // current position from the center of the object : [x,y]
+        this._initRadius = radius                // initial object's radius
+        this._radius = this._initRadius          // current object's radius
+        this._initColor = color                  // declaration color value || (ctx, this)=>{return color value}
+        this._color = this._initColor            // the current color or gradient of the filled shape
+        this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
+        this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
+        this._anims = {backlog:[], currents:[]}  // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
+        this._initialized = false                // whether the shape has been initialized yet
     }
 
     // Runs when the object gets added to a canvas instance
@@ -187,6 +188,7 @@ class Obj {
     get saturation() {return this.colorObject.saturation}
     get brightness() {return this.colorObject.brightness}
     get initialized() {return this._initialized}
+    get alwaysActive() {return this._alwaysActive}
 
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}
@@ -204,12 +206,13 @@ class Obj {
     set g(g) {this.colorObject.g = g}
     set b(b) {this.colorObject.b = b}
     set a(a) {this.colorObject.a = a}
-    set hue(hue) {return this.colorObject.hue = hue}
-    set saturation(saturation) {return this.colorObject.saturation = saturation}
-    set brightness(brightness) {return this.colorObject.brightness = brightness}
+    set hue(hue) {this.colorObject.hue = hue}
+    set saturation(saturation) {this.colorObject.saturation = saturation}
+    set brightness(brightness) {this.colorObject.brightness = brightness}
     set initPos(ip) {this._initPos = ip}
     set initRadius(ir) {this._initRadius = ir}
     set initColor(ic) {this._initColor = ic}
     set initialized(init) {this._initialized = init}
+    set alwaysActive(aa) {this._alwaysActive = aa}
     
 }

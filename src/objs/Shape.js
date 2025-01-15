@@ -7,8 +7,8 @@
 class Shape extends Obj {
     static DEFAULT_LIMIT = 100
 
-    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
-        super(pos, radius??Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB)
+    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, alwaysActive, fragile) {
+        super(pos, radius??Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, alwaysActive)
         this._cvs = null                         // CVS instance
         this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                    // initial dots declaration
@@ -16,7 +16,7 @@ class Shape extends Obj {
         this._ratioPos = [Infinity,Infinity]     // position of ratio target object 
         this._drawEffectCB = drawEffectCB        // (ctx, Dot, ratio, mouse, distance, parent, rawRatio)=>
         this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>
-        this._fragile = fragile||false           // whether the shape resets on document visibility change 
+        this._fragile = fragile||false           // whether the shape resets on document visibility change
 
         this._rotation = 0                       // the shape's rotation in degrees 
         this._scale = [1,1]                      // the shape's scale factor: [scaleX, scaleY] 
@@ -51,8 +51,9 @@ class Shape extends Obj {
     // adds one or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
-            if (typeof this._initColor!=="function") {dot.color = this.colorObject} // tocheck (todo)
-            dot.radius = !dot.radius ? this._radius : dot.radius
+            if (typeof this._initColor!=="function") dot.color = this.colorObject // tocheck (todo)
+            dot.radius = !dot.radius ? this._radius : dot.radius // tocheck (todo)
+            if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
             dot.parent = this
             dot.initialize()
             return dot

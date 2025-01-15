@@ -7,8 +7,8 @@
 class Grid extends Shape {
     static DEFAULT_GAPS = [25, 25]
 
-    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
-        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
+    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, alwaysActive, fragile) {
+        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, alwaysActive, fragile)
 
         this._keys = keys                                 // keys to convert to source's values as a string
         this._gaps = gaps ?? Grid.DEFAULT_GAPS            // [x, y] gap length within the dots
