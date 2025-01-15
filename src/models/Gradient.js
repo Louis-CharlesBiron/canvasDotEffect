@@ -99,6 +99,10 @@ class Gradient {
         }
     }
 
+    toString() {
+        return "G"+this._positions+this._colorStops+this.isLinear
+    }
+
     get ctx() {return this._ctx}
     get initPositions() {return this._initPositions}
     get positions() {return this._positions}
