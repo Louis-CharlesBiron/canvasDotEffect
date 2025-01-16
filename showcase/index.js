@@ -9,15 +9,15 @@ const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//lo
 
 const normalColorTester = new Color("white")
 
-let movementsTester = new Shape([500,500],[
-     new Dot([450, 400]),
-     new Dot([450, 500]),
-     new Dot([450, 550]),
-     new Dot([500, 450]),
-     new Dot([550, 450]),
-     new Dot([550, 500]),
-     new Dot([550, 550]),
-     new Dot([500, 550]),
+let movementsTester = new Shape([300,300],[
+     new Dot([0, -50]),
+     new Dot([0, 50]),
+     new Dot([0, 100]),
+     new Dot([50, 0]),
+     new Dot([100, 0]),
+     new Dot([100, 50]),
+     new Dot([100, 100]),
+     new Dot([50, 100]),
  ], null, normalColorTester, 100, (ctx, dot, ratio, m, dist)=>{
      dot.a = CDEUtils.mod(1, ratio, 0.8)
      //dot.r = CDEUtils.mod(255, ratio, -255)
@@ -28,10 +28,9 @@ let movementsTester = new Shape([500,500],[
      dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
      CanvasUtils.drawOuterRing(dot, [255,255,255,0.2], 5)
 
- }, null, null, [-500, -500])
+ }, null, null, [50,0])
 CanvasUtils.toggleCenter(movementsTester)
 
-let movementsTester2 = new Shape([50,50],[new Dot([50, 50])])
 
 let dragAnim2 = CanvasUtils.getDraggableDotCB()
 let filledShapeTester = new FilledShape(
@@ -90,20 +89,6 @@ let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200]
 
 
 
-let animTesterDx = 200
-let animTester = new Shape([400,200],[
-    new Dot([0,50], null, null, (dot, shape)=>{
-        dot.playAnim(new Anim((progress, playCount)=>{
-            dot.a=1-progress
-            if (playCount % 2) dot.x+=animTesterDx*progress*CVS.deltaTime
-            else dot.x-=animTesterDx*progress*CVS.deltaTime
-        }, -1000))
-    })
-], null, null, 25, (ctx, dot, ratio, m, dist)=>{
-    CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)
-})
-
-
 
 // SINGLE DRAGGABLE DOT
 let dragAnim1 = CanvasUtils.getDraggableDotCB()
@@ -128,11 +113,24 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null,
 }, null)
 // ()=>[animTester.firstDot.x+50, animTester.firstDot.y]
 
-CVS.add(animTester)
-CVS.add(draggableDotTester)
+let animTesterDx = 200
+let animTester = new Shape([400,200],[
+    new Dot([0,50], null, null, (dot, shape)=>{
+        dot.playAnim(new Anim((progress, playCount)=>{
+            dot.a=1-progress
+            if (playCount % 2) dot.x+=animTesterDx*progress*CVS.deltaTime
+            else dot.x-=animTesterDx*progress*CVS.deltaTime
+        }, -1000))
+    })
+], null, null, 25, (ctx, dot, ratio, m, dist)=>{
+    CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)
+}, null, null, ()=>draggableDotTester.firstDot?.pos, true)
+
+//CVS.add(animTester)
+//CVS.add(draggableDotTester)
 //CVS.add(testMore)
 //CVS.add(filledShapeTester)
-//CVS.add(movementsTester)
+CVS.add(movementsTester)
 //CVS.add(le)
 //CVS.add(test2)
 

@@ -29,6 +29,7 @@
 //// ANCHOR POS TODO
 - fix Dynamic anchor verifs (obj / cb)
 
+TEST MOVE AT / BY / TO :|
 
 null (default -> parent or CVS)
 Obj.ANCHOR_ABSOLUTE = [0, 0]

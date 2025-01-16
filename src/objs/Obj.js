@@ -202,7 +202,7 @@ class Obj {
         if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent.pos_
         else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_
         else if (this._anchorPos==Obj.ABSOLUTE_ANCHOR) return [0,0]
-        else if (typeof this._anchorPos=="function") return [...this._anchorPos(this, this._cvs??this.parent)]
+        else if (typeof this._anchorPos=="function") return [...(this._anchorPos(this, this._cvs??this.parent)||[0,0])]
         else return this._anchorPos
     }
     get lastAnchorPos() {return this.#lastAnchorPos}

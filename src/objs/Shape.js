@@ -24,7 +24,7 @@ class Shape extends Obj {
 
     // initializes the shape, adds its dots and initializes them
     initialize() {
-        this.relativePos = this.getInitPos()
+        this._pos = this.getInitPos()
 
         if (typeof this._initDots == "string") this.add(this.createFromString(this._initDots))
         else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))
@@ -42,7 +42,7 @@ class Shape extends Obj {
         if (this.lastAnchorPos?.toString() !== this.anchorPos?.toString()) {
             this.relativeX += (this.anchorPos[0]*1)-this.lastAnchorPos[0]
             this.relativeY += (this.anchorPos[1]*1)-this.lastAnchorPos[1]
-            //console.log("SHAPE", this.anchorPos, this.lastAnchorPos, this.relativeX, this.relativeY)
+            console.log("SHAPE", this.anchorPos, this.lastAnchorPos, this.relativeX, this.relativeY)
             //console.log("UPDATE ANCHOR POS SHAPE", this, this.anchorPos, this.lastAnchorPos, this.anchorPosRaw, this.hasDynamicAnchorPos, this.lastAnchorPos?.toString() !== this.anchorPos?.toString())
             this.lastAnchorPos = this.anchorPos
         }
