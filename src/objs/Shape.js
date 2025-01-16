@@ -39,7 +39,13 @@ class Shape extends Obj {
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
     draw(ctx, time) {
-        
+        if (this.lastAnchorPos?.toString() !== this.anchorPos?.toString()) {
+            this.relativeX += (this.anchorPos[0]*1)-this.lastAnchorPos[0]
+            this.relativeY += (this.anchorPos[1]*1)-this.lastAnchorPos[1]
+            //console.log("SHAPE", this.anchorPos, this.lastAnchorPos, this.relativeX, this.relativeY)
+            //console.log("UPDATE ANCHOR POS SHAPE", this, this.anchorPos, this.lastAnchorPos, this.anchorPosRaw, this.hasDynamicAnchorPos, this.lastAnchorPos?.toString() !== this.anchorPos?.toString())
+            this.lastAnchorPos = this.anchorPos
+        }
         super.draw(ctx, time)
         if (typeof this._ratioPosCB == "function") this._ratioPos = this._ratioPosCB(this)
     }

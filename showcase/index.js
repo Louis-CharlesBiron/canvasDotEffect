@@ -41,7 +41,6 @@ let filledShapeTester = new FilledShape(
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
 }, null, null, null, true)
 filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
-CVS.add(filledShapeTester)
 
 let testMoreDragAnim = CanvasUtils.getDraggableDotCB()
 let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, "blue")], 15, (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, "red"], [1, "yellow"]]), null, (ctx, dot, ratio, m, dist, shape)=>{
@@ -55,22 +54,8 @@ let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, 
     }
 }, null, null, null)
 testMore.playAnim(new Anim((prog)=>testMore.colorRaw.rotation=-360*prog, -750))
-CVS.add(testMore)
 
 
-
-let animTesterDx = 200
-let animTester = new Shape([400,200],[
-    new Dot([0,50], null, null, (dot, shape)=>{
-        dot.playAnim(new Anim((progress, playCount)=>{
-            dot.a=1-progress
-            if (playCount % 2) dot.x+=animTesterDx*progress*CVS.deltaTime
-            else dot.x-=animTesterDx*progress*CVS.deltaTime
-        }, -1000))
-    })
-], null, null, 25, (ctx, dot, ratio, m, dist)=>{
-    CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)
-})
 
 let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])], (shape)=>{return shape.dots.length*2}, normalColorTester, 100, (ctx, dot, ratio)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
@@ -105,6 +90,21 @@ let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200]
 
 
 
+let animTesterDx = 200
+let animTester = new Shape([400,200],[
+    new Dot([0,50], null, null, (dot, shape)=>{
+        dot.playAnim(new Anim((progress, playCount)=>{
+            dot.a=1-progress
+            if (playCount % 2) dot.x+=animTesterDx*progress*CVS.deltaTime
+            else dot.x-=animTesterDx*progress*CVS.deltaTime
+        }, -1000))
+    })
+], null, null, 25, (ctx, dot, ratio, m, dist)=>{
+    CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)
+})
+
+
+
 // SINGLE DRAGGABLE DOT
 let dragAnim1 = CanvasUtils.getDraggableDotCB()
 let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null, (ctx, dot, ratio, m, dist, shape)=>{
@@ -125,11 +125,13 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null,
     }, -750, Anim.easeOutQuad))
 
     dot.playAnim(new Anim((prog, i, cprog)=>{dot.b = i%2?255*(1-cprog):255*cprog}, -750))
-}, ()=>animTester.firstDot.pos)
-
+}, null)
+// ()=>[animTester.firstDot.x+50, animTester.firstDot.y]
 
 CVS.add(animTester)
 CVS.add(draggableDotTester)
+//CVS.add(testMore)
+//CVS.add(filledShapeTester)
 //CVS.add(movementsTester)
 //CVS.add(le)
 //CVS.add(test2)

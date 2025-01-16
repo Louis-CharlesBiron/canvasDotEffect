@@ -9,6 +9,7 @@ class Obj {
     static DEFAULT_RADIUS = 5
     static ABSOLUTE_ANCHOR = "ABSOLUTE_ANCHOR"
 
+    #lastAnchorPos = [0,0]
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
         this._initPos = pos                      // initial position : [x,y] || (Canvas)=>{return [x,y]}
@@ -18,8 +19,7 @@ class Obj {
         this._initColor = color                  // declaration color value || (ctx, this)=>{return color value}
         this._color = this._initColor            // the current color or gradient of the filled shape
         this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
-        this._initAnchorPos = anchorPos          // reference point from which the object's pos will be set
-        this._anchorPos = anchorPos              // reference point from which the object's pos will be set
+        this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
         
         this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
         this._anims = {backlog:[], currents:[]}  // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
@@ -28,7 +28,7 @@ class Obj {
 
     // Runs when the object gets added to a canvas instance
     initialize() {
-        this.relativePos = this.getInitPos()||Obj.DEFAULT_POS
+        this._pos = this.getInitPos()||Obj.DEFAULT_POS
         this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
         this.color = this.getInitColor()
         if (typeof this._setupCB == "function") this._setupCB(this, this.parent)
@@ -50,22 +50,12 @@ class Obj {
         return typeof this._initPos=="function" ? [...this._initPos(this._cvs??this.parent, this.parent??this)] : [...this._initPos]
     }
 
-    // returns the value of the inital anchorPos declaration
-    getInitAnchorPos() {
-        
-    }
-
     // Runs every frame
     draw(ctx, time) {
         let anims = this._anims.currents
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         let a_ll = anims.length
         for (let i=0;i<a_ll;i++) anims[i].getFrame(time)
-
-        if (this.hasDynamicAnchorPos || this.parent?.hasDynamicAnchorPos) {
-            //console.log(this.pos, this.relativeX, this.relativeY)
-            this.relativePos = this.getInitPos()
-        }
     }
 
     // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the dot's radius)
@@ -207,7 +197,7 @@ class Obj {
     get initialized() {return this._initialized}
     get alwaysActive() {return this._alwaysActive}
     get anchorPosRaw() {return this._anchorPos}
-    get hasDynamicAnchorPos() {return Boolean(this._anchorPos instanceof Obj||this._anchorPos)}
+    get hasDynamicAnchorPos() {return Boolean(this._anchorPos instanceof Obj||typeof this._anchorPos=="function")}
     get anchorPos() {// returns the anchorPos value
         if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent.pos_
         else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_
@@ -215,6 +205,7 @@ class Obj {
         else if (typeof this._anchorPos=="function") return [...this._anchorPos(this, this._cvs??this.parent)]
         else return this._anchorPos
     }
+    get lastAnchorPos() {return this.#lastAnchorPos}
 
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}
@@ -249,6 +240,10 @@ class Obj {
     set initColor(initColor) {this._initColor = initColor}
     set initialized(init) {this._initialized = init}
     set alwaysActive(alwaysActive) {this._alwaysActive = alwaysActive}
-    set anchorPosRaw(anchorPos) {this._anchorPos = anchorPos}
+    set anchorPos(anchorPos) {this.anchorPosRaw = anchorPos}
+    set anchorPosRaw(anchorPos) {
+        this._anchorPos = anchorPos
+    }
+    set lastAnchorPos(l) {this.#lastAnchorPos = l}
     
 }
