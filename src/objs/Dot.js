@@ -5,8 +5,8 @@
 
 // The main component to create Effect, can be used on it's on, but designed to be contained by a Shape instance
 class Dot extends Obj {
-    constructor(pos, radius, color, setupCB, alwaysActive) {
-        super(pos, radius, color, setupCB, alwaysActive)
+    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
+        super(pos, radius, color, setupCB, anchorPos, alwaysActive)
         this._parent = null               // the instance containing the dot's parent (Shape)
         this._connections = []            // array of Dot to draw a connecting line to
     }

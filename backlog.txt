@@ -26,4 +26,7 @@
 
 
 
-git test
+//// ANCHOR POS TODO
+- fix Dynamic anchor verifs (obj / cb)
+
+- make it so when you update the anchor pos, it actully moves

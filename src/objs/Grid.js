@@ -7,8 +7,8 @@
 class Grid extends Shape {
     static DEFAULT_GAPS = [25, 25]
 
-    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, alwaysActive, fragile) {
-        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, alwaysActive, fragile)
+    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile) {
+        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)
 
         this._keys = keys                                 // keys to convert to source's values as a string
         this._gaps = gaps ?? Grid.DEFAULT_GAPS            // [x, y] gap length within the dots
@@ -27,7 +27,7 @@ class Grid extends Shape {
     }
 
     // Creates a formation of symbols
-    createGrid(keys=this._keys, pos=super.pos, gaps=this._gaps, spacing=this._spacing, source=this._source) {
+    createGrid(keys=this._keys, pos=[0,0], gaps=this._gaps, spacing=this._spacing, source=this._source) {
         let [cx, cy] = pos, isNewLine=true, symbols=[]
         ;[...keys].forEach(l=>{
             let symbol = this.createSymbol(l, [cx=(l=="\n")?pos[0]:(cx+spacing*(!isNewLine)), cy+=(l=="\n")&&source.width*gaps[1]+this.radius])
@@ -38,7 +38,7 @@ class Grid extends Shape {
     }
 
     // Creates the dot based symbol at given pos, based on given source
-    createSymbol(key, pos=super.pos, source=this._source) {
+    createSymbol(key, pos=super.relativePos, source=this._source) {
         let dotGroup = [], [gx, gy] = this._gaps, xi=[0,0], yi=0, s = source[key.toUpperCase()],
         sourceRadius = Math.sqrt(source.width*source.height)
 

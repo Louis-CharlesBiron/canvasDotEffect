@@ -7,16 +7,18 @@
 class Obj {
     static DEFAULT_POS = [0,0]
     static DEFAULT_RADIUS = 5
+    static ABSOLUTE_ANCHOR = "ABSOLUTE_ANCHOR"
 
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
         this._initPos = pos                      // initial position : [x,y] || (Canvas)=>{return [x,y]}
-        this._pos = pos                          // current position from the center of the object : [x,y]
+        this._pos = [0,0]                        // current position from the center of the object : [x,y]
         this._initRadius = radius                // initial object's radius
         this._radius = this._initRadius          // current object's radius
         this._initColor = color                  // declaration color value || (ctx, this)=>{return color value}
         this._color = this._initColor            // the current color or gradient of the filled shape
         this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
+        this._initAnchorPos = anchorPos          // reference point from which the object's pos will be set
         this._anchorPos = anchorPos              // reference point from which the object's pos will be set
         
         this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
@@ -26,10 +28,10 @@ class Obj {
 
     // Runs when the object gets added to a canvas instance
     initialize() {
-        this._pos = this.getInitPos()||Obj.DEFAULT_POS
+        this.relativePos = this.getInitPos()||Obj.DEFAULT_POS
         this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
         this.color = this.getInitColor()
-        if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
+        if (typeof this._setupCB == "function") this._setupCB(this, this.parent)
         this._initialized = true
     }
 
@@ -45,7 +47,12 @@ class Obj {
 
     // returns the value of the inital pos declaration
     getInitPos() {
-        return typeof this._initPos=="function" ? [...this._initPos(this._cvs, this?.parent??this)] : [...this._initPos]
+        return typeof this._initPos=="function" ? [...this._initPos(this._cvs??this.parent, this.parent??this)] : [...this._initPos]
+    }
+
+    // returns the value of the inital anchorPos declaration
+    getInitAnchorPos() {
+        
     }
 
     // Runs every frame
@@ -54,6 +61,11 @@ class Obj {
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         let a_ll = anims.length
         for (let i=0;i<a_ll;i++) anims[i].getFrame(time)
+
+        if (this.hasDynamicAnchorPos || this.parent?.hasDynamicAnchorPos) {
+            //console.log(this.pos, this.relativeX, this.relativeY)
+            this.relativePos = this.getInitPos()
+        }
     }
 
     // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the dot's radius)
@@ -85,7 +97,7 @@ class Obj {
     // Smoothly moves to coords in set time
     moveTo(pos, time=1000, easing=Anim.easeInOutQuad, initPos=[this.x, this.y], isUnique=true, force=true) {
         let [ix, iy] = initPos, 
-            [fx, fy] = this.adjustInputPos(pos),
+            [fx, fy] = this.adjustPos(pos),
             dx = fx-ix,
             dy = fy-iy
 
@@ -151,7 +163,7 @@ class Obj {
     }
 
     // allows flexible pos declarations
-    adjustInputPos(pos) {
+    adjustPos(pos) {
         let [x, y] = pos
         if (x === null || x === undefined) x = this.x
         if (y === null || y === undefined) y = this.y
@@ -163,9 +175,9 @@ class Obj {
     get y() {return this._pos[1]}
     get pos() {return this._pos}
     get pos_() {return [...this._pos]} // static position
-    get relativeX() {return "TODO"}
-    get relativeY() {return "TODO"}
-    get relativePos() {return "TODO"}
+    get relativeX() {return this.x-this.anchorPos[0]}
+    get relativeY() {return this.y-this.anchorPos[1]}
+    get relativePos() {return [this.relativeX, this.relativeY]}
     get radius() {return this._radius}
     get top() {return this.y-this._radius}
     get bottom() {return this.y+this._radius}
@@ -194,17 +206,25 @@ class Obj {
     get brightness() {return this.colorObject.brightness}
     get initialized() {return this._initialized}
     get alwaysActive() {return this._alwaysActive}
-    get anchorPos() {return this._anchorPos}
-    get anchorPosValue() {
-        return "TODO"// TODO
+    get anchorPosRaw() {return this._anchorPos}
+    get hasDynamicAnchorPos() {return Boolean(this._anchorPos instanceof Obj||this._anchorPos)}
+    get anchorPos() {// returns the anchorPos value
+        if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent.pos_
+        else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_
+        else if (this._anchorPos==Obj.ABSOLUTE_ANCHOR) return [0,0]
+        else if (typeof this._anchorPos=="function") return [...this._anchorPos(this, this._cvs??this.parent)]
+        else return this._anchorPos
     }
 
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}
     set pos(pos) {this._pos = pos}
-    set absoluteX(x) {} // todo
-    set absoluteY(y) {} // todo
-    set absolutePos(pos) {} // todo
+    set relativeX(x) {this._pos[0] = this.anchorPos[0]+x}
+    set relativeY(y) {this._pos[1] = this.anchorPos[1]+y}
+    set relativePos(pos) {
+        this.relativeX = pos[0]
+        this.relativeY = pos[1]
+    }
     set radius(radius) {this._radius = radius<0?0:radius}
     set color(color) {
         if (this._color?.colorRaw?.toString() != color?.toString() || !this._color) {
@@ -224,11 +244,11 @@ class Obj {
     set hue(hue) {this.colorObject.hue = hue}
     set saturation(saturation) {this.colorObject.saturation = saturation}
     set brightness(brightness) {this.colorObject.brightness = brightness}
-    set initPos(ip) {this._initPos = ip}
-    set initRadius(ir) {this._initRadius = ir}
-    set initColor(ic) {this._initColor = ic}
+    set initPos(initPos) {this._initPos = initPos}
+    set initRadius(initRadius) {this._initRadius = initRadius}
+    set initColor(initColor) {this._initColor = initColor}
     set initialized(init) {this._initialized = init}
-    set alwaysActive(aa) {this._alwaysActive = aa}
-    set anchorPos(anchorPos) {this._anchorPos = anchorPos}
+    set alwaysActive(alwaysActive) {this._alwaysActive = alwaysActive}
+    set anchorPosRaw(anchorPos) {this._anchorPos = anchorPos}
     
 }
