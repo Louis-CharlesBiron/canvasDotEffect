@@ -155,6 +155,10 @@ class Color {
         return null
     }
 
+    toString() {
+        return "C"+this._color.toString()
+    }
+
     // returns the usable value of the color
     get color() {
         let color = Color.formatRgba(this.#rgba)

@@ -15,10 +15,13 @@
     - Filled Shape
     - Grid
         - Grid Assets
+    - Color
     - Gradient
     - Anim
     - Mouse
-- Utilities
+    - Utilities
+      - CanvasUtils
+      - CDEUtils
 - Execution order
 - Best practices
 - Misc
@@ -892,6 +895,6 @@ by, at, to
 
  
 
-## Credits
+### Credits
 
 Made by Louis-Charles Biron

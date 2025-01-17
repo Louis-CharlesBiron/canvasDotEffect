@@ -234,6 +234,10 @@ class CanvasUtils {
         }
     }
 
+    // Generic function to rotate the gradient of an object
+    static rotateGradient(obj, duration, speed=1) {
+        return obj.playAnim(new Anim((prog)=>obj.colorRaw.rotation=-speed*360*prog, duration))
+    }
 
 }
 // JS
@@ -247,25 +251,31 @@ class Color {
     static DEFAULT_COLOR = "aliceblue"
     static CSS_COLOR_TO_RGBA_CONVERTIONS = {aliceblue:[240,248,255,1],antiquewhite:[250,235,215,1],aqua:[0,255,255,1],aquamarine:[127,255,212,1],azure:[240,255,255,1],beige:[245,245,220,1],bisque:[255,228,196,1],black:[0,0,0,1],blanchedalmond:[255,235,205,1],blue:[0,0,255,1],blueviolet:[138,43,226,1],brown:[165,42,42,1],burlywood:[222,184,135,1],cadetblue:[95,158,160,1],chartreuse:[127,255,0,1],chocolate:[210,105,30,1],coral:[255,127,80,1],cornflowerblue:[100,149,237,1],cornsilk:[255,248,220,1],crimson:[220,20,60,1],cyan:[0,255,255,1],darkblue:[0,0,139,1],darkcyan:[0,139,139,1],darkgoldenrod:[184,134,11,1],darkgray:[169,169,169,1],darkgreen:[0,100,0,1],darkkhaki:[189,183,107,1],darkmagenta:[139,0,139,1],darkolivegreen:[85,107,47,1],darkorange:[255,140,0,1],darkorchid:[153,50,204,1],darkred:[139,0,0,1],darksalmon:[233,150,122,1],darkseagreen:[143,188,143,1],darkslateblue:[72,61,139,1],darkslategray:[47,79,79,1],darkturquoise:[0,206,209,1],darkviolet:[148,0,211,1],deeppink:[255,20,147,1],deepskyblue:[0,191,255,1],dimgray:[105,105,105,1],dodgerblue:[30,144,255,1],firebrick:[178,34,34,1],floralwhite:[255,250,240,1],forestgreen:[34,139,34,1],fuchsia:[255,0,255,1],gainsboro:[220,220,220,1],ghostwhite:[248,248,255,1],gold:[255,215,0,1],goldenrod:[218,165,32,1],gray:[128,128,128,1],green:[0,128,0,1],greenyellow:[173,255,47,1],honeydew:[240,255,240,1],hotpink:[255,105,180,1],indianred:[205,92,92,1],indigo:[75,0,130,1],ivory:[255,255,240,1],khaki:[240,230,140,1],lavender:[230,230,250,1],lavenderblush:[255,240,245,1],lawngreen:[124,252,0,1],lemonchiffon:[255,250,205,1],lightblue:[173,216,230,1],lightcoral:[240,128,128,1],lightcyan:[224,255,255,1],lightgoldenrodyellow:[250,250,210,1],lightgray:[211,211,211,1],lightgreen:[144,238,144,1],lightpink:[255,182,193,1],lightsalmon:[255,160,122,1],lightseagreen:[32,178,170,1],lightskyblue:[135,206,250,1],lightslategray:[119,136,153,1],lightsteelblue:[176,224,230,1],lightyellow:[255,255,224,1],lime:[0,255,0,1],limegreen:[50,205,50,1],linen:[250,240,230,1],magenta:[255,0,255,1],maroon:[128,0,0,1],mediumaquamarine:[102,205,170,1],mediumblue:[0,0,205,1],mediumorchid:[186,85,211,1],mediumpurple:[147,112,219,1],mediumseagreen:[60,179,113,1],mediumslateblue:[123,104,238,1],mediumspringgreen:[0,250,154,1],mediumturquoise:[72,209,204,1],mediumvioletred:[199,21,133,1],midnightblue:[25,25,112,1],mintcream:[245,255,250,1],mistyrose:[255,228,225,1],moccasin:[255,228,181,1],navajowhite:[255,222,173,1],navy:[0,0,128,1],oldlace:[253,245,230,1],olive:[128,128,0,1],olivedrab:[107,142,35,1],orange:[255,165,0,1],orangered:[255,69,0,1],orchid:[218,112,214,1],palegoldenrod:[238,232,170,1],palegreen:[152,251,152,1],paleturquoise:[175,238,238,1],palevioletred:[219,112,147,1],papayawhip:[255,239,213,1],peachpuff:[255,218,185,1],peru:[205,133,63,1],pink:[255,192,203,1],plum:[221,160,221,1],powderblue:[176,224,230,1],purple:[128,0,128,1],rebeccapurple:[102,51,153,1],red:[255,0,0,1],rosybrown:[188,143,143,1],royalblue:[65,105,225,1],saddlebrown:[139,69,19,1],salmon:[250,128,114,1],sandybrown:[244,164,96,1],seagreen:[46,139,87,1],seashell:[255,245,238,1],sienna:[160,82,45,1],silver:[192,192,192,1],skyblue:[135,206,235,1],slateblue:[106,90,205,1],slategray:[112,128,144,1],snow:[255,250,250,1],springgreen:[0,255,127,1],steelblue:[70,130,180,1],tan:[210,180,140,1],teal:[0,128,128,1],thistle:[216,191,216,1],tomato:[255,99,71,1],turquoise:[64,224,208,1],violet:[238,130,238,1],wheat:[245,222,179,1],white:[255,255,255,1],whitesmoke:[245,245,245,1],yellow:[255,255,0,1],yellowgreen:[154,205,50,1]}
     static RGBA_TO_CSS_COLOR_CONVERTIONS = {"240,248,255,1":"aliceblue","250,235,215,1":"antiquewhite","0,255,255,1":"aqua","127,255,212,1":"aquamarine","240,255,255,1":"azure","245,245,220,1":"beige","255,228,196,1":"bisque","0,0,0,1":"black","255,235,205,1":"blanchedalmond","0,0,255,1":"blue","138,43,226,1":"blueviolet","165,42,42,1":"brown","222,184,135,1":"burlywood","95,158,160,1":"cadetblue","127,255,0,1":"chartreuse","210,105,30,1":"chocolate","255,127,80,1":"coral","100,149,237,1":"cornflowerblue","255,248,220,1":"cornsilk","220,20,60,1":"crimson","0,0,139,1":"darkblue","0,139,139,1":"darkcyan","184,134,11,1":"darkgoldenrod","169,169,169,1":"darkgray","0,100,0,1":"darkgreen","189,183,107,1":"darkkhaki","139,0,139,1":"darkmagenta","85,107,47,1":"darkolivegreen","255,140,0,1":"darkorange","153,50,204,1":"darkorchid","139,0,0,1":"darkred","233,150,122,1":"darksalmon","143,188,143,1":"darkseagreen","72,61,139,1":"darkslateblue","47,79,79,1":"darkslategray","0,206,209,1":"darkturquoise","148,0,211,1":"darkviolet","255,20,147,1":"deeppink","0,191,255,1":"deepskyblue","105,105,105,1":"dimgray","30,144,255,1":"dodgerblue","178,34,34,1":"firebrick","255,250,240,1":"floralwhite","34,139,34,1":"forestgreen","220,220,220,1":"gainsboro","248,248,255,1":"ghostwhite","255,215,0,1":"gold","218,165,32,1":"goldenrod","128,128,128,1":"gray","0,128,0,1":"green","173,255,47,1":"greenyellow","240,255,240,1":"honeydew","255,105,180,1":"hotpink","205,92,92,1":"indianred","75,0,130,1":"indigo","255,255,240,1":"ivory","240,230,140,1":"khaki","230,230,250,1":"lavender","255,240,245,1":"lavenderblush","124,252,0,1":"lawngreen","255,250,205,1":"lemonchiffon","173,216,230,1":"lightblue","240,128,128,1":"lightcoral","224,255,255,1":"lightcyan","250,250,210,1":"lightgoldenrodyellow","211,211,211,1":"lightgray","144,238,144,1":"lightgreen","255,182,193,1":"lightpink","255,160,122,1":"lightsalmon","32,178,170,1":"lightseagreen","135,206,250,1":"lightskyblue","119,136,153,1":"lightslategray","176,224,230,1":"lightsteelblue","255,255,224,1":"lightyellow","0,255,0,1":"lime","50,205,50,1":"limegreen","250,240,230,1":"linen","255,0,255,1":"magenta","128,0,0,1":"maroon","102,205,170,1":"mediumaquamarine","0,0,205,1":"mediumblue","186,85,211,1":"mediumorchid","147,112,219,1":"mediumpurple","60,179,113,1":"mediumseagreen","123,104,238,1":"mediumslateblue","0,250,154,1":"mediumspringgreen","72,209,204,1":"mediumturquoise","199,21,133,1":"mediumvioletred","25,25,112,1":"midnightblue","245,255,250,1":"mintcream","255,228,225,1":"mistyrose","255,228,181,1":"moccasin","255,222,173,1":"navajowhite","0,0,128,1":"navy","253,245,230,1":"oldlace","128,128,0,1":"olive","107,142,35,1":"olivedrab","255,165,0,1":"orange","255,69,0,1":"orangered","218,112,214,1":"orchid","238,232,170,1":"palegoldenrod","152,251,152,1":"palegreen","175,238,238,1":"paleturquoise","219,112,147,1":"palevioletred","255,239,213,1":"papayawhip","255,218,185,1":"peachpuff","205,133,63,1":"peru","255,192,203,1":"pink","221,160,221,1":"plum","128,0,128,1":"purple","102,51,153,1":"rebeccapurple","255,0,0,1":"red","188,143,143,1":"rosybrown","65,105,225,1":"royalblue","139,69,19,1":"saddlebrown","250,128,114,1":"salmon","244,164,96,1":"sandybrown","46,139,87,1":"seagreen","255,245,238,1":"seashell","160,82,45,1":"sienna","192,192,192,1":"silver","135,206,235,1":"skyblue","106,90,205,1":"slateblue","112,128,144,1":"slategray","255,250,250,1":"snow","0,255,127,1":"springgreen","70,130,180,1":"steelblue","210,180,140,1":"tan","0,128,128,1":"teal","216,191,216,1":"thistle","255,99,71,1":"tomato","64,224,208,1":"turquoise","238,130,238,1":"violet","245,222,179,1":"wheat","255,255,255,1":"white","245,245,245,1":"whitesmoke","255,255,0,1":"yellow","154,205,50,1":"yellowgreen"}
-    static FORMATS = {RGBA:"RGBA", TEXT:"TEXT", HEX:"HEX", GRADIENT:"GRADIENT", COLOR:"COLOR"}
+    static FORMATS = {RGBA:"RGBA", TEXT:"TEXT", HEX:"HEX", GRADIENT:"GRADIENT", COLOR:"COLOR", HSV:"HSVA"}
 
     #rgba = null // cached rgba value
+    #hsv = null  // cached hsv value
     constructor(color, isChannel=false,) {
         this._color = color instanceof Color ? color.colorRaw : color||Color.DEFAULT_COLOR // the color value declaration, in any format
         this._format = this.getFormat()
-        this.#updateRGBA()
+        this.#updateCache()
 
         this._isChannel = isChannel // if true, this instance will be used as a color channel and will not duplicate
     }
 
     // returns a new instance of the same color
-    duplicate() {
-        return new Color([...this.#rgba])
+    duplicate(gradientPositions) {
+        if (this._format == Color.FORMATS.GRADIENT) return new Color(this._color.duplicate(gradientPositions))
+        else return new Color([...this.#rgba])
     }
 
     // updates the cached rgba value
-    #updateRGBA() {
-        this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : [...this._color])
+    #updateCache() {
+        if (this._format == Color.FORMATS.GRADIENT) this.#rgba = this.#hsv = []
+        else {
+            this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : [...this._color])
+            this.#hsv = Color.convertTo(Color.FORMATS.HSV, this.#rgba)
+        }
     }
 
     // converts a color to another color format
@@ -275,12 +285,16 @@ class Color {
         if (format==Color.FORMATS.RGBA) {
             if (inputFormat==Color.FORMATS.HEX) convertedColor = Color.#hexToRgba(color)
             else if (inputFormat==Color.FORMATS.TEXT) convertedColor = [...Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color]]
+            else if (inputFormat==Color.FORMATS.HSV) convertedColor = Color.#hsvToRgba(color)
         } else if (format==Color.FORMATS.HEX) {
             if (inputFormat==Color.FORMATS.RGBA) convertedColor = Color.#rgbaToHex(color)
-            else if (inputFormat==Color.FORMATS.TEXT) convertedColor = Color.#rgbaToHex(Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color])
+            else Color.#rgbaToHex(Color.convertTo(Color.FORMATS.RGBA, color))
         } else if (format==Color.FORMATS.TEXT) {
             if (inputFormat==Color.FORMATS.RGBA) convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[color.toString()] ?? color
-            else if (inputFormat==Color.FORMATS.HEX) convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[Color.#hexToRgba(color).toString()] ?? color
+            else convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[Color.convertTo(Color.FORMATS.RGBA, color).toString()] ?? color
+        } else if (format==Color.FORMATS.HSV) {
+            if (inputFormat==Color.FORMATS.RGBA) convertedColor = Color.#rgbaToHsv(color)
+            else convertedColor = Color.#rgbaToHsv(Color.convertTo(Color.FORMATS.RGBA, color))
         }
 
         return convertedColor
@@ -290,15 +304,39 @@ class Color {
         return Color.convertTo(format, color)
     }
 
-    // returns the format of the provided color
-    static getFormat(color) {
-        return Array.isArray(color) ? Color.FORMATS.RGBA : color instanceof Color ? Color.FORMATS.COLOR : color instanceof Gradient ? Color.FORMATS.GRADIENT : color.includes("#") ? Color.FORMATS.HEX : Color.FORMATS.TEXT
-    }
-    // instance version
-    getFormat(color=this._color) {
-        return Color.getFormat(color)
+    // converts rbga to hsv (without alpha)
+    static #rgbaToHsv(rgba) {
+        let r = rgba[0]/255, g = rgba[1]/255, b = rgba[2]/255,
+            min = Math.min(r, g, b), max = Math.max(r, g, b),
+            hue, diff = max-min
+    
+        if (max==min) hue = 0
+        else {
+            if (max==r) hue = (g-b)/diff
+            else if (max==g) hue = (b-r)/diff+2
+            else hue = (r-g)/diff+4
+            hue = (360+hue*60)%360
+        }
+
+        return [hue, max&&(diff/max)*100, max*100]
     }
 
+    // converts hsv to rbga (without default alpha)
+    static #hsvToRgba(hsva) {
+        let hue = hsva[0], sat = hsva[1]/100, bright = hsva[2]/100,
+        chro = bright*sat, x = chro*(1-Math.abs(((hue/60)%2)-1)), dc = bright-chro,
+        r, g, b
+    
+        if (0<=hue&&hue<60) {r=chro;g=x;b=0}
+        else if (60<=hue&&hue<120) {r=x;g=chro;b=0}
+        else if (120<=hue&&hue<180) {r=0;g=chro;b=x}
+        else if (180<=hue&&hue<240) {r=0;g=x;b=chro}
+        else if (240<=hue&&hue<300) {r=x;g=0;b=chro}
+        else {r=chro;g=0;b=x}
+
+        return [Math.round((r+dc)*255), Math.round((g+dc)*255), Math.round((b+dc)*255), 1]
+    }
+    
     // converts rbga to hex
     static #rgbaToHex(rgba) {
         return "#"+rgba.reduce((a,b,i)=>a+=(i&&!(i%3)?Math.round(b*255):b).toString(16).padStart(2,"0"),"")
@@ -307,6 +345,15 @@ class Color {
     // converts hex to rgba
     static #hexToRgba(hex) {
         return hex.padEnd(9, "F").match(/[a-z0-9]{2}/gi).reduce((a,b,i)=>a.concat(parseInt(b, 16)/(i&&!(i%3)?255:1)),[])
+    }
+
+    // returns the format of the provided color
+    static getFormat(color) {
+        return Array.isArray(color) ? (color.length == 4 ? Color.FORMATS.RGBA : Color.FORMATS.HSV) : color instanceof Color ? Color.FORMATS.COLOR : color instanceof Gradient ? Color.FORMATS.GRADIENT : color.includes("#") ? Color.FORMATS.HEX : Color.FORMATS.TEXT
+    }
+    // instance version
+    getFormat(color=this._color) {
+        return Color.getFormat(color)
     }
 
     // ajust color values to Color instances
@@ -350,6 +397,10 @@ class Color {
         return null
     }
 
+    toString() {
+        return "C"+this._color.toString()
+    }
+
     // returns the usable value of the color
     get color() {
         let color = Color.formatRgba(this.#rgba)
@@ -358,23 +409,47 @@ class Color {
     }
     get colorRaw() {return this._color} // returns the declaration of the color
     get isChannel() {return this._isChannel}
-
+    get rgba() {return this.#rgba}
+    get hsv() {return this.#hsv}
     get r() {return this.#rgba[0]}
     get g() {return this.#rgba[1]}
     get b() {return this.#rgba[2]}
     get a() {return this.#rgba[3]}
+    get hue() {return this.#hsv[0]}
+    get saturation() {return this.#hsv[1]}
+    get brightness() {return this.#hsv[2]}
 
 
     set color(color) {
         this._color = color
         this._format = this.getFormat()
-        this.#updateRGBA()
+        this.#updateCache()
     }
-
     set r(r) {this.#rgba[0] = r}
     set g(g) {this.#rgba[1] = g}
     set b(b) {this.#rgba[2] = b}
     set a(a) {this.#rgba[3] = a}
+    set hue(hue) {
+        hue = hue%360
+        if (this.#hsv[0] !== hue) {
+            this.#hsv[0] = hue
+            this.#rgba = Color.#hsvToRgba(this.#hsv)
+        }
+    }
+    set saturation(saturation) {
+        saturation = saturation>100?100:saturation
+        if (this.#hsv[1] !== saturation) {
+        this.#hsv[1] = saturation
+        this.#rgba = Color.#hsvToRgba(this.#hsv)
+        }
+    }
+    set brightness(brightness) {
+        brightness = brightness>100?100:brightness
+        if (this.#hsv[2] !== brightness) {
+            this.#hsv[2] = brightness
+            this.#rgba = Color.#hsvToRgba(this.#hsv)
+        }
+    }
 }
 
 
@@ -720,6 +795,7 @@ class Canvas {
     #deltaTimeCap = Canvas.DEFAULT_MAX_DELTATIME // used to prevent significant delta time gaps
     #frameSkipsOffset = null // used to prevent significant frame gaps
     #timeStamp = null  // requestanimationframe timestamp in ms
+    #cachedEls = [] // cached canvas elements to draw
 
     constructor(cvs, loopingCallback, frame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                         //html canvas element
@@ -814,13 +890,16 @@ class Canvas {
         this.#lastFrame = time
     }
 
+    updateCachedAllEls() {
+        this.#cachedEls = this.refs.concat(this._els.refs.flatMap(source=>source.asSource)).concat(this._els.defs)
+    }
+
     // calls the draw function on all canvas objects
     draw() {
-        let els = this.refs.concat(this._els.refs.flatMap(source=>source.asSource)).concat(this._els.defs), els_ll = els.length
-
+        let els = this.#cachedEls, els_ll = els.length
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
-            if (!el.draw || !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING)) continue
+            if (!el.draw || (!el.alwaysActive && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING))) continue
             el.draw(this._ctx, this.timeStamp, this._deltaTime)
         }
     }
@@ -851,26 +930,26 @@ class Canvas {
         return this._settings=st
     }
 
-    // add 1 or many objects, as a (def)inition or as a (ref)erence (source)
-    add(objs, isDef) {
+    // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "active" is false, it only initializes the obj, without adding it to the canvas
+    add(objs, isDef, active=true) {
         let l = objs.length??1
         for (let i=0;i<l;i++) {
             let obj = objs[i]??objs
-            if (!isDef) {
-                obj.cvs = this
-                if (typeof obj.initialize=="function") obj.initialize()
-            } else {
-                obj.parent = this
-                if (typeof obj.initialize=="function") obj.initialize()
-            }
-            this._els[isDef?"defs":"refs"].push(obj)
+            if (!isDef) obj.cvs = this
+            else obj.parent = this
+            
+            if (typeof obj.initialize=="function") obj.initialize()
+
+            if (active) this._els[isDef?"defs":"refs"].push(obj)
         }
+        this.updateCachedAllEls()
     }
 
     // removes any element from the canvas by id
     remove(id) {
         this._els.defs = this._els.defs.filter(el=>el.id!==id)
         this._els.refs = this._els.refs.filter(source=>source.id!==id)
+        this.updateCachedAllEls()
     }
 
     // get any element from the canvas by id
@@ -992,8 +1071,8 @@ class Anim {
         this._id = Anim.ANIM_ID_GIVER++                         // animation id
         this._animation = animation                      // the main animation (clampedProgress, playCount, progress)=>
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
-        this._easing = easing||(x=>x)                    // easing static (x)=>
-        this._endCallback = endCallback                  // static called when animation is over
+        this._easing = easing||(x=>x)                    // easing function (x)=>
+        this._endCallback = endCallback                  // function called when animation is over
 
         this._startTime = null // start time
         this._progress = 0     // animation progress
@@ -1021,7 +1100,7 @@ class Anim {
     // ends the animation
     end() {
         this._animation(1, this._playCount++, 1)
-        if (typeof this._endCallback == "static") this._endCallback()
+        if (typeof this._endCallback == "function") this._endCallback()
     }
 
     // resets the animation
@@ -1048,52 +1127,47 @@ class Anim {
 	set endCallback(_endCallback) {return this._endCallback = _endCallback}
 
     // Easings from: https://easings.net/
-    static easeInSine = (x) => 1 - Math.cos((x * Math.PI) / 2)
-    static easeOutSine = (x) => Math.sin((x * Math.PI) / 2)
-    static easeInOutSine = (x) => -(Math.cos(Math.PI * x) - 1) / 2
+    static easeInSine=x=>1-Math.cos(x*Math.PI/2)
+    static easeOutSine=x=>Math.sin(x*Math.PI/2)
+    static easeInOutSine=x=>-(Math.cos(Math.PI*x)-1)/2
 
-    static easeInCubic = (x) => x * x * x
-    static easeOutCubic = (x) => 1 - Math.pow(1 - x, 3)
-    static easeInOutCubic = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
-    
-    static easeInQuint = (x) => x*x*x*x*x
-    static easeOutQuint = (x) => 1 - Math.pow(1 - x, 5)
-    static easeInOutQuint = (x) => x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2
+    static easeInCubic=x=>x*x*x
+    static easeOutCubic=x=>1-Math.pow(1-x,3)
+    static easeInOutCubic=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2
 
-    static easeInCirc = (x) => 1 - Math.sqrt(1 - Math.pow(x, 2))
-    static easeOutCirc = (x) => Math.sqrt(1 - Math.pow(x - 1, 2))
-    static easeInOutCirc = (x) => x < 0.5 ? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2 : (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2
+    static easeInQuint=x=>x*x*x*x*x
+    static easeOutQuint=x=>1-Math.pow(1-x,5)
+    static easeInOutQuint=x=>x<.5?16*x*x*x*x*x:1-Math.pow(-2*x+2,5)/2
 
-    static easeInElastic = (x) => x === 0 ? 0 : x === 1 ? 1 : -Math.pow(2, 10 * x - 10) * Math.sin((x * 10 - 10.75) * ((2 * Math.PI) / 3))
-    static easeOutElastic = (x) => x === 0 ? 0 : x === 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * ((2 * Math.PI) / 3)) + 1
-    static easeInOutElastic = (x) => x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * (2 * Math.PI) / 4.5)) / 2 + 1
-    
-    static easeInQuad = (x) => x * x
-    static easeOutQuad = (x) => 1 - (1 - x) * (1 - x)
-    static easeInOutQuad = (x) => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2
+    static easeInCirc=x=>1-Math.sqrt(1-Math.pow(x,2))
+    static easeOutCirc=x=>Math.sqrt(1-Math.pow(x-1,2))
+    static easeInOutCirc=x=>x<.5?(1-Math.sqrt(1-Math.pow(2*x,2)))/2:(Math.sqrt(1-Math.pow(-2*x+2,2))+1)/2
 
-    static easeInQuart = (x) => x * x * x * x
-    static easeOutQuart = (x) => 1 - Math.pow(1 - x, 4)
-    static easeInOutQuart = (x) => x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2
+    static easeInElastic=x=>0===x?0:1===x?1:-Math.pow(2,10*x-10)*Math.sin((10*x-10.75)*(2*Math.PI/3))
+    static easeOutElastic=x=>0===x?0:1===x?1:Math.pow(2,-10*x)*Math.sin((10*x-.75)*(2*Math.PI/3))+1
+    static easeInOutElastic=x=>0===x?0:1===x?1:x<.5?-Math.pow(2,20*x-10)*Math.sin((20*x-11.125)*(2*Math.PI)/4.5)/2:Math.pow(2,-20*x+10)*Math.sin((20*x-11.125)*(2*Math.PI)/4.5)/2+1
 
-    static easeInExpo = (x) => x === 0 ? 0 : Math.pow(2, 10 * x - 10)
-    static easeOutExpo = (x) => x === 1 ? 1 : 1 - Math.pow(2, -10 * x)
-    static easeInOutExpo = (x) => x === 0 ? 0 : x === 1 ? 1 : x < 0.5 ? Math.pow(2, 20 * x - 10) / 2 : (2 - Math.pow(2, -20 * x + 10)) / 2
-    
-    static easeInBack = (x) => (1.70158 + 1) * x * x * x - 1.70158 * x * x
-    static easeOutBack = (x) => 1 + (1.70158 + 1) * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2)
-    static easeInOutBack = (x) => x < 0.5? (Math.pow(2 * x, 2) * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) / 2 : (Math.pow(2 * x - 2, 2) * ((1.70158 * 1.525 + 1) * (x * 2 - 2) + 1.70158 * 1.525) + 2) / 2
+    static easeInQuad=x=>x*x
+    static easeOutQuad=x=>1-(1-x)*(1-x)
+    static easeInOutQuad=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2
 
-    static easeInBounce = (x) => 1 - easeOutBounce(1 - x)
-    static easeOutBounce = (x) => {
-            if (x < 1 / 2.75) return 7.5625 * x * x
-            else if (x < 2 / 2.75) return 7.5625 * (x -= 1.5 / 2.75) * x + 0.75
-            else if (x < 2.5 / 2.75) return 7.5625 * (x -= 2.25 / 2.75) * x + 0.9375
-            else return 7.5625 * (x -= 2.625 / 2.75) * x + 0.984375
-    }
-    static easeInOutBounce = (x) => x < 0.5 ? (1 - this.easeOutBounce(1 - 2 * x)) / 2: (1 + this.easeOutBounce(2 * x - 1)) / 2
-    
-    static linear = (x) => x
+    static easeInQuart=x=>x*x*x*x
+    static easeOutQuart=x=>1-Math.pow(1-x,4)
+    static easeInOutQuart=x=>x<.5?8*x*x*x*x:1-Math.pow(-2*x+2,4)/2
+
+    static easeInExpo=x=>0===x?0:Math.pow(2,10*x-10)
+    static easeOutExpo=x=>1===x?1:1-Math.pow(2,-10*x)
+    static easeInOutExpo=x=>0===x?0:1===x?1:x<.5?Math.pow(2,20*x-10)/2:(2-Math.pow(2,-20*x+10))/2
+
+    static easeInBack=x=>2.70158*x*x*x-1.70158*x*x
+    static easeOutBack=x=>1+2.70158*Math.pow(x-1,3)+1.70158*Math.pow(x-1,2)
+    static easeInOutBack=x=>x<.5?Math.pow(2*x,2)*(7.189819*x-2.5949095)/2:(Math.pow(2*x-2,2)*(3.5949095*(2*x-2)+2.5949095)+2)/2
+
+    static easeInBounce=x=>1-easeOutBounce(1-x)
+    static easeOutBounce=x=>x<1/2.75?7.5625*x*x:x<2/2.75?7.5625*(x-=1.5/2.75)*x+.75:x<2.5/2.75?7.5625*(x-=2.25/2.75)*x+.9375:7.5625*(x-=2.625/2.75)*x+.984375
+    static easeInOutBounce=x=>x<.5?(1-this.easeOutBounce(1-2*x))/2:(1+this.easeOutBounce(2*x-1))/2
+
+    static linear=x=>x
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -1104,30 +1178,46 @@ class Anim {
 class Obj {
     static DEFAULT_POS = [0,0]
     static DEFAULT_RADIUS = 5
+    static ABSOLUTE_ANCHOR = "ABSOLUTE_ANCHOR"
 
-    constructor(pos, radius, color, setupCB) {
-        this._id = Canvas.ELEMENT_ID_GIVER++      // canvas obj id
-        this._initPos = pos||Obj.DEFAULT_POS      // initial position : [x,y] || (Canvas)=>{return [x,y]}
-        this._pos = this._initPos                 // current position from the center of the object : [x,y]
-        this._radius = radius??Obj.DEFAULT_RADIUS // object's radius
-        this._initColor = color                   // declaration color value || (ctx, this)=>{return color value}
-        this._color = this._initColor             // the current color or gradient of the filled shape
-        this._setupCB = setupCB                   // called on object's initialization (this, this.parent)=>
-        this._anims = {backlog:[], currents:[]}    // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
+    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
+        this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
+        this._initPos = pos                      // initial position : [x,y] || (Canvas)=>{return [x,y]}
+        this._pos = [0,0]                        // current position from the center of the object : [x,y]
+        this._initRadius = radius                // initial object's radius
+        this._radius = this._initRadius          // current object's radius
+        this._initColor = color                  // declaration color value || (ctx, this)=>{return color value}
+        this._color = this._initColor            // the current color or gradient of the filled shape
+        this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
+        this._anchorPos = anchorPos              // reference point from which the object's pos will be set
+        
+        this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
+        this._anims = {backlog:[], currents:[]}  // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
+        this._initialized = false                // whether the shape has been initialized yet
     }
 
     // Runs when the object gets added to a canvas instance
     initialize() {
-        if (typeof this._initColor=="function") this.color = this._initColor(this.ctx??this.parent.ctx, this)
-        else if (this._initColor) this.color = this._initColor
-        this.moveAtInitPos()
-        if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
+        this.relativePos = this.getInitPos()||Obj.DEFAULT_POS
+        this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
+        this.color = this.getInitColor()
+        if (typeof this._setupCB == "function") this._setupCB(this, this.parent)
+        this._initialized = true
     }
 
-    // sets the current pos to the value of the inital pos
-    moveAtInitPos() {
-        if (typeof this._initPos=="function") this._pos = [...this._initPos(this._cvs, this?.parent??this)]
-        else this._pos = [...this._initPos]
+    // returns the value of the inital color declaration
+    getInitColor() {
+        return typeof this._initColor=="function" ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor
+    }
+
+    // returns the value of the inital radius declaration
+    getInitRadius() {
+        return typeof this._initRadius=="function" ? this._initRadius(this) : this._initRadius
+    }
+
+    // returns the value of the inital pos declaration
+    getInitPos() {
+        return typeof this._initPos=="function" ? [...this._initPos(this._cvs??this.parent, this.parent??this)] : [...this._initPos]
     }
 
     // Runs every frame
@@ -1138,13 +1228,13 @@ class Obj {
         for (let i=0;i<a_ll;i++) anims[i].getFrame(time)
     }
 
-    // returns whether the provided pos is inside the obj
+    // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the dot's radius)
     isWithin(pos, circularDetection) {
         let [x,y]=pos
-        return circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom
+        return  (x!=null&&y!=null) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
     }
 
-    // Returns the [top, right, bottom, left] distances between the canvas limits, according to the object's size
+    // Returns the [top, right, bottom, left] distances between the canvas borders, according to the object's size
     posDistances(pos=this._pos) {
         let [x,y]=pos, cw=this._cvs.width, ch=this._cvs.height
         return [y-this.height/2, cw-(x+this.width/2), ch-(y+this.height/2), x-this.width/2]
@@ -1167,7 +1257,7 @@ class Obj {
     // Smoothly moves to coords in set time
     moveTo(pos, time=1000, easing=Anim.easeInOutQuad, initPos=[this.x, this.y], isUnique=true, force=true) {
         let [ix, iy] = initPos, 
-            [fx, fy] = this.adjustInputPos(pos),
+            [fx, fy] = this.adjustPos(pos),
             dx = fx-ix,
             dy = fy-iy
 
@@ -1175,6 +1265,32 @@ class Obj {
             this.x = ix+dx*prog
             this.y = iy+dy*prog
         }, time, easing), isUnique, force)
+    }
+
+    /**
+    * Used to make the dot follow a custom path
+    * @param {Number} duration: duration of the animation in ms
+    * @param {Function} easing: easing function 
+    * @param {Function?} action: custom callback that can be called in addition to the movement                                                        //newProg is 'prog' - the progress delimeter of the range
+    * @param {...Array[Number, Function]} progressSeparations: list of callback paired with a progress range, the callback must return a position (prog, newProg, initX, initY)=>return [x,y]
+    * progressSeparations example: [0:(prog)=>[x1, y1]], [0.5:(prog, fprog)=>[x2, y2]] -> from 0% to 49% the pos from 1st callback is applied, from 50%-100% the pos from 2nd callback is applied  
+    */
+    follow(duration, easing, action, ...progressSeparations) {
+        let [ix, iy] = this._pos, ps_ll = progressSeparations.length-1
+        this.playAnim(new Anim((prog)=>{
+            let progSep = null
+            if (prog<0) prog=0
+            for (let i=ps_ll;i>=0;i--) {
+                let progressSepIndex = progressSeparations[i]
+                if (progressSepIndex[0] <= prog) {
+                    progSep = progressSepIndex
+                    break
+                }
+            }
+            const [nx, ny] = progSep[1](prog, prog-progSep[0], this, ix, iy)
+            this.moveAt([ix+nx, iy+ny])
+            if (typeof action == "function") action(prog, this)
+        }, duration, easing))
     }
 
     // moves the obj in specified direction at specified distance(force)
@@ -1207,7 +1323,7 @@ class Obj {
     }
 
     // allows flexible pos declarations
-    adjustInputPos(pos) {
+    adjustPos(pos) {
         let [x, y] = pos
         if (x === null || x === undefined) x = this.x
         if (y === null || y === undefined) y = this.y
@@ -1217,13 +1333,16 @@ class Obj {
 	get id() {return this._id}
     get x() {return this._pos[0]}
     get y() {return this._pos[1]}
+    get pos() {return this._pos}
+    get pos_() {return [...this._pos]} // static position
+    get relativeX() {return this.x-this.anchorPos[0]}
+    get relativeY() {return this.y-this.anchorPos[1]}
+    get relativePos() {return [this.relativeX, this.relativeY]}
     get radius() {return this._radius}
     get top() {return this.y-this._radius}
     get bottom() {return this.y+this._radius}
     get right() {return this.x+this._radius}
     get left() {return this.x-this._radius}
-    get pos() {return this._pos}
-    get pos_() {return [...this._pos]} // static position
     get stringPos() {return this.x+","+this.y}
 	get initPos() {return this._initPos}
     get width() {return this._radius*2}
@@ -1235,21 +1354,61 @@ class Obj {
     get colorRaw() {return this._color.colorRaw}
     get color() {return this._color.color}
     get initColor() {return this._initColor}
+    get initRadius() {return this._initRadius}
+    get rgba() {return this.colorObject.rgba}
     get r() {return this.colorObject.r}
     get g() {return this.colorObject.g}
     get b() {return this.colorObject.b}
     get a() {return this.colorObject.a}
+    get hsv() {return this.colorObject.hsv}
+    get hue() {return this.colorObject.hue}
+    get saturation() {return this.colorObject.saturation}
+    get brightness() {return this.colorObject.brightness}
+    get initialized() {return this._initialized}
+    get alwaysActive() {return this._alwaysActive}
+    get anchorPosRaw() {return this._anchorPos}
+    get anchorPos() {// returns the anchorPos value
+        if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent.pos_
+        else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_
+        else if (this._anchorPos==Obj.ABSOLUTE_ANCHOR) return [0,0]
+        else if (typeof this._anchorPos=="function") return [...this._anchorPos(this, this._cvs??this.parent)]
+        else return this._anchorPos
+    }
 
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}
     set pos(pos) {this._pos = pos}
+    set relativeX(x) {this._pos[0] = this.anchorPos[0]+x}
+    set relativeY(y) {this._pos[1] = this.anchorPos[1]+y}
+    set relativePos(pos) {
+        this.relativeX = pos[0]
+        this.relativeY = pos[1]
+    }
     set radius(radius) {this._radius = radius<0?0:radius}
-    set color(color) {if (this._color?.colorRaw?.toString() != color?.toString() || !this._color) this._color = Color.adjust(color)}
+    set color(color) {
+        if (this._color?.colorRaw?.toString() != color?.toString() || !this._color) {
+            let potentialGradient = color?.colorRaw||color
+            if (potentialGradient?.positions==Gradient.PLACEHOLDER) {
+                color = potentialGradient.duplicate()
+                color.initPositions = this
+            }
+            this._color = Color.adjust(color)
+        }
+    }
     set setupCB(cb) {this._setupCB = cb}
     set r(r) {this.colorObject.r = r}
     set g(g) {this.colorObject.g = g}
     set b(b) {this.colorObject.b = b}
     set a(a) {this.colorObject.a = a}
+    set hue(hue) {this.colorObject.hue = hue}
+    set saturation(saturation) {this.colorObject.saturation = saturation}
+    set brightness(brightness) {this.colorObject.brightness = brightness}
+    set initPos(initPos) {this._initPos = initPos}
+    set initRadius(initRadius) {this._initRadius = initRadius}
+    set initColor(initColor) {this._initColor = initColor}
+    set initialized(init) {this._initialized = init}
+    set alwaysActive(alwaysActive) {this._alwaysActive = alwaysActive}
+    set anchorPosRaw(anchorPos) {this._anchorPos = anchorPos}
     
 }
 // JS
@@ -1261,8 +1420,8 @@ class Obj {
 class Shape extends Obj {
     static DEFAULT_LIMIT = 100
 
-    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
-        super(pos, radius, color, setupCB)
+    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile) {
+        super(pos, radius??Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, anchorPos, alwaysActive)
         this._cvs = null                         // CVS instance
         this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                    // initial dots declaration
@@ -1270,7 +1429,7 @@ class Shape extends Obj {
         this._ratioPos = [Infinity,Infinity]     // position of ratio target object 
         this._drawEffectCB = drawEffectCB        // (ctx, Dot, ratio, mouse, distance, parent, rawRatio)=>
         this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>
-        this._fragile = fragile||false           // whether the shape resets on document visibility change 
+        this._fragile = fragile||false           // whether the shape resets on document visibility change
 
         this._rotation = 0                       // the shape's rotation in degrees 
         this._scale = [1,1]                      // the shape's scale factor: [scaleX, scaleY] 
@@ -1278,16 +1437,17 @@ class Shape extends Obj {
 
     // initializes the shape, adds its dots and initializes them
     initialize() {
-        super.moveAtInitPos()
+        this.relativePos = this.getInitPos()
 
-        if (typeof this._initDots == "string") this.createFromString(this._initDots)
-        else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs)) // initDOt maybe redo callback (todo)
+        if (typeof this._initDots == "string") this.add(this.createFromString(this._initDots))
+        else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))
         else if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
 
-        if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
+        this.setRadius(this.getInitRadius(), true)
+        this.setColor(this.getInitColor(), true)
 
-        if (typeof this._initColor=="function") this.setColor(this._initColor(this.ctx, this))
-        else this._initColor
+        if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
+        this.initialized = true
     }
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
@@ -1296,25 +1456,34 @@ class Shape extends Obj {
         if (typeof this._ratioPosCB == "function") this._ratioPos = this._ratioPosCB(this)
     }
 
-    // adds a or many dots to the shape
+    // returns a separate copy of this Shape (only initialized for objects)
+    duplicate() {
+        return this.initialized ? new Shape(this.pos_, this._dots.map(d=>d.duplicate()), this.radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
+    }
+
+    // adds one or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
-            if (typeof this._initColor!=="function") dot.color = this.colorObject
-            dot.radius = !dot.radius||dot.radius==Obj.DEFAULT_RADIUS ? this._radius : dot.radius // TODO probably do an init radius too
+            if (typeof this._initColor!=="function") dot.color = this.colorObject // tocheck (todo)
+            dot.radius = !dot.radius ? this._radius : dot.radius // tocheck (todo)
+            if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
             dot.parent = this
             dot.initialize()
             return dot
         }))
+        this._cvs.updateCachedAllEls()
     }
 
     // remove a dot from the shape by its id or by its instance
     removeDot(idOrDot) {
         this._dots = this._dots.filter(dot=>dot.id!==(idOrDot?.id??idOrDot))
+        this._cvs.updateCachedAllEls()
     }
 
     // remove the shape and all its dots
     remove() {
         this._cvs.remove(this._id)
+        this._cvs.updateCachedAllEls()
     }
 
     /**
@@ -1338,16 +1507,38 @@ class Shape extends Obj {
         return dots
     }
  
-    // updates the radius of all the shape's dots
-    setRadius(radius=this._radius) {
+    // updates the radius of all the shape's dots. If "onlyReplaceDefaults" is true, it only sets the dot's radius if it was not initialy set
+    setRadius(radius=this._radius, onlyReplaceDefaults) {
         this._radius = radius
-        this._dots.forEach(dot=>dot.radius=radius)
+        let d_ll = this._dots.length
+        for (let i=0;i<d_ll;i++) {
+            let dot = this._dots[i]
+            if (onlyReplaceDefaults && dot.initRadius==null) {
+                dot.radius = radius
+                dot.initRadius = radius
+            }
+            else if (!onlyReplaceDefaults) {
+                dot.radius = radius
+                if (!dot.initRadius) dot.initRadius = radius
+            }
+        }
     }
 
-    // updates the color of all the shape's dots
-    setColor(color=this._color) {
+    // updates the color of all the shape's dots. If "onlyReplaceDefaults" is true, it only sets the dot's color if it was not initialy set
+    setColor(color=this._color, onlyReplaceDefaults) {
         this.color = color
-        this._dots.forEach(dot=>dot.color=color)
+        let d_ll = this._dots.length
+        for (let i=0;i<d_ll;i++) {
+            let dot = this._dots[i]
+            if (onlyReplaceDefaults && !dot.initColor) {
+                dot.color = color
+                dot.initColor = color
+            }
+            else if (!onlyReplaceDefaults) {
+                dot.color = color
+                if (!dot.initColor) dot.initColor = color
+            }
+        }
     }
 
     // moves the shape and all its dots in specified direction at specified distance(force)
@@ -1370,7 +1561,7 @@ class Shape extends Obj {
 
     // Teleports the shape and all its dots to given coords
     moveAt(pos) {
-        let [fx, fy] = this.adjustInputPos(pos), dx = fx-this.x, dy = fy-this.y
+        let [fx, fy] = this.adjustPos(pos), dx = fx-this.x, dy = fy-this.y
         this._dots.forEach(d=>{
             if (dx) d.x += dx
             if (dy) d.y += dy
@@ -1459,6 +1650,7 @@ class Shape extends Obj {
     // Empties the shapes of all its dots
     clear() {
         this._dots = []
+        this._cvs.updateCachedAllEls()
     }
 
     // Rerenders the shape to its original form
@@ -1502,6 +1694,8 @@ class Shape extends Obj {
 
 // Allows the creation of custom gradients
 class Gradient {
+    static PLACEHOLDER = "PLACERHOLDER" // can be used to instantiate a Gradient without positions, and apply that of the object on assignement
+
     #lastDotsPos = null
     #lastRotation = null
     #lastDotPos = null
@@ -1520,6 +1714,11 @@ class Gradient {
     // returns a the gradient rotation in degrees or false if radial gradient
     #getFormatedIsLinear(isLinear=this._isLinear) {
         return typeof isLinear=="number" ? isLinear : isLinear==true ? 0 : false
+    }
+
+    // returns a separate copy of the Gradient
+    duplicate(positions=this._positions) {
+        return new Gradient(this._ctx, Array.isArray(positions) ? [...positions] : positions, this._isLinear, [...this._colorStops])
     }
 
     /**
@@ -1578,15 +1777,20 @@ class Gradient {
         } else return false
     }
 
-    // Creates and returns the gradient. Updates it if the initPositions is a Shape instance
+    // Creates and returns the gradient. Updates it if the initPositions is a Shape/Dot instance
     updateGradient() {
-        this._positions = this.getAutomaticPositions()
-        this._gradient = this._ctx[`create${typeof this.#getFormatedIsLinear()=="number"?"Linear":"Radial"}Gradient`](...this._positions[0], ...this._positions[1])
-        let cs_ll = this._colorStops.length
-        for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], this._colorStops[i][1].color)
-        return this._gradient
+        if (this._initPositions !== Gradient.PLACEHOLDER) {
+            this._positions = this.getAutomaticPositions()
+            this._gradient = this._ctx[`create${typeof this.#getFormatedIsLinear()=="number"?"Linear":"Radial"}Gradient`](...this._positions[0], ...this._positions[1])
+            let cs_ll = this._colorStops.length
+            for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], this._colorStops[i][1].color)
+            return this._gradient
+        }
     }
 
+    toString() {
+        return "G"+this._positions+this._colorStops+this.isLinear
+    }
 
     get ctx() {return this._ctx}
     get initPositions() {return this._initPositions}
@@ -1600,6 +1804,7 @@ class Gradient {
         return this._gradient
     }
 	set ctx(_ctx) {this._ctx = _ctx}
+    set initPositions(initPositions) {this._initPositions = initPositions}
 	set positions(_positions) {this._positions = _positions}
 	set colorStops(_colorStops) {this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])}
     set isLinear(isLinear) {this._isLinear = isLinear}
@@ -1613,8 +1818,8 @@ class Gradient {
 // Regular shape with a filled area defined by its dots
 class FilledShape extends Shape {
     #lastDotsPos = null
-    constructor(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
-        super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
+    constructor(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile) {
+        super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)
         this._initFillColor = fillColor                           // declaration color fill value
         this._fillColor = this._initFillColor                     // the current color or gradient of the filled shape
         this._path = null                                         // path perimeter delimiting the surface to fill
@@ -1638,6 +1843,11 @@ class FilledShape extends Shape {
             ctx.fillStyle = this.fillColor
             ctx.fill(this._path)
         }
+    }
+
+    // returns a separate copy of this FilledShape (only initialized for objects)
+    duplicate() {
+        return this.initialized ? new FilledShape((_,shape)=>this.fillColorRaw instanceof Gradient?this.fillColorRaw.duplicate(Array.isArray(this.fillColorRaw.initPositions)?null:shape):this.fillColorObject.duplicate(), this._dynamicUpdates, this.pos_, this._dots.map(d=>d.duplicate()), this.radius, (_,shape)=>this.colorRaw instanceof Gradient?this.colorRaw.duplicate(Array.isArray(this.colorRaw.initPositions)?null:shape):this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
     }
 
     // updates the path perimeter if the dots pos have changed
@@ -1665,7 +1875,7 @@ class FilledShape extends Shape {
 
     set fillColor(fillColor) {
         if (this.fillColorObject?.colorRaw?.toString() != fillColor.toString() || !this._fillColor) this._fillColor = Color.adjust(fillColor)
-        }
+    }
 	set dynamicUpdates(_dynamicUpdates) {return this._dynamicUpdates = _dynamicUpdates}
 }
 // JS
@@ -1677,15 +1887,23 @@ class FilledShape extends Shape {
 class Grid extends Shape {
     static DEFAULT_GAPS = [25, 25]
 
-    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile) {
-        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)
+    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile) {
+        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)
 
-        this._keys = keys                                 // keys to convert to source's values 
+        this._keys = keys                                 // keys to convert to source's values as a string
         this._gaps = gaps ?? Grid.DEFAULT_GAPS            // [x, y] gap length within the dots
-        this._source = source ?? GridAssets.fontSource5x5 // symbols' source
         this._spacing = spacing ?? this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
+        this._source = source ?? GridAssets.fontSource5x5 // symbols' source
+    }
 
-        if (this._keys) super.add(this.createGrid())
+    initialize() {
+        super.initialize()
+        if (this._keys) this.add(this.createGrid())
+    }
+
+    // returns a separate copy of this Grid (only initialized for objects)
+    duplicate() {
+        return this.initialized ? new Grid(this._keys, [...this._gaps], this._spacing, this._source, this.pos_, this.radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
     }
 
     // Creates a formation of symbols
@@ -1703,8 +1921,8 @@ class Grid extends Shape {
     createSymbol(key, pos=super.pos, source=this._source) {
         let dotGroup = [], [gx, gy] = this._gaps, xi=[0,0], yi=0, s = source[key.toUpperCase()],
         sourceRadius = Math.sqrt(source.width*source.height)
-        
-        if (s) s.map((d,i)=>[new Dot([pos[0]+(xi[0]=d[0]??xi[0]+1,isNaN(Math.abs(d[0]))?xi[0]:Math.abs(d[0]))*gx, pos[1]+(yi+=(xi[0]<=xi[1]||!i)||Math.sign(1/xi[0])==-1)*gy], this.radius, this.colorObject), d[1], yi*sourceRadius+(xi[1]=Math.abs(xi[0]))]).forEach(([dot, c, p],_,a)=>{
+
+        if (s) s.map((d,i)=>[new Dot([pos[0]+(xi[0]=d[0]??xi[0]+1,isNaN(Math.abs(d[0]))?xi[0]:Math.abs(d[0]))*gx, pos[1]+(yi+=(xi[0]<=xi[1]||!i)||Math.sign(1/xi[0])==-1)*gy]), d[1], yi*sourceRadius+(xi[1]=Math.abs(xi[0]))]).forEach(([dot, c, p],_,a)=>{
             GridAssets.D.places.forEach(dir=>{c&dir[0]&&dot.addConnection(a.find(n=>n[2]==p+dir[1](sourceRadius))?.[0])}) 
             dotGroup.push(dot)
         })
@@ -1756,8 +1974,8 @@ class Grid extends Shape {
 
 // The main component to create Effect, can be used on it's on, but designed to be contained by a Shape instance
 class Dot extends Obj {
-    constructor(pos, radius, color, setupCB) {
-        super(pos, radius, color, setupCB)
+    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
+        super(pos, radius, color, setupCB, anchorPos, alwaysActive)
         this._parent = null               // the instance containing the dot's parent (Shape)
         this._connections = []            // array of Dot to draw a connecting line to
     }
@@ -1776,6 +1994,12 @@ class Dot extends Obj {
         }
 
         super.draw(ctx, time)
+    }
+
+    
+    // returns a separate copy of this Dot (only initialized for objects)
+    duplicate() {
+        return this.initialized ? new Dot(this.pos_, this.radius, this.colorObject.duplicate(), this.setupCB) : null
     }
 
     // returns pythagorian distance between the ratio defining position and the dot
@@ -1821,35 +2045,6 @@ class Dot extends Obj {
             s_y1 = lfn(s_x1), s_y2 = lfn(s_x2), t_y1 = lfn(t_x1), t_y2 = lfn(t_x2)
     
         return {source:{inner:[s_x1, s_y1], outer:[s_x2, s_y2]}, target:{outer:[t_x1, t_y1], inner:[t_x2, t_y2]}}
-    }
-
-    /**
-     * Used to make the dot follow a custom path
-     * @param {Number} duration: duration of the animation in ms
-     * @param {Function} easing: easing function 
-     * @param {Function?} action: custom callback that can be called in addition to the movement                                                        //newProg is 'prog' - the progress delimeter of the range
-     * @param {...Array[Number, Function]} progressSeparations: list of callback paired with a progress range, the callback must return a position (prog, newProg, initX, initY)=>return [x,y]
-     * progressSeparations example: [0:(prog)=>[x1, y1]], [0.5:(prog, fprog)=>[x2, y2]] -> from 0% to 49% the pos from 1st callback is applied, from 50%-100% the pos from 2nd callback is applied  
-     */
-    follow(duration, easing, action, ...progressSeparations) {
-        let [ix, iy] = this._pos, ps_ll = progressSeparations.length-1
-        this.playAnim(new Anim((prog)=>{
-            let progSep = null
-            if (prog<0) prog=0
-            for (let i=ps_ll;i>=0;i--) {
-                let progressSepIndex = progressSeparations[i]
-                if (progressSepIndex[0] <= prog) {
-                    progSep = progressSepIndex
-                    break
-                }
-            }
-            const [nx, ny] = progSep[1](prog, prog-progSep[0], this, ix, iy)
-
-            this.x = ix+nx
-            this.y = iy+ny
-            if (typeof action == "function") action(prog, this)
-        }, duration, easing))
-
     }
 
     // deletes the dot

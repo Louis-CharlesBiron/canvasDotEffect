@@ -7,8 +7,8 @@
 class Shape extends Obj {
     static DEFAULT_LIMIT = 100
 
-    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, alwaysActive, fragile) {
-        super(pos, radius??Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, alwaysActive)
+    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile) {
+        super(pos, radius??Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, anchorPos, alwaysActive)
         this._cvs = null                         // CVS instance
         this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                    // initial dots declaration
@@ -51,8 +51,8 @@ class Shape extends Obj {
     // adds one or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
-            if (typeof this._initColor!=="function") dot.color = this.colorObject // tocheck (todo)
-            dot.radius = !dot.radius ? this._radius : dot.radius // tocheck (todo)
+            if (dot.initColor==null) dot.initColor = this.colorObject
+            if (dot.initRadius==null) dot.initRadius = this._radius
             if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
             dot.parent = this
             dot.initialize()
@@ -148,7 +148,7 @@ class Shape extends Obj {
 
     // Teleports the shape and all its dots to given coords
     moveAt(pos) {
-        let [fx, fy] = this.adjustInputPos(pos), dx = fx-this.x, dy = fy-this.y
+        let [fx, fy] = this.adjustPos(pos), dx = fx-this.x, dy = fy-this.y
         this._dots.forEach(d=>{
             if (dx) d.x += dx
             if (dy) d.y += dy

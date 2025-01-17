@@ -5,26 +5,29 @@
 
 // The main component to create Effect, can be used on it's on, but designed to be contained by a Shape instance
 class Dot extends Obj {
-    constructor(pos, radius, color, setupCB, alwaysActive) {
-        super(pos, radius, color, setupCB, alwaysActive)
+    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
+        super(pos, radius, color, setupCB, anchorPos, alwaysActive)
         this._parent = null               // the instance containing the dot's parent (Shape)
         this._connections = []            // array of Dot to draw a connecting line to
     }
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
     draw(ctx, time) {
-        ctx.fillStyle = this.color
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this._radius, 0, CDEUtils.CIRC)
-        ctx.fill()
-
-        // runs parent drawEffect callback if defined
-        if (typeof this.drawEffectCB == "function") {
-            let dist = this.getDistance(), rawRatio = this.getRatio(dist)
-            this.drawEffectCB(ctx, this, Math.min(1, rawRatio), this.cvs.mouse, dist, this._parent, rawRatio)
-        }
-
         super.draw(ctx, time)
+        
+        if (this.initialized) {
+            // runs parent drawEffect callback if defined
+            if (typeof this.drawEffectCB == "function") {
+                let dist = this.getDistance(), rawRatio = this.getRatio(dist)
+                this.drawEffectCB(ctx, this, Math.min(1, rawRatio), this.cvs.mouse, dist, this._parent, rawRatio)
+            }
+
+            // draw dot
+            ctx.fillStyle = this.color
+            ctx.beginPath()
+            ctx.arc(this.x, this.y, this._radius, 0, CDEUtils.CIRC)
+            ctx.fill()
+        } else this.initialized = true
     }
 
     
