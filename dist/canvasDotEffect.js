@@ -139,11 +139,12 @@ class CDEUtils {
 // Provides generic canvas functions
 class CanvasUtils {
     static SHOW_CENTERS_DOT_ID = {}
+    static LINE_VISIBILE_OPACITY = 0.01
 
     // DEBUG // Can be used to display a dot at the specified shape pos (which is normally not visible)
     static toggleCenter(shape, radius=5, color=[255,0,0,1]) {
         if (!CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]) {
-            let dot = new Dot(()=>[shape.x, shape.y], radius, color)
+            let dot = new Dot([0,0], radius, color, null, shape)
             CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id] = dot.id
             CVS.add(dot, true)
         } else {
@@ -177,8 +178,9 @@ class CanvasUtils {
     // Generic function to draw connection between the specified dot and a sourcePos
     static drawConnection(dot, color, source, radiusPaddingMultiplier=0) {
         let ctx = dot.ctx, [sx, sy] = source.pos||source
-
-        if (color[3]==0 || color.a==0) return;
+        
+        // skip if not visible
+        if (color[3]<CanvasUtils.LINE_VISIBILE_OPACITY || color.a<CanvasUtils.LINE_VISIBILE_OPACITY) return;
 
         ctx.strokeStyle = Color.formatRgba(color)??color.color
         ctx.beginPath()
@@ -197,7 +199,8 @@ class CanvasUtils {
     static drawDotConnections(dot, color, radiusPaddingMultiplier=0, isSourceOver=false) {// CAN BE OPTIMIZED VIA ALPHA
         let ctx = dot.ctx, dc_ll = dot.connections.length, colorValue = Color.formatRgba(color)??color.color
 
-        if (color[3]==0 || color.a==0) return;
+        // skip if not visible
+        if (color[3]<CanvasUtils.LINE_VISIBILE_OPACITY || color.a<CanvasUtils.LINE_VISIBILE_OPACITY) return;
 
         if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
 
@@ -899,14 +902,14 @@ class Canvas {
         let els = this.#cachedEls, els_ll = els.length
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
-            if (!el.draw || (!el.alwaysActive && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING))) continue
+            if (!el.draw || (!el.alwaysActive && !el.hasAnchorPosChanged && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING))) continue
             el.draw(this._ctx, this.timeStamp, this._deltaTime)
         }
     }
 
     // clears the canvas
-    clear(x=0, y=0, width, height) {
-        this._ctx.clearRect(x??0, y??0, width??this._cvs.width, height??this._cvs.height)
+    clear(x=0, y=0, width=this.width, height=this.height) {
+        this._ctx.clearRect(x, y, width, height)
     }
 
     // resets every fragile source
@@ -1180,16 +1183,17 @@ class Obj {
     static DEFAULT_RADIUS = 5
     static ABSOLUTE_ANCHOR = "ABSOLUTE_ANCHOR"
 
+    #lastAnchorPos = [0,0]
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
-        this._initPos = pos                      // initial position : [x,y] || (Canvas)=>{return [x,y]}
+        this._initPos = pos||[0,0]               // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = [0,0]                        // current position from the center of the object : [x,y]
         this._initRadius = radius                // initial object's radius
         this._radius = this._initRadius          // current object's radius
         this._initColor = color                  // declaration color value || (ctx, this)=>{return color value}
         this._color = this._initColor            // the current color or gradient of the filled shape
         this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
-        this._anchorPos = anchorPos              // reference point from which the object's pos will be set
+        this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
         
         this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
         this._anims = {backlog:[], currents:[]}  // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
@@ -1198,21 +1202,20 @@ class Obj {
 
     // Runs when the object gets added to a canvas instance
     initialize() {
-        this.relativePos = this.getInitPos()||Obj.DEFAULT_POS
+        this._pos = this.getInitPos()||Obj.DEFAULT_POS
         this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
         this.color = this.getInitColor()
         if (typeof this._setupCB == "function") this._setupCB(this, this.parent)
-        this._initialized = true
     }
 
     // returns the value of the inital color declaration
     getInitColor() {
-        return typeof this._initColor=="function" ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor
+        return typeof this._initColor=="function" ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor||null
     }
 
     // returns the value of the inital radius declaration
     getInitRadius() {
-        return typeof this._initRadius=="function" ? this._initRadius(this) : this._initRadius
+        return typeof this._initRadius=="function" ? this._initRadius(this.parent||this) : this._initRadius||null
     }
 
     // returns the value of the inital pos declaration
@@ -1222,6 +1225,15 @@ class Obj {
 
     // Runs every frame
     draw(ctx, time) {
+        // update pos according to anchor pos
+        if (this.hasAnchorPosChanged) {
+            let anchorPos = this.anchorPos
+            this.relativeX += anchorPos[0]-this.lastAnchorPos[0]
+            this.relativeY += anchorPos[1]-this.lastAnchorPos[1]
+            this.lastAnchorPos = anchorPos
+        }
+
+        // run anims
         let anims = this._anims.currents
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         let a_ll = anims.length
@@ -1352,7 +1364,7 @@ class Obj {
     get setupCB() {return this._setupCB}
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}
-    get color() {return this._color.color}
+    get color() {return this._color?.color}
     get initColor() {return this._initColor}
     get initRadius() {return this._initRadius}
     get rgba() {return this.colorObject.rgba}
@@ -1367,13 +1379,19 @@ class Obj {
     get initialized() {return this._initialized}
     get alwaysActive() {return this._alwaysActive}
     get anchorPosRaw() {return this._anchorPos}
+    get hasDynamicAnchorPos() {return Boolean(this._anchorPos instanceof Obj||typeof this._anchorPos=="function")}
     get anchorPos() {// returns the anchorPos value
-        if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent.pos_
+        if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent?.pos_
         else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_
         else if (this._anchorPos==Obj.ABSOLUTE_ANCHOR) return [0,0]
-        else if (typeof this._anchorPos=="function") return [...this._anchorPos(this, this._cvs??this.parent)]
+        else if (typeof this._anchorPos=="function") {
+            let res = this._anchorPos(this, this._cvs??this.parent)
+            return [...(res?.pos_||res||[0,0])]
+        }
         else return this._anchorPos
     }
+    get lastAnchorPos() {return this.#lastAnchorPos}
+    get hasAnchorPosChanged() {return this.#lastAnchorPos?.toString() !== this.anchorPos?.toString()}
 
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}
@@ -1408,7 +1426,11 @@ class Obj {
     set initColor(initColor) {this._initColor = initColor}
     set initialized(init) {this._initialized = init}
     set alwaysActive(alwaysActive) {this._alwaysActive = alwaysActive}
-    set anchorPosRaw(anchorPos) {this._anchorPos = anchorPos}
+    set anchorPos(anchorPos) {this.anchorPosRaw = anchorPos}
+    set anchorPosRaw(anchorPos) {
+        this._anchorPos = anchorPos
+    }
+    set lastAnchorPos(l) {this.#lastAnchorPos = l}
     
 }
 // JS
@@ -1437,7 +1459,7 @@ class Shape extends Obj {
 
     // initializes the shape, adds its dots and initializes them
     initialize() {
-        this.relativePos = this.getInitPos()
+        this._pos = this.getInitPos()
 
         if (typeof this._initDots == "string") this.add(this.createFromString(this._initDots))
         else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))
@@ -1464,8 +1486,8 @@ class Shape extends Obj {
     // adds one or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
-            if (typeof this._initColor!=="function") dot.color = this.colorObject // tocheck (todo)
-            dot.radius = !dot.radius ? this._radius : dot.radius // tocheck (todo)
+            if (dot.initColor==null) dot.initColor = this.colorObject
+            if (dot.initRadius==null) dot.initRadius = this._radius
             if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
             dot.parent = this
             dot.initialize()
@@ -1907,7 +1929,7 @@ class Grid extends Shape {
     }
 
     // Creates a formation of symbols
-    createGrid(keys=this._keys, pos=super.pos, gaps=this._gaps, spacing=this._spacing, source=this._source) {
+    createGrid(keys=this._keys, pos=[0,0], gaps=this._gaps, spacing=this._spacing, source=this._source) {
         let [cx, cy] = pos, isNewLine=true, symbols=[]
         ;[...keys].forEach(l=>{
             let symbol = this.createSymbol(l, [cx=(l=="\n")?pos[0]:(cx+spacing*(!isNewLine)), cy+=(l=="\n")&&source.width*gaps[1]+this.radius])
@@ -1918,7 +1940,7 @@ class Grid extends Shape {
     }
 
     // Creates the dot based symbol at given pos, based on given source
-    createSymbol(key, pos=super.pos, source=this._source) {
+    createSymbol(key, pos=super.relativePos, source=this._source) {
         let dotGroup = [], [gx, gy] = this._gaps, xi=[0,0], yi=0, s = source[key.toUpperCase()],
         sourceRadius = Math.sqrt(source.width*source.height)
 
@@ -1982,18 +2004,21 @@ class Dot extends Obj {
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
     draw(ctx, time) {
-        ctx.fillStyle = this.color
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this._radius, 0, CDEUtils.CIRC)
-        ctx.fill()
-
-        // runs parent drawEffect callback if defined
-        if (typeof this.drawEffectCB == "function") {
-            let dist = this.getDistance(), rawRatio = this.getRatio(dist)
-            this.drawEffectCB(ctx, this, Math.min(1, rawRatio), this.cvs.mouse, dist, this._parent, rawRatio)
-        }
-
         super.draw(ctx, time)
+        
+        if (this.initialized) {
+            // runs parent drawEffect callback if defined
+            if (typeof this.drawEffectCB == "function") {
+                let dist = this.getDistance(), rawRatio = this.getRatio(dist)
+                this.drawEffectCB(ctx, this, Math.min(1, rawRatio), this.cvs.mouse, dist, this._parent, rawRatio)
+            }
+
+            // draw dot
+            ctx.fillStyle = this.color
+            ctx.beginPath()
+            ctx.arc(this.x, this.y, this._radius, 0, CDEUtils.CIRC)
+            ctx.fill()
+        } else this.initialized = true
     }
 
     
