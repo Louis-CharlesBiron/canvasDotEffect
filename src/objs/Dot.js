@@ -13,26 +13,21 @@ class Dot extends Obj {
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
     draw(ctx, time) {
-        let parentHasDynamicAnchorPos = this.parent.hasDynamicAnchorPos
-        if (this.lastAnchorPos?.toString() !== this.anchorPos?.toString()) {
-           this.relativeX += (this.anchorPos[0]*1)-this.lastAnchorPos[0]
-           this.relativeY += (this.anchorPos[1]*1)-this.lastAnchorPos[1]
-            //console.log("UPDATE ANCHOR POS DOT", this, this.anchorPos, this.lastAnchorPos, this.hasDynamicAnchorPos, this.lastAnchorPos?.toString() !== this.anchorPos?.toString())
-            this.lastAnchorPos = this.anchorPos
-        }
-
-        ctx.fillStyle = this.color
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this._radius, 0, CDEUtils.CIRC)
-        ctx.fill()
-
-        // runs parent drawEffect callback if defined
-        if (typeof this.drawEffectCB == "function") {
-            let dist = this.getDistance(), rawRatio = this.getRatio(dist)
-            this.drawEffectCB(ctx, this, Math.min(1, rawRatio), this.cvs.mouse, dist, this._parent, rawRatio)
-        }
-
         super.draw(ctx, time)
+        
+        if (this.initialized) {
+            // runs parent drawEffect callback if defined
+            if (typeof this.drawEffectCB == "function") {
+                let dist = this.getDistance(), rawRatio = this.getRatio(dist)
+                this.drawEffectCB(ctx, this, Math.min(1, rawRatio), this.cvs.mouse, dist, this._parent, rawRatio)
+            }
+
+            // draw dot
+            ctx.fillStyle = this.color
+            ctx.beginPath()
+            ctx.arc(this.x, this.y, this._radius, 0, CDEUtils.CIRC)
+            ctx.fill()
+        } else this.initialized = true
     }
 
     

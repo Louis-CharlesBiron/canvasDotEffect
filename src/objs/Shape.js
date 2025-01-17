@@ -39,13 +39,6 @@ class Shape extends Obj {
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
     draw(ctx, time) {
-        if (this.lastAnchorPos?.toString() !== this.anchorPos?.toString()) {
-            this.relativeX += (this.anchorPos[0]*1)-this.lastAnchorPos[0]
-            this.relativeY += (this.anchorPos[1]*1)-this.lastAnchorPos[1]
-            console.log("SHAPE", this.anchorPos, this.lastAnchorPos, this.relativeX, this.relativeY)
-            //console.log("UPDATE ANCHOR POS SHAPE", this, this.anchorPos, this.lastAnchorPos, this.anchorPosRaw, this.hasDynamicAnchorPos, this.lastAnchorPos?.toString() !== this.anchorPos?.toString())
-            this.lastAnchorPos = this.anchorPos
-        }
         super.draw(ctx, time)
         if (typeof this._ratioPosCB == "function") this._ratioPos = this._ratioPosCB(this)
     }
@@ -58,8 +51,8 @@ class Shape extends Obj {
     // adds one or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
-            if (typeof this._initColor!=="function") dot.color = this.colorObject // tocheck (todo)
-            dot.radius = !dot.radius ? this._radius : dot.radius // tocheck (todo)
+            if (dot.initColor==null) dot.initColor = this.colorObject
+            if (dot.initRadius==null) dot.initRadius = this._radius
             if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
             dot.parent = this
             dot.initialize()

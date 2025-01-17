@@ -6,11 +6,12 @@
 // Provides generic canvas functions
 class CanvasUtils {
     static SHOW_CENTERS_DOT_ID = {}
+    static LINE_VISIBILE_OPACITY = 0.01
 
     // DEBUG // Can be used to display a dot at the specified shape pos (which is normally not visible)
     static toggleCenter(shape, radius=5, color=[255,0,0,1]) {
         if (!CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]) {
-            let dot = new Dot(()=>[shape.x, shape.y], radius, color)
+            let dot = new Dot([0,0], radius, color, null, shape)
             CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id] = dot.id
             CVS.add(dot, true)
         } else {
@@ -44,8 +45,9 @@ class CanvasUtils {
     // Generic function to draw connection between the specified dot and a sourcePos
     static drawConnection(dot, color, source, radiusPaddingMultiplier=0) {
         let ctx = dot.ctx, [sx, sy] = source.pos||source
-
-        if (color[3]==0 || color.a==0) return;
+        
+        // skip if not visible
+        if (color[3]<CanvasUtils.LINE_VISIBILE_OPACITY || color.a<CanvasUtils.LINE_VISIBILE_OPACITY) return;
 
         ctx.strokeStyle = Color.formatRgba(color)??color.color
         ctx.beginPath()
@@ -64,7 +66,8 @@ class CanvasUtils {
     static drawDotConnections(dot, color, radiusPaddingMultiplier=0, isSourceOver=false) {// CAN BE OPTIMIZED VIA ALPHA
         let ctx = dot.ctx, dc_ll = dot.connections.length, colorValue = Color.formatRgba(color)??color.color
 
-        if (color[3]==0 || color.a==0) return;
+        // skip if not visible
+        if (color[3]<CanvasUtils.LINE_VISIBILE_OPACITY || color.a<CanvasUtils.LINE_VISIBILE_OPACITY) return;
 
         if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
 

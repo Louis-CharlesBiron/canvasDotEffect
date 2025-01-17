@@ -12,7 +12,7 @@ class Obj {
     #lastAnchorPos = [0,0]
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
-        this._initPos = pos                      // initial position : [x,y] || (Canvas)=>{return [x,y]}
+        this._initPos = pos||[0,0]               // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = [0,0]                        // current position from the center of the object : [x,y]
         this._initRadius = radius                // initial object's radius
         this._radius = this._initRadius          // current object's radius
@@ -32,17 +32,16 @@ class Obj {
         this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
         this.color = this.getInitColor()
         if (typeof this._setupCB == "function") this._setupCB(this, this.parent)
-        this._initialized = true
     }
 
     // returns the value of the inital color declaration
     getInitColor() {
-        return typeof this._initColor=="function" ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor
+        return typeof this._initColor=="function" ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor||null
     }
 
     // returns the value of the inital radius declaration
     getInitRadius() {
-        return typeof this._initRadius=="function" ? this._initRadius(this) : this._initRadius
+        return typeof this._initRadius=="function" ? this._initRadius(this.parent||this) : this._initRadius||null
     }
 
     // returns the value of the inital pos declaration
@@ -52,6 +51,15 @@ class Obj {
 
     // Runs every frame
     draw(ctx, time) {
+        // update pos according to anchor pos
+        if (this.hasAnchorPosChanged) {
+            let anchorPos = this.anchorPos
+            this.relativeX += anchorPos[0]-this.lastAnchorPos[0]
+            this.relativeY += anchorPos[1]-this.lastAnchorPos[1]
+            this.lastAnchorPos = anchorPos
+        }
+
+        // run anims
         let anims = this._anims.currents
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         let a_ll = anims.length
@@ -182,7 +190,7 @@ class Obj {
     get setupCB() {return this._setupCB}
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}
-    get color() {return this._color.color}
+    get color() {return this._color?.color}
     get initColor() {return this._initColor}
     get initRadius() {return this._initRadius}
     get rgba() {return this.colorObject.rgba}
@@ -199,13 +207,17 @@ class Obj {
     get anchorPosRaw() {return this._anchorPos}
     get hasDynamicAnchorPos() {return Boolean(this._anchorPos instanceof Obj||typeof this._anchorPos=="function")}
     get anchorPos() {// returns the anchorPos value
-        if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent.pos_
+        if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent?.pos_
         else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_
         else if (this._anchorPos==Obj.ABSOLUTE_ANCHOR) return [0,0]
-        else if (typeof this._anchorPos=="function") return [...(this._anchorPos(this, this._cvs??this.parent)||[0,0])]
+        else if (typeof this._anchorPos=="function") {
+            let res = this._anchorPos(this, this._cvs??this.parent)
+            return [...(res?.pos_||res||[0,0])]
+        }
         else return this._anchorPos
     }
     get lastAnchorPos() {return this.#lastAnchorPos}
+    get hasAnchorPosChanged() {return this.#lastAnchorPos?.toString() !== this.anchorPos?.toString()}
 
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}
