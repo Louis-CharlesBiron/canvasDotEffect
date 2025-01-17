@@ -7,16 +7,20 @@
 class Obj {
     static DEFAULT_POS = [0,0]
     static DEFAULT_RADIUS = 5
+    static ABSOLUTE_ANCHOR = "ABSOLUTE_ANCHOR"
 
-    constructor(pos, radius, color, setupCB, alwaysActive) {
+    #lastAnchorPos = [0,0]
+    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
-        this._initPos = pos                      // initial position : [x,y] || (Canvas)=>{return [x,y]}
-        this._pos = pos                          // current position from the center of the object : [x,y]
+        this._initPos = pos||[0,0]               // initial position : [x,y] || (Canvas)=>{return [x,y]}
+        this._pos = [0,0]                        // current position from the center of the object : [x,y]
         this._initRadius = radius                // initial object's radius
         this._radius = this._initRadius          // current object's radius
         this._initColor = color                  // declaration color value || (ctx, this)=>{return color value}
         this._color = this._initColor            // the current color or gradient of the filled shape
         this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
+        this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
+        
         this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
         this._anims = {backlog:[], currents:[]}  // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
         this._initialized = false                // whether the shape has been initialized yet
@@ -27,27 +31,35 @@ class Obj {
         this._pos = this.getInitPos()||Obj.DEFAULT_POS
         this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
         this.color = this.getInitColor()
-        if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
-        this._initialized = true
+        if (typeof this._setupCB == "function") this._setupCB(this, this.parent)
     }
 
     // returns the value of the inital color declaration
     getInitColor() {
-        return typeof this._initColor=="function" ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor
+        return typeof this._initColor=="function" ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor||null
     }
 
     // returns the value of the inital radius declaration
     getInitRadius() {
-        return typeof this._initRadius=="function" ? this._initRadius(this) : this._initRadius
+        return typeof this._initRadius=="function" ? this._initRadius(this.parent||this) : this._initRadius||null
     }
 
     // returns the value of the inital pos declaration
     getInitPos() {
-        return typeof this._initPos=="function" ? [...this._initPos(this._cvs, this?.parent??this)] : [...this._initPos]
+        return typeof this._initPos=="function" ? [...this._initPos(this._cvs??this.parent, this.parent??this)] : [...this._initPos]
     }
 
     // Runs every frame
     draw(ctx, time) {
+        // update pos according to anchor pos
+        if (this.hasAnchorPosChanged) {
+            let anchorPos = this.anchorPos
+            this.relativeX += anchorPos[0]-this.lastAnchorPos[0]
+            this.relativeY += anchorPos[1]-this.lastAnchorPos[1]
+            this.lastAnchorPos = anchorPos
+        }
+
+        // run anims
         let anims = this._anims.currents
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         let a_ll = anims.length
@@ -60,7 +72,7 @@ class Obj {
         return  (x!=null&&y!=null) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
     }
 
-    // Returns the [top, right, bottom, left] distances between the canvas limits, according to the object's size
+    // Returns the [top, right, bottom, left] distances between the canvas borders, according to the object's size
     posDistances(pos=this._pos) {
         let [x,y]=pos, cw=this._cvs.width, ch=this._cvs.height
         return [y-this.height/2, cw-(x+this.width/2), ch-(y+this.height/2), x-this.width/2]
@@ -83,7 +95,7 @@ class Obj {
     // Smoothly moves to coords in set time
     moveTo(pos, time=1000, easing=Anim.easeInOutQuad, initPos=[this.x, this.y], isUnique=true, force=true) {
         let [ix, iy] = initPos, 
-            [fx, fy] = this.adjustInputPos(pos),
+            [fx, fy] = this.adjustPos(pos),
             dx = fx-ix,
             dy = fy-iy
 
@@ -149,7 +161,7 @@ class Obj {
     }
 
     // allows flexible pos declarations
-    adjustInputPos(pos) {
+    adjustPos(pos) {
         let [x, y] = pos
         if (x === null || x === undefined) x = this.x
         if (y === null || y === undefined) y = this.y
@@ -159,13 +171,16 @@ class Obj {
 	get id() {return this._id}
     get x() {return this._pos[0]}
     get y() {return this._pos[1]}
+    get pos() {return this._pos}
+    get pos_() {return [...this._pos]} // static position
+    get relativeX() {return this.x-this.anchorPos[0]}
+    get relativeY() {return this.y-this.anchorPos[1]}
+    get relativePos() {return [this.relativeX, this.relativeY]}
     get radius() {return this._radius}
     get top() {return this.y-this._radius}
     get bottom() {return this.y+this._radius}
     get right() {return this.x+this._radius}
     get left() {return this.x-this._radius}
-    get pos() {return this._pos}
-    get pos_() {return [...this._pos]} // static position
     get stringPos() {return this.x+","+this.y}
 	get initPos() {return this._initPos}
     get width() {return this._radius*2}
@@ -175,7 +190,7 @@ class Obj {
     get setupCB() {return this._setupCB}
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}
-    get color() {return this._color.color}
+    get color() {return this._color?.color}
     get initColor() {return this._initColor}
     get initRadius() {return this._initRadius}
     get rgba() {return this.colorObject.rgba}
@@ -189,18 +204,41 @@ class Obj {
     get brightness() {return this.colorObject.brightness}
     get initialized() {return this._initialized}
     get alwaysActive() {return this._alwaysActive}
+    get anchorPosRaw() {return this._anchorPos}
+    get hasDynamicAnchorPos() {return Boolean(this._anchorPos instanceof Obj||typeof this._anchorPos=="function")}
+    get anchorPos() {// returns the anchorPos value
+        if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent?.pos_
+        else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_
+        else if (this._anchorPos==Obj.ABSOLUTE_ANCHOR) return [0,0]
+        else if (typeof this._anchorPos=="function") {
+            let res = this._anchorPos(this, this._cvs??this.parent)
+            return [...(res?.pos_||res||[0,0])]
+        }
+        else return this._anchorPos
+    }
+    get lastAnchorPos() {return this.#lastAnchorPos}
+    get hasAnchorPosChanged() {return this.#lastAnchorPos?.toString() !== this.anchorPos?.toString()}
 
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}
     set pos(pos) {this._pos = pos}
+    set relativeX(x) {this._pos[0] = this.anchorPos[0]+x}
+    set relativeY(y) {this._pos[1] = this.anchorPos[1]+y}
+    set relativePos(pos) {
+        this.relativeX = pos[0]
+        this.relativeY = pos[1]
+    }
     set radius(radius) {this._radius = radius<0?0:radius}
     set color(color) {
-        let potentialGradient = color?.colorRaw||color
-        if (potentialGradient?.positions==Gradient.PLACEHOLDER) {
-            color = potentialGradient.duplicate()
-            color.initPositions = this
+        if (this._color?.colorRaw?.toString() != color?.toString() || !this._color) {
+            let potentialGradient = color?.colorRaw||color
+            if (potentialGradient?.positions==Gradient.PLACEHOLDER) {
+                color = potentialGradient.duplicate()
+                color.initPositions = this
+            }
             this._color = Color.adjust(color)
-        } else if (this._color?.colorRaw?.toString() != color?.toString() || !this._color) this._color = Color.adjust(color)}
+        }
+    }
     set setupCB(cb) {this._setupCB = cb}
     set r(r) {this.colorObject.r = r}
     set g(g) {this.colorObject.g = g}
@@ -209,10 +247,15 @@ class Obj {
     set hue(hue) {this.colorObject.hue = hue}
     set saturation(saturation) {this.colorObject.saturation = saturation}
     set brightness(brightness) {this.colorObject.brightness = brightness}
-    set initPos(ip) {this._initPos = ip}
-    set initRadius(ir) {this._initRadius = ir}
-    set initColor(ic) {this._initColor = ic}
+    set initPos(initPos) {this._initPos = initPos}
+    set initRadius(initRadius) {this._initRadius = initRadius}
+    set initColor(initColor) {this._initColor = initColor}
     set initialized(init) {this._initialized = init}
-    set alwaysActive(aa) {this._alwaysActive = aa}
+    set alwaysActive(alwaysActive) {this._alwaysActive = alwaysActive}
+    set anchorPos(anchorPos) {this.anchorPosRaw = anchorPos}
+    set anchorPosRaw(anchorPos) {
+        this._anchorPos = anchorPos
+    }
+    set lastAnchorPos(l) {this.#lastAnchorPos = l}
     
 }
