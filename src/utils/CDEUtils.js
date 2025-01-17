@@ -22,7 +22,7 @@ class CDEUtils {
         return value < min ? min : value > max ? max : value
     }
 
-     // Create an instance of the FPSCounter and run every frame: either getFpsRaw for raw fps AND/OR getFps for averaged fps
+    // Create an instance of the FPSCounter and run every frame: either getFpsRaw for raw fps AND/OR getFps for averaged fps
     static FPSCounter = class {
         constructor(avgSampleSize) {
             this._t = []

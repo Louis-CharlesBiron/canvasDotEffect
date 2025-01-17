@@ -7,7 +7,7 @@ const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//lo
 
 
 // DECLARE OBJS
-let logo = new Shape([350, 375], [
+let logo = new Shape([0,0], [
     new Dot([250, 440], 15, (ctx, dot)=>new Gradient(ctx, dot, 270, [[0, "#B9ACE3"], [1, "#9ADBE4"]])),
     new Dot([350, 290], 16.5, (ctx, dot)=>new Gradient(ctx, dot, 90, [[0, "#B9ACE3"], [1, "#9ADBE4"]])),
     new Dot([470, 350], 18, (ctx, dot)=>new Gradient(ctx, dot, 180, [[0, "#B9ACE3"], [1, "#9ADBE4"]])),
@@ -33,7 +33,7 @@ let logo = new Shape([350, 375], [
 })
 
 let logoBG = new FilledShape([65, 100, 100, 0.15], true,
-[350, 375], [
+[0,0], [
     new Dot([340, 205]),
     new Dot([560, 365]),
     new Dot([170, 510]),
@@ -42,7 +42,7 @@ let logoBG = new FilledShape([65, 100, 100, 0.15], true,
 CVS.add(logo)
 CVS.add(logoBG)
 
-logoBG.scaleAt([1.15, 1.15])
+logoBG.scaleAt([1.15, 1.15], [350, 375])
 
 let textGrad = new Color(new Gradient(CVS.ctx, [[410, 325],[310,400]], 90, [[0, "#AFB0E3"], [1, "#9ADBE4"]]))
 let logoLetters = new Grid("CDE", [5, 5], 38, null, [308,372], 0, null, 100, (ctx, dot, ratio, m, dist, shape)=>{

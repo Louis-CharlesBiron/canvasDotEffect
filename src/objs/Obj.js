@@ -21,9 +21,9 @@ class Obj {
         this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
         
-        this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
+        this._alwaysActive = alwaysActive??false // whether the object stays active when outside the canvas bounds
         this._anims = {backlog:[], currents:[]}  // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
-        this._initialized = false                // whether the shape has been initialized yet
+        this._initialized = false                // whether the object has been initialized yet
     }
 
     // Runs when the object gets added to a canvas instance
@@ -32,6 +32,7 @@ class Obj {
         this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
         this.color = this.getInitColor()
         if (typeof this._setupCB == "function") this._setupCB(this, this.parent)
+        this.setAnchoredPos()
     }
 
     // returns the value of the inital color declaration
@@ -41,7 +42,7 @@ class Obj {
 
     // returns the value of the inital radius declaration
     getInitRadius() {
-        return typeof this._initRadius=="function" ? this._initRadius(this.parent||this) : this._initRadius||null
+        return typeof this._initRadius=="function" ? this._initRadius(this.parent||this) : this._initRadius??null
     }
 
     // returns the value of the inital pos declaration
@@ -49,15 +50,19 @@ class Obj {
         return typeof this._initPos=="function" ? [...this._initPos(this._cvs??this.parent, this.parent??this)] : [...this._initPos]
     }
 
-    // Runs every frame
-    draw(ctx, time) {
-        // update pos according to anchor pos
+    setAnchoredPos() {
         if (this.hasAnchorPosChanged) {
             let anchorPos = this.anchorPos
             this.relativeX += anchorPos[0]-this.lastAnchorPos[0]
             this.relativeY += anchorPos[1]-this.lastAnchorPos[1]
             this.lastAnchorPos = anchorPos
         }
+    }
+
+    // Runs every frame
+    draw(ctx, time) {
+        // update pos according to anchor pos
+        this.setAnchoredPos()
 
         // run anims
         let anims = this._anims.currents
@@ -106,7 +111,7 @@ class Obj {
     }
 
     /**
-    * Used to make the dot follow a custom path
+    * Used to make an object follow a custom path
     * @param {Number} duration: duration of the animation in ms
     * @param {Function} easing: easing function 
     * @param {Function?} action: custom callback that can be called in addition to the movement                                                        //newProg is 'prog' - the progress delimeter of the range
@@ -145,7 +150,7 @@ class Obj {
 
     // adds an animation to play. "isUnique" makes it so the animation gets queue in the backlog. "force" terminates the current backlog animation and replaces it with the specified "anim"
     playAnim(anim, isUnique, force) {
-        if (isUnique && this.currentBacklogAnim && force) { // TOFIX
+        if (isUnique && this.currentBacklogAnim && force) {
             this.currentBacklogAnim.end()
             this._anims.backlog.addAt(anim, 0)
         }
@@ -205,7 +210,6 @@ class Obj {
     get initialized() {return this._initialized}
     get alwaysActive() {return this._alwaysActive}
     get anchorPosRaw() {return this._anchorPos}
-    get hasDynamicAnchorPos() {return Boolean(this._anchorPos instanceof Obj||typeof this._anchorPos=="function")}
     get anchorPos() {// returns the anchorPos value
         if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent?.pos_
         else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_

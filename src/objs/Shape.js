@@ -139,34 +139,6 @@ class Shape extends Obj {
         }, time, easing), isUnique, animForce)
     }
 
-    // Teleports the shape and all its dots to incremented coords
-    moveBy(pos) {
-        super.moveBy(pos)
-        let d_ll = this._dots.length
-        for (let i=0;i<d_ll;i++) this._dots[i].moveBy(pos)
-    }
-
-    // Teleports the shape and all its dots to given coords
-    moveAt(pos) {
-        let [fx, fy] = this.adjustPos(pos), dx = fx-this.x, dy = fy-this.y
-        this._dots.forEach(d=>{
-            if (dx) d.x += dx
-            if (dy) d.y += dy
-        })
-        super.moveAt(pos)
-    }
-
-    // Smoothly moves the shape and all its dots to given coords in set time
-    moveTo(pos, time=1000, easing=Anim.easeInOutQuad, initPos=this.pos, isUnique=true, force=true) {
-        let [ix, iy] = initPos,
-        dx = pos[0]-ix,
-        dy = pos[1]-iy
-
-        return this.playAnim(new Anim((prog)=>{
-            this.moveAt([ix+dx*prog, iy+dy*prog])
-        }, time, easing), isUnique, force)
-    }
-
     // Rotates the dots by a specified degree increment around a specified center point
     rotateBy(deg, centerPos=this.pos) {// clock-wise, from the top
         let [cx, cy] = centerPos

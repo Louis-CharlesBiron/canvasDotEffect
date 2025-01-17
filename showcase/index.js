@@ -52,7 +52,7 @@ let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, 
         else dot.radius = dot.getInitRadius()
     }
 }, null, null, null)
-testMore.playAnim(new Anim((prog)=>testMore.colorRaw.rotation=-360*prog, -750))
+testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog, -750))
 
 
 

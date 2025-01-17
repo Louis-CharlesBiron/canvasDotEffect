@@ -30,7 +30,7 @@
 
 ## Getting Started / Minimal setup
 
-1. **Get the library file.** 
+1. **Get the library file. ([canvasDotEffect.min.js](https://github.com/Louis-CharlesBiron/canvasDotEffect/blob/main/dist/canvasDotEffect.min.js))** 
 ```html
     <head>
         ...
@@ -45,7 +45,7 @@
     </div>
 ```
 
-3. **In a JS file, create a new Canvas instance with the canvas element in parameter.**
+3. **In a JS file, create a new Canvas instance with the html canvas element in parameter.**
 ```js
     const CVS = new Canvas(document.getElementById("canvasId"))
 ```
@@ -53,7 +53,7 @@
 4. **From this Canvas instance, add any canvas objects you want.**
 ```js
     // Create a canvas object
-    const dummyShape = new Shape([50,50],[new Dot([50, 50])])
+    const dummyShape = new Shape([50,50],[new Dot()])
     
     // Add it to the canvas
     CVS.add(dummyShape)
@@ -79,6 +79,8 @@
     const CVS = new Canvas(document.getElementById("canvasId"))
     
     // Creating and adding shapes ...
+    const dummyShape = new Shape([50,50],[new Dot()])
+    CVS.add(dummyShape)
     
     CVS.setmousemove(/*custom callback*/)
     CVS.setmouseleave()
@@ -107,14 +109,21 @@ The Canvas class is the core of the projet. It manages the main loop, the window
 - **loopingCallback**? -> A custom callback ran each frame.
 - **frame**? -> If you don't want the canvas to take the size of its direct parent, you can provide another custom HTML element here.
 - **settings**? -> The custom canvas settings (leave blank for prebuilt default settings).
+- **willReadFrequently**? -> If true, optimizes the canvas context for frequent readings. (Defaults to false)
+
+ 
 
 **To add canvas object to the canvas,** use the add() function:
+###### - add(objs, isDef, active=true)
 ```js
     // For a source object
     CVS.add(yourShape)
 
     // For a standalone object
     CVS.add(yourObject, true)
+    
+    // For a prefab or inactive shape
+    CVS.add(yourShape, false, false)
 ```
 
 **To set up mouse listeners for the canvas,** use the following prebuilt functions:
@@ -162,35 +171,28 @@ The Obj class is the template class of any canvas object. **It should not be dir
 - ***id*** -> Id of the object.
 - **initPos** -> Initial pos declaration. Can either be a pos array `[x, y]` or a callback `(Canvas)=>{... return [x, y]}`
 - ***pos*** -> Array containing the `[x, y]` position of the object.
+- ***initRadius*** -> Initial radius declaration. Can either be a number or a callback `(parent or this)=>{... return radius}`
 - **radius** -> The radius in px object the dot (Or the radius of its dots if is a Shape).
+- ***initColor*** -> Initial color declaration. Can either be a color value (see ↓) or a callback `(ctx, this)=>{... return colorValue}`
 - **color** -> Either a Color instance `new Color("red")`, a string `"red"`, a hex value `#FF0000` or an rgba array `[255, 0, 0, 1]`
-- **setupCB** -> Custom callback called on the object's initialization `(this, this?.parent)=>{}`
+- **setupCB** -> Custom callback called on the object's initialization `(this, this?.parent)=>{}`s
+- **anchorPos** -> The reference point from which the object's pos will be set. Can either be a pos `[x,y]`, another canvas object instance, or a callback `(this, Canvas or parent)=>{... return [x,y]}` (Defaults to the parent's pos, or `[0, 0]` if the object has no parent)
+- **alwaysAcitve** -> Whether the object stays active when outside the canvas bounds.
+- ***initialized*** -> wWether the object has been initialized.
 
 **This class also defines other useful base functions**, such as:
-- Movements functions (`moveBy`, `addForce`, ...)
-- Informative functions (`isWithin`, `posDistances`, ...)
+- Movements functions (`moveBy`, `addForce`, `follow`, ...)
+- Informative functions (`isWithin`, `posDistances`, `getInitPos`, ...)
 - Access to the object's animation play (`playAnim`)
 
  
 
-# Dot
 
-The dot class is **meant** to be the core of all effects. It appears as a circular dot on the canvas by default.
-
-#### **The Dot constructor takes the following parameters:**
-###### - `new Dot(pos, radius, color, setupCB)`
-- *pos, radius, color, setupCB* -> See the Obj class.
-
-Its other attributes are:
-- **parent**? -> The shape in which the dot is contained, if any. 
-- **connections** -> a list referencing other dots, primarily to draw a connection betweem them. 
-
-**The follow function:** use `follow()` to make a dot follow a custom path:
-
+**The follow function:** use `follow()` to make an object follow a custom path:
 ###### - `follow(duration, easing, action, ...progressSeparations)`
 ```js
    /**
-     * Used to make the dot follow a custom path
+     * Used to make an object follow a custom path
      * @param {Number} duration: duration of the animation in ms
      * @param {Function} easing: easing function 
      * @param {Function?} action: custom callback that can be called in addition to the movement                                                        //newProg is 'prog' - the progress delimeter of the range
@@ -202,6 +204,22 @@ Its other attributes are:
     let dx=400, dy=200
     dot.follow(3000, Anim.easeOutQuad, null, [0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]])
 ```
+
+ 
+
+# Dot
+
+The dot class is **meant** to be the *core* of all effects. It appears as a circular dot on the canvas by default.
+
+#### **The Dot constructor takes the following parameters:**
+###### - `new Dot(pos, radius, color, setupCB, anchorPos, alwaysActive)`
+- *pos, radius, color, setupCB, anchorPos, alwaysActive* -> See the Obj class.
+
+Its other attributes are:
+- **parent**? -> The shape in which the dot is contained, if any. 
+- **connections** -> a list referencing other dots, primarily to draw a connection betweem them. 
+
+
 
 **To add or remove connections,** use the following functions:
 ```js
@@ -227,7 +245,6 @@ Its other attributes are:
         25,             // 25px radius
         [0,0,255,0.5],  // blue at 50% opacity
         ()=>{           // custom callback ran on dot's initialization
-            
             console.log("I am now added to the canvas and ready to go!")
         }
     )
@@ -245,7 +262,7 @@ Its other attributes are:
             new Dot([150, 100]),
             new Dot([150, 150]),
             new Dot([100, 150])
-    ], Obj.DEFAULT_RADIUS, Color.DEFAULT_COLOR)
+    ], Obj.DEFAULT_RADIUS, Color.DEFAULT_COLOR, Shape.DEFAULT_LIMIT)
     
     // Add the shape along with all of its dots as a single unit. (reference)
     CVS.add(squareLikeFormation)
@@ -262,8 +279,8 @@ One of the main features is the *drawEffectCB*, this callback allows to create a
 Effects are often ratio-based, meaning the *intensity* of the effect is based on the distance between the dot and the *ratioPos*. You can control the affected distance with the *limit* parameter, and the the object to which the distance\ratio is calculated with the *ratioPosCB* parameter.
 
 #### **The Shape constructor takes the following parameters:**
-###### - `new Shape(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)`
-- *pos, radius, color, setupCB* -> See the Obj class.
+###### - `new Shape(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)`
+- *pos, radius, color, setupCB, anchorPos, alwaysActive* -> See the Obj class.
 - **initDots** -> Initial dots declaration. Can either be: an array of dots `[new Dot(...), existingDot, ...]`, a **String** (this will automatically call the shape's createFromString() function), or a callback `(Shape, Canvas)=>{... return anArrayOfDots}` 
 - ***dots*** -> Array of all the current dots the contained by the shape. 
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
@@ -283,42 +300,20 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
     const dummyShape = new Shape([100,100])
     CVS.add(dummyShape)
     
-    // Later, adding a dot to the shape
+    // Later, adding a dot to the shape, at [150, 150] on the canvas
     dummyShape.add(new Dot(50, 50))
     
     // or many dots
     dummyShape.add([new Dot(50, 50), new Dot(50, 100)])
 ```
 
-**Note: adding dots to a shape:** 
-1. **Overrides** the dots' color to the one set one of shape, regardless of definition.
-2. Sets the dots' radius to the one of the shape, if NOT previously undefined.
-3. Sets the dots' parent attribute to reference the shape.
+**Note, adding dots to a shape:** 
+1. Sets the dots' the dots' color to the one of shape, if not previously defined.
+2. Sets the dots' radius to the one of the shape, if not previously defined.
+3. Sets the dots' anchorPos to the shape's pos, if not previously defined.
+4. Sets the dots' alwaysActive property to that of the shape, if not previously defined.
+5. Sets the dots' parent attribute to reference the shape.
 
-### **Creating a formation of dots using a String** with the createFromString() function:
-###### - createFromString(str, topLeftPos, gaps, dotChar?)
-```js
-   /**
-     * createFromString can be used as a primitive/fast way to create a formation of dots, using text drawings.
-     * @param {String} str: ex: "oo o o \n ooo \n ooo" 
-     * @param {pos[x,y]} topLeftPos: starting pos of the formation
-     * @param {[gapX, gapY]} gaps: the x and y distance between each dot
-     * @param {Character} dotChar: the character used in the creation string other than the spaces ("o" by default)
-     * @returns the created dots formation
-     */
-     
-     // Creating the dots
-     const spike = dummyShape.createFromString(`
-        o
-       o o
-      o   o
-     o     o
-     `, [100, 100], [20, 25])
-     
-     // Adding the dot formation to the shape
-     dummyShape.add(spike)
-
-```
 
 ### **To modify dots' properties all at once** with the createFromString() function:
 ###### - setRadius(radius),  setColor(color), setLimit(limit)
@@ -372,6 +367,27 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
     dummyShape.remove()
 ```
 
+### **To duplicate a shape,** use the duplicate() function:
+###### - duplicate()
+```js
+    // Creating a dummy shape
+    const dummyShape = new Shape([10,10], new Dot())
+    
+    // Adding it to the canvas and thus initializing it
+    CVS.add(dummyShape)
+    
+    
+    // Creating a copy of the dummyShape (which need to be initialized)
+    const dummyShapeCopy = dummyShape.duplicate()
+    
+    // Adding it to the canvas
+    CVS.add(dummyShapeCopy)
+    
+    // Moving the copy 100px to the right
+    dummyShapeCopy.moveBy([100, 0])
+    
+```
+
 #### Example use 1:
 ###### - idk shape exemaple
 ```js
@@ -386,8 +402,8 @@ The FilledShape class is a derivate of the Shape class. It allows to fill the ar
 
 
 #### **The FilledShape constructor takes the following parameters:**
-###### - `new FilledShape(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)`
-- *pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile* -> See the Shape class.
+###### - `new FilledShape(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)`
+- *pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
 - **fillColor** -> Defines the color of the shape's filling. Either a color value, a Gradient instance or a callback returning any of the previous two `(ctx, shape)=>{... return [r, g, b, a]}`.
 - **dynamicUpdates** -> Whether the shape's fill area checks for updates every frame
 
@@ -414,10 +430,10 @@ The FilledShape class is a derivate of the Shape class. It allows to fill the ar
         true,  // Automatically updates the fill area positions
         [100, 100], // shape pos
         [
-            new Dot([100, 100]), // Top left corner
-            new Dot([150, 100]), // Top right corner
-            new Dot([150, 150]), // Bottom right corner
-            new Dot([100, 150])  // Bottom left corner
+            new Dot([-50, -50]), // Top left corner
+            new Dot([50, -50]),  // Top right corner
+            new Dot([50, 50]),   // Bottom right corner
+            new Dot([-50, 50])   // Bottom left corner
         ]
     )
 
@@ -434,8 +450,8 @@ The FilledShape class is a derivate of the Shape class. It allows to fill the ar
 The Grid class is a derivate of the Shape class. It allows the creation of dot-based symbols / text. To create your own set of symbols (source), see the *Grid Assets* section.
 
 #### **The Grid constructor takes the following parameters:**
-###### - `new Grid(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile)`
-- *pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, fragile* -> See the Shape class.
+###### - `new Grid(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)`
+- *pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
 - **keys** -> A string containing the characters to create.
 - **gaps** -> The `[x, y]` distances within the dots.
 - **source** -> The source containing the symbols definitions. See *Grid Assets* section.
@@ -462,7 +478,7 @@ The Grid class is a derivate of the Shape class. It allows the creation of dot-b
 #### Example use 1:
 ###### - Displaying all A-Z letters, with a nice effect when passing the mouse over the shape
 ```js
-    // Creating a simple filledShape
+    // Creating a Grid
     const coolAlphabet = new Grid(
         "abcdefg\nhijklm\nnopqrs\ntuvwxyz", // the keys corresponding to the alphabet letters, with some line breaks
         [5, 5],                             // equal gaps, this will make the alphabet look a bit square-ish
@@ -633,6 +649,49 @@ A symbol has this structure: `[...[index, directions]]`. It is composed of a mai
 
  
 
+# Color
+
+The Color class represents a color and provides some multiple utility functions such as HSV control, RGBA control, color finding, color format convertions and color normalisation.
+
+**Note:** Direct HSV / RGBA controls are not supported for gradients
+
+#### **The Color constructor takes the following parameters:**
+###### - `new Color(color, isChannel)`
+- **color** -> The color value in any supported format. (Text: `"red"`, RGBA: `[255, 255, 255 ,1]`, HEX:"#123abcff", Gradient: `new Gradient( ... )`, Color: *an instance of this class*)
+- **isChannel** -> If true, the Color instance will be considered a color channel and will not duplicate. (Channels are for global color distribution)
+
+### **To convert a color to another format,** use the convertTo() function:
+###### - converTo(format=Color.FORMATS.RGBA, color)
+```js
+    const red = "red"
+    
+    console.log("Here is red in some other formats:",
+        Color.convertTo(Color.FORMATS.RGBA, red)
+        Color.convertTo(Color.FORMATS.HSV, red)
+        Color.convertTo(Color.FORMATS.HEX, red)
+    )
+```
+**Note:** `ConvertTo` doesn't support gradients.
+
+### **To find the first position of a color in the canvas,** use the findFirstPos() function:
+###### - findFirstPos(canvas, color, useAlpha=false, temperance=Color.DEFAULT_TEMPERANCE, searchStart=Color.DEFAULT_SEARCH_START, areaSize=[])
+```js
+    const redColor = new Color([255, 0, 0, 1])
+    
+    
+    const whereRedIsAt = Color.findFirstPos(
+        CVS, // Canvas instance
+        redColor // Color instance
+    )
+    
+    
+    if (whereRedIsAt) console.log("The color red was found at: X:"+whereRedIsAt[0]+", Y:"+whereRedIsAt[1])
+    else console.log("The canvas doesn't contain the color red")
+```
+
+
+ 
+
 # Gradient
 
 The Gradient class allows the creation of custom linear / radial gradients. A Gradient instance can be used in the *color* and *fillColor* fields of cavnas objects. 
@@ -652,7 +711,7 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
             CVS.ctx,                 // canvas context
             [ [0, 0], [100, 100] ],  // setting manual positions
             true,                    // is a linear gradient
-            [0, "red"], [1, "blue"]  // goes from red to blue
+            [[0, "red"], [1, "blue"]]  // goes from red to blue
         )
 
     // Assigning the gradient to a dummy filled shape
@@ -662,10 +721,10 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
     customGradient.colorStops = [[0, "green"], [1, "pink"]]
 
     // Access the gradient assigned to the shape's filling and update it
-    dummyFilledShape.fillColor.updateGradient()
+    dummyFilledShape.fillColorRaw.updateGradient()
 ```
 
-**Note:** when using a Shape instance as the 'positions' parameter, the gradient will update automatically.
+**Note:** when using a Shape or a Dot instance as the 'positions' parameter, the gradient will update every frame automatically.
 
 #### Example use 1:
 ###### - Coloring a FilledShape with a gradient and making a rotating gradient effect
@@ -677,12 +736,12 @@ const gradientShape = new FilledShape(
         
         // Other parameters are used by the FilledShape, to make a square at [100, 100]
         false,
-        [100, 100], 
+        [200, 200], 
         [
-            new Dot([100, 100]),
-            new Dot([150, 100]),
-            new Dot([150, 150]),
-            new Dot([100, 150])
+            new Dot([-50, -50]), // Top left corner
+            new Dot([50, -50]),  // Top right corner
+            new Dot([50, 50]),   // Bottom right corner
+            new Dot([-50, 50])   // Bottom left corner
         ]
     )
     
@@ -690,10 +749,10 @@ const gradientShape = new FilledShape(
     gradientShape.playAnim(
         new Anim((progress)=>{
         
-            // Getting the gradient
-            const gradient = gradientShape.fillColor
+            // Getting the gradient instance
+            const gradient = gradientShape.fillColorRaw
             
-            // rotating it
+            // Rotating it
             gradient.rotation = 360 * progress
             
         }, -750) // repeating every 750 ms
@@ -716,21 +775,38 @@ The Anim class allows the creation of smooth animations and the use of easings.
 - **endCallback**? -> Custom callback ran upon the animation ending.
 
 ### **To play an animation:** 
-Use the playAnim() function on any canvas object. Animations get added to the end of the animation play of an object and are played once they're at the first index of this play. You can terminate the current animation and instantly replace it with another one by putting `true` as the second parameter.
+Use the playAnim() function on any canvas object. All object have an `anims` property containing the `currents` and the `backlog` animations.
 
-###### - playAnim(Anim, force?)
+- **The `currents` behave like this:** By default, an animation is added to the `currents` array. Every animation in the `currents` array runs simultaneously.
+
+- **The `backlog` behaves like this:** When the `isUnique` parameter is `true`, animations get added to the end of the backlog queue of an object. Animations are then played one at a time, upon their arrival at the first index of the queue. Setting the `force` parameter to `true` terminates the current backlog animation and instantly replaces it with the provided anim parameter.
+
+###### - playAnim(Anim, isUnique, force)
+`Currents` animations:
 ```js
     // Dummy animations
     const someAnim = new Anim(/* some parameters ... */)
-    const animationThatNeedsToRunNOW = new Anim(/* some other parameters ... */)
+    const anotherAnim = new Anim(/* some other parameters ... */)
     
+    // This will run all both anims simultaneously
+    dummyShape.playAnim(someAnim)
+    dummyShape.playAnim(anotherAnim)
+
+```
     
-    // This will play the animation to be run once all previously playd animations are completed.
-    dot.playAnim(someAnim)
+
+`Backlog` animations:
+```js
+    // Dummy animations
+    const someUniqueAnim = new Anim(/* some parameters ... */)
+    const uniqueAnimationThatNeedsToRunNOW = new Anim(/* some other parameters ... */)
+    
+    // This will queue the animation to be run once all previously queued animations are completed.
+    dot.playAnim(someUniqueAnim, true)
     
     // Will terminate and replace any animation running! (After 3 seconds)
     setTimeout(()=>{
-        dot.playAnim(animationThatNeedsToRunNOW, true)
+        dot.playAnim(animationThatNeedsToRunNOW, true, true)
     }, 3000)
 ```
 
@@ -748,8 +824,10 @@ Use the playAnim() function on any canvas object. Animations get added to the en
     // Creating the animation
     const fadingAnimation = new Anim(
         (progress)=>{
-            // fading the dot over 5 seconds
+            // fading off the dot over 5 seconds
             dot.a = 1 - progress
+            
+            // deleting the dot once invisible
             if (progress == 1) dot.remove()
         },
         5000 // 5 second duration
@@ -762,7 +840,7 @@ Use the playAnim() function on any canvas object. Animations get added to the en
 #### Example use 2:
 ###### - Making a dot smoothly move back and forth while blinking, every second, for eternity 
 ```js
-    let distance = 200
+    const distance = 200
     
     dot.playAnim(new Anim((progress, playCount)=>{
         // fading the dot over 1 second
