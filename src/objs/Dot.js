@@ -12,8 +12,8 @@ class Dot extends Obj {
     }
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
-    draw(ctx, time) {
-        super.draw(ctx, time)
+    draw(ctx, time, deltaTime) {
+        super.draw(ctx, time, deltaTime)
         
         if (this.initialized) {
             // runs parent drawEffect callback if defined

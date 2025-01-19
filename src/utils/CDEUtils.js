@@ -10,7 +10,7 @@ Array.prototype.last=function(index=0){return this[this.length-1-index]}
 Array.prototype.addAt=function(el, index=0){return this.slice(0,index).concat(...[el, this.slice(index, this.length)])}
 
 class CDEUtils {
-    static ACCEPTABLE_DIF = 0.0000001
+    static DEFAULT_ACCEPTABLE_DIFFERENCE = 0.0000001
     static CIRC = 2*Math.PI
 
     // returns a random number within the min and max range. Can generate decimals
@@ -90,11 +90,11 @@ class CDEUtils {
     /**
     * Rounds the specied decimal number if it's close enough to its rounded value 
     * @param {Number} n: a decimal number 
-    * @param {Number} okDif: the minimal difference between the given decimal number and it's rounded conterpart, for them be considered the same 
+    * @param {Number} acceptableDiff: the minimal difference between the given decimal number and it's rounded conterpart, for them be considered the same 
     * @returns The potentially adjusted number
     */
-    static getAcceptableDif(n, okDif=CDEUtils.ACCEPTABLE_DIF) {
-        return Math.round(n)-n <= okDif ? Math.round(n) : n
+    static getAcceptableDiff(n, acceptableDiff=CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE) {
+        return Math.round(n)-n <= acceptableDiff ? Math.round(n) : n
     }
 
     /**

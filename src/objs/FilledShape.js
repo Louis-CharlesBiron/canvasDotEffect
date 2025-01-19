@@ -23,8 +23,8 @@ class FilledShape extends Shape {
     }
 
     // runs every frame, draws the shape if it is at least containing 3 dots
-    draw(ctx, time) {
-        super.draw(ctx, time)
+    draw(ctx, time, deltaTime) {
+        super.draw(ctx, time, deltaTime)
         
         if (this.dots.length > 2) {
             if (this._dynamicUpdates) this.updatePath()

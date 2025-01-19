@@ -63,7 +63,7 @@ class CanvasUtils {
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
-    static drawDotConnections(dot, color, radiusPaddingMultiplier=0, isSourceOver=false) {// CAN BE OPTIMIZED VIA ALPHA
+    static drawDotConnections(dot, color, radiusPaddingMultiplier=0, isSourceOver=false) {
         let ctx = dot.ctx, dc_ll = dot.connections.length, colorValue = Color.formatRgba(color)??color.color
 
         // skip if not visible
@@ -89,9 +89,9 @@ class CanvasUtils {
     }
 
     // Generic function to get a callback that can make a dot draggable and throwable
-    static getDraggableDotCB(pickableRadius=50) {
+    static getDraggableDotCB() {
         let mouseup = false, dragAnim = null
-        return (dot, mouse, dist, ratio)=>{
+        return (dot, mouse, dist, ratio, pickableRadius=50)=>{
             if (mouse.clicked && dist < pickableRadius) {
                 mouseup = true
                 if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
@@ -105,8 +105,8 @@ class CanvasUtils {
     }
 
     // Generic function to rotate the gradient of an object
-    static rotateGradient(obj, duration, speed=1) {
-        return obj.playAnim(new Anim((prog)=>obj.colorRaw.rotation=-speed*360*prog, duration))
+    static rotateGradient(obj, duration=1000, speed=1, isFillColor=false) {
+        return obj.playAnim(new Anim((prog)=>obj[isFillColor?"fillColorRaw":"colorRaw"].rotation=-speed*360*prog, duration))
     }
 
 }

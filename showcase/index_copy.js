@@ -64,3 +64,28 @@ CVS.setmouseup()
 // START
 CVS.startLoop()
 
+
+
+const simpleShape = new Shape([100,100],[
+    new Dot([-50, -50]),
+    new Dot([-50, 0]),
+    new Dot([-50, 50]),
+    new Dot([0, -50]),
+    new Dot([0, 50]),
+    new Dot([50, -50]),
+    new Dot([50, 0]),
+    new Dot([50, 50]),
+], null, normalColorTester, 100, (ctx, dot, ratio, mouse, dist)=>{
+
+    // Changes the opacity and color according to mouse distance
+    dot.a = CDEUtils.mod(1, ratio, 0.8)
+    dot.r = CDEUtils.mod(255, ratio, -255)
+    dot.g = CDEUtils.mod(255, ratio, -255)
+    
+    
+    // Changes the dot's radius, from 2 times the default radius with a range of 80% (10px..2px), according to mouse distance
+    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
+    
+    // Draws a ring around the dot, at 5 times the radius
+    CanvasUtils.drawOuterRing(dot, [255,255,255,0.2], 5)
+    }, null, null, )

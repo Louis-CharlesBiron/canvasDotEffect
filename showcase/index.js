@@ -65,7 +65,7 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
     dot.g = 0
     dot.follow(3000, null, (prog, dot, cprog)=>{
         let d = new Dot(null, 4, null, null, dot.pos)
-            d.playAnim(new Anim((progress, a)=>{
+            d.playAnim(new Anim((progress)=>{
                 d.a=1-progress
                 if (progress==1) d.remove()
             }, 1000))
@@ -104,8 +104,8 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null,
     dragAnim1(shape.dots[0], m, dist, ratio)
 }, null, (shape)=>{
     let dot = shape.firstDot
-    dot.playAnim(new Anim((prog, i)=>{
-        dot.radius = i%2?25*(1-prog):25*prog
+    dot.playAnim(new Anim((prog, deltaTime, i, cprog)=>{
+        dot.radius = i%2?25*(1-cprog):25*cprog
         le.limit = dot.radius*5
     }, -750, Anim.easeOutQuad))
 
@@ -115,11 +115,11 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null,
 let animTesterDx = 200
 let animTester = new Shape([400,200],[
     new Dot([0,50], null, null, (dot, shape)=>{
-        dot.playAnim(new Anim((progress, playCount)=>{
-            dot.a=1-progress
-            if (playCount % 2) dot.x+=animTesterDx*progress*CVS.deltaTime
-            else dot.x-=animTesterDx*progress*CVS.deltaTime
-        }, -1000))
+        let distance = 150, ix = dot.x
+        dot.playAnim(new Anim((progress, deltaTime, playCount)=>{
+            dot.x = ix + ((playCount%2)||-1) * distance * progress
+            if (progress==1) ix = dot.x
+        }, -1000, Anim.easeOutQuad))
     })
 ], null, null, 25, (ctx, dot, ratio, m, dist)=>{
     CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)

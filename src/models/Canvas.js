@@ -125,7 +125,7 @@ class Canvas {
         let els = this.#cachedEls, els_ll = els.length
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
-            if (!el.draw || (!el.alwaysActive && !el.hasAnchorPosChanged && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING))) continue
+            if (!el.draw || (!el.alwaysActive && el.initialized && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING))) continue
             el.draw(this._ctx, this.timeStamp, this._deltaTime)
         }
     }

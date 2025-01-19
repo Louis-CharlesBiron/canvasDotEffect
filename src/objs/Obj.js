@@ -21,7 +21,7 @@ class Obj {
         this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
         
-        this._alwaysActive = alwaysActive??false // whether the object stays active when outside the canvas bounds
+        this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
         this._anims = {backlog:[], currents:[]}  // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
         this._initialized = false                // whether the object has been initialized yet
     }
@@ -31,8 +31,8 @@ class Obj {
         this._pos = this.getInitPos()||Obj.DEFAULT_POS
         this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
         this.color = this.getInitColor()
-        if (typeof this._setupCB == "function") this._setupCB(this, this.parent)
         this.setAnchoredPos()
+        if (typeof this._setupCB == "function") this._setupCB(this, this.parent)
     }
 
     // returns the value of the inital color declaration
@@ -42,12 +42,12 @@ class Obj {
 
     // returns the value of the inital radius declaration
     getInitRadius() {
-        return typeof this._initRadius=="function" ? this._initRadius(this.parent||this) : this._initRadius??null
+        return typeof this._initRadius=="function" ? this._initRadius(this.parent||this, this) : this._initRadius??null
     }
 
     // returns the value of the inital pos declaration
     getInitPos() {
-        return typeof this._initPos=="function" ? [...this._initPos(this._cvs??this.parent, this.parent??this)] : [...this._initPos]
+        return typeof this._initPos=="function" ? [...this._initPos(this._cvs??this.parent, this)] : [...this._initPos]
     }
 
     setAnchoredPos() {
@@ -60,7 +60,7 @@ class Obj {
     }
 
     // Runs every frame
-    draw(ctx, time) {
+    draw(ctx, time, deltaTime) {
         // update pos according to anchor pos
         this.setAnchoredPos()
 
@@ -68,7 +68,7 @@ class Obj {
         let anims = this._anims.currents
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         let a_ll = anims.length
-        for (let i=0;i<a_ll;i++) anims[i].getFrame(time)
+        for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
     }
 
     // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the dot's radius)
@@ -137,10 +137,10 @@ class Obj {
     }
 
     // moves the obj in specified direction at specified distance(force)
-    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
+    addForce(distance, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
         let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
-            dx = CDEUtils.getAcceptableDif(force*Math.cos(rDir), CDEUtils.ACCEPTABLE_DIF),
-            dy = CDEUtils.getAcceptableDif(force*Math.sin(rDir), CDEUtils.ACCEPTABLE_DIF)
+            dx = CDEUtils.getAcceptableDiff(distance*Math.cos(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE),
+            dy = CDEUtils.getAcceptableDiff(distance*Math.sin(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE)
         
         return this.playAnim(new Anim(prog=>{
             this.x = ix+dx*prog

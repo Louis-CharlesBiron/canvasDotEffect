@@ -38,8 +38,8 @@ class Shape extends Obj {
     }
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
-    draw(ctx, time) {
-        super.draw(ctx, time)
+    draw(ctx, time, deltaTime) {
+        super.draw(ctx, time, deltaTime)
         if (typeof this._ratioPosCB == "function") this._ratioPos = this._ratioPosCB(this)
     }
 
@@ -131,8 +131,8 @@ class Shape extends Obj {
     // moves the shape and all its dots in specified direction at specified distance(force)
     addForce(force, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
         let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
-            dx = CDEUtils.getAcceptableDif(force*Math.cos(rDir), CDEUtils.ACCEPTABLE_DIF),
-            dy = CDEUtils.getAcceptableDif(force*Math.sin(rDir), CDEUtils.ACCEPTABLE_DIF)
+            dx = CDEUtils.getAcceptableDiff(force*Math.cos(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE),
+            dy = CDEUtils.getAcceptableDiff(force*Math.sin(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE)
         
         return this.playAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy-dy*prog])
