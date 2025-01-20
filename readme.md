@@ -175,7 +175,7 @@ The Obj class is the template class of any canvas object. **It should not be dir
 - **color** -> Either a Color instance `new Color("red")`, a string `"red"`, a hex value `#FF0000` or a RGBA array `[255, 0, 0, 1]`
 - **setupCB** -> Custom callback called on the object's initialization `(this, this?.parent)=>{}`s
 - **anchorPos** -> The reference point from which the object's pos will be set. Can either be a pos `[x,y]`, another canvas object instance, or a callback `(this, Canvas or parent)=>{... return [x,y]}` (Defaults to the parent's pos, or `[0, 0]` if the object has no parent)
-- **alwaysAcitve** -> Whether the object stays active when outside the canvas bounds.
+- **alwaysActive** -> Whether the object stays active when outside the canvas bounds.
 - ***initialized*** -> Whether the object has been initialized.
 
 **This class also defines other useful base functions**, such as:
@@ -187,20 +187,20 @@ The Obj class is the template class of any canvas object. **It should not be dir
 
 
 **The follow function:** use `follow()` to make an object follow a custom path:
-###### - `follow(duration, easing, action, ...progressSeparations)`
+###### - `follow(duration, easing, action, progressSeparations)`
 ```js
    /**
      * Used to make an object follow a custom path
      * @param {Number} duration: duration of the animation in ms
      * @param {Function} easing: easing function 
      * @param {Function?} action: a custom callback that can be called in addition to the movement                                                        //newProg is 'prog' - the progress delimiter of the range
-     * @param {...Array[Number, Function]} progressSeparations: list of callback paired with a progress range, the callback must return a position (prog, newProg, initX, initY)=>return [x,y]
+     * @param {[[Number, Function], ...]} progressSeparations: list of callback paired with a progress range, the callback must return a position (prog, newProg, initX, initY)=>return [x,y]
      * progressSeparations example: [0:(prog)=>[x1, y1]], [0.5:(prog, newProg)=>[x2, y2]] -> from 0% to 49% the pos from 1st callback is applied, from 50%-100% the pos from 2nd callback is applied  
      */
      
     // Example use, for 3 seconds, easeOutQuad, no custom callback, will travel in a sideways 'L' shape 
     let dx=400, dy=200
-    dot.follow(3000, Anim.easeOutQuad, null, [0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]])
+    dot.follow(3000, Anim.easeOutQuad, null, [[0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]]])
 ```
 
  
