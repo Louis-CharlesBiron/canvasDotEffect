@@ -206,6 +206,11 @@ class Shape extends Obj {
         return false
     }
 
+    getCenter() {
+        const rangeX = CDEUtils.getMinMax(this.dots, "x"), rangeY = CDEUtils.getMinMax(this.dots, "y")
+        return [rangeX[0]+(rangeX[1]-rangeX[0])/2, rangeY[0]+(rangeY[1]-rangeY[0])/2]
+    }
+
     // Empties the shapes of all its dots
     clear() {
         this._dots = []

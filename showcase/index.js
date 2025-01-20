@@ -10,23 +10,31 @@ const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//lo
 const normalColorTester = new Color("white")
 
 let movementsTester = new Shape([300,300],[
-     new Dot([-50, -50]),
-     new Dot([-50, 0]),
-     new Dot([-50, 50]),
-     new Dot([0, -50]),
-     new Dot([0, 0]),
-     new Dot([0, 50]),
-     new Dot([50, -50]),
-     new Dot([50, 0]),
+    new Dot([-50, -50]),
+    new Dot([-50, 0]),
+    new Dot([-50, 50]),
+    new Dot([0, -50]),
+    new Dot([0, 0]),
+    new Dot([0, 50]),
+    new Dot([50, -50]),
+    new Dot([50, 0]),
  ], null, normalColorTester, 100, (ctx, dot, ratio, m, dist)=>{
-     dot.a = CDEUtils.mod(1, ratio, 0.8)
-     //dot.r = CDEUtils.mod(255, ratio, -255)
-     //dot.g = CDEUtils.mod(255, ratio, -255)
-     //let idk = CDEUtils.mod(5, ratio, 5)
-     //dot.x += CDEUtils.random(-idk, idk)
-     //dot.y += CDEUtils.random(-idk, idk)
-     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
-     CanvasUtils.drawOuterRing(dot, [255,255,255,0.2], 5)
+    dot.a = CDEUtils.mod(1, ratio, 0.8)
+    //dot.r = CDEUtils.mod(255, ratio, -255)
+    //dot.g = CDEUtils.mod(255, ratio, -255)
+    //let idk = CDEUtils.mod(5, ratio, 5)
+    //dot.x += CDEUtils.random(-idk, idk)
+    //dot.y += CDEUtils.random(-idk, idk)
+    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
+    CanvasUtils.drawOuterRing(dot, [255,255,255,0.2], 5)
+
+    let kb = CVS.keyboard, speed = 100
+    if (kb.hasKeysDown()) {
+        if (kb.isDown("A")) dot.x -= speed*CVS.deltaTime
+        if (kb.isDown("d")) dot.x += speed*CVS.deltaTime
+        if (kb.isDown("W")) dot.y -= speed*CVS.deltaTime
+        if (kb.isDown("s")) dot.y += speed*CVS.deltaTime
+    }
 
  }, null, null, [50,0])
 CanvasUtils.toggleCenter(movementsTester)

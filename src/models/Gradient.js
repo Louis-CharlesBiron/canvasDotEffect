@@ -40,7 +40,7 @@ class Gradient {
      */
     getAutomaticPositions(obj=this._initPositions, optimize=true) {
         if (obj instanceof Shape) {
-            if (!optimize || this.#hasShapeChanged(obj)) {
+            if (this.#hasShapeChanged(obj) || !optimize) {
                 const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"),
                     smallestX = rangeX[0], smallestY = rangeY[0],
                     biggestX = rangeX[1], biggestY = rangeY[1],
@@ -56,7 +56,7 @@ class Gradient {
                 }
             } else return this._positions
         } else if (obj instanceof Dot) {
-            if (!optimize || this.#hasDotChanged(obj)) {
+            if (this.#hasDotChanged(obj) || !optimize ) {
                 if (this.#getFormatedIsLinear() !== false) {
                     let x = obj.left-obj.x, y = obj.top-obj.y, x2 = obj.right-obj.x, y2 = obj.bottom-obj.y,
                         cosV = Math.cos(CDEUtils.toRad(this.#getFormatedIsLinear())), sinV = Math.sin(CDEUtils.toRad(this.#getFormatedIsLinear()))

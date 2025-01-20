@@ -24,6 +24,9 @@ class TypingDevice {
         return Boolean(this._keysPressed.find(v=>v.key==key.toUpperCase()))
     }
 
+    hasKeysDown() {
+        return Boolean(this._keysPressed.length)
+    }
 
     get keysPressedRaw() {return this._keysPressed}
     get keysPressed() {return this._keysPressed.map(v=>v.key)}
