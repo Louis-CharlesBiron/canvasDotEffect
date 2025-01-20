@@ -112,14 +112,13 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null,
     dot.playAnim(new Anim((prog, i)=>{dot.b = i%2?255*(1-prog):255*prog}, -750))
 })
 
-let animTesterDx = 200
 let animTester = new Shape([400,200],[
     new Dot([0,50], null, null, (dot, shape)=>{
         let distance = 150, ix = dot.x
         dot.playAnim(new Anim((progress, deltaTime, playCount)=>{
             dot.x = ix + ((playCount%2)||-1) * distance * progress
             if (progress==1) ix = dot.x
-        }, -1000, Anim.easeOutQuad))
+        }, -1000, Anim.easeOutBack))
     })
 ], null, null, 25, (ctx, dot, ratio, m, dist)=>{
     CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)
@@ -139,6 +138,8 @@ CVS.setmousemove(mMove)
 CVS.setmouseleave(mMove)
 CVS.setmousedown()
 CVS.setmouseup()
+CVS.setkeydown()
+CVS.setkeyup()
 
 // START
 CVS.startLoop()

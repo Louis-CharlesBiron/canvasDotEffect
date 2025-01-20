@@ -24,36 +24,38 @@ class Canvas {
     #cachedEls = [] // cached canvas elements to draw
 
     constructor(cvs, loopingCallback, frame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
-        this._cvs = cvs                                         //html canvas element
-        this._frame = frame??cvs?.parentElement                 //html parent of canvas element
-        this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)        //set styles selector
-        this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true) //set styles selector
-        this._ctx = this._cvs.getContext("2d", {willReadFrequently})   //canvas context
-        this._settings = this.updateSettings(settings)          //set context settings
+        this._cvs = cvs                                         // html canvas element
+        this._frame = frame??cvs?.parentElement                 // html parent of canvas element
+        this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)        // set styles selector for canvas
+        this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true) // set styles selector for parent
+        this._ctx = this._cvs.getContext("2d", {willReadFrequently})   // canvas context
+        this._settings = this.updateSettings(settings)          // set context settings
 
-        this._els={refs:[], defs:[]}                            //arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
+        this._els={refs:[], defs:[]}                            // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
 
-        this._looping = false                                   //loop state
-        this._cb = loopingCallback                              //custom callback called along with the loop() function
+        this._looping = false                                   // loop state
+        this._loopingCallback = loopingCallback                 // custom callback called along with the loop() function
 
-        this._deltaTime = null                                  //useable delta time in seconds
-        this._fixedTimeStamp = null                             //fixed (offsets lag spikes) requestanimationframe timestamp in ms
+        this._deltaTime = null                                  // useable delta time in seconds
+        this._fixedTimeStamp = null                             // fixed (offsets lag spikes) requestanimationframe timestamp in ms
 
-        this._windowListeners = this.#initWindowListeners()     //[onresize, onvisibilitychange]
+        this._windowListeners = this.#initWindowListeners()     // [onresize, onvisibilitychange]
         
-        let frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
-        this.setSize(frameCBR.width, frameCBR.height)           //init size
-        this.#initStyles()                                      //init styles
+        const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
+        this.setSize(frameCBR.width, frameCBR.height)           // init size
+        this.#initStyles()                                      // init styles
 
-        this._mouse = new Mouse()                               //mouse info
-        this._offset = this.updateOffset()                      //cvs page offset
+        this._typingDevice = new TypingDevice()                 // keyboard info
+        this._mouse = new Mouse()                               // mouse info
+        this._offset = this.updateOffset()                      // cvs page offset
     }
 
     // sets css styles on the canvas and the parent
     #initStyles() {
-        let style = document.createElement("style")
-        style.appendChild(document.createTextNode(`[${Canvas.DEFAULT_CVSFRAMEDE_ATTR}]{position:relative !important;}canvas[${Canvas.DEFAULT_CVSDE_ATTR}]{${Object.entries(Canvas.DEFAULT_CANVAS_STYLES).reduce((a,b)=>a+=`${b[0]}:${b[1]};`,"")}}`))
+        const style = document.createElement("style")
+        style.appendChild(document.createTextNode(`[${Canvas.DEFAULT_CVSFRAMEDE_ATTR}]{position:relative !important;outline: none;}canvas[${Canvas.DEFAULT_CVSDE_ATTR}]{${Object.entries(Canvas.DEFAULT_CANVAS_STYLES).reduce((a,b)=>a+=`${b[0]}:${b[1]};`,"")}}`))
         this._cvs.appendChild(style)
+        this._frame.setAttribute("tabindex", 0)
     }
 
     // sets resize and visibility change listeners on the window
@@ -91,7 +93,7 @@ class Canvas {
             this.clear()
             this.draw()
             
-            if (typeof this._cb == "function") this._cb()
+            if (typeof this._loopingCallback == "function") this._loopingCallback()
 
             this._fixedTimeStamp = 0
 
@@ -197,7 +199,7 @@ class Canvas {
             if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos=this._mouse.pos
         }
         // custom move callback
-        if (typeof cb == "function") cb(this._mouse, e)
+        if (typeof cb == "function") cb(e, this._mouse)
 
         // check mouse pos validity
         this._mouse.checkValid()
@@ -231,7 +233,7 @@ class Canvas {
     // called on any mouse clicks
     #mouseClicks(cb, e) {
         this._mouse.setMouseClicks(e)
-        if (typeof cb == "function") cb(this._mouse, e)
+        if (typeof cb == "function") cb(e, this._mouse)
     }
 
     // defines the onmousedown listener
@@ -246,6 +248,30 @@ class Canvas {
         const onmouseup=e=>this.#mouseClicks(cb, e)
         this._frame.addEventListener("mouseup", onmouseup)
         return ()=>this._frame.removeEventListener("mouseup", onmouseup)
+    }
+
+    // defines the onkeydown listener
+    setkeydown(cb, global) {
+        const onkeydown=e=>{
+            this._typingDevice.setDown(e)
+            if (typeof cb=="function") cb(e, this._typingDevice)
+        }
+        
+        const element = global ? document : this._frame
+        element.addEventListener("keydown", onkeydown)
+        return ()=>element.removeEventListener("keydown", onkeydown)
+    }
+
+    // defines the onkeyup listener
+    setkeyup(cb, global) {
+        const onkeyup=e=>{
+            this._typingDevice.setUp(e)
+            if (typeof cb=="function") cb(e, this._typingDevice)
+        }
+
+        const element = global ? document : this._frame
+        element.addEventListener("keyup", onkeyup)
+        return ()=>element.removeEventListener("keyup", onkeyup)
     }
 
     // returns the center [x,y] of the canvas
@@ -264,7 +290,7 @@ class Canvas {
 	get width() {return this._cvs.width}
 	get height() {return this._cvs.height}
 	get settings() {return this._settings}
-	get cb() {return this._cb}
+	get loopingCallback() {return this._loopingCallback}
 	get looping() {return this._looping}
 	get deltaTime() {return this._deltaTime}
 	get deltaTimeCap() {return this.#deltaTimeCap}
@@ -273,13 +299,15 @@ class Canvas {
 	get timeStampRaw() {return this.#timeStamp}
 	get els() {return this._els}
 	get mouse() {return this._mouse}
+	get typingDevice() {return this._typingDevice}
+	get keyboard() {return this._typingDevice}
 	get offset() {return this._offset}
     get defs() {return this._els.defs}
     get refs() {return this._els.refs}
     get allDefsAndRefs() {return this.defs.concat(this.refs)}
     get allEls() {return this.allDefsAndRefs.flatMap(x=>x.dots||x)}
 
-	set cb(_cb) {return this._cb = _cb}
+	set loopingCallback(_cb) {return this._loopingCallback = _cb}
 	set width(w) {this.setSize(w, null)}
 	set height(h) {this.setSize(null, h)}
 }

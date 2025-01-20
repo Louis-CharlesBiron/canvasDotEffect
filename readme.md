@@ -17,7 +17,9 @@
     - Color
     - Gradient
     - Anim
-    - Mouse
+    - Input Devices
+        - TypingDevice
+        - Mouse
     - Utilities
       - CanvasUtils
       - CDEUtils
@@ -36,7 +38,7 @@
     </head>
 ```
 
-2. **In your HTML file, place a canvas element. The canvas will automatically take the size of its parent** element.
+2. **In your HTML file, place a canvas element. The canvas will later automatically take the size of its parent element**.
 ```HTML
     <div class="canvasHolder">
         <canvas id="canvasId"></canvas>
@@ -59,7 +61,7 @@
 
 5. **Set the mouse event listeners for mouse interactions.**
 ```js
-    // Set up the prebuilt event listener, allowing the creation of more interactive effects!
+    // Set up the prebuilt event listeners, allowing the creation of more interactive effects!
     CVS.setmousemove(/*custom callback*/)
     CVS.setmouseleave()
     CVS.setmousedown()
@@ -932,10 +934,50 @@ Use the playAnim() function on any canvas object. All objects have an `anims` pr
 ```
 
  
+# Input Devices
+
+## TypingDevice
+The TypingDevice class is automatically created and accessible by any Canvas instance. It provides information about the user's keyboard, such as the current keys pressed.
+
+**Note:** for setting the *keyup* and *keydown* event listeners, use the prebuilt functions from the Canvas class.
+
+#### **The TypingDevice's main attributes are**:
+- **keysPressed** -> The keys which are currently pressed.
+
+
+### **To set the keys event listeners,** use the following prebuilt functions:
+###### - setkeydown(cb, global), setkeyup(cb, global)
+```js
+    // Setting the keydown listener
+    CVS.setkeydown()
+    
+    // Settign the keyup listener with a custom callback
+    CVS.setkeyup((e)=>{
+        console.log("Custom callback: ", e)
+    })
+    
+    // OR
+    
+    // Setting both listeners globally. (This will detect the key inputs even when the canvas is not directly focused)
+    CVS.setkeydown(null, true)
+    CVS.setkeyup((e)=>{
+        console.log("Custom callback: ", e)
+    }, true)
+    
+```
+
+### **To get whether a certain key is down,** use the isDown() function:
+###### - isDown(key)
+```js
+    // Accessing the typing device's "a" key state
+    const isKey_A_down = CVS.typingDevice.isDown("a")
+    
+    console.log("Is the 'a' key down: ", isKey_A_down)
+```
 
 ## Mouse
 
-The Mouse class is automatically created and accessible by any Canvas instance. It provides information about the mouse.
+The Mouse class is automatically created and accessible by any Canvas instance. It provides information about the user's mouse, such a position, speed, direction, and buttons pressed.
 
 **Note:** for setting the *move*, *leave*, *up*, and *down* mouse event listeners, use the prebuilt functions from the Canvas class.
 
