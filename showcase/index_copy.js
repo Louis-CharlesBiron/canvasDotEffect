@@ -7,6 +7,8 @@ const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//lo
 
 
 // DECLARE OBJS
+const normalColorTester = new Color("white")
+
 let logo = new Shape([0,0], [
     new Dot([250, 440], 15, (ctx, dot)=>new Gradient(ctx, dot, 270, [[0, "#B9ACE3"], [1, "#9ADBE4"]])),
     new Dot([350, 290], 16.5, (ctx, dot)=>new Gradient(ctx, dot, 90, [[0, "#B9ACE3"], [1, "#9ADBE4"]])),
@@ -27,9 +29,9 @@ let logo = new Shape([0,0], [
     shape.playAnim(new Anim((prog)=>shape.colorRaw.rotation=360*prog, -1000))
 
     let radiusMovements = 1
-    shape.dots[0].playAnim(new Anim((prog, i)=>shape.dots[0].radius += i%2?radiusMovements*prog*CVS.deltaTime:-radiusMovements*prog*CVS.deltaTime, -6000, Anim.easeOutQuad))
-    shape.dots[1].playAnim(new Anim((prog, i)=>shape.dots[1].radius += i%2?radiusMovements*prog*CVS.deltaTime:-radiusMovements*prog*CVS.deltaTime, -3000, Anim.easeOutQuad))
-    shape.dots[2].playAnim(new Anim((prog, i)=>shape.dots[2].radius += i%2?radiusMovements*prog*CVS.deltaTime:-radiusMovements*prog*CVS.deltaTime, -4000, Anim.easeOutQuad))
+    shape.dots[0].playAnim(new Anim((prog, dt, i)=>shape.dots[0].radius += i%2?radiusMovements*prog*CVS.deltaTime:-radiusMovements*prog*CVS.deltaTime, -6000, Anim.easeOutQuad))
+    shape.dots[1].playAnim(new Anim((prog, dt, i)=>shape.dots[1].radius += i%2?radiusMovements*prog*CVS.deltaTime:-radiusMovements*prog*CVS.deltaTime, -3000, Anim.easeOutQuad))
+    shape.dots[2].playAnim(new Anim((prog, dt, i)=>shape.dots[2].radius += i%2?radiusMovements*prog*CVS.deltaTime:-radiusMovements*prog*CVS.deltaTime, -4000, Anim.easeOutQuad))
 })
 
 let logoBG = new FilledShape([65, 100, 100, 0.15], true,
@@ -50,8 +52,32 @@ let logoLetters = new Grid("CDE", [5, 5], 38, null, [308,372], 0, null, 100, (ct
 })
 
 logoLetters.rotateAt(-25)
-CVS.add(logoLetters)
+//CVS.add(logoLetters)
 
+
+
+let oktest = new Shape([110,250],[new Dot(), new Dot([10, 0],null,null,null,(dot, shape)=>shape.firstDot)], null, null, 100, (ctx, dot, ratio)=>{// SHAPE DRAW EFFECT CB
+    
+    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
+    CanvasUtils.drawDotConnections(dot, [255,0,0,1])
+
+}, null, (shape)=>{// SHAPE SETUP CB
+    
+    shape.firstDot.follow(5000, null, (prog, dot)=>{
+        let d = new Dot(null, 4, null, null, dot.pos)
+        shape.add(d)
+    }, CanvasUtils.FOLLOW_PATHS.CIRCLE(null, null, 0.5))
+
+    
+    shape.dots[1].follow(5000, Anim.easeOutBack, (prog, dot)=>{
+        let d = new Dot(null, 2, "red", null, dot.pos)
+        shape.add(d)
+    }, CanvasUtils.FOLLOW_PATHS.RELATIVE(CanvasUtils.FOLLOW_PATHS.LINEAR(800, 0)))
+
+    shape.firstDot.addConnection(shape.dots[1])
+}, null, true)
+
+CVS.add(oktest)
 
 
 // USER ACTIONS

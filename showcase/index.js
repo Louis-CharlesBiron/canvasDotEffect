@@ -71,7 +71,7 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
 }, undefined, (shape)=>{
     let dx=400, dy=200, dot = shape.dots.last()
     dot.g = 0
-    dot.follow(3000, null, (prog, dot, cprog)=>{
+    dot.follow(3000, null, (prog, dot)=>{
         let d = new Dot(null, 4, null, null, dot.pos)
             d.playAnim(new Anim((progress)=>{
                 d.a=1-progress
@@ -93,7 +93,7 @@ let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200]
     if (dist < shape.limit) CanvasUtils.drawConnection(dot, [dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)], dot.ratioPos)
     
     CanvasUtils.drawDotConnections(dot, [255,0,0,1])
-}, ()=>draggableDotTester.dots[0].pos, null, ()=>filledShapeTester.firstDot)
+}, ()=>draggableDotTester.dots[0].pos, null)
 
 
 

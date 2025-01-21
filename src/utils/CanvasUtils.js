@@ -114,80 +114,89 @@ class CanvasUtils {
             width??=100
             height??=50
             progressOffset??=0
-            return [0, (prog)=>{
+            return [[0, (prog)=>{
                 const progress = CDEUtils.CIRC*((prog+progressOffset)%1)
                 return [width*Math.sin(progress), height*Math.sin(2*progress)]
-            }]
+            }]]
         }
 
         static CIRCLE(width, height, progressOffset) {
             width??=100
             height??=100
             progressOffset??=0
-            return [0, (prog)=>{
+            return [[0, (prog)=>{
                 const progress = CDEUtils.CIRC*((prog+progressOffset)%1)
                 return [width*Math.cos(progress), height*Math.sin(progress)]
-            }]
+            }]]
         }
         
         static RECTANGLE(width, height, progressOffset) {
             width??=100
             height??=100
             progressOffset??=0
-            return [0, (prog) => {
+            return [[0, (prog)=>{
                 const pos = ((prog+progressOffset)%1)*2*(width+height)
                 if (pos < width) return [pos, 0]
                 else if (pos < width+height) return [width, pos-width]
                 else if (pos < 2*width+height) return [width-(pos-(width+height)), height]
                 else return [0, height-(pos-(2*width+height))]
-            }]
+            }]]
         }
 
         static QUADRATIC(width, height, isFliped) {
             width ??= 100
             height ??= 200
             const maxNaturalHeight = Math.pow(width/2,2)
-            return [
-                [0, (prog) => {
-                    let x = (prog-0.5)*width, y = height*((Math.pow(x,2))/maxNaturalHeight)
-                    if (isFliped) y = height-y
-                    return [x, y]
-                }]
-            ]
+            return [[0, (prog)=>{
+                let x = (prog-0.5)*width, y = height*((Math.pow(x,2))/maxNaturalHeight)
+                if (isFliped) y = height-y
+                return [x, y]
+            }]]
         }
 
         static LINEAR(width, a) {
             width ??= 100
             a ??= 1
-            return [
-                [0, (prog) => {
-                    let x = prog*width, y = a*x
-                    return [x, y]
-                }]
-            ]
+            return [[0, (prog)=>{
+                let x = prog*width, y = a*x
+                return [x, y]
+            }]]
         }
 
         static SINE_WAVE(width = 100, height = 100) {
             width ??= 100
             height ??= 100
-            return [
-                [0, (prog) => {
-                    let x = prog*width, y = height*Math.sin((CDEUtils.CIRC*x)/width)
-                    return [x, y]
-                }]
-            ]
+            return [[0, (prog)=>{
+                let x = prog*width, y = height*Math.sin((CDEUtils.CIRC*x)/width)
+                return [x, y]
+            }]]
         }
 
         static COSINE_WAVE(width = 100, height = 100) {
             width ??= 100
             height ??= 100
-            return [
-                [0, (prog) => {
-                    let x = prog*width, y = height*Math.cos((CDEUtils.CIRC*x)/width)
-                    return [x, y]
-                }]
-            ]
+            return [[0, (prog)=>{
+                let x = prog*width, y = height*Math.cos((CDEUtils.CIRC*x)/width)
+                return [x, y]
+            }]]
         }
+
+        // Doesn't move the dot, unless provided a x/y value. Also accepts other generic follow paths as x/y values.
+        static RELATIVE(forceX, forceY) {
+            forceX??= undefined
+            forceY??= undefined
+            let isForceXFn = false, isForceYFn = false
+            if (Array.isArray(forceX)) {
+                forceX = forceX.flat()[1]
+                isForceXFn = true
+            }
+            if (Array.isArray(forceY)) {
+                forceY = forceY.flat()[1]
+                isForceYFn = true
+            }
+            return [[0,(prog)=>[isForceXFn?forceX(prog)[0]:forceX, isForceYFn?forceY(prog)[1]:forceX]]]
+        }
+
         
     }
 

@@ -25,6 +25,7 @@ class Shape extends Obj {
     // initializes the shape, adds its dots and initializes them
     initialize() {
         this._pos = this.getInitPos()
+        this.setAnchoredPos()
 
         if (typeof this._initDots == "string") this.add(this.createFromString(this._initDots))
         else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))
@@ -242,6 +243,8 @@ class Shape extends Obj {
         return currentDotPos
     }
     get firstDot() {return this._dots[0]}
+    get secondDot() {return this._dots[1]}
+    get thirdDot() {return this._dots[2]}
     get asSource() {return this._dots}
 
     set cvs(cvs) {this._cvs = cvs}

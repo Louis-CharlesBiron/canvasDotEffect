@@ -47,7 +47,7 @@ class Obj {
 
     // returns the value of the inital pos declaration
     getInitPos() {
-        return typeof this._initPos=="function" ? [...this._initPos(this._cvs??this.parent, this)] : [...this._initPos]
+        return typeof this._initPos=="function" ? [...this._initPos(this._cvs??this.parent, this)] : [...this.adjustPos(this._initPos)]
     }
 
     setAnchoredPos() {
@@ -86,15 +86,15 @@ class Obj {
     // Teleports to given coords
     moveAt(pos) {
         let [x, y] = pos
-        if (x !== null && x !== undefined) this.x = x
-        if (y !== null && y !== undefined) this.y = y
+        if (x !== null && x !== undefined && isFinite(x)) this.x = x
+        if (y !== null && y !== undefined && isFinite(y)) this.y = y
     }
 
     // Teleports to incremented coords
     moveBy(pos) {
         let [x, y] = pos
-        if (x !== null && x !== undefined) this.x += x
-        if (y !== null && y !== undefined) this.y += y
+        if (x !== null && x !== undefined && isFinite(x)) this.x += x
+        if (y !== null && y !== undefined && isFinite(y)) this.y += y
     }
 
     // Smoothly moves to coords in set time
@@ -168,8 +168,8 @@ class Obj {
     // allows flexible pos declarations
     adjustPos(pos) {
         let [x, y] = pos
-        if (x === null || x === undefined) x = this.x
-        if (y === null || y === undefined) y = this.y
+        if (x === null || x === undefined) x = this.x??0
+        if (y === null || y === undefined) y = this.y??0
         return [x, y]
     }
 
