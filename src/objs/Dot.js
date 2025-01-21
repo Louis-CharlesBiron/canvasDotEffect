@@ -13,13 +13,12 @@ class Dot extends Obj {
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
     draw(ctx, time, deltaTime) {
-        super.draw(ctx, time, deltaTime)
         
         if (this.initialized) {
             // runs parent drawEffect callback if defined
             if (typeof this.drawEffectCB == "function") {
                 let dist = this.getDistance(), rawRatio = this.getRatio(dist)
-                this.drawEffectCB(ctx, this, Math.min(1, rawRatio), this.cvs.mouse, dist, this._parent, rawRatio)
+                this.drawEffectCB(ctx, this, rawRatio>1 ? 1 : rawRatio, this.cvs.mouse, dist, this._parent, rawRatio)
             }
 
             // draw dot
@@ -28,6 +27,7 @@ class Dot extends Obj {
             ctx.arc(this.x, this.y, this._radius, 0, CDEUtils.CIRC)
             ctx.fill()
         } else this.initialized = true
+        super.draw(ctx, time, deltaTime)
     }
 
     

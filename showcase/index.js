@@ -3,7 +3,7 @@ const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//lo
     if (fpsDisplay.textContent !== fps) fpsDisplay.textContent = fps
     mouseSpeed.textContent = CVS?.mouse?.speed?.toFixed(2)+" px/sec"
     mouseAngle.textContent = CVS?.mouse?.dir?.toFixed(2)+" deg"
-})
+}, null)
 
 // DECLARE OBJS
 

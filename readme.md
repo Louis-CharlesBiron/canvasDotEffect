@@ -108,13 +108,14 @@ The Canvas class is the core of the project. It manages the main loop, the windo
 ###### - `new Canvas(cvs, loopingCallback, frame, settings)`
 - **cvs** -> The HTML canvas element to link to.
 - **loopingCallback**? -> A custom callback ran each frame.
+- **fpsLimit**? -> The maximum fps cap. Defaults to V-Sync.
 - **frame**? -> If you don't want the canvas to take the size of its direct parent, you can provide another custom HTML element here.
 - **settings**? -> The custom canvas settings (leave blank for prebuilt default settings).
 - **willReadFrequently**? -> If true, optimizes the canvas context for frequent readings. (Defaults to false)
 
  
 
-**To add canvas object to the canvas,** use the add() function:
+**To add objects to the canvas,** use the add() function:
 ###### - add(objs, isDef, active=true)
 ```js
     // For a source object
@@ -127,13 +128,17 @@ The Canvas class is the core of the project. It manages the main loop, the windo
     CVS.add(yourShape, false, false)
 ```
 
-**To set up mouse listeners for the canvas,** use the following prebuilt functions:
+**To set up mouse/keyboard listeners for the canvas,** use the following prebuilt functions:
 ```js
     // Set the important mouse events 
     CVS.setmousemove(/*possible custom callback*/)
     CVS.setmouseleave()
     CVS.setmousedown()
     CVS.setmouseup()
+
+    // Set the important keyboard events 
+    CVS.setkeydown(/*possible custom callback*/)
+    CVS.setkeyup()
 ```
 
 **To control the canvas loop**, use the following functions:

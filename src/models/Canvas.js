@@ -8,24 +8,27 @@ const CDE_CANVAS_DEFAULT_TIMEOUT_FN = window.requestAnimationFrame||window.mozRe
 // Represents a html canvas element
 class Canvas {
     static ELEMENT_ID_GIVER = 0
-    static DEFAULT_MAX_DELTATIME= 0.13
+    static DEFAULT_MAX_DELTATIME_MS = 130
+    static DEFAULT_MAX_DELTATIME = Canvas.DEFAULT_MAX_DELTATIME_MS/1000
+    static DEFAULT_MAXDELAY_MULTIPLIER = 0.44
     static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
     static DEFAULT_CVSDE_ATTR = "_CVSDE"
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
-    static DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":false, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue", "willReadFrequently":false}
+    static DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":true, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue", "willReadFrequently":false}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
 
-    #lastFrame = 0  // used for delta time calcultions
-    #deltaTimeCap = Canvas.DEFAULT_MAX_DELTATIME // used to prevent significant delta time gaps
+    #lastFrame = 0 
+    #lastLimitedFrame = 0 
+    #maxTime = null
     #frameSkipsOffset = null // used to prevent significant frame gaps
-    #timeStamp = null  // requestanimationframe timestamp in ms
-    #cachedEls = [] // cached canvas elements to draw
+    #timeStamp = null        // requestanimationframe timestamp in ms
+    #cachedEls = []          // cached canvas elements to draw
 
-    constructor(cvs, loopingCallback, frame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
+    constructor(cvs, loopingCallback, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                         // html canvas element
-        this._frame = frame??cvs?.parentElement                 // html parent of canvas element
+        this._frame = cvsFrame??cvs?.parentElement              // html parent of canvas element
         this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)        // set styles selector for canvas
         this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true) // set styles selector for parent
         this._ctx = this._cvs.getContext("2d", {willReadFrequently})   // canvas context
@@ -36,6 +39,8 @@ class Canvas {
         this._looping = false                                   // loop state
         this._loopingCallback = loopingCallback                 // custom callback called along with the loop() function
 
+        this.fpsLimit = fpsLimit                                // delay between each frame to limit fps
+        this.#maxTime = this.#getMaxTime(fpsLimit)              // max time between frames
         this._deltaTime = null                                  // useable delta time in seconds
         this._fixedTimeStamp = null                             // fixed (offsets lag spikes) requestanimationframe timestamp in ms
 
@@ -60,8 +65,8 @@ class Canvas {
 
     // sets resize and visibility change listeners on the window
     #initWindowListeners() {
-        const onresize=()=>{this.setSize()},
-        onvisibilitychange=()=>{if (!document.hidden) this.reset()}
+        const onresize=()=>this.setSize(),
+              onvisibilitychange=()=>{if (!document.hidden) this.reset()}
 
         window.addEventListener("resize", onresize)
         window.addEventListener("visibilitychange", onvisibilitychange)
@@ -82,12 +87,32 @@ class Canvas {
         }
     }
 
+    static a = 0;
+
     // main loop, runs every frame
     #loop(time) {
-        let delay = Math.abs((time-this.#timeStamp)-this.deltaTime*1000)
-        if (this._fixedTimeStamp==0) this._fixedTimeStamp = time-this.#frameSkipsOffset
-        if (time && this._fixedTimeStamp && delay < Canvas.DEFAULT_MAX_DELTATIME*1000) {
+        this.#timeStamp = time
+        if (this._fpsLimit) {
+            const timeDiff = time-this.#lastLimitedFrame
+            if (timeDiff >= this._fpsLimit) {
+                this.#loopCore(time)
+                this.#lastFrame = time
+                this.#lastLimitedFrame = time-(timeDiff%this._fpsLimit)
+            }
+        } else {
+            this.#loopCore(time)
+            this.#lastFrame = time
+        }
 
+        if (this._looping) CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
+    }
+
+    #loopCore(time) {
+        this.#calcDeltaTime(time)
+
+        const delay = Math.abs((time-this.#timeStamp)-this.deltaTime*1000)
+        if (this._fixedTimeStamp==0) this._fixedTimeStamp = time-this.#frameSkipsOffset
+        if (time && this._fixedTimeStamp && delay < this.#maxTime) {
             this._mouse.calcSpeed(this._deltaTime)
 
             this.clear()
@@ -96,15 +121,11 @@ class Canvas {
             if (typeof this._loopingCallback == "function") this._loopingCallback()
 
             this._fixedTimeStamp = 0
-
-        } else if (time) {
-            this._fixedTimeStamp = time-(this.#frameSkipsOffset += Canvas.DEFAULT_MAX_DELTATIME*1000)
-            this.#frameSkipsOffset += Canvas.DEFAULT_MAX_DELTATIME*1000
-        }
-
-        this.#timeStamp = time
-        this.#calcDeltaTime(time)
-        if (this._looping) CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
+        } else if (time) {// maybe see if frame skipping is really necessary
+            console.log("SKIP")
+            this._fixedTimeStamp = time-(this.#frameSkipsOffset += this.#maxTime)
+            this.#frameSkipsOffset += this.#maxTime
+        }   
     }
 
     // stops the loop
@@ -114,8 +135,7 @@ class Canvas {
 
     // calculates and sets the deltaTime
     #calcDeltaTime(time=0) {
-        this._deltaTime = Math.min((time-this.#lastFrame)/1000, this.#deltaTimeCap)
-        this.#lastFrame = time
+        this._deltaTime = Math.min((time-this.#lastFrame)/1000, this.#maxTime)
     }
 
     updateCachedAllEls() {
@@ -283,6 +303,10 @@ class Canvas {
         let [x,y]=pos
         return x >= -padding && x <= this.width+padding && y >= -padding && y <= this.height+padding
     }
+
+    #getMaxTime(fpsLimit) {
+        return fpsLimit ? (360-fpsLimit)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER : Canvas.DEFAULT_MAX_DELTATIME_MS
+    }
     
 	get cvs() {return this._cvs}
 	get frame() {return this._frame}
@@ -293,7 +317,6 @@ class Canvas {
 	get loopingCallback() {return this._loopingCallback}
 	get looping() {return this._looping}
 	get deltaTime() {return this._deltaTime}
-	get deltaTimeCap() {return this.#deltaTimeCap}
 	get windowListeners() {return this._windowListeners}
 	get timeStamp() {return this._fixedTimeStamp||this.#timeStamp}
 	get timeStampRaw() {return this.#timeStamp}
@@ -306,8 +329,15 @@ class Canvas {
     get refs() {return this._els.refs}
     get allDefsAndRefs() {return this.defs.concat(this.refs)}
     get allEls() {return this.allDefsAndRefs.flatMap(x=>x.dots||x)}
+    get fpsLimitRaw() {return this._fpsLimit}
+    get fpsLimit() {return this._fpsLimit==null||!isFinite(this._fpsLimit) ? null : 1/(this._fpsLimit/1000)}
+    get maxTime() {return this.#maxTime}
 
-	set loopingCallback(_cb) {return this._loopingCallback = _cb}
+	set loopingCallback(_cb) {this._loopingCallback = _cb}
 	set width(w) {this.setSize(w, null)}
 	set height(h) {this.setSize(null, h)}
+	set fpsLimit(fpsLimit) {
+        this._fpsLimit = fpsLimit!=null&&isFinite(fpsLimit) ? 1000/Math.max(fpsLimit, 0) : null
+        this.#maxTime = this.#getMaxTime(fpsLimit)
+    }
 }

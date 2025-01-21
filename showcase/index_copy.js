@@ -3,7 +3,7 @@ const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//lo
     if (fpsDisplay.textContent !== fps) fpsDisplay.textContent = fps
     mouseSpeed.textContent = CVS?.mouse?.speed?.toFixed(2)+" px/sec"
     mouseAngle.textContent = CVS?.mouse?.dir?.toFixed(2)+" deg"
-})
+}, 60)
 
 
 // DECLARE OBJS
@@ -69,7 +69,7 @@ let oktest = new Shape([110,250],[new Dot(), new Dot([10, 0],null,null,null,(dot
     }, CanvasUtils.FOLLOW_PATHS.CIRCLE(null, null, 0.5))
 
     
-    shape.dots[1].follow(5000, Anim.easeOutBack, (prog, dot)=>{
+    shape.dots[1].follow(5000, Anim.LINEAR, (prog, dot)=>{
         let d = new Dot(null, 2, "red", null, dot.pos)
         shape.add(d)
     }, CanvasUtils.FOLLOW_PATHS.RELATIVE(CanvasUtils.FOLLOW_PATHS.LINEAR(800, 0)))
@@ -89,29 +89,3 @@ CVS.setmouseup()
 
 // START
 CVS.startLoop()
-
-
-
-const simpleShape = new Shape([100,100],[
-    new Dot([-50, -50]),
-    new Dot([-50, 0]),
-    new Dot([-50, 50]),
-    new Dot([0, -50]),
-    new Dot([0, 50]),
-    new Dot([50, -50]),
-    new Dot([50, 0]),
-    new Dot([50, 50]),
-], null, normalColorTester, 100, (ctx, dot, ratio, mouse, dist)=>{
-
-    // Changes the opacity and color according to mouse distance
-    dot.a = CDEUtils.mod(1, ratio, 0.8)
-    dot.r = CDEUtils.mod(255, ratio, -255)
-    dot.g = CDEUtils.mod(255, ratio, -255)
-    
-    
-    // Changes the dot's radius, from 2 times the default radius with a range of 80% (10px..2px), according to mouse distance
-    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
-    
-    // Draws a ring around the dot, at 5 times the radius
-    CanvasUtils.drawOuterRing(dot, [255,255,255,0.2], 5)
-    }, null, null, )
