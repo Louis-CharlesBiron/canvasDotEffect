@@ -37,7 +37,7 @@ class Mouse {
 
     // calculates and set the current mouse direction (run on mouse move)
     calcAngle() {
-        let dx = this._x-this._lastX, dy = this._y-this._lastY
+        const dx = this._x-this._lastX, dy = this._y-this._lastY
         if (isFinite(dx) && isFinite(dy) && (dx||dy)) {
             let angle = (-CDEUtils.toDeg(Math.atan2(dy, dx))+360)%360, diff = angle-this._dir
             diff += (360*(diff<-180))-(360*(diff>180))
@@ -48,7 +48,7 @@ class Mouse {
 
     // given an mouse event, sets the current mouse active buttons
     setMouseClicks(e) {
-        let v = e.type=="mousedown"
+        const v = e.type=="mousedown"
         if (e.button==0) this._clicked = v
         else if (e.button==1) this._scrollClicked = v
         else if (e.button==2) this._rightClicked = v

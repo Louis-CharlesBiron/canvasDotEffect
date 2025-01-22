@@ -30,7 +30,7 @@ class Grid extends Shape {
     createGrid(keys=this._keys, pos=[0,0], gaps=this._gaps, spacing=this._spacing, source=this._source) {
         let [cx, cy] = pos, isNewLine=true, symbols=[]
         ;[...keys].forEach(l=>{
-            let symbol = this.createSymbol(l, [cx=(l=="\n")?pos[0]:(cx+spacing*(!isNewLine)), cy+=(l=="\n")&&source.width*gaps[1]+this.radius])
+            const symbol = this.createSymbol(l, [cx=(l=="\n")?pos[0]:(cx+spacing*(!isNewLine)), cy+=(l=="\n")&&source.width*gaps[1]+this.radius])
             isNewLine = (l=="\n")
             symbols.push(symbol)
         })

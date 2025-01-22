@@ -40,7 +40,7 @@ class Color {
 
     // converts a color to another color format
     static convertTo(format=Color.FORMATS.RGBA, color) {
-        let inputFormat =  this.getFormat(color), convertedColor = color
+        let inputFormat = this.getFormat(color), convertedColor = color
 
         if (format==Color.FORMATS.RGBA) {
             if (inputFormat==Color.FORMATS.HEX) convertedColor = Color.#hexToRgba(color)

@@ -18,8 +18,19 @@ class CDEUtils {
         return +(Math.random()*(max-min)+min).toFixed(decimals)
     }
 
+    // clamps a numeric value between the min and max 
     static clamp(value, min=Infinity, max=Infinity) {
         return value < min ? min : value > max ? max : value
+    }
+
+    // returns whether a value is defined
+    static isDefined(v) {
+        return v != null
+    }
+
+    // returns whether a value is a function
+    static isFunction(v) {
+        return typeof v === "function"
     }
 
     // Create an instance of the FPSCounter and run every frame: either getFpsRaw for raw fps AND/OR getFps for averaged fps
@@ -59,7 +70,7 @@ class CDEUtils {
 
     // Returns the "a", "b" and "function" values formed by a line between 2 positions
     static getLinearFn(pos1, pos2) {
-        let a = (pos2[1]-pos1[1])/(pos2[0]-pos1[0]), b = -(a*pos1[0]-pos1[1])
+        const a = (pos2[1]-pos1[1])/(pos2[0]-pos1[0]), b = -(a*pos1[0]-pos1[1])
         return [a, b, (x)=>a*x+b]
     }
     
@@ -105,7 +116,7 @@ class CDEUtils {
     static getMinMax(arr, propPath=null) {
        let min = Infinity, max = -Infinity, ll = arr.length
        for (let i=0;i<ll;i++) {
-           let v = propPath ? +arr[i][propPath] : arr[i]
+           const v = propPath ? +arr[i][propPath] : arr[i]
          if (v < min) min = v
          if (v > max) max = v
        }

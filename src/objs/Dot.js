@@ -17,7 +17,7 @@ class Dot extends Obj {
         if (this.initialized) {
             // runs parent drawEffect callback if defined
             if (typeof this.drawEffectCB == "function") {
-                let dist = this.getDistance(), rawRatio = this.getRatio(dist)
+                const dist = this.getDistance(), rawRatio = this.getRatio(dist)
                 this.drawEffectCB(ctx, this, rawRatio>1 ? 1 : rawRatio, this.cvs.mouse, dist, this._parent, rawRatio)
             }
 
@@ -68,7 +68,7 @@ class Dot extends Obj {
      * } The 2 intersection points for the target and for the source
      */
     getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {
-        let [tx, ty] = target.pos||target, [sx, sy] = source.pos||source,
+        const [tx, ty] = target.pos||target, [sx, sy] = source.pos||source,
             [a, b, lfn] = CDEUtils.getLinearFn([sx,sy], [tx,ty]), t_r = targetPadding**2, s_r = sourcePadding**2,
             qA = (1+a**2)*2,
             s_qB = -(2*a*(b-sy)-2*sx),

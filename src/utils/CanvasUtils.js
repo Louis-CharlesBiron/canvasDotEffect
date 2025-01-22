@@ -11,7 +11,7 @@ class CanvasUtils {
     // DEBUG // Can be used to display a dot at the specified shape pos (which is normally not visible)
     static toggleCenter(shape, radius=5, color=[255,0,0,1]) {
         if (!CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]) {
-            let dot = new Dot([0,0], radius, color, null, shape)
+            const dot = new Dot([0,0], radius, color, null, shape)
             CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id] = dot.id
             CVS.add(dot, true)
         } else {
@@ -22,7 +22,7 @@ class CanvasUtils {
 
     // DEBUG // Create dots at provided intersection points
     static showIntersectionPoints(res) {
-        let s_d1 = new Dot(res.source.inner, 3, [255,0,0,1]),
+        const s_d1 = new Dot(res.source.inner, 3, [255,0,0,1]),
             s_d2 = new Dot(res.source.outer, 3, [255,0,0,0.45]),
             t_d1 = new Dot(res.target.outer, 3, [255,0,0,0.45]),
             t_d2 = new Dot(res.target.inner, 3, [255,0,0,1])
@@ -35,7 +35,7 @@ class CanvasUtils {
     
     // Generic function to draw an outer ring around a dot
     static drawOuterRing(dot, color, radiusMultiplier) {
-        let ctx = dot.ctx
+        const ctx = dot.ctx
         ctx.strokeStyle = Color.formatRgba(color)??color.color
         ctx.beginPath()
         ctx.arc(dot.x, dot.y, dot.radius*radiusMultiplier, 0, CDEUtils.CIRC)
@@ -44,7 +44,7 @@ class CanvasUtils {
     
     // Generic function to draw connection between the specified dot and a sourcePos
     static drawConnection(dot, color, source, radiusPaddingMultiplier=0) {
-        let ctx = dot.ctx, [sx, sy] = source.pos||source
+        const ctx = dot.ctx, [sx, sy] = source.pos||source
         
         // skip if not visible
         if (color[3]<CanvasUtils.LINE_VISIBILE_OPACITY || color.a<CanvasUtils.LINE_VISIBILE_OPACITY) return;
@@ -52,7 +52,7 @@ class CanvasUtils {
         ctx.strokeStyle = Color.formatRgba(color)??color.color
         ctx.beginPath()
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
-            let res = dot.getLinearIntersectPoints(source, source.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
+            const res = dot.getLinearIntersectPoints(source, source.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
             ctx.moveTo(res.source.inner[0], res.source.inner[1])
             ctx.lineTo(res.target.inner[0], res.target.inner[1])
         } else {
@@ -64,7 +64,7 @@ class CanvasUtils {
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
     static drawDotConnections(dot, color, radiusPaddingMultiplier=0, isSourceOver=false) {
-        let ctx = dot.ctx, dc_ll = dot.connections.length, colorValue = Color.formatRgba(color)??color.color
+        const ctx = dot.ctx, dc_ll = dot.connections.length, colorValue = Color.formatRgba(color)??color.color
 
         // skip if not visible
         if (color[3]<CanvasUtils.LINE_VISIBILE_OPACITY || color.a<CanvasUtils.LINE_VISIBILE_OPACITY) return;
@@ -72,11 +72,11 @@ class CanvasUtils {
         if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
 
         if (dc_ll) for (let i=0;i<dc_ll;i++) {
-            let c = dot.connections[i]
+            const c = dot.connections[i]
             ctx.strokeStyle = colorValue
             ctx.beginPath()
             if (radiusPaddingMultiplier) {
-                let res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
+                const res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
                 ctx.moveTo(res.source.inner[0], res.source.inner[1])
                 ctx.lineTo(res.target.inner[0], res.target.inner[1])
             } else {
@@ -158,7 +158,7 @@ class CanvasUtils {
             width ??= 100
             a ??= 1
             return [[0, (prog)=>{
-                let x = prog*width, y = a*x
+                const x = prog*width, y = a*x
                 return [x, y]
             }]]
         }
@@ -167,7 +167,7 @@ class CanvasUtils {
             width ??= 100
             height ??= 100
             return [[0, (prog)=>{
-                let x = prog*width, y = height*Math.sin((CDEUtils.CIRC*x)/width)
+                const x = prog*width, y = height*Math.sin((CDEUtils.CIRC*x)/width)
                 return [x, y]
             }]]
         }
@@ -176,7 +176,7 @@ class CanvasUtils {
             width ??= 100
             height ??= 100
             return [[0, (prog)=>{
-                let x = prog*width, y = height*Math.cos((CDEUtils.CIRC*x)/width)
+                const x = prog*width, y = height*Math.cos((CDEUtils.CIRC*x)/width)
                 return [x, y]
             }]]
         }

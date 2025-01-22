@@ -52,7 +52,7 @@ class Obj {
 
     setAnchoredPos() {
         if (this.hasAnchorPosChanged) {
-            let anchorPos = this.anchorPos
+            const anchorPos = this.anchorPos
             this.relativeX += anchorPos[0]-this.lastAnchorPos[0]
             this.relativeY += anchorPos[1]-this.lastAnchorPos[1]
             this.lastAnchorPos = anchorPos
@@ -67,39 +67,39 @@ class Obj {
         // run anims
         let anims = this._anims.currents
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
-        let a_ll = anims.length
+        const a_ll = anims.length
         for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
     }
 
     // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the dot's radius)
     isWithin(pos, circularDetection) {
-        let [x,y]=pos
+        const [x,y]=pos
         return  (x!=null&&y!=null) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
     }
 
     // Returns the [top, right, bottom, left] distances between the canvas borders, according to the object's size
     posDistances(pos=this._pos) {
-        let [x,y]=pos, cw=this._cvs.width, ch=this._cvs.height
+        const [x,y]=pos, cw=this._cvs.width, ch=this._cvs.height
         return [y-this.height/2, cw-(x+this.width/2), ch-(y+this.height/2), x-this.width/2]
     }
 
     // Teleports to given coords
     moveAt(pos) {
-        let [x, y] = pos
+        const [x, y] = pos
         if (x !== null && x !== undefined && isFinite(x)) this.x = x
         if (y !== null && y !== undefined && isFinite(y)) this.y = y
     }
 
     // Teleports to incremented coords
     moveBy(pos) {
-        let [x, y] = pos
+        const [x, y] = pos
         if (x !== null && x !== undefined && isFinite(x)) this.x += x
         if (y !== null && y !== undefined && isFinite(y)) this.y += y
     }
 
     // Smoothly moves to coords in set time
     moveTo(pos, time=1000, easing=Anim.easeInOutQuad, initPos=[this.x, this.y], isUnique=true, force=true) {
-        let [ix, iy] = initPos, 
+        const [ix, iy] = initPos, 
             [fx, fy] = this.adjustPos(pos),
             dx = fx-ix,
             dy = fy-iy
@@ -154,7 +154,7 @@ class Obj {
             this.currentBacklogAnim.end()
             this._anims.backlog.addAt(anim, 0)
         }
-        let initEndCB = anim.endCallback
+        const initEndCB = anim.endCallback
         anim.endCallback=()=>{
             if (isUnique) this._anims.backlog.shift()
             else this._anims.currents = this._anims.currents.filter(a=>a.id!==anim.id)
@@ -215,7 +215,7 @@ class Obj {
         else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_
         else if (this._anchorPos==Obj.ABSOLUTE_ANCHOR) return [0,0]
         else if (typeof this._anchorPos=="function") {
-            let res = this._anchorPos(this, this._cvs??this.parent)
+            const res = this._anchorPos(this, this._cvs??this.parent)
             return [...(res?.pos_||res||[0,0])]
         }
         else return this._anchorPos
@@ -235,7 +235,7 @@ class Obj {
     set radius(radius) {this._radius = radius<0?0:radius}
     set color(color) {
         if (this._color?.colorRaw?.toString() != color?.toString() || !this._color) {
-            let potentialGradient = color?.colorRaw||color
+            const potentialGradient = color?.colorRaw||color
             if (potentialGradient?.positions==Gradient.PLACEHOLDER) {
                 color = potentialGradient.duplicate()
                 color.initPositions = this

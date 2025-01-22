@@ -83,7 +83,7 @@ class Shape extends Obj {
      * @returns the created dots formation
      */
     createFromString(str, topLeftPos=[0,0], gaps=[25, 25], dotChar="o") {
-        let dots = []
+        const dots = []
         str.split("\n").filter(x=>x).forEach((x,i)=>{
             let [atX, atY] = topLeftPos
             atY+=i*gaps[1]
@@ -98,9 +98,9 @@ class Shape extends Obj {
     // updates the radius of all the shape's dots. If "onlyReplaceDefaults" is true, it only sets the dot's radius if it was not initialy set
     setRadius(radius=this._radius, onlyReplaceDefaults) {
         this._radius = radius
-        let d_ll = this._dots.length
+        const d_ll = this._dots.length
         for (let i=0;i<d_ll;i++) {
-            let dot = this._dots[i]
+            const dot = this._dots[i]
             if (onlyReplaceDefaults && dot.initRadius==null) {
                 dot.radius = radius
                 dot.initRadius = radius
@@ -115,9 +115,9 @@ class Shape extends Obj {
     // updates the color of all the shape's dots. If "onlyReplaceDefaults" is true, it only sets the dot's color if it was not initialy set
     setColor(color=this._color, onlyReplaceDefaults) {
         this.color = color
-        let d_ll = this._dots.length
+        const d_ll = this._dots.length
         for (let i=0;i<d_ll;i++) {
-            let dot = this._dots[i]
+            const dot = this._dots[i]
             if (onlyReplaceDefaults && !dot.initColor) {
                 dot.color = color
                 dot.initColor = color
@@ -131,7 +131,7 @@ class Shape extends Obj {
 
     // moves the shape and all its dots in specified direction at specified distance(force)
     addForce(force, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
-        let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
+        const rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
             dx = CDEUtils.getAcceptableDiff(force*Math.cos(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE),
             dy = CDEUtils.getAcceptableDiff(force*Math.sin(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE)
         
@@ -142,9 +142,9 @@ class Shape extends Obj {
 
     // Rotates the dots by a specified degree increment around a specified center point
     rotateBy(deg, centerPos=this.pos) {// clock-wise, from the top
-        let [cx, cy] = centerPos
+        const [cx, cy] = centerPos
         this._dots.forEach(dot=>{
-            let x = dot.x-cx, y = dot.y-cy,
+            const x = dot.x-cx, y = dot.y-cy,
                 cosV = Math.cos(CDEUtils.toRad(deg)), sinV = Math.sin(CDEUtils.toRad(deg))
                 
             dot.x = (x*cosV-y*sinV)+cx
@@ -161,7 +161,7 @@ class Shape extends Obj {
 
     // Smoothly rotates the dots to a specified degree around a specified center point
     rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=true, force=true) {
-        let ir = this._rotation, dr = deg-this._rotation
+        const ir = this._rotation, dr = deg-this._rotation
 
         return this.playAnim(new Anim((prog)=>{
             this.rotateAt(ir+dr*prog, centerPos)
@@ -170,7 +170,7 @@ class Shape extends Obj {
 
     // Scales the dots by a specified amount [scaleX, scaleY] from a specified center point
     scaleBy(scale, centerPos=this.pos) {
-        let [scaleX, scaleY] = scale, [cx, cy] = centerPos
+        const [scaleX, scaleY] = scale, [cx, cy] = centerPos
         this._dots.forEach(dot=>{
             dot.x = (dot.x-cx)*scaleX+cx
             dot.y = (dot.y-cy)*scaleY+cy
@@ -180,13 +180,13 @@ class Shape extends Obj {
 
     // Scales the dots to a specified amount [scaleX, scaleY] from a specified center point
     scaleAt(scale, centerPos=this.pos) {
-        let dsX = scale[0]/this._scale[0], dsY = scale[1]/this._scale[1]
+        const dsX = scale[0]/this._scale[0], dsY = scale[1]/this._scale[1]
         this.scaleBy([dsX, dsY], centerPos)
     }
 
     // Smoothly scales the dots by a specified amount [scaleX, scaleY] from a specified center point
     scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=true, force=true) {
-        let is = this._scale, dsX = scale[0]-this._scale[0], dsY = scale[1]-this._scale[1]
+        const is = this._scale, dsX = scale[0]-this._scale[0], dsY = scale[1]-this._scale[1]
 
         return this.playAnim(new Anim(prog=>{
             this.scaleAt([is[0]+dsX*prog, is[1]+dsY*prog], centerPos)
@@ -195,9 +195,9 @@ class Shape extends Obj {
 
     // returns whether the provided pos is inside the area delimited by the dots permimeter
     isWithin(pos) {
-        let d_ll = this.dots.length
+        const d_ll = this.dots.length
         if (d_ll > 2) {
-            let permimeter = new Path2D()
+            const permimeter = new Path2D()
             permimeter.moveTo(...this.dots[0].pos)
             for (let i=1;i<d_ll;i++) permimeter.lineTo(...this.dots[i].pos)
             permimeter.closePath()

@@ -47,22 +47,22 @@ class Gradient {
                     cx = smallestX+(biggestX-smallestX)/2, cy = smallestY+(biggestY-smallestY)/2
 
                 if (this.#getFormatedIsLinear() !== false) {
-                    let x = smallestX-cx, y = smallestY-cy, x2 = biggestX-cx, y2 = biggestY-cy,
+                    const x = smallestX-cx, y = smallestY-cy, x2 = biggestX-cx, y2 = biggestY-cy,
                         cosV = Math.cos(CDEUtils.toRad(this.#getFormatedIsLinear())), sinV = Math.sin(CDEUtils.toRad(this.#getFormatedIsLinear()))
                     return [[(x*cosV-y*sinV)+cx, (x*sinV+y*cosV)+cy], [(x2*cosV-y2*sinV)+cx, (x2*sinV+y2*cosV)+cy]]
                 } else {
-                    let coverRadius = Math.max(biggestX-smallestX, biggestY-smallestY)
+                    const coverRadius = Math.max(biggestX-smallestX, biggestY-smallestY)
                     return [[cx, cy, coverRadius],[cx, cy, coverRadius*0.25]]
                 }
             } else return this._positions
         } else if (obj instanceof Dot) {
             if (this.#hasDotChanged(obj) || !optimize ) {
                 if (this.#getFormatedIsLinear() !== false) {
-                    let x = obj.left-obj.x, y = obj.top-obj.y, x2 = obj.right-obj.x, y2 = obj.bottom-obj.y,
+                    const x = obj.left-obj.x, y = obj.top-obj.y, x2 = obj.right-obj.x, y2 = obj.bottom-obj.y,
                         cosV = Math.cos(CDEUtils.toRad(this.#getFormatedIsLinear())), sinV = Math.sin(CDEUtils.toRad(this.#getFormatedIsLinear()))
                     return [[(x*cosV-y*sinV)+obj.x, (x*sinV+y*cosV)+obj.y], [(x2*cosV-y2*sinV)+obj.x, (x2*sinV+y2*cosV)+obj.y]]
                 } else {
-                    let coverRadius = obj.radius*1
+                    const coverRadius = obj.radius*1
                     return [[obj.x, obj.y, coverRadius],[obj.x, obj.y, coverRadius*0.25]]
                 }
             } return this._positions
@@ -71,7 +71,7 @@ class Gradient {
     }
 
     #hasShapeChanged(shape) {
-        let currentDotsPos = shape.dotsPositions
+        const currentDotsPos = shape.dotsPositions
         if (this.#lastRotation !== this._isLinear || currentDotsPos !== this.#lastDotsPos) {
             this.#lastDotsPos = currentDotsPos
             this.#lastRotation = this._isLinear
@@ -80,7 +80,7 @@ class Gradient {
     }
     
     #hasDotChanged(dot) {
-        let currentDotPos = dot.stringPos
+        const currentDotPos = dot.stringPos
         if (this.#lastRotation !== this._isLinear || currentDotPos !== this.#lastDotPos) {
             this.#lastDotPos = currentDotPos
             this.#lastRotation = this._isLinear
@@ -93,7 +93,7 @@ class Gradient {
         if (this._initPositions !== Gradient.PLACEHOLDER) {
             this._positions = this.getAutomaticPositions()
             this._gradient = this._ctx[`create${typeof this.#getFormatedIsLinear()=="number"?"Linear":"Radial"}Gradient`](...this._positions[0], ...this._positions[1])
-            let cs_ll = this._colorStops.length
+            const cs_ll = this._colorStops.length
             for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], this._colorStops[i][1].color)
             return this._gradient
         }

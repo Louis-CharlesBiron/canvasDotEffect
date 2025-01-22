@@ -40,9 +40,9 @@ class FilledShape extends Shape {
 
     // updates the path perimeter if the dots pos have changed
     updatePath() {
-        let d_ll = this.dots.length
+        const d_ll = this.dots.length
         if (d_ll) {
-            let currentDotPos = this.dotsPositions
+            const currentDotPos = this.dotsPositions
             if (currentDotPos !== this.#lastDotsPos) {
                 this.#lastDotsPos = currentDotPos
 

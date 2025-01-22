@@ -75,7 +75,7 @@ class Canvas {
 
     // updates the calculated canvas offset in the page
     updateOffset() {
-        let {width, height, x, y} = this._cvs.getBoundingClientRect()
+        const {width, height, x, y} = this._cvs.getBoundingClientRect()
         return this._offset = {x:Math.round((x+width)-this.width+window.scrollX), y:Math.round((y+height)-this.height+window.scrollY)}
     }
 
@@ -86,8 +86,6 @@ class Canvas {
             this.#loop(0)
         }
     }
-
-    static a = 0;
 
     // main loop, runs every frame
     #loop(time) {
@@ -122,7 +120,6 @@ class Canvas {
 
             this._fixedTimeStamp = 0
         } else if (time) {// maybe see if frame skipping is really necessary
-            console.log("SKIP")
             this._fixedTimeStamp = time-(this.#frameSkipsOffset += this.#maxTime)
             this.#frameSkipsOffset += this.#maxTime
         }   
@@ -149,7 +146,7 @@ class Canvas {
 
     // calls the draw function on all canvas objects
     draw() {
-        let els = this.#cachedEls, els_ll = els.length
+        const els = this.#cachedEls, els_ll = els.length
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
             if (!el.draw || (!el.alwaysActive && el.initialized && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING))) continue
@@ -169,25 +166,25 @@ class Canvas {
 
     // sets the width and height in px of the canvas element
     setSize(w, h) {
-        let {width, height} = this._frame.getBoundingClientRect()
-        if (w!==null) this._cvs.width = w??width
-        if (h!==null) this._cvs.height = h??height
+        const {width, height} = this._frame.getBoundingClientRect()
+        if (w != null) this._cvs.width = w??width
+        if (h != null) this._cvs.height = h??height
         this.updateSettings()
         this.updateOffset()
     }
 
     // updates current canvas settings
     updateSettings(settings) {
-        let st = settings||this._settings
+        const st = settings||this._settings
         Object.entries(st).forEach(s=>this._ctx[s[0]]=s[1])
         return this._settings=st
     }
 
     // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "active" is false, it only initializes the obj, without adding it to the canvas
     add(objs, isDef, active=true) {
-        let l = objs.length??1
+        const l = objs.length??1
         for (let i=0;i<l;i++) {
-            let obj = objs[i]??objs
+            const obj = objs[i]??objs
             if (!isDef) obj.cvs = this
             else obj.parent = this
             
@@ -218,9 +215,9 @@ class Canvas {
     // called on mouse move
     #mouseMovements(cb, e) {
         // update ratioPos to mouse pos if not overwritten
-        let r_ll = this.refs.length
+        const r_ll = this.refs.length
         for (let i=0;i<r_ll;i++) {
-            let ref = this.refs[i]
+            const ref = this.refs[i]
             if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos=this._mouse.pos
         }
         // custom move callback
@@ -253,7 +250,6 @@ class Canvas {
         this._frame.addEventListener("mouseleave", onmouseleave)
         return ()=>this._frame.removeEventListener("mouseleave", onmouseleave)
     }
-
 
     // called on any mouse clicks
     #mouseClicks(cb, e) {
@@ -305,7 +301,7 @@ class Canvas {
     }
 
     isWithin(pos, padding=0) {
-        let [x,y]=pos
+        const [x,y] = pos
         return x >= -padding && x <= this.width+padding && y >= -padding && y <= this.height+padding
     }
     

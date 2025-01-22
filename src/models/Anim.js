@@ -22,7 +22,7 @@ class Anim {
     
     // progresses the animation 1 frame fowards (loop each frame) 
     getFrame(time, deltaTime) {
-        let isInfinite = Math.sign(this._duration)==-1
+        const isInfinite = Math.sign(this._duration)===-1
         if (!this._playCount || isInfinite) {
             // SET START TIME
             if (!this._startTime) this._startTime = time
