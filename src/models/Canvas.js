@@ -138,6 +138,11 @@ class Canvas {
         this._deltaTime = Math.min((time-this.#lastFrame)/1000, this.#maxTime)
     }
 
+    // calculates the max time between frames according to the fpsLimit
+    #getMaxTime(fpsLimit) {
+        return fpsLimit ? fpsLimit < 7 ? (((14-fpsLimit)*1.05)**3)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER : (360-fpsLimit)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER : Canvas.DEFAULT_MAX_DELTATIME_MS
+    }
+
     updateCachedAllEls() {
         this.#cachedEls = this.refs.concat(this._els.refs.flatMap(source=>source.asSource)).concat(this._els.defs)
     }
@@ -302,10 +307,6 @@ class Canvas {
     isWithin(pos, padding=0) {
         let [x,y]=pos
         return x >= -padding && x <= this.width+padding && y >= -padding && y <= this.height+padding
-    }
-
-    #getMaxTime(fpsLimit) {
-        return fpsLimit ? (360-fpsLimit)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER : Canvas.DEFAULT_MAX_DELTATIME_MS
     }
     
 	get cvs() {return this._cvs}
