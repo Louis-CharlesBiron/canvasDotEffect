@@ -30,8 +30,8 @@ class Grid extends Shape {
     createGrid(keys=this._keys, pos=[0,0], gaps=this._gaps, spacing=this._spacing, source=this._source) {
         let [cx, cy] = pos, isNewLine=true, symbols=[]
         ;[...keys].forEach(l=>{
-            const symbol = this.createSymbol(l, [cx=(l=="\n")?pos[0]:(cx+spacing*(!isNewLine)), cy+=(l=="\n")&&source.width*gaps[1]+this.radius])
-            isNewLine = (l=="\n")
+            const symbol = this.createSymbol(l, [cx=(l==="\n")?pos[0]:(cx+spacing*(!isNewLine)), cy+=(l==="\n")&&source.width*gaps[1]+this.radius])
+            isNewLine = (l==="\n")
             symbols.push(symbol)
         })
         return symbols.flat()
@@ -42,8 +42,8 @@ class Grid extends Shape {
         let dotGroup = [], [gx, gy] = this._gaps, xi=[0,0], yi=0, s = source[key.toUpperCase()],
         sourceRadius = Math.sqrt(source.width*source.height)
 
-        if (s) s.map((d,i)=>[new Dot([pos[0]+(xi[0]=d[0]??xi[0]+1,isNaN(Math.abs(d[0]))?xi[0]:Math.abs(d[0]))*gx, pos[1]+(yi+=(xi[0]<=xi[1]||!i)||Math.sign(1/xi[0])==-1)*gy]), d[1], yi*sourceRadius+(xi[1]=Math.abs(xi[0]))]).forEach(([dot, c, p],_,a)=>{
-            GridAssets.D.places.forEach(dir=>{c&dir[0]&&dot.addConnection(a.find(n=>n[2]==p+dir[1](sourceRadius))?.[0])}) 
+        if (s) s.map((d,i)=>[new Dot([pos[0]+(xi[0]=d[0]??xi[0]+1,isNaN(Math.abs(d[0]))?xi[0]:Math.abs(d[0]))*gx, pos[1]+(yi+=(xi[0]<=xi[1]||!i)||Math.sign(1/xi[0])===-1)*gy]), d[1], yi*sourceRadius+(xi[1]=Math.abs(xi[0]))]).forEach(([dot, c, p],_,a)=>{
+            GridAssets.D.places.forEach(dir=>{c&dir[0]&&dot.addConnection(a.find(n=>n[2]===p+dir[1](sourceRadius))?.[0])}) 
             dotGroup.push(dot)
         })
         return dotGroup

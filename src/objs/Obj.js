@@ -32,22 +32,22 @@ class Obj {
         this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
         this.color = this.getInitColor()
         this.setAnchoredPos()
-        if (typeof this._setupCB == "function") this._setupCB(this, this.parent)
+        if (CDEUtils.isFunction(this._setupCB)) this._setupCB(this, this.parent)
     }
 
     // returns the value of the inital color declaration
     getInitColor() {
-        return typeof this._initColor=="function" ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor||null
+        return CDEUtils.isFunction(this._initColor) ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor||null
     }
 
     // returns the value of the inital radius declaration
     getInitRadius() {
-        return typeof this._initRadius=="function" ? this._initRadius(this.parent||this, this) : this._initRadius??null
+        return CDEUtils.isFunction(this._initRadius) ? this._initRadius(this.parent||this, this) : this._initRadius??null
     }
 
     // returns the value of the inital pos declaration
     getInitPos() {
-        return typeof this._initPos=="function" ? [...this._initPos(this._cvs??this.parent, this)] : [...this.adjustPos(this._initPos)]
+        return CDEUtils.isFunction(this._initPos) ? [...this._initPos(this._cvs??this.parent, this)] : [...this.adjustPos(this._initPos)]
     }
 
     setAnchoredPos() {
@@ -74,7 +74,7 @@ class Obj {
     // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the dot's radius)
     isWithin(pos, circularDetection) {
         const [x,y]=pos
-        return  (x!=null&&y!=null) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
+        return  (CDEUtils.isDefined(x)&&CDEUtils.isDefined(y)) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection===1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
     }
 
     // Returns the [top, right, bottom, left] distances between the canvas borders, according to the object's size
@@ -86,15 +86,15 @@ class Obj {
     // Teleports to given coords
     moveAt(pos) {
         const [x, y] = pos
-        if (x !== null && x !== undefined && isFinite(x)) this.x = x
-        if (y !== null && y !== undefined && isFinite(y)) this.y = y
+        if (CDEUtils.isDefined(x) && isFinite(x)) this.x = x
+        if (CDEUtils.isDefined(y) && isFinite(y)) this.y = y
     }
 
     // Teleports to incremented coords
     moveBy(pos) {
         const [x, y] = pos
-        if (x !== null && x !== undefined && isFinite(x)) this.x += x
-        if (y !== null && y !== undefined && isFinite(y)) this.y += y
+        if (CDEUtils.isDefined(x) && isFinite(x)) this.x += x
+        if (CDEUtils.isDefined(y) && isFinite(y)) this.y += y
     }
 
     // Smoothly moves to coords in set time
@@ -132,7 +132,7 @@ class Obj {
             }
             const [nx, ny] = progSep[1](prog, prog-progSep[0], this, ix, iy)
             this.moveAt([ix+nx, iy+ny])
-            if (typeof action == "function") action(prog, this)
+            if (CDEUtils.isFunction(action)) action(prog, this)
         }, duration, easing))
     }
 
@@ -159,7 +159,7 @@ class Obj {
             if (isUnique) this._anims.backlog.shift()
             else this._anims.currents = this._anims.currents.filter(a=>a.id!==anim.id)
             
-            if (typeof initEndCB=="function") initEndCB()
+            if (CDEUtils.isFunction(initEndCB)) initEndCB()
         }
         this._anims[isUnique?"backlog":"currents"].push(anim)
         return anim
@@ -168,8 +168,8 @@ class Obj {
     // allows flexible pos declarations
     adjustPos(pos) {
         let [x, y] = pos
-        if (x === null || x === undefined) x = this.x??0
-        if (y === null || y === undefined) y = this.y??0
+        if (!CDEUtils.isDefined(x)) x = this.x??0
+        if (!CDEUtils.isDefined(x)) y = this.y??0
         return [x, y]
     }
 
@@ -213,8 +213,8 @@ class Obj {
     get anchorPos() {// returns the anchorPos value
         if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent?.pos_
         else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_
-        else if (this._anchorPos==Obj.ABSOLUTE_ANCHOR) return [0,0]
-        else if (typeof this._anchorPos=="function") {
+        else if (this._anchorPos===Obj.ABSOLUTE_ANCHOR) return [0,0]
+        else if (CDEUtils.isFunction(this._anchorPos)) {
             const res = this._anchorPos(this, this._cvs??this.parent)
             return [...(res?.pos_||res||[0,0])]
         }
@@ -234,9 +234,9 @@ class Obj {
     }
     set radius(radius) {this._radius = radius<0?0:radius}
     set color(color) {
-        if (this._color?.colorRaw?.toString() != color?.toString() || !this._color) {
+        if (this._color?.colorRaw?.toString() !== color?.toString() || !this._color) {
             const potentialGradient = color?.colorRaw||color
-            if (potentialGradient?.positions==Gradient.PLACEHOLDER) {
+            if (potentialGradient?.positions===Gradient.PLACEHOLDER) {
                 color = potentialGradient.duplicate()
                 color.initPositions = this
             }

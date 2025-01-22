@@ -109,14 +109,14 @@ class Canvas {
         this.#calcDeltaTime(time)
 
         const delay = Math.abs((time-this.#timeStamp)-this.deltaTime*1000)
-        if (this._fixedTimeStamp==0) this._fixedTimeStamp = time-this.#frameSkipsOffset
+        if (this._fixedTimeStamp===0) this._fixedTimeStamp = time-this.#frameSkipsOffset
         if (time && this._fixedTimeStamp && delay < this.#maxTime) {
             this._mouse.calcSpeed(this._deltaTime)
 
             this.clear()
             this.draw()
             
-            if (typeof this._loopingCallback == "function") this._loopingCallback()
+            if (CDEUtils.isFunction(this._loopingCallback)) this._loopingCallback()
 
             this._fixedTimeStamp = 0
         } else if (time) {// maybe see if frame skipping is really necessary
@@ -167,8 +167,8 @@ class Canvas {
     // sets the width and height in px of the canvas element
     setSize(w, h) {
         const {width, height} = this._frame.getBoundingClientRect()
-        if (w != null) this._cvs.width = w??width
-        if (h != null) this._cvs.height = h??height
+        if (CDEUtils.isDefined(w)) this._cvs.width = w??width
+        if (CDEUtils.isDefined(h)) this._cvs.height = h??height
         this.updateSettings()
         this.updateOffset()
     }
@@ -188,7 +188,7 @@ class Canvas {
             if (!isDef) obj.cvs = this
             else obj.parent = this
             
-            if (typeof obj.initialize=="function") obj.initialize()
+            if (CDEUtils.isFunction(obj.initialize)) obj.initialize()
 
             if (active) this._els[isDef?"defs":"refs"].push(obj)
         }
@@ -204,7 +204,7 @@ class Canvas {
 
     // get any element from the canvas by id
     get(id) {
-        return this.allEls.find(el=>el.id == id)
+        return this.allEls.find(el=>el.id===id)
     }
 
     // removes any element from the canvas by instance type
@@ -221,7 +221,7 @@ class Canvas {
             if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos=this._mouse.pos
         }
         // custom move callback
-        if (typeof cb == "function") cb(e, this._mouse)
+        if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
 
         // check mouse pos validity
         this._mouse.checkValid()
@@ -254,7 +254,7 @@ class Canvas {
     // called on any mouse clicks
     #mouseClicks(cb, e) {
         this._mouse.setMouseClicks(e)
-        if (typeof cb == "function") cb(e, this._mouse)
+        if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
     }
 
     // defines the onmousedown listener
@@ -275,7 +275,7 @@ class Canvas {
     setkeydown(cb, global) {
         const onkeydown=e=>{
             this._typingDevice.setDown(e)
-            if (typeof cb=="function") cb(e, this._typingDevice)
+            if (CDEUtils.isFunction(cb)) cb(e, this._typingDevice)
         }
         
         const element = global ? document : this._frame
@@ -287,7 +287,7 @@ class Canvas {
     setkeyup(cb, global) {
         const onkeyup=e=>{
             this._typingDevice.setUp(e)
-            if (typeof cb=="function") cb(e, this._typingDevice)
+            if (CDEUtils.isFunction(cb)) cb(e, this._typingDevice)
         }
 
         const element = global ? document : this._frame
@@ -334,7 +334,7 @@ class Canvas {
 	set width(w) {this.setSize(w, null)}
 	set height(h) {this.setSize(null, h)}
 	set fpsLimit(fpsLimit) {
-        this._fpsLimit = fpsLimit!=null&&isFinite(fpsLimit) ? 1000/Math.max(fpsLimit, 0) : null
+        this._fpsLimit = CDEUtils.isDefined(fpsLimit)&&isFinite(fpsLimit) ? 1000/Math.max(fpsLimit, 0) : null
         this.#maxTime = this.#getMaxTime(fpsLimit)
     }
 }

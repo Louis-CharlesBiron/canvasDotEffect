@@ -27,21 +27,21 @@ class Shape extends Obj {
         this._pos = this.getInitPos()
         this.setAnchoredPos()
 
-        if (typeof this._initDots == "string") this.add(this.createFromString(this._initDots))
-        else if (typeof this._initDots == "function") this.add(this._initDots(this, this._cvs))
+        if (typeof this._initDots === "string") this.add(this.createFromString(this._initDots))
+        else if (CDEUtils.isFunction(this._initDots)) this.add(this._initDots(this, this._cvs))
         else if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
 
         this.setRadius(this.getInitRadius(), true)
         this.setColor(this.getInitColor(), true)
 
-        if (typeof this._setupCB == "function") this._setupCB(this, this?.parent)
+        if (CDEUtils.isFunction(this._setupCB)) this._setupCB(this, this?.parent)
         this.initialized = true
     }
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
     draw(ctx, time, deltaTime) {
         super.draw(ctx, time, deltaTime)
-        if (typeof this._ratioPosCB == "function") this._ratioPos = this._ratioPosCB(this)
+        if (CDEUtils.isFunction(this._ratioPosCB)) this._ratioPos = this._ratioPosCB(this)
     }
 
     // returns a separate copy of this Shape (only initialized for objects)
@@ -88,7 +88,7 @@ class Shape extends Obj {
             let [atX, atY] = topLeftPos
             atY+=i*gaps[1]
             ;[...x].forEach(c=>{
-                if (c==dotChar) dots.push(new Dot([atX+gaps[0]/2, atY+gaps[1]/2]))
+                if (c===dotChar) dots.push(new Dot([atX+gaps[0]/2, atY+gaps[1]/2]))
                 atX+=gaps[0]
             })
         })

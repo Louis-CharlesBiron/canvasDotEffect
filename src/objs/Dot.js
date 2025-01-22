@@ -16,7 +16,7 @@ class Dot extends Obj {
         
         if (this.initialized) {
             // runs parent drawEffect callback if defined
-            if (typeof this.drawEffectCB == "function") {
+            if (CDEUtils.isFunction(this.drawEffectCB)) {
                 const dist = this.getDistance(), rawRatio = this.getRatio(dist)
                 this.drawEffectCB(ctx, this, rawRatio>1 ? 1 : rawRatio, this.cvs.mouse, dist, this._parent, rawRatio)
             }
@@ -53,7 +53,7 @@ class Dot extends Obj {
 
     // removes a Dot from the connection array
     removeConnection(dotOrId) {
-        this._connections = this._connections.filter(d=>typeof dotOrId=="number"?d.id!==dotOrId:d.id!==dotOrId.id)
+        this._connections = this._connections.filter(d=>typeof dotOrId==="number"?d.id!==dotOrId:d.id!==dotOrId.id)
     }
 
     /**

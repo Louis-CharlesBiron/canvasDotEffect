@@ -17,7 +17,7 @@ class FilledShape extends Shape {
     // initializes the filled shape and creates its path
     initialize() {
         super.initialize()
-        if (typeof this._initFillColor=="function") this.fillColor = this._initFillColor(this.ctx, this)
+        if (CDEUtils.isFunction(this._initFillColor)) this.fillColor = this._initFillColor(this.ctx, this)
         else this.fillColor = this._initFillColor
         this.updatePath()
     }
@@ -62,7 +62,7 @@ class FilledShape extends Shape {
 	get dynamicUpdates() {return this._dynamicUpdates}
 
     set fillColor(fillColor) {
-        if (this.fillColorObject?.colorRaw?.toString() != fillColor.toString() || !this._fillColor) this._fillColor = Color.adjust(fillColor)
+        if (this.fillColorObject?.colorRaw?.toString() !== fillColor.toString() || !this._fillColor) this._fillColor = Color.adjust(fillColor)
     }
 	set dynamicUpdates(_dynamicUpdates) {return this._dynamicUpdates = _dynamicUpdates}
 }

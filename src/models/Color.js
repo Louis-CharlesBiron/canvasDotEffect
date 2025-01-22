@@ -25,13 +25,13 @@ class Color {
 
     // returns a new instance of the same color
     duplicate(gradientPositions) {
-        if (this._format == Color.FORMATS.GRADIENT) return new Color(this._color.duplicate(gradientPositions))
+        if (this._format === Color.FORMATS.GRADIENT) return new Color(this._color.duplicate(gradientPositions))
         else return new Color([...this.#rgba])
     }
 
     // updates the cached rgba value
     #updateCache() {
-        if (this._format == Color.FORMATS.GRADIENT) this.#rgba = this.#hsv = []
+        if (this._format === Color.FORMATS.GRADIENT) this.#rgba = this.#hsv = []
         else {
             this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : [...this._color])
             this.#hsv = Color.convertTo(Color.FORMATS.HSV, this.#rgba)
@@ -42,18 +42,18 @@ class Color {
     static convertTo(format=Color.FORMATS.RGBA, color) {
         let inputFormat = this.getFormat(color), convertedColor = color
 
-        if (format==Color.FORMATS.RGBA) {
-            if (inputFormat==Color.FORMATS.HEX) convertedColor = Color.#hexToRgba(color)
-            else if (inputFormat==Color.FORMATS.TEXT) convertedColor = [...Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color]]
-            else if (inputFormat==Color.FORMATS.HSV) convertedColor = Color.#hsvToRgba(color)
-        } else if (format==Color.FORMATS.HEX) {
-            if (inputFormat==Color.FORMATS.RGBA) convertedColor = Color.#rgbaToHex(color)
+        if (format===Color.FORMATS.RGBA) {
+            if (inputFormat===Color.FORMATS.HEX) convertedColor = Color.#hexToRgba(color)
+            else if (inputFormat===Color.FORMATS.TEXT) convertedColor = [...Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color]]
+            else if (inputFormat===Color.FORMATS.HSV) convertedColor = Color.#hsvToRgba(color)
+        } else if (format===Color.FORMATS.HEX) {
+            if (inputFormat===Color.FORMATS.RGBA) convertedColor = Color.#rgbaToHex(color)
             else Color.#rgbaToHex(Color.convertTo(Color.FORMATS.RGBA, color))
-        } else if (format==Color.FORMATS.TEXT) {
-            if (inputFormat==Color.FORMATS.RGBA) convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[color.toString()] ?? color
+        } else if (format===Color.FORMATS.TEXT) {
+            if (inputFormat===Color.FORMATS.RGBA) convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[color.toString()] ?? color
             else convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[Color.convertTo(Color.FORMATS.RGBA, color).toString()] ?? color
-        } else if (format==Color.FORMATS.HSV) {
-            if (inputFormat==Color.FORMATS.RGBA) convertedColor = Color.#rgbaToHsv(color)
+        } else if (format===Color.FORMATS.HSV) {
+            if (inputFormat===Color.FORMATS.RGBA) convertedColor = Color.#rgbaToHsv(color)
             else convertedColor = Color.#rgbaToHsv(Color.convertTo(Color.FORMATS.RGBA, color))
         }
 
@@ -70,10 +70,10 @@ class Color {
             min = Math.min(r, g, b), max = Math.max(r, g, b),
             hue, diff = max-min
     
-        if (max==min) hue = 0
+        if (max===min) hue = 0
         else {
-            if (max==r) hue = (g-b)/diff
-            else if (max==g) hue = (b-r)/diff+2
+            if (max===r) hue = (g-b)/diff
+            else if (max===g) hue = (b-r)/diff+2
             else hue = (r-g)/diff+4
             hue = (360+hue*60)%360
         }
@@ -109,7 +109,7 @@ class Color {
 
     // returns the format of the provided color
     static getFormat(color) {
-        return Array.isArray(color) ? (color.length == 4 ? Color.FORMATS.RGBA : Color.FORMATS.HSV) : color instanceof Color ? Color.FORMATS.COLOR : color instanceof Gradient ? Color.FORMATS.GRADIENT : color.includes("#") ? Color.FORMATS.HEX : Color.FORMATS.TEXT
+        return Array.isArray(color) ? (color.length === 4 ? Color.FORMATS.RGBA : Color.FORMATS.HSV) : color instanceof Color ? Color.FORMATS.COLOR : color instanceof Gradient ? Color.FORMATS.GRADIENT : color.includes("#") ? Color.FORMATS.HEX : Color.FORMATS.TEXT
     }
     // instance version
     getFormat(color=this._color) {
@@ -143,13 +143,13 @@ class Color {
             r = color.r, g = color.g, b = color.b, a = color.a*255,
             br = r-temperance, bg = g-temperance, bb = b-temperance, ba = a-temperance,
             tr = r+temperance, tg = g+temperance, tb = b+temperance, ta = a+temperance,
-            isSearchTL = searchStart==Color.SEARCH_STARTS.TOP_LEFT,
+            isSearchTL = searchStart===Color.SEARCH_STARTS.TOP_LEFT,
             startX = isSearchTL?0:width-1, endX = isSearchTL?width:-1, stepX = isSearchTL?1:-1,
             startY = isSearchTL?0:height-1, endY = isSearchTL?height:-1, stepY = isSearchTL?1:-1
 
-            for (y=startY;y!=endY;y+=stepY) {
+            for (y=startY;y!==endY;y+=stepY) {
                 yi = y*ow
-                for (x=startX;x!=endX;x+=stepX) {
+                for (x=startX;x!==endX;x+=stepX) {
                     xi = yi+x*4
                     currentR = data[xi] 
                     if (temperance) {
@@ -158,7 +158,7 @@ class Color {
                             currentB = data[xi+2]
                             if (currentG >= bg && currentG <= tg && currentB >= bb && currentB <= tb && (!useAlpha || (currentA >= ba && currentA <= ta))) return [x, y]
                         }
-                    } else if (currentR == r) if (data[xi+1] == g && data[xi+2] == b && (!useAlpha || data[xi+3] == a)) return [x, y]
+                    } else if (currentR === r) if (data[xi+1] === g && data[xi+2] === b && (!useAlpha || data[xi+3] === a)) return [x, y]
                 }
             }
 
@@ -172,7 +172,7 @@ class Color {
     // returns the usable value of the color
     get color() {
         let color = Color.formatRgba(this.#rgba)
-        if (this._format == Color.FORMATS.GRADIENT) color = this._color.gradient
+        if (this._format === Color.FORMATS.GRADIENT) color = this._color.gradient
         return color 
     }
     get colorRaw() {return this._color} // returns the declaration of the color

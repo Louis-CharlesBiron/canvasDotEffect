@@ -41,7 +41,7 @@ class Anim {
     // ends the animation
     end(deltaTime) {
         this._animation(1, deltaTime, this._playCount++, 1)
-        if (typeof this._endCallback == "function") this._endCallback()
+        if (CDEUtils.isFunction(this._endCallback)) this._endCallback()
     }
 
     // resets the animation

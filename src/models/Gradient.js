@@ -24,7 +24,7 @@ class Gradient {
 
     // returns a the gradient rotation in degrees or false if radial gradient
     #getFormatedIsLinear(isLinear=this._isLinear) {
-        return typeof isLinear=="number" ? isLinear : isLinear==true ? 0 : false
+        return typeof isLinear==="number" ? isLinear : isLinear===true ? 0 : false
     }
 
     // returns a separate copy of the Gradient
@@ -108,7 +108,7 @@ class Gradient {
     get positions() {return this._positions}
     get isLinear() {return this._isLinear}
 	get colorStops() {return this._colorStops}
-	get rotation() {return typeof this.#getFormatedIsLinear()=="number" ? this._isLinear : null}
+	get rotation() {return typeof this.#getFormatedIsLinear()==="number" ? this._isLinear : null}
     get gradient() {
         // Automatic dynamic positions updates when using a shape instance
         if (this._initPositions instanceof Shape || this._initPositions instanceof Dot) this.updateGradient()
@@ -119,5 +119,5 @@ class Gradient {
 	set positions(_positions) {this._positions = _positions}
 	set colorStops(_colorStops) {this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])}
     set isLinear(isLinear) {this._isLinear = isLinear}
-	set rotation(deg) {this._isLinear = typeof deg=="number" ? deg%360 : this._isLinear}
+	set rotation(deg) {this._isLinear = typeof deg==="number" ? deg%360 : this._isLinear}
 }
