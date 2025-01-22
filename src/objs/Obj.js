@@ -19,6 +19,7 @@ class Obj {
         this._initColor = color                  // declaration color value || (ctx, this)=>{return color value}
         this._color = this._initColor            // the current color or gradient of the filled shape
         this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
+        this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
         
         this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
@@ -32,7 +33,7 @@ class Obj {
         this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
         this.color = this.getInitColor()
         this.setAnchoredPos()
-        if (CDEUtils.isFunction(this._setupCB)) this._setupCB(this, this.parent)
+        if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this.parent)
     }
 
     // returns the value of the inital color declaration
@@ -193,6 +194,7 @@ class Obj {
     get currentBacklogAnim() {return this._anims.backlog[0]}
     get anims() {return this._anims}
     get setupCB() {return this._setupCB}
+    get setupResults() {return this._setupResults}
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}
     get color() {return this._color?.color}
@@ -244,6 +246,7 @@ class Obj {
         }
     }
     set setupCB(cb) {this._setupCB = cb}
+    set setupResults(value) {this._setupResults = value}
     set r(r) {this.colorObject.r = r}
     set g(g) {this.colorObject.g = g}
     set b(b) {this.colorObject.b = b}

@@ -111,7 +111,7 @@ The Canvas class is the core of the project. It manages the main loop, the windo
 - **fpsLimit**? -> The maximum fps cap. Defaults to V-Sync.
 - **frame**? -> If you don't want the canvas to take the size of its direct parent, you can provide another custom HTML element here.
 - **settings**? -> The custom canvas settings (leave blank for prebuilt default settings).
-- **willReadFrequently**? -> If true, optimizes the canvas context for frequent readings. (Defaults to false)
+- **willReadFrequently**? -> If `true`, optimizes the canvas context for frequent readings. (Defaults to `false`)
 
  
 
@@ -182,6 +182,7 @@ The Obj class is the template class of any canvas object. **It should not be dir
 - ***initColor*** -> Initial color declaration. Can either be a color value (see ↓) or a callback `(ctx, this)=>{... return colorValue}`
 - **color** -> Either a Color instance `new Color("red")`, a string `"red"`, a hex value `#FF0000` or a RGBA array `[255, 0, 0, 1]`
 - **setupCB** -> Custom callback called on the object's initialization `(this, this?.parent)=>{}`s
+- ***setupResults*** -> The value returned by the `setupCB` call.
 - **anchorPos** -> The reference point from which the object's pos will be set. Can either be a pos `[x,y]`, another canvas object instance, or a callback `(this, Canvas or parent)=>{... return [x,y]}` (Defaults to the parent's pos, or `[0, 0]` if the object has no parent)
 - **alwaysActive** -> Whether the object stays active when outside the canvas bounds.
 - ***initialized*** -> Whether the object has been initialized.
@@ -290,7 +291,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 - **initDots** -> Initial dots declaration. Can either be: an array of dots `[new Dot(...), existingDot, ...]`, a **String** (this will automatically call the shape's createFromString() function), or a callback `(Shape, Canvas)=>{... return anArrayOfDots}` 
 - ***dots*** -> Array of all the current dots contained by the shape. 
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
-- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(ctx, Dot, ratio, mouse, distance, parent, rawRatio)=>{...}`.
+- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(ctx, Dot, ratio, mouse, distance, parent, parentSetupResults rawRatio)=>{...}`.
 - **ratioPosCB**? -> References the mouse position by default. Can be used to set a custom *ratioPos* target `(Shape, dots)=>{... return [x, y]}`. Can be disabled if set to `null`.
 - **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused) 
 
@@ -747,7 +748,7 @@ The Color class represents a color and provides multiple utility functions such 
 #### **The Color constructor takes the following parameters:**
 ###### - `new Color(color, isChannel)`
 - **color** -> The color value in any supported format. (Text: `"red"`, RGBA: `[255, 255, 255 ,1]`, HEX:"#123abcff", Gradient: `new Gradient( ... )`, Color: *an instance of this class*)
-- **isChannel** -> If true, the Color instance will be considered a color channel and will not duplicate. (Channels are for global color distribution)
+- **isChannel** -> If `true`, the Color instance will be considered a color channel and will not duplicate. (Channels are for global color distribution)
 
 ### **To convert a color to another format,** use the convertTo() function:
 ###### - converTo(format=Color.FORMATS.RGBA, color)

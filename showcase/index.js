@@ -84,6 +84,8 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
 
     shape.dots[0].addConnection(shape.dots.last())
     shape.dots[1].addConnection(shape.dots.last(1))
+
+    return shape.dots*10
 })
 
 // ALPHABET
@@ -131,6 +133,8 @@ let animTester = new Shape([400,200],[
 ], null, null, 25, (ctx, dot, ratio, m, dist)=>{
     CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)
 }, null, null, ()=>draggableDotTester.firstDot?.pos, true)
+
+
 
 CVS.add(animTester)
 CVS.add(draggableDotTester)

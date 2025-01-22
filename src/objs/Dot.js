@@ -18,7 +18,7 @@ class Dot extends Obj {
             // runs parent drawEffect callback if defined
             if (CDEUtils.isFunction(this.drawEffectCB)) {
                 const dist = this.getDistance(), rawRatio = this.getRatio(dist)
-                this.drawEffectCB(ctx, this, rawRatio>1 ? 1 : rawRatio, this.cvs.mouse, dist, this._parent, rawRatio)
+                this.drawEffectCB(ctx, this, rawRatio>1 ? 1 : rawRatio, this.mouse, dist, this._parent, this.parentSetupResults, rawRatio)
             }
 
             // draw dot
@@ -57,7 +57,7 @@ class Dot extends Obj {
     }
 
     /**
-     * Calculates the 4 intersection points between two dots and a direct line between them.
+     * Calculates the 4 intersection points between two dots and a direct line going through them.
      * @param {Dot | pos} target: a Dot or a pos [x,y] (Defaults to the first Dot in this object's connections list)
      * @param {Number} targetPadding: the padding radius of the target (Defaults to the target radius if it's a Dot, or 5)
      * @param {Dot | pos} source: a Dot or a pos [x,y] (Defaults to this object)
@@ -92,8 +92,10 @@ class Dot extends Obj {
     get limit() {return this._parent?.limit}
     get drawEffectCB() {return this._parent?.drawEffectCB}
     get parent() {return this._parent}
+    get mouse() {return this.cvs.mouse}
     get ratioPos() {return this._parent?.ratioPos}
     get connections() {return this._connections}
+    get parentSetupResults() {return this._parent?.setupResults}
 
     set limit(limit) {this._parent.limit = limit}
     set parent(p) {this._parent = p}
