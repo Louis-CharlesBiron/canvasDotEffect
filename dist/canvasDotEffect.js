@@ -253,7 +253,15 @@ class CanvasUtils {
         return obj.playAnim(new Anim((prog)=>obj[isFillColor?"fillColorRaw":"colorRaw"].rotation=-speed*360*prog, duration))
     }
 
-    static FOLLOW_PATHS = class {
+    // Provides generic shapes
+    static SHAPES = class {// DOC TODO
+        static FILLED_SQUARE() {
+            return new Shape()
+        }
+    }
+
+    // Provides generic follow paths
+    static FOLLOW_PATHS = class {// DOC TODO
         static INFINITY_SIGN(width, height, progressOffset) {
             width??=100
             height??=50
@@ -1062,7 +1070,7 @@ class Canvas {
 
     // calculates the max time between frames according to the fpsLimit
     #getMaxTime(fpsLimit) {
-        return fpsLimit ? fpsLimit < 7 ? (((14-fpsLimit)*1.05)**3)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER : (360-fpsLimit)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER : Canvas.DEFAULT_MAX_DELTATIME_MS
+        return fpsLimit ? fpsLimit < 7 ? (((14-fpsLimit)*1.05)**3)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER : Math.max((360-fpsLimit)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER, 50) : Canvas.DEFAULT_MAX_DELTATIME_MS
     }
 
     updateCachedAllEls() {
@@ -2261,7 +2269,8 @@ class Dot extends Obj {
 
     // deletes the dot
     remove() {
-        this._parent.removeDot(this._id)
+        if (CDEUtils.isFunction(this._parent.removeDot)) this._parent.removeDot(this._id)
+        else this._parent.remove(this._id)
     }
 
     get cvs() {return this._parent?.cvs}

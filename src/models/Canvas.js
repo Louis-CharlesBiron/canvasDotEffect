@@ -33,23 +33,18 @@ class Canvas {
         this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true) // set styles selector for parent
         this._ctx = this._cvs.getContext("2d", {willReadFrequently})   // canvas context
         this._settings = this.updateSettings(settings)          // set context settings
-
         this._els={refs:[], defs:[]}                            // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
-
         this._looping = false                                   // loop state
         this._loopingCallback = loopingCallback                 // custom callback called along with the loop() function
-
         this.fpsLimit = fpsLimit                                // delay between each frame to limit fps
         this.#maxTime = this.#getMaxTime(fpsLimit)              // max time between frames
         this._deltaTime = null                                  // useable delta time in seconds
         this._fixedTimeStamp = null                             // fixed (offsets lag spikes) requestanimationframe timestamp in ms
-
         this._windowListeners = this.#initWindowListeners()     // [onresize, onvisibilitychange]
-        
+        this._viewPos = [0,0]                                   // context view offset
         const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
         this.setSize(frameCBR.width, frameCBR.height)           // init size
         this.#initStyles()                                      // init styles
-
         this._typingDevice = new TypingDevice()                 // keyboard info
         this._mouse = new Mouse()                               // mouse info
         this._offset = this.updateOffset()                      // cvs page offset
@@ -66,7 +61,7 @@ class Canvas {
     // sets resize and visibility change listeners on the window
     #initWindowListeners() {
         const onresize=()=>this.setSize(),
-              onvisibilitychange=()=>{if (!document.hidden) this.reset()}
+              onvisibilitychange=()=>{if (!document.hidden) this.resetReferences()}
 
         window.addEventListener("resize", onresize)
         window.addEventListener("visibilitychange", onvisibilitychange)
@@ -76,7 +71,7 @@ class Canvas {
     // updates the calculated canvas offset in the page
     updateOffset() {
         const {width, height, x, y} = this._cvs.getBoundingClientRect()
-        return this._offset = {x:Math.round((x+width)-this.width+window.scrollX), y:Math.round((y+height)-this.height+window.scrollY)}
+        return this._offset = {x:Math.round((x+width)-this.width+window.scrollX)+this._viewPos[0], y:Math.round((y+height)-this.height+window.scrollY)+this._viewPos[1]}
     }
 
     // starts the drawing loop
@@ -137,7 +132,7 @@ class Canvas {
 
     // calculates the max time between frames according to the fpsLimit
     #getMaxTime(fpsLimit) {
-        return fpsLimit ? fpsLimit < 7 ? (((14-fpsLimit)*1.05)**3)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER : (360-fpsLimit)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER : Canvas.DEFAULT_MAX_DELTATIME_MS
+        return fpsLimit ? fpsLimit < 7 ? (((14-fpsLimit)*1.05)**3)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER : Math.max((360-fpsLimit)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER, 50) : Canvas.DEFAULT_MAX_DELTATIME_MS
     }
 
     updateCachedAllEls() {
@@ -155,20 +150,46 @@ class Canvas {
     }
 
     // clears the canvas
-    clear(x=0, y=0, width=this.width, height=this.height) {
-        this._ctx.clearRect(x, y, width, height)
+    clear(pos1=[0,0], pos2=[this.width, this.height]) {
+        this._ctx.clearRect(...pos1, ...pos2)
     }
 
-    // resets every fragile source
-    reset() {
-        this.refs.filter(source=>source.fragile).forEach(r=>r.reset())
+    // resets every fragile references
+    resetReferences() {
+        this.refs.filter(ref=>ref.fragile).forEach(r=>r.reset())
     }
 
-    // sets the width and height in px of the canvas element
-    setSize(w, h) {
+    // discards all current context transformations
+    resetTransformations() {
+        this.ctx.setTransform(1,0,0,1,0,0)
+    }
+
+    // moves the context by specified x/y values
+    moveViewBy(pos) {
+        let [x, y] = pos
+        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
+        this._viewPos = [this._viewPos[0]+x, this._viewPos[1]+y]
+        this.updateOffset()
+    }
+
+    // moves the context to a specific x/y value
+    moveViewAt(pos) {
+        let [x, y] = pos
+        this.resetTransformations()
+        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
+        this._viewPos = [x, y]
+        this.updateOffset()
+    }
+
+    // sets the width and height in px of the canvas element. If "forceCSSupdate" is true, it also resizes the frame with css
+    setSize(w, h, forceCSSupdate) {
         const {width, height} = this._frame.getBoundingClientRect()
-        if (CDEUtils.isDefined(w)) this._cvs.width = w??width
-        if (CDEUtils.isDefined(h)) this._cvs.height = h??height
+        this._cvs.width = w??width
+        this._cvs.height = h??height
+        if (forceCSSupdate) {
+            this._frame.style.width = this.width+"px"
+            this._frame.style.height = this.height+"px"
+        }
         this.updateSettings()
         this.updateOffset()
     }
@@ -329,10 +350,12 @@ class Canvas {
     get fpsLimitRaw() {return this._fpsLimit}
     get fpsLimit() {return this._fpsLimit==null||!isFinite(this._fpsLimit) ? null : 1/(this._fpsLimit/1000)}
     get maxTime() {return this.#maxTime}
+    get viewPos() {return this._viewPos}
 
 	set loopingCallback(_cb) {this._loopingCallback = _cb}
 	set width(w) {this.setSize(w, null)}
 	set height(h) {this.setSize(null, h)}
+	set offset(offset) {this._offset = offset}
 	set fpsLimit(fpsLimit) {
         this._fpsLimit = CDEUtils.isDefined(fpsLimit)&&isFinite(fpsLimit) ? 1000/Math.max(fpsLimit, 0) : null
         this.#maxTime = this.#getMaxTime(fpsLimit)

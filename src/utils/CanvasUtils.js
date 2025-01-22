@@ -109,7 +109,15 @@ class CanvasUtils {
         return obj.playAnim(new Anim((prog)=>obj[isFillColor?"fillColorRaw":"colorRaw"].rotation=-speed*360*prog, duration))
     }
 
-    static FOLLOW_PATHS = class {
+    // Provides generic shape declarations
+    static SHAPES = class {// DOC TODO
+        static FILLED_SQUARE() {
+            
+        }
+    }
+
+    // Provides generic follow paths
+    static FOLLOW_PATHS = class {// DOC TODO
         static INFINITY_SIGN(width, height, progressOffset) {
             width??=100
             height??=50

@@ -3,7 +3,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/Louis-CharlesBiron/canvasDotEffect?link=https%3A%2F%2Fgithub.com%2FLouis-CharlesBiron%2FcanvasDotEffect%2Fcommits%2Fmain%2F&label=Last%20Commit)
 ![GitHub Created At](https://img.shields.io/github/created-at/Louis-CharlesBiron/canvasDotEffect?label=Since&color=5F9EA0)
 
-# What is CanvasDotEffect (CDE)
+# CanvasDotEffect
 
 **CanvasDotEffect is a lightweight JS library that helps create customizable and interactive dot-based effects using the Canvas API.**
 
