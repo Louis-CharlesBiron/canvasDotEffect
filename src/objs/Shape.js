@@ -34,7 +34,7 @@ class Shape extends Obj {
         this.setRadius(this.getInitRadius(), true)
         this.setColor(this.getInitColor(), true)
 
-        if (CDEUtils.isFunction(this._setupCB)) this._setupCB(this, this?.parent)
+        if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this?.parent)
         this.initialized = true
     }
 

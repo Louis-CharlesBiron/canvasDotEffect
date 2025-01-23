@@ -64,9 +64,10 @@ testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog
 
 
 
-let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])], (shape)=>{return shape.dots.length*2}, normalColorTester, 100, (ctx, dot, ratio)=>{
+let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
+(shape)=>{return shape.dots.length*2}, normalColorTester, 100, (ctx, dot, ratio, m, dist, parent, res)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
-
+    
     CanvasUtils.drawDotConnections(dot, [255,0,0,CDEUtils.mod(1, ratio, 0.8)])
 }, undefined, (shape)=>{
     let dx=400, dy=200, dot = shape.dots.last()
@@ -85,7 +86,7 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
     shape.dots[0].addConnection(shape.dots.last())
     shape.dots[1].addConnection(shape.dots.last(1))
 
-    return shape.dots*10
+    return {a:"idk"}
 })
 
 // ALPHABET
