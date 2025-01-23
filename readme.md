@@ -789,19 +789,21 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
 #### **The Gradient constructor takes the following parameters:**
 ###### - `new Gradient(ctx, positions, isLinear, ...colorStops)`
 - **ctx** -> The canvas context.
-- **positions** -> The positions of the gradient. Giving a Shape instance will position automatically the gradient according to the pos of its dots. For manual positions:linear gradients: `[ [x1, y1], [x2, y2] ]`, radial gradients `[ [x1, y1, r1], [x2, y2, r2] ]`.
-- **isLinear** -> Whether the gradient is linear or radial. (If is a number, acts as the rotation in degrees of the linear gradient).
-- **...colorStops** -> An array containing the difference colors and their range `[0..1, color]`. Ex: `[ [0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"] ]`.
+- **positions** -> The positions of the gradient. Giving a Shape instance will position automatically the gradient according to the pos of its dots. For manual positions: **linear gradients**: `[ [x1, y1], [x2, y2] ]`, **radial gradients** `[ [x1, y1, r1], [x2, y2, r2] ]`, *conic gradients:* `[ x, y ]`.
+- **colorStops** -> An array containing the difference colors and their range `[0..1, color]`. Ex: `[ [0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"] ]`.
+- **type** -> The type of gradient. Either: Linear, Radial or Conic. (Defaults to Linear)
+- **rotation** -> The rotation in degrees of the gradient. (Not applicable for Radial gradients)
+
 
 ### **To update a gradient,** use the updateGradient() function:
 ###### - updateGradient()
 ```js
     // Creating a gradient
     const customGradient = new Gradient(
-            CVS.ctx,                 // canvas context
-            [ [0, 0], [100, 100] ],  // setting manual positions
-            true,                    // is a linear gradient
-            [[0, "red"], [1, "blue"]]  // goes from red to blue
+            CVS.ctx,                  // canvas context
+            [ [0, 0], [100, 100] ],   // setting manual position
+            [[0, "red"], [1, "blue"]],// goes from red to blue
+            Gradient.TYPES.LINEAR     // linear gradient
         )
 
     // Assigning the gradient to a dummy filled shape
@@ -820,9 +822,9 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
 ###### - Coloring a FilledShape with a gradient and making a rotating gradient effect
 ```js
 const gradientShape = new FilledShape(
-        // Creating and returning a gradient with a callback.
-        // The gradient will auto-position itself according to the shape's dots, start at 90deg rotation and will go from purple->red->yellow-ish
-        (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"]]), 
+        // Creating and returning a linear gradient with a callback.
+        // This linear gradient will auto-position itself according to the shape's dots, start at 90deg rotation and will go from purple->red->yellow-ish
+        (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"]], null, 90), 
         
         // Other parameters are used by the FilledShape, to make a square at [100, 100]
         false,

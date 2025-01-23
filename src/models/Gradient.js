@@ -6,30 +6,27 @@
 // Allows the creation of custom gradients
 class Gradient {
     static PLACEHOLDER = "PLACERHOLDER" // can be used to instantiate a Gradient without positions, and apply that of the object on assignement
+    static TYPES = {LINEAR:"Linear", RADIAL:"Radial", CONIC:"Conic"}
+    static DEFAULT_TYPE = Gradient.TYPES.LINEAR
 
     #lastDotsPos = null
     #lastRotation = null
     #lastDotPos = null
-    constructor(ctx, positions, isLinear=0, ...colorStops) {
+    constructor(ctx, positions, colorStops, type, rotation) {
         this._ctx = ctx                                                     // canvas context
-        this._isLinear = this.#getFormatedIsLinear(isLinear)                // whether the gradient is linear or radial (if a number, acts as the rotation in degrees of linear gradient)
-        this._initPositions = positions                                     // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | Shape
+        this._initPositions = positions                                     // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
+        this._type = type||Gradient.DEFAULT_TYPE                            // type of gradient
         this._positions = this.getAutomaticPositions()??this._initPositions // usable positions from initPositions
-
-        this._colorStops = colorStops.flat().map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
+        this._colorStops = colorStops.map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
+        this._rotation = rotation??0
 
         this._gradient = null // useable as a fillStyle
         this.updateGradient()
     }
 
-    // returns a the gradient rotation in degrees or false if radial gradient
-    #getFormatedIsLinear(isLinear=this._isLinear) {
-        return typeof isLinear==="number" ? isLinear : isLinear===true ? 0 : false
-    }
-
     // returns a separate copy of the Gradient
     duplicate(positions=this._positions) {
-        return new Gradient(this._ctx, Array.isArray(positions) ? [...positions] : positions, this._isLinear, [...this._colorStops])
+        return new Gradient(this._ctx, Array.isArray(positions) ? [...positions] : positions, [...this._colorStops], this._type, this._rotation)
     }
 
     /**
@@ -42,48 +39,45 @@ class Gradient {
         if (obj instanceof Shape) {
             if (this.#hasShapeChanged(obj) || !optimize) {
                 const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"),
-                    smallestX = rangeX[0], smallestY = rangeY[0],
-                    biggestX = rangeX[1], biggestY = rangeY[1],
+                    smallestX = rangeX[0], smallestY = rangeY[0], biggestX = rangeX[1], biggestY = rangeY[1],
                     cx = smallestX+(biggestX-smallestX)/2, cy = smallestY+(biggestY-smallestY)/2
 
-                if (this.#getFormatedIsLinear() !== false) {
-                    const x = smallestX-cx, y = smallestY-cy, x2 = biggestX-cx, y2 = biggestY-cy,
-                        cosV = Math.cos(CDEUtils.toRad(this.#getFormatedIsLinear())), sinV = Math.sin(CDEUtils.toRad(this.#getFormatedIsLinear()))
-                    return [[(x*cosV-y*sinV)+cx, (x*sinV+y*cosV)+cy], [(x2*cosV-y2*sinV)+cx, (x2*sinV+y2*cosV)+cy]]
-                } else {
-                    const coverRadius = Math.max(biggestX-smallestX, biggestY-smallestY)
-                    return [[cx, cy, coverRadius],[cx, cy, coverRadius*0.25]]
-                }
+                if (this._type===Gradient.TYPES.LINEAR) return this.#getLinearPositions(smallestX-cx, smallestY-cy, biggestX-cx, biggestY-cy, cx, cy)
+                else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(cx, cy, Math.max(biggestX-smallestX, biggestY-smallestY))
+                else return obj.getCenter()
             } else return this._positions
         } else if (obj instanceof Dot) {
-            if (this.#hasDotChanged(obj) || !optimize ) {
-                if (this.#getFormatedIsLinear() !== false) {
-                    const x = obj.left-obj.x, y = obj.top-obj.y, x2 = obj.right-obj.x, y2 = obj.bottom-obj.y,
-                        cosV = Math.cos(CDEUtils.toRad(this.#getFormatedIsLinear())), sinV = Math.sin(CDEUtils.toRad(this.#getFormatedIsLinear()))
-                    return [[(x*cosV-y*sinV)+obj.x, (x*sinV+y*cosV)+obj.y], [(x2*cosV-y2*sinV)+obj.x, (x2*sinV+y2*cosV)+obj.y]]
-                } else {
-                    const coverRadius = obj.radius*1
-                    return [[obj.x, obj.y, coverRadius],[obj.x, obj.y, coverRadius*0.25]]
-                }
+            if (this.#hasDotChanged(obj) || !optimize) {
+                if (this._type===Gradient.TYPES.LINEAR) return this.#getLinearPositions(obj.left-obj.x, obj.top-obj.y, obj.right-obj.x, obj.bottom-obj.y, obj.x, obj.y)
+                else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(obj.x, obj.y, obj.radius)
+                else return obj.pos_
             } return this._positions
-        } 
-        else return this._positions
+        } else return this._positions
+    }
+
+    #getLinearPositions(x, y, x2, y2, cx, cy) {
+        const cosV = Math.cos(CDEUtils.toRad(this._rotation)), sinV = Math.sin(CDEUtils.toRad(this._rotation))
+        return [[(x*cosV-y*sinV)+cx, (x*sinV+y*cosV)+cy], [(x2*cosV-y2*sinV)+cx, (x2*sinV+y2*cosV)+cy]]
+    }
+
+    #getRadialPositions(x, y, coverRadius) {
+        return [[x, y, coverRadius],[x, y, coverRadius*0.25]]
     }
 
     #hasShapeChanged(shape) {
         const currentDotsPos = shape.dotsPositions
-        if (this.#lastRotation !== this._isLinear || currentDotsPos !== this.#lastDotsPos) {
+        if (this.#lastRotation !== this._rotation || currentDotsPos !== this.#lastDotsPos) {
             this.#lastDotsPos = currentDotsPos
-            this.#lastRotation = this._isLinear
+            this.#lastRotation = this._rotation
             return true
         } else return false
     }
     
     #hasDotChanged(dot) {
         const currentDotPos = dot.stringPos
-        if (this.#lastRotation !== this._isLinear || currentDotPos !== this.#lastDotPos) {
+        if (this.#lastRotation !== this._rotation || currentDotPos !== this.#lastDotPos) {
             this.#lastDotPos = currentDotPos
-            this.#lastRotation = this._isLinear
+            this.#lastRotation = this._rotation
             return true
         } else return false
     }
@@ -92,7 +86,8 @@ class Gradient {
     updateGradient() {
         if (this._initPositions !== Gradient.PLACEHOLDER) {
             this._positions = this.getAutomaticPositions()
-            this._gradient = this._ctx[`create${typeof this.#getFormatedIsLinear()=="number"?"Linear":"Radial"}Gradient`](...this._positions[0], ...this._positions[1])
+            if (this._type===Gradient.TYPES.CONIC) this._gradient = this._ctx[`create${this._type}Gradient`](CDEUtils.toRad(this._rotation), ...this._positions)
+            else this._gradient = this._ctx[`create${this._type}Gradient`](...this._positions[0], ...this._positions[1])
             const cs_ll = this._colorStops.length
             for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], this._colorStops[i][1].color)
             return this._gradient
@@ -100,15 +95,15 @@ class Gradient {
     }
 
     toString() {
-        return "G"+this._positions+this._colorStops+this.isLinear
+        return "G"+this._positions+this._colorStops+this._type+this._rotation
     }
 
     get ctx() {return this._ctx}
     get initPositions() {return this._initPositions}
     get positions() {return this._positions}
-    get isLinear() {return this._isLinear}
+    get type() {return this._type}
 	get colorStops() {return this._colorStops}
-	get rotation() {return typeof this.#getFormatedIsLinear()==="number" ? this._isLinear : null}
+	get rotation() {return this._rotation}
     get gradient() {
         // Automatic dynamic positions updates when using a shape instance
         if (this._initPositions instanceof Shape || this._initPositions instanceof Dot) this.updateGradient()
@@ -118,6 +113,6 @@ class Gradient {
     set initPositions(initPositions) {this._initPositions = initPositions}
 	set positions(_positions) {this._positions = _positions}
 	set colorStops(_colorStops) {this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])}
-    set isLinear(isLinear) {this._isLinear = isLinear}
-	set rotation(deg) {this._isLinear = typeof deg==="number" ? deg%360 : this._isLinear}
+    set type(type) {this._type = type}
+	set rotation(deg) {this._rotation = deg}
 }

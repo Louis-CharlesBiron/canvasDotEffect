@@ -42,7 +42,7 @@ CanvasUtils.toggleCenter(movementsTester)
 
 let dragAnim2 = CanvasUtils.getDraggableDotCB()
 let filledShapeTester = new FilledShape(
-    (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]]),
+    (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]], null, 90),
     true, [0,0], [new Dot([100, 400]), new Dot([100, 450]), new Dot([150, 450]),new Dot([150, 400]),new Dot([125,325])], null, null, null, (ctx, dot, ratio, m, dist, shape)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
@@ -50,7 +50,7 @@ let filledShapeTester = new FilledShape(
 filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
 
 let testMoreDragAnim = CanvasUtils.getDraggableDotCB()
-let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, "blue")], 15, (ctx, shape)=>new Gradient(ctx, shape, 90, [[0, "red"], [1, "yellow"]]), null, (ctx, dot, ratio, m, dist, shape)=>{
+let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, "blue")], 15, (ctx, shape)=>new Gradient(ctx, shape, [[0, "red"], [1, "yellow"]], null, 90), null, (ctx, dot, ratio, m, dist, shape)=>{
     if (shape.dots[0].id == dot.id) {
         testMoreDragAnim(shape.dots[0], m, dist, ratio)
 
@@ -67,7 +67,7 @@ testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog
 let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
 (shape)=>{return shape.dots.length*2}, normalColorTester, 100, (ctx, dot, ratio, m, dist, parent, res)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
-    
+
     CanvasUtils.drawDotConnections(dot, [255,0,0,CDEUtils.mod(1, ratio, 0.8)])
 }, undefined, (shape)=>{
     let dx=400, dy=200, dot = shape.dots.last()

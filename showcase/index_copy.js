@@ -10,10 +10,10 @@ const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//lo
 const normalColorTester = new Color("white")
 
 let logo = new Shape([0,0], [
-    new Dot([250, 440], 15, (ctx, dot)=>new Gradient(ctx, dot, 270, [[0, "#B9ACE3"], [1, "#9ADBE4"]])),
-    new Dot([350, 290], 16.5, (ctx, dot)=>new Gradient(ctx, dot, 90, [[0, "#B9ACE3"], [1, "#9ADBE4"]])),
-    new Dot([470, 350], 18, (ctx, dot)=>new Gradient(ctx, dot, 180, [[0, "#B9ACE3"], [1, "#9ADBE4"]])),
-], 18, (ctx, shape)=>new Gradient(ctx, shape, 270, [[0, "#AFB0E3"], [1, "#9ADBE4"]]), null,  (ctx, dot, ratio, m, dist, shape)=>{
+    new Dot([250, 440], 15, (ctx, dot)=>new Gradient(ctx, dot, [[0, "#B9ACE3"], [1, "#9ADBE4"]], null, 270)),
+    new Dot([350, 290], 16.5, (ctx, dot)=>new Gradient(ctx, dot, [[0, "#B9ACE3"], [1, "#9ADBE4"]], null, 90)),
+    new Dot([470, 350], 18, (ctx, dot)=>new Gradient(ctx, dot, [[0, "#B9ACE3"], [1, "#9ADBE4"]], null, 180)),
+], 18, (ctx, shape)=>new Gradient(ctx, shape, [[0, "#AFB0E3"], [1, "#9ADBE4"]], null, 270), null,  (ctx, dot, ratio, m, dist, shape)=>{
     CanvasUtils.drawOuterRing(dot, dot.colorObject, 1.8)
     CVS.updateSettings({"lineWidth":5})
     CanvasUtils.drawDotConnections(dot, shape.colorObject, 2.5)
@@ -46,7 +46,7 @@ CVS.add(logoBG)
 
 logoBG.scaleAt([1.15, 1.15], [350, 375])
 
-let textGrad = new Color(new Gradient(CVS.ctx, [[410, 325],[310,400]], 90, [[0, "#AFB0E3"], [1, "#9ADBE4"]]))
+let textGrad = new Color(new Gradient(CVS.ctx, [[410, 325],[310,400]], [[0, "#AFB0E3"], [1, "#9ADBE4"]], null, 90))
 let logoLetters = new Grid("CDE", [5, 5], 38, null, [308,372], 0, null, 100, (ctx, dot, ratio, m, dist, shape)=>{
     CanvasUtils.drawDotConnections(dot, textGrad, 0, true)
 })
