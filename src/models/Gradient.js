@@ -86,7 +86,7 @@ class Gradient {
     updateGradient() {
         if (this._initPositions !== Gradient.PLACEHOLDER) {
             this._positions = this.getAutomaticPositions()
-            if (this._type===Gradient.TYPES.CONIC) this._gradient = this._ctx[`create${this._type}Gradient`](CDEUtils.toRad(this._rotation), ...this._positions)
+            if (this._type===Gradient.TYPES.CONIC) this._gradient = this._ctx.createConicGradient(CDEUtils.toRad(this._rotation), ...this._positions)
             else this._gradient = this._ctx[`create${this._type}Gradient`](...this._positions[0], ...this._positions[1])
             const cs_ll = this._colorStops.length
             for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], this._colorStops[i][1].color)

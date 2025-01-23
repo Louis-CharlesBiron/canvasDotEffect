@@ -53,12 +53,8 @@ class CanvasUtils {
         ctx.beginPath()
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
             const res = dot.getLinearIntersectPoints(source, source.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-            ctx.moveTo(res.source.inner[0], res.source.inner[1])
-            ctx.lineTo(res.target.inner[0], res.target.inner[1])
-        } else {
-            ctx.moveTo(sx, sy)
-            ctx.lineTo(dot.x, dot.y)
-        }
+            Line.draw(ctx, Line.getLine(res.source.inner, res.target.inner), color)
+        } else Line.draw(ctx, Line.getLine([sx, sy], dot.pos), color)
         ctx.stroke()
     }
 
@@ -111,8 +107,8 @@ class CanvasUtils {
 
     // Provides generic shape declarations
     static SHAPES = class {// DOC TODO
-        static FILLED_SQUARE() {
-            
+        static DEBUG_SHAPE(pos, dots) {
+            return new Shape(pos||[100,100], dots||[new Dot(), new Dot([50]), new Dot([,50]), new Dot([50,50])])
         }
     }
 

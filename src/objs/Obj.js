@@ -170,7 +170,7 @@ class Obj {
     adjustPos(pos) {
         let [x, y] = pos
         if (!CDEUtils.isDefined(x)) x = this.x??0
-        if (!CDEUtils.isDefined(x)) y = this.y??0
+        if (!CDEUtils.isDefined(y)) y = this.y??0
         return [x, y]
     }
 

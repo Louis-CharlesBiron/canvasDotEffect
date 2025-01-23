@@ -4,99 +4,51 @@
 //
 
 // Represents a drawn line
-class Line {
-    constructor(lineWidth, lineCap, lineDash, lineDashOffset) {
-        this._lineWidth = lineWidth??Canvas.DEFAULT_CTX_SETTINGS.lineWidth
-        this._lineCap = lineCap??Canvas.DEFAULT_CTX_SETTINGS.lineCap
-        this._lineDash = lineDash
-        this._lineDashOffset = lineDashOffset
+class Line {// DOC TODO
+    static JOIN_TYPES = {MITER:"miter", BEVEL:"bevel", ROUND:"round"} // spike, flat, round
+    static CAP_TYPES = {BUTT:"butt", SQUARE:"square", ROUND:"round"}  // short, long, round
+    static DEFAULT_WIDTH = 2
+    static DEFAULT_CAP = Line.CAP_TYPES.ROUND
+    static DEFAULT_JOIN = Line.JOIN_TYPES.BEVEL
+    static DEFAULT_DASH = []
+    static DEFAULT_DASH_OFFSET = 0
+
+    static getLine(startPos, endPos) {
+        return (ctx)=>{
+            ctx.moveTo(...startPos)
+            ctx.lineTo(...endPos)
+        }
     }
 
-    line(pos1, pos2) {
-
+    static getQuadCurve(startPos, endPos, controlPos) {
+        return (ctx)=>{
+            ctx.moveTo(...startPos)
+            ctx.quadraticCurveTo(...controlPos, ...endPos)
+        }
     }
 
-    quadCurve(pos1, pos2, controlPos) {
+    static getBeizerCurve(startPos, endPos, controlPos1, controlPos2) {
+        controlPos1 ??= [startPos[1], startPos[0]]
+        controlPos2 ??= [endPos[1], endPos[0]]
 
+        return (ctx)=>{
+            ctx.moveTo(...startPos)
+            ctx.bezierCurveTo(...controlPos1, ...controlPos2, ...endPos)
+        }
     }
 
-    beizerCurve(pos1, pos2, controlPos1, controlPos2) {
-
+    // draws a custom line/curve according to the parameters  
+    static draw(ctx, line, color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
+        if (color) ctx.strokeStyle = Color.formatRgba(color)??color.color // color of the line
+        if (lineWidth) ctx.lineWidth = lineWidth                // width of drawn line
+        if (lineCap) ctx.lineCap = lineCap                      // determines the shape of line ends
+        if (lineJoin) ctx.lineJoin = lineJoin                   // determines the shape of line joins
+        if (lineDash) ctx.lineDash = lineDash                   // gaps length within the line
+        if (lineDashOffset) ctx.lineDashOffset = lineDashOffset // line gaps offset
+        ctx.beginPath()
+        line(ctx)
+        ctx.stroke()
+        //console.log(line, color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset)
     }
-
-
-
-
-    // ctx.lineTo()
-    // ctx.quadraticCurveTo()
-    // ctx.bezierCurveTo()
-
-    //ctx.setLineDash
-    //ctx.lineCap
-    //ctx.lineWidth
-    //ctx.lineDashOffset
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-    curve(pos1, pos2, radius=50) {
-        const ctx = CVS.ctx
-
-        let otherPos = [pos2[0]-100, pos2[1]+1]
-        ctx.beginPath()
-        ctx.moveTo(...pos1)
-        //CDEUtils.getLinearFn(pos2, [pos2[0], pos2[1]+50])
-        
-        ctx.arcTo(...pos2, ...otherPos, radius)
-        ctx.stroke()
-
-        ctx.fillStyle = "green"
-        ctx.beginPath()
-        ctx.arc(...otherPos, 5, 0, CDEUtils.CIRC)
-        ctx.fill()
-    }
-
-let startPos = [0, 0]
-let stopLine = [[0, 200],[300, 50]]
-let radius = 500
-
-let shape = new Shape([500, 400], [new Dot(startPos, 5, "blue"), new Dot(stopLine[0]), new Dot(stopLine[1])], 5, "red", null, (ctx, dot, ratio, m, dist, shape)=>{
-    let mainDot = shape.firstDot
-    let cDot1 = shape.secondDot
-    let cDot2 = shape.thirdDot
-    
-    ctx.beginPath()
-    ctx.lineWidth = 2
-    ctx.moveTo(...mainDot.pos)
-    ctx.arcTo(...cDot1.pos, ...cDot2.pos, CDEUtils.mod(radius, ratio))
-    ctx.stroke()
-})
-
-CVS.add(shape)
-
-
-*/
