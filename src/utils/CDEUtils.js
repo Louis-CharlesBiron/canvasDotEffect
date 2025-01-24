@@ -70,8 +70,14 @@ class CDEUtils {
 
     // Returns the "a", "b" and "function" values formed by a line between 2 positions
     static getLinearFn(pos1, pos2) {
-        const a = (pos2[1]-pos1[1])/(pos2[0]-pos1[0]), b = -(a*pos1[0]-pos1[1])
-        return [a, b, (x)=>a*x+b]
+        const a = (pos2[1]-pos1[1])/(pos2[0]-pos1[0]), b = -a*pos1[0]+pos1[1]
+        return [a, b, (x)=>a*x+b, pos1]
+    }
+
+    // Returns the "a", "b" and "function" values of the perpendicular line. 
+    static getPerpendicularLinearFn(linearFnResult) {
+        const a = -1/linearFnResult[0], pos = linearFnResult[3], b = -a*pos[0]+pos[1]
+        return [a, b, (x)=>a*x+b, pos]
     }
     
     /**

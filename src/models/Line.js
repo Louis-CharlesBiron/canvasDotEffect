@@ -28,8 +28,8 @@ class Line {// DOC TODO
     }
 
     static getBeizerCurve(startPos, endPos, controlPos1, controlPos2) {
-        controlPos1 ??= [startPos[1], startPos[0]]
-        controlPos2 ??= [endPos[1], endPos[0]]
+        controlPos1 ??= [startPos[1]+20, startPos[0]+20]
+        controlPos2 ??= [endPos[1]+20, endPos[0]+20]
 
         return (ctx)=>{
             ctx.moveTo(...startPos)
@@ -48,7 +48,31 @@ class Line {// DOC TODO
         ctx.beginPath()
         line(ctx)
         ctx.stroke()
-        //console.log(line, color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset)
     }
 
+
 }
+
+
+/*
+let a = CanvasUtils.SHAPES.DEBUG_SHAPE([500, 500])
+a.drawEffectCB = (ctx, dot, r, m, d, p, res)=>{
+    if (dot.id==p.firstDot.id) {
+        let p1 = p.firstDot.pos, p2 = p.dots[3].pos
+
+
+        let perp = CDEUtils.getPerpendicularLinearFn(CDEUtils.getLinearFn(p1, p2)), rad = CDEUtils.getDist(...p1, ...p2)/4
+        console.log(rad)
+        let c1 = [perp[3][0]+rad*2, perp[2](perp[3][0]+rad)+rad/2],
+            c2 = [perp[3][0], perp[2](perp[3][0]-rad)+rad/2]
+
+        Line.draw(ctx, Line.getBeizerCurve(p1, p2, c1, c2), [0,0,255,1])
+        
+        CanvasUtils.DRAW.POINT(ctx, c1, 3, new Color("red"))
+        CanvasUtils.DRAW.POINT(ctx, c2, 3, new Color("green"))
+        
+    }
+}
+
+CVS.add(a)
+*/

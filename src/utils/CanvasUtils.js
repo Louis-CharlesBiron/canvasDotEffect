@@ -105,10 +105,27 @@ class CanvasUtils {
         return obj.playAnim(new Anim((prog)=>obj[isFillColor?"fillColorRaw":"colorRaw"].rotation=-speed*360*prog, duration))
     }
 
-    // Provides generic shape declarations
+    // Provides generic drawings
+    static DRAW = class {
+        static POINT(ctx, pos, radius, color) {
+            ctx.fillStyle = Color.formatRgba(color)??color.color
+            ctx.beginPath()
+            ctx.arc(...pos, radius, 0, CDEUtils.CIRC)
+            ctx.fill()
+        }
+    }
+
+    // Provides quick generic shape declarations
     static SHAPES = class {// DOC TODO
         static DEBUG_SHAPE(pos, dots) {
-            return new Shape(pos||[100,100], dots||[new Dot(), new Dot([50]), new Dot([,50]), new Dot([50,50])])
+            return new Shape(pos||[100,100], dots||[new Dot(), new Dot([100]), new Dot([,100]), new Dot([100,100])])
+        }
+
+        static THROWABLE_DOT(pos, radius, color) {
+            const dragAnim = CanvasUtils.getDraggableDotCB()
+            return new Shape(pos||[10,10],new Dot(), radius, color, null, (ctx, dot, ratio, m, dist, shape)=>{
+                dragAnim(shape.firstDot, m, dist, ratio)
+            })
         }
     }
 
