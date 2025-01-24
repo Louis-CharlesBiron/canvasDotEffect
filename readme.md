@@ -469,7 +469,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
     const backAndForthDotShape = new Shape([200,200],
         new Dot([0,0], null, null, (dot, shape)=>{
             let distance = 150, ix = dot.x
-            dot.playAnim(new Anim((progress, deltaTime, playCount)=>{
+            dot.playAnim(new Anim((progress, playCount, deltaTime)=>{
                 dot.x = ix + ((playCount % 2) === 0 ? 1 : -1) * distance * progress
                 if (progress == 1) ix = dot.x
             }, -1000, Anim.easeOutBack))
@@ -933,7 +933,7 @@ Use the playAnim() function on any canvas object. All objects have an `anims` pr
 ###### - Making a dot smoothly move back and forth 200px, while blinking, every second, for eternity 
 ```js
     let distance = 200, ix = dot.x
-    dot.playAnim(new Anim((progress, deltaTime, playCount)=>{
+    dot.playAnim(new Anim((progress, playCount, deltaTime)=>{
         // fading the dot over 1 second
         dot.a = 1 - progress
         

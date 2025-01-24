@@ -115,7 +115,7 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null,
     dragAnim1(shape.dots[0], m, dist, ratio)
 }, null, (shape)=>{
     let dot = shape.firstDot
-    dot.playAnim(new Anim((prog, deltaTime, i, cprog)=>{
+    dot.playAnim(new Anim((prog, i, deltaTime, cprog)=>{
         dot.radius = i%2?25*(1-cprog):25*cprog
         le.limit = dot.radius*5
     }, -750, Anim.easeOutQuad))
@@ -125,11 +125,29 @@ let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null,
 
 let animTester = new Shape([400,200],[
     new Dot([0,50], null, null, (dot, shape)=>{
-        let distance = 150, ix = dot.x
-        dot.playAnim(new Anim((progress, deltaTime, playCount)=>{
-            dot.x = ix + ((playCount%2)||-1) * distance * progress
-            if (progress==1) ix = dot.x
+
+        // overriding
+        //let distance = 150, ix = dot.x
+        //dot.playAnim(new Anim((progress, playCount)=>{
+        //    dot.x = ix + ((playCount%2)||-1) * distance * progress
+        //    if (progress==1) ix = dot.x
+        //}, -1000, Anim.easeOutBack))
+
+        // additive
+        let distance = 150, ix = dot.x, ax = 0
+        dot.playAnim(new Anim((prog, i) => {
+            const dx = ((i%2)||-1)*distance*prog-ax
+            dot.x += dx
+            ax += dx
+        
+            if (prog === 1) {
+                ix = dot.x
+                ax = 0
+                //console.log(dot.x)
+            }
         }, -1000, Anim.easeOutBack))
+        
+
     })
 ], null, null, 25, (ctx, dot, ratio, m, dist)=>{
     CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)

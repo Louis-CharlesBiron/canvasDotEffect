@@ -29,7 +29,7 @@ class Anim {
             // PLAY ANIMATION
             else if (time<this._startTime+Math.abs(this._duration)) {
                 this._progress = this._easing((time-this._startTime)/Math.abs(this._duration))
-                this._animation(this._progress, deltaTime, this._playCount, this.progress)
+                this._animation(this._progress, this._playCount, deltaTime, this.progress)
             }
             // REPEAT IF NEGATIVE DURATION
             else if (isInfinite) this.reset(true, deltaTime)
@@ -40,13 +40,13 @@ class Anim {
 
     // ends the animation
     end(deltaTime) {
-        this._animation(1, deltaTime, this._playCount++, 1)
+        this._animation(1, this._playCount++, deltaTime, 1)
         if (CDEUtils.isFunction(this._endCallback)) this._endCallback()
     }
 
     // resets the animation
     reset(isInfiniteReset, deltaTime) {
-        if (isInfiniteReset) this._animation(1, deltaTime, this._playCount++, 1)
+        if (isInfiniteReset) this._animation(1, this._playCount++, deltaTime, 1)
         else this._playCount = 0
         this._progress = 0
         this._startTime = null

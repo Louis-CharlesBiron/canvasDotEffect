@@ -29,9 +29,9 @@ let logo = new Shape([0,0], [
     shape.playAnim(new Anim((prog)=>shape.colorRaw.rotation=360*prog, -1000))
 
     let radiusMovements = 1
-    shape.dots[0].playAnim(new Anim((prog, dt, i)=>shape.dots[0].radius += i%2?radiusMovements*prog*CVS.deltaTime:-radiusMovements*prog*CVS.deltaTime, -6000, Anim.easeOutQuad))
-    shape.dots[1].playAnim(new Anim((prog, dt, i)=>shape.dots[1].radius += i%2?radiusMovements*prog*CVS.deltaTime:-radiusMovements*prog*CVS.deltaTime, -3000, Anim.easeOutQuad))
-    shape.dots[2].playAnim(new Anim((prog, dt, i)=>shape.dots[2].radius += i%2?radiusMovements*prog*CVS.deltaTime:-radiusMovements*prog*CVS.deltaTime, -4000, Anim.easeOutQuad))
+    shape.dots[0].playAnim(new Anim((prog, i, dt)=>shape.dots[0].radius += i%2?radiusMovements*prog*dt:-radiusMovements*prog*dt, -6000, Anim.easeOutQuad))
+    shape.dots[1].playAnim(new Anim((prog, i, dt)=>shape.dots[1].radius += i%2?radiusMovements*prog*dt:-radiusMovements*prog*dt, -3000, Anim.easeOutQuad))
+    shape.dots[2].playAnim(new Anim((prog, i, dt)=>shape.dots[2].radius += i%2?radiusMovements*prog*dt:-radiusMovements*prog*dt, -4000, Anim.easeOutQuad))
 })
 
 let logoBG = new FilledShape([65, 100, 100, 0.15], true,
