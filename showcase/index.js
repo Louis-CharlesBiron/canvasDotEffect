@@ -154,6 +154,19 @@ let animTester = new Shape([400,200],[
 }, null, null, ()=>draggableDotTester.firstDot?.pos, true)
 
 
+let generationTester = new Shape([100,600], 
+    Shape.generate(null, [-50, 0], 1000, 10, [-600, 150], (dot, nextDot)=>{
+        //dot.addConnection(nextDot)
+
+    }),
+    3, "red", 100, (ctx, dot, ratio, m, dist, parent)=>{
+            CanvasUtils.drawDotConnections(dot, [255,0,0,1])
+            dot.radius = CDEUtils.mod(dot.getInitRadius()*2, ratio, dot.getInitRadius()*2*0.8)
+            dot.a = CDEUtils.mod(1, ratio, 0.8)
+    })
+
+CVS.add(generationTester)
+
 
 CVS.add(animTester)
 CVS.add(draggableDotTester)

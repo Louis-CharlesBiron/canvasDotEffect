@@ -27,9 +27,9 @@ class Shape extends Obj {
         this._pos = this.getInitPos()
         this.setAnchoredPos()
 
-        if (typeof this._initDots === "string") this.add(this.createFromString(this._initDots))
+        if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
         else if (CDEUtils.isFunction(this._initDots)) this.add(this._initDots(this, this._cvs))
-        else if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
+        else if (typeof this._initDots === "string") this.add(this.createFromString(this._initDots))
 
         this.setRadius(this.getInitRadius(), true)
         this.setColor(this.getInitColor(), true)
@@ -72,6 +72,32 @@ class Shape extends Obj {
     remove() {
         this._cvs.remove(this._id)
         this._cvs.updateCachedAllEls()
+    }
+
+    static generate(yTrajectory, startOffset, length, gapX, yModifier, genCB) {
+        yTrajectory??=x=>0
+        startOffset??=[0,0]
+        length??=100
+        gapX??=1
+        yModifier??=[-50, 50]
+
+        let dots = [], lastDot = null
+        for (let x=0;x<=length;x+=CDEUtils.getValueFromRange(gapX)) {
+            let dot = new Dot([startOffset[0]+x, startOffset[1]+CDEUtils.getValueFromRange(yModifier)+yTrajectory(x)])
+            if (lastDot && CDEUtils.isFunction(genCB)) genCB(dot, lastDot)
+            dots.push(dot)
+            lastDot = dot
+        }
+        return dots
+
+
+        // function to follow: fn,
+        // where to start: startPos,
+        // distance of the follow: length, 
+        // horizontal gaps, gapX
+        // vertical range of generation: genHeight,
+        //
+        // callback(dot, nextDot, shape)
     }
 
     /**
@@ -229,6 +255,7 @@ class Shape extends Obj {
     get cvs() {return this._cvs}
     get ctx() {return this._cvs.ctx}
     get dots() {return this._dots}
+    get dotsPos() {return this._dots.map(dot=>dot.pos)}
     get limit() {return this._limit}
 	get initDots() {return this._initDots}
     get drawEffectCB() {return this._drawEffectCB}

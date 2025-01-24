@@ -79,6 +79,11 @@ class CDEUtils {
         const a = -1/linearFnResult[0], pos = linearFnResult[3], b = -a*pos[0]+pos[1]
         return [a, b, (x)=>a*x+b, pos]
     }
+
+    // Returns a random value in a randomArray
+    static getValueFromRange(minMax) {
+        return Array.isArray(minMax) ? CDEUtils.random(minMax[0], minMax[1]) : minMax 
+    }
     
     /**
     * Returns the interpolated number between (max) and (max - range) 
