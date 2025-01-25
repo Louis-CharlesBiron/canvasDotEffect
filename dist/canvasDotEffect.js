@@ -70,8 +70,19 @@ class CDEUtils {
 
     // Returns the "a", "b" and "function" values formed by a line between 2 positions
     static getLinearFn(pos1, pos2) {
-        const a = (pos2[1]-pos1[1])/(pos2[0]-pos1[0]), b = -(a*pos1[0]-pos1[1])
-        return [a, b, (x)=>a*x+b]
+        const a = (pos2[1]-pos1[1])/(pos2[0]-pos1[0]), b = -a*pos1[0]+pos1[1]
+        return [a, b, (x)=>a*x+b, pos1]
+    }
+
+    // Returns the "a", "b" and "function" values of the perpendicular line. 
+    static getPerpendicularLinearFn(linearFnResult) {
+        const a = -1/linearFnResult[0], pos = linearFnResult[3], b = -a*pos[0]+pos[1]
+        return [a, b, (x)=>a*x+b, pos]
+    }
+
+    // Returns a random value in a randomArray
+    static getValueFromRange(minMax) {
+        return Array.isArray(minMax) ? CDEUtils.random(minMax[0], minMax[1]) : minMax 
     }
     
     /**
@@ -197,12 +208,8 @@ class CanvasUtils {
         ctx.beginPath()
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
             const res = dot.getLinearIntersectPoints(source, source.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-            ctx.moveTo(res.source.inner[0], res.source.inner[1])
-            ctx.lineTo(res.target.inner[0], res.target.inner[1])
-        } else {
-            ctx.moveTo(sx, sy)
-            ctx.lineTo(dot.x, dot.y)
-        }
+            Line.draw(ctx, Line.getLine(res.source.inner, res.target.inner), color)
+        } else Line.draw(ctx, Line.getLine([sx, sy], dot.pos), color)
         ctx.stroke()
     }
 
@@ -253,10 +260,27 @@ class CanvasUtils {
         return obj.playAnim(new Anim((prog)=>obj[isFillColor?"fillColorRaw":"colorRaw"].rotation=-speed*360*prog, duration))
     }
 
-    // Provides generic shapes
+    // Provides generic drawings
+    static DRAW = class {
+        static POINT(ctx, pos, radius, color) {
+            ctx.fillStyle = Color.formatRgba(color)??color.color
+            ctx.beginPath()
+            ctx.arc(...pos, radius, 0, CDEUtils.CIRC)
+            ctx.fill()
+        }
+    }
+
+    // Provides quick generic shape declarations
     static SHAPES = class {// DOC TODO
-        static FILLED_SQUARE() {
-            return new Shape()
+        static DEBUG_SHAPE(pos, dots) {
+            return new Shape(pos||[100,100], dots||[new Dot(), new Dot([100]), new Dot([,100]), new Dot([100,100])])
+        }
+
+        static THROWABLE_DOT(pos, radius, color) {
+            const dragAnim = CanvasUtils.getDraggableDotCB()
+            return new Shape(pos||[10,10],new Dot(), radius, color, null, (ctx, dot, ratio, m, dist, shape)=>{
+                dragAnim(shape.firstDot, m, dist, ratio)
+            })
         }
     }
 
@@ -936,6 +960,84 @@ class Mouse {
 // Please don't use or credit this code as your own.
 //
 
+// Represents a drawn line
+class Line {// DOC TODO
+    static JOIN_TYPES = {MITER:"miter", BEVEL:"bevel", ROUND:"round"} // spike, flat, round
+    static CAP_TYPES = {BUTT:"butt", SQUARE:"square", ROUND:"round"}  // short, long, round
+    static DEFAULT_WIDTH = 2
+    static DEFAULT_CAP = Line.CAP_TYPES.ROUND
+    static DEFAULT_JOIN = Line.JOIN_TYPES.BEVEL
+    static DEFAULT_DASH = []
+    static DEFAULT_DASH_OFFSET = 0
+
+    static getLine(startPos, endPos) {
+        return (ctx)=>{
+            ctx.moveTo(...startPos)
+            ctx.lineTo(...endPos)
+        }
+    }
+
+    static getQuadCurve(startPos, endPos, controlPos) {
+        return (ctx)=>{
+            ctx.moveTo(...startPos)
+            ctx.quadraticCurveTo(...controlPos, ...endPos)
+        }
+    }
+
+    static getBeizerCurve(startPos, endPos, controlPos1, controlPos2) {
+        controlPos1 ??= [startPos[1]+20, startPos[0]+20]
+        controlPos2 ??= [endPos[1]+20, endPos[0]+20]
+
+        return (ctx)=>{
+            ctx.moveTo(...startPos)
+            ctx.bezierCurveTo(...controlPos1, ...controlPos2, ...endPos)
+        }
+    }
+
+    // draws a custom line/curve according to the parameters  
+    static draw(ctx, line, color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
+        if (color) ctx.strokeStyle = Color.formatRgba(color)??color.color // color of the line
+        if (lineWidth) ctx.lineWidth = lineWidth                // width of drawn line
+        if (lineCap) ctx.lineCap = lineCap                      // determines the shape of line ends
+        if (lineJoin) ctx.lineJoin = lineJoin                   // determines the shape of line joins
+        if (lineDash) ctx.lineDash = lineDash                   // gaps length within the line
+        if (lineDashOffset) ctx.lineDashOffset = lineDashOffset // line gaps offset
+        ctx.beginPath()
+        line(ctx)
+        ctx.stroke()
+    }
+
+
+}
+
+
+/*
+let a = CanvasUtils.SHAPES.DEBUG_SHAPE([500, 500])
+a.drawEffectCB = (ctx, dot, r, m, d, p, res)=>{
+    if (dot.id==p.firstDot.id) {
+        let p1 = p.firstDot.pos, p2 = p.dots[3].pos
+
+
+        let perp = CDEUtils.getPerpendicularLinearFn(CDEUtils.getLinearFn(p1, p2)), rad = CDEUtils.getDist(...p1, ...p2)/4
+        console.log(rad)
+        let c1 = [perp[3][0]+rad*2, perp[2](perp[3][0]+rad)+rad/2],
+            c2 = [perp[3][0], perp[2](perp[3][0]-rad)+rad/2]
+
+        Line.draw(ctx, Line.getBeizerCurve(p1, p2, c1, c2), [0,0,255,1])
+        
+        CanvasUtils.DRAW.POINT(ctx, c1, 3, new Color("red"))
+        CanvasUtils.DRAW.POINT(ctx, c2, 3, new Color("green"))
+        
+    }
+}
+
+CVS.add(a)
+*/
+// JS
+// Canvas Dot Effect by Louis-Charles Biron
+// Please don't use or credit this code as your own.
+//
+
 const CDE_CANVAS_DEFAULT_TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame
 
 // Represents a html canvas element
@@ -947,7 +1049,7 @@ class Canvas {
     static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
     static DEFAULT_CVSDE_ATTR = "_CVSDE"
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
-    static DEFAULT_CTX_SETTINGS = {"lineCap":"round", "imageSmoothingEnabled":true, "lineWidth":2, "fillStyle":"aliceblue", "stokeStyle":"aliceblue", "willReadFrequently":false}
+    static DEFAULT_CTX_SETTINGS = {"lineDashOffset":Line.DEFAULT_DASH_OFFSET, "lineDash":Line.DEFAULT_DASH, "lineJoin":Line.DEFAULT_JOIN, "lineCap":Line.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":Line.DEFAULT_WIDTH,  "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
@@ -966,23 +1068,18 @@ class Canvas {
         this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true) // set styles selector for parent
         this._ctx = this._cvs.getContext("2d", {willReadFrequently})   // canvas context
         this._settings = this.updateSettings(settings)          // set context settings
-
         this._els={refs:[], defs:[]}                            // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
-
         this._looping = false                                   // loop state
         this._loopingCallback = loopingCallback                 // custom callback called along with the loop() function
-
         this.fpsLimit = fpsLimit                                // delay between each frame to limit fps
         this.#maxTime = this.#getMaxTime(fpsLimit)              // max time between frames
         this._deltaTime = null                                  // useable delta time in seconds
         this._fixedTimeStamp = null                             // fixed (offsets lag spikes) requestanimationframe timestamp in ms
-
         this._windowListeners = this.#initWindowListeners()     // [onresize, onvisibilitychange]
-        
+        this._viewPos = [0,0]                                   // context view offset
         const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
         this.setSize(frameCBR.width, frameCBR.height)           // init size
         this.#initStyles()                                      // init styles
-
         this._typingDevice = new TypingDevice()                 // keyboard info
         this._mouse = new Mouse()                               // mouse info
         this._offset = this.updateOffset()                      // cvs page offset
@@ -999,7 +1096,7 @@ class Canvas {
     // sets resize and visibility change listeners on the window
     #initWindowListeners() {
         const onresize=()=>this.setSize(),
-              onvisibilitychange=()=>{if (!document.hidden) this.reset()}
+              onvisibilitychange=()=>{if (!document.hidden) this.resetReferences()}
 
         window.addEventListener("resize", onresize)
         window.addEventListener("visibilitychange", onvisibilitychange)
@@ -1009,7 +1106,7 @@ class Canvas {
     // updates the calculated canvas offset in the page
     updateOffset() {
         const {width, height, x, y} = this._cvs.getBoundingClientRect()
-        return this._offset = {x:Math.round((x+width)-this.width+window.scrollX), y:Math.round((y+height)-this.height+window.scrollY)}
+        return this._offset = {x:Math.round((x+width)-this.width+window.scrollX)+this._viewPos[0], y:Math.round((y+height)-this.height+window.scrollY)+this._viewPos[1]}
     }
 
     // starts the drawing loop
@@ -1088,20 +1185,46 @@ class Canvas {
     }
 
     // clears the canvas
-    clear(x=0, y=0, width=this.width, height=this.height) {
-        this._ctx.clearRect(x, y, width, height)
+    clear(pos1=[0,0], pos2=[this.width, this.height]) {
+        this._ctx.clearRect(...pos1, ...pos2)
     }
 
-    // resets every fragile source
-    reset() {
-        this.refs.filter(source=>source.fragile).forEach(r=>r.reset())
+    // resets every fragile references
+    resetReferences() {
+        this.refs.filter(ref=>ref.fragile).forEach(r=>r.reset())
     }
 
-    // sets the width and height in px of the canvas element
-    setSize(w, h) {
+    // discards all current context transformations
+    resetTransformations() {
+        this.ctx.setTransform(1,0,0,1,0,0)
+    }
+
+    // moves the context by specified x/y values
+    moveViewBy(pos) {
+        let [x, y] = pos
+        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
+        this._viewPos = [this._viewPos[0]+x, this._viewPos[1]+y]
+        this.updateOffset()
+    }
+
+    // moves the context to a specific x/y value
+    moveViewAt(pos) {
+        let [x, y] = pos
+        this.resetTransformations()
+        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
+        this._viewPos = [x, y]
+        this.updateOffset()
+    }
+
+    // sets the width and height in px of the canvas element. If "forceCSSupdate" is true, it also resizes the frame with css
+    setSize(w, h, forceCSSupdate) {
         const {width, height} = this._frame.getBoundingClientRect()
-        if (CDEUtils.isDefined(w)) this._cvs.width = w??width
-        if (CDEUtils.isDefined(h)) this._cvs.height = h??height
+        this._cvs.width = w??width
+        this._cvs.height = h??height
+        if (forceCSSupdate) {
+            this._frame.style.width = this.width+"px"
+            this._frame.style.height = this.height+"px"
+        }
         this.updateSettings()
         this.updateOffset()
     }
@@ -1262,10 +1385,12 @@ class Canvas {
     get fpsLimitRaw() {return this._fpsLimit}
     get fpsLimit() {return this._fpsLimit==null||!isFinite(this._fpsLimit) ? null : 1/(this._fpsLimit/1000)}
     get maxTime() {return this.#maxTime}
+    get viewPos() {return this._viewPos}
 
 	set loopingCallback(_cb) {this._loopingCallback = _cb}
 	set width(w) {this.setSize(w, null)}
 	set height(h) {this.setSize(null, h)}
+	set offset(offset) {this._offset = offset}
 	set fpsLimit(fpsLimit) {
         this._fpsLimit = CDEUtils.isDefined(fpsLimit)&&isFinite(fpsLimit) ? 1000/Math.max(fpsLimit, 0) : null
         this.#maxTime = this.#getMaxTime(fpsLimit)
@@ -1302,7 +1427,7 @@ class Anim {
             // PLAY ANIMATION
             else if (time<this._startTime+Math.abs(this._duration)) {
                 this._progress = this._easing((time-this._startTime)/Math.abs(this._duration))
-                this._animation(this._progress, deltaTime, this._playCount, this.progress)
+                this._animation(this._progress, this._playCount, deltaTime, this.progress)
             }
             // REPEAT IF NEGATIVE DURATION
             else if (isInfinite) this.reset(true, deltaTime)
@@ -1313,13 +1438,13 @@ class Anim {
 
     // ends the animation
     end(deltaTime) {
-        this._animation(1, deltaTime, this._playCount++, 1)
+        this._animation(1, this._playCount++, deltaTime, 1)
         if (CDEUtils.isFunction(this._endCallback)) this._endCallback()
     }
 
     // resets the animation
     reset(isInfiniteReset, deltaTime) {
-        if (isInfiniteReset) this._animation(1, deltaTime, this._playCount++, 1)
+        if (isInfiniteReset) this._animation(1, this._playCount++, deltaTime, 1)
         else this._playCount = 0
         this._progress = 0
         this._startTime = null
@@ -1404,6 +1529,7 @@ class Obj {
         this._initColor = color                  // declaration color value || (ctx, this)=>{return color value}
         this._color = this._initColor            // the current color or gradient of the filled shape
         this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
+        this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
         
         this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
@@ -1417,7 +1543,7 @@ class Obj {
         this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
         this.color = this.getInitColor()
         this.setAnchoredPos()
-        if (CDEUtils.isFunction(this._setupCB)) this._setupCB(this, this.parent)
+        if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this.parent)
     }
 
     // returns the value of the inital color declaration
@@ -1554,7 +1680,7 @@ class Obj {
     adjustPos(pos) {
         let [x, y] = pos
         if (!CDEUtils.isDefined(x)) x = this.x??0
-        if (!CDEUtils.isDefined(x)) y = this.y??0
+        if (!CDEUtils.isDefined(y)) y = this.y??0
         return [x, y]
     }
 
@@ -1578,6 +1704,7 @@ class Obj {
     get currentBacklogAnim() {return this._anims.backlog[0]}
     get anims() {return this._anims}
     get setupCB() {return this._setupCB}
+    get setupResults() {return this._setupResults}
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}
     get color() {return this._color?.color}
@@ -1629,6 +1756,7 @@ class Obj {
         }
     }
     set setupCB(cb) {this._setupCB = cb}
+    set setupResults(value) {this._setupResults = value}
     set r(r) {this.colorObject.r = r}
     set g(g) {this.colorObject.g = g}
     set b(b) {this.colorObject.b = b}
@@ -1677,14 +1805,14 @@ class Shape extends Obj {
         this._pos = this.getInitPos()
         this.setAnchoredPos()
 
-        if (typeof this._initDots === "string") this.add(this.createFromString(this._initDots))
+        if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
         else if (CDEUtils.isFunction(this._initDots)) this.add(this._initDots(this, this._cvs))
-        else if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
+        else if (typeof this._initDots === "string") this.add(this.createFromString(this._initDots))
 
         this.setRadius(this.getInitRadius(), true)
         this.setColor(this.getInitColor(), true)
 
-        if (CDEUtils.isFunction(this._setupCB)) this._setupCB(this, this?.parent)
+        if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this?.parent)
         this.initialized = true
     }
 
@@ -1722,6 +1850,32 @@ class Shape extends Obj {
     remove() {
         this._cvs.remove(this._id)
         this._cvs.updateCachedAllEls()
+    }
+
+    static generate(yTrajectory, startOffset, length, gapX, yModifier, genCB) {
+        yTrajectory??=x=>0
+        startOffset??=[0,0]
+        length??=100
+        gapX??=1
+        yModifier??=[-50, 50]
+
+        let dots = [], lastDot = null
+        for (let x=0;x<=length;x+=CDEUtils.getValueFromRange(gapX)) {
+            let dot = new Dot([startOffset[0]+x, startOffset[1]+CDEUtils.getValueFromRange(yModifier)+yTrajectory(x)])
+            if (lastDot && CDEUtils.isFunction(genCB)) genCB(dot, lastDot)
+            dots.push(dot)
+            lastDot = dot
+        }
+        return dots
+
+
+        // function to follow: fn,
+        // where to start: startPos,
+        // distance of the follow: length, 
+        // horizontal gaps, gapX
+        // vertical range of generation: genHeight,
+        //
+        // callback(dot, nextDot, shape)
     }
 
     /**
@@ -1879,6 +2033,7 @@ class Shape extends Obj {
     get cvs() {return this._cvs}
     get ctx() {return this._cvs.ctx}
     get dots() {return this._dots}
+    get dotsPos() {return this._dots.map(dot=>dot.pos)}
     get limit() {return this._limit}
 	get initDots() {return this._initDots}
     get drawEffectCB() {return this._drawEffectCB}
@@ -1912,30 +2067,27 @@ class Shape extends Obj {
 // Allows the creation of custom gradients
 class Gradient {
     static PLACEHOLDER = "PLACERHOLDER" // can be used to instantiate a Gradient without positions, and apply that of the object on assignement
+    static TYPES = {LINEAR:"Linear", RADIAL:"Radial", CONIC:"Conic"}
+    static DEFAULT_TYPE = Gradient.TYPES.LINEAR
 
     #lastDotsPos = null
     #lastRotation = null
     #lastDotPos = null
-    constructor(ctx, positions, isLinear=0, ...colorStops) {
+    constructor(ctx, positions, colorStops, type, rotation) {
         this._ctx = ctx                                                     // canvas context
-        this._isLinear = this.#getFormatedIsLinear(isLinear)                // whether the gradient is linear or radial (if a number, acts as the rotation in degrees of linear gradient)
-        this._initPositions = positions                                     // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | Shape
+        this._initPositions = positions                                     // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
+        this._type = type||Gradient.DEFAULT_TYPE                            // type of gradient
         this._positions = this.getAutomaticPositions()??this._initPositions // usable positions from initPositions
-
-        this._colorStops = colorStops.flat().map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
+        this._colorStops = colorStops.map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
+        this._rotation = rotation??0
 
         this._gradient = null // useable as a fillStyle
         this.updateGradient()
     }
 
-    // returns a the gradient rotation in degrees or false if radial gradient
-    #getFormatedIsLinear(isLinear=this._isLinear) {
-        return typeof isLinear==="number" ? isLinear : isLinear===true ? 0 : false
-    }
-
     // returns a separate copy of the Gradient
     duplicate(positions=this._positions) {
-        return new Gradient(this._ctx, Array.isArray(positions) ? [...positions] : positions, this._isLinear, [...this._colorStops])
+        return new Gradient(this._ctx, Array.isArray(positions) ? [...positions] : positions, [...this._colorStops], this._type, this._rotation)
     }
 
     /**
@@ -1948,48 +2100,45 @@ class Gradient {
         if (obj instanceof Shape) {
             if (this.#hasShapeChanged(obj) || !optimize) {
                 const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"),
-                    smallestX = rangeX[0], smallestY = rangeY[0],
-                    biggestX = rangeX[1], biggestY = rangeY[1],
+                    smallestX = rangeX[0], smallestY = rangeY[0], biggestX = rangeX[1], biggestY = rangeY[1],
                     cx = smallestX+(biggestX-smallestX)/2, cy = smallestY+(biggestY-smallestY)/2
 
-                if (this.#getFormatedIsLinear() !== false) {
-                    const x = smallestX-cx, y = smallestY-cy, x2 = biggestX-cx, y2 = biggestY-cy,
-                        cosV = Math.cos(CDEUtils.toRad(this.#getFormatedIsLinear())), sinV = Math.sin(CDEUtils.toRad(this.#getFormatedIsLinear()))
-                    return [[(x*cosV-y*sinV)+cx, (x*sinV+y*cosV)+cy], [(x2*cosV-y2*sinV)+cx, (x2*sinV+y2*cosV)+cy]]
-                } else {
-                    const coverRadius = Math.max(biggestX-smallestX, biggestY-smallestY)
-                    return [[cx, cy, coverRadius],[cx, cy, coverRadius*0.25]]
-                }
+                if (this._type===Gradient.TYPES.LINEAR) return this.#getLinearPositions(smallestX-cx, smallestY-cy, biggestX-cx, biggestY-cy, cx, cy)
+                else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(cx, cy, Math.max(biggestX-smallestX, biggestY-smallestY))
+                else return obj.getCenter()
             } else return this._positions
         } else if (obj instanceof Dot) {
-            if (this.#hasDotChanged(obj) || !optimize ) {
-                if (this.#getFormatedIsLinear() !== false) {
-                    const x = obj.left-obj.x, y = obj.top-obj.y, x2 = obj.right-obj.x, y2 = obj.bottom-obj.y,
-                        cosV = Math.cos(CDEUtils.toRad(this.#getFormatedIsLinear())), sinV = Math.sin(CDEUtils.toRad(this.#getFormatedIsLinear()))
-                    return [[(x*cosV-y*sinV)+obj.x, (x*sinV+y*cosV)+obj.y], [(x2*cosV-y2*sinV)+obj.x, (x2*sinV+y2*cosV)+obj.y]]
-                } else {
-                    const coverRadius = obj.radius*1
-                    return [[obj.x, obj.y, coverRadius],[obj.x, obj.y, coverRadius*0.25]]
-                }
+            if (this.#hasDotChanged(obj) || !optimize) {
+                if (this._type===Gradient.TYPES.LINEAR) return this.#getLinearPositions(obj.left-obj.x, obj.top-obj.y, obj.right-obj.x, obj.bottom-obj.y, obj.x, obj.y)
+                else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(obj.x, obj.y, obj.radius)
+                else return obj.pos_
             } return this._positions
-        } 
-        else return this._positions
+        } else return this._positions
+    }
+
+    #getLinearPositions(x, y, x2, y2, cx, cy) {
+        const cosV = Math.cos(CDEUtils.toRad(this._rotation)), sinV = Math.sin(CDEUtils.toRad(this._rotation))
+        return [[(x*cosV-y*sinV)+cx, (x*sinV+y*cosV)+cy], [(x2*cosV-y2*sinV)+cx, (x2*sinV+y2*cosV)+cy]]
+    }
+
+    #getRadialPositions(x, y, coverRadius) {
+        return [[x, y, coverRadius],[x, y, coverRadius*0.25]]
     }
 
     #hasShapeChanged(shape) {
         const currentDotsPos = shape.dotsPositions
-        if (this.#lastRotation !== this._isLinear || currentDotsPos !== this.#lastDotsPos) {
+        if (this.#lastRotation !== this._rotation || currentDotsPos !== this.#lastDotsPos) {
             this.#lastDotsPos = currentDotsPos
-            this.#lastRotation = this._isLinear
+            this.#lastRotation = this._rotation
             return true
         } else return false
     }
     
     #hasDotChanged(dot) {
         const currentDotPos = dot.stringPos
-        if (this.#lastRotation !== this._isLinear || currentDotPos !== this.#lastDotPos) {
+        if (this.#lastRotation !== this._rotation || currentDotPos !== this.#lastDotPos) {
             this.#lastDotPos = currentDotPos
-            this.#lastRotation = this._isLinear
+            this.#lastRotation = this._rotation
             return true
         } else return false
     }
@@ -1998,7 +2147,8 @@ class Gradient {
     updateGradient() {
         if (this._initPositions !== Gradient.PLACEHOLDER) {
             this._positions = this.getAutomaticPositions()
-            this._gradient = this._ctx[`create${typeof this.#getFormatedIsLinear()=="number"?"Linear":"Radial"}Gradient`](...this._positions[0], ...this._positions[1])
+            if (this._type===Gradient.TYPES.CONIC) this._gradient = this._ctx.createConicGradient(CDEUtils.toRad(this._rotation), ...this._positions)
+            else this._gradient = this._ctx[`create${this._type}Gradient`](...this._positions[0], ...this._positions[1])
             const cs_ll = this._colorStops.length
             for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], this._colorStops[i][1].color)
             return this._gradient
@@ -2006,15 +2156,15 @@ class Gradient {
     }
 
     toString() {
-        return "G"+this._positions+this._colorStops+this.isLinear
+        return "G"+this._positions+this._colorStops+this._type+this._rotation
     }
 
     get ctx() {return this._ctx}
     get initPositions() {return this._initPositions}
     get positions() {return this._positions}
-    get isLinear() {return this._isLinear}
+    get type() {return this._type}
 	get colorStops() {return this._colorStops}
-	get rotation() {return typeof this.#getFormatedIsLinear()==="number" ? this._isLinear : null}
+	get rotation() {return this._rotation}
     get gradient() {
         // Automatic dynamic positions updates when using a shape instance
         if (this._initPositions instanceof Shape || this._initPositions instanceof Dot) this.updateGradient()
@@ -2024,8 +2174,8 @@ class Gradient {
     set initPositions(initPositions) {this._initPositions = initPositions}
 	set positions(_positions) {this._positions = _positions}
 	set colorStops(_colorStops) {this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])}
-    set isLinear(isLinear) {this._isLinear = isLinear}
-	set rotation(deg) {this._isLinear = typeof deg==="number" ? deg%360 : this._isLinear}
+    set type(type) {this._type = type}
+	set rotation(deg) {this._rotation = deg}
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -2204,7 +2354,7 @@ class Dot extends Obj {
             // runs parent drawEffect callback if defined
             if (CDEUtils.isFunction(this.drawEffectCB)) {
                 const dist = this.getDistance(), rawRatio = this.getRatio(dist)
-                this.drawEffectCB(ctx, this, rawRatio>1 ? 1 : rawRatio, this.cvs.mouse, dist, this._parent, rawRatio)
+                this.drawEffectCB(ctx, this, rawRatio>1 ? 1 : rawRatio, this.mouse, dist, this._parent, this.parentSetupResults, rawRatio)
             }
 
             // draw dot
@@ -2243,7 +2393,7 @@ class Dot extends Obj {
     }
 
     /**
-     * Calculates the 4 intersection points between two dots and a direct line between them.
+     * Calculates the 4 intersection points between two dots and a direct line going through them.
      * @param {Dot | pos} target: a Dot or a pos [x,y] (Defaults to the first Dot in this object's connections list)
      * @param {Number} targetPadding: the padding radius of the target (Defaults to the target radius if it's a Dot, or 5)
      * @param {Dot | pos} source: a Dot or a pos [x,y] (Defaults to this object)
@@ -2278,8 +2428,10 @@ class Dot extends Obj {
     get limit() {return this._parent?.limit}
     get drawEffectCB() {return this._parent?.drawEffectCB}
     get parent() {return this._parent}
+    get mouse() {return this.cvs.mouse}
     get ratioPos() {return this._parent?.ratioPos}
     get connections() {return this._connections}
+    get parentSetupResults() {return this._parent?.setupResults}
 
     set limit(limit) {this._parent.limit = limit}
     set parent(p) {this._parent = p}
