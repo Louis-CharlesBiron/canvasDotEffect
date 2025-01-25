@@ -32,4 +32,8 @@ if (-not (Test-Path $terser)) {
     npm install
     Set-Location $at
 }
+
+Get-Item $toMinifyPath
 & $terser $toMinifyPath -o "$dist\canvasDotEffect.min.js" --compress
+
+Get-Item "$dist\canvasDotEffect.min.js"
