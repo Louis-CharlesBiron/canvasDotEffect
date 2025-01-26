@@ -4,20 +4,19 @@
 //
 
 // Abstract canvas obj class
-class Obj {
+class Obj extends _HasColor {
     static DEFAULT_POS = [0,0]
     static DEFAULT_RADIUS = 5
     static ABSOLUTE_ANCHOR = "ABSOLUTE_ANCHOR"
 
     #lastAnchorPos = [0,0]
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
+        super(color)
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
         this._initPos = pos||[0,0]               // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = [0,0]                        // current position from the center of the object : [x,y]
         this._initRadius = radius                // initial object's radius
         this._radius = this._initRadius          // current object's radius
-        this._initColor = color                  // declaration color value || (ctx, this)=>{return color value}
-        this._color = this._initColor            // the current color or gradient of the filled shape
         this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
         this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
@@ -34,11 +33,6 @@ class Obj {
         this.color = this.getInitColor()
         this.setAnchoredPos()
         if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this.parent)
-    }
-
-    // returns the value of the inital color declaration
-    getInitColor() {
-        return CDEUtils.isFunction(this._initColor) ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor||null
     }
 
     // returns the value of the inital radius declaration
@@ -194,21 +188,8 @@ class Obj {
     get currentBacklogAnim() {return this._anims.backlog[0]}
     get anims() {return this._anims}
     get setupCB() {return this._setupCB}
-    get setupResults() {return this._setupResults}
-    get colorObject() {return this._color}
-    get colorRaw() {return this._color.colorRaw}
-    get color() {return this._color?.color}
-    get initColor() {return this._initColor}
     get initRadius() {return this._initRadius}
-    get rgba() {return this.colorObject.rgba}
-    get r() {return this.colorObject.r}
-    get g() {return this.colorObject.g}
-    get b() {return this.colorObject.b}
-    get a() {return this.colorObject.a}
-    get hsv() {return this.colorObject.hsv}
-    get hue() {return this.colorObject.hue}
-    get saturation() {return this.colorObject.saturation}
-    get brightness() {return this.colorObject.brightness}
+    get setupResults() {return this._setupResults}
     get initialized() {return this._initialized}
     get alwaysActive() {return this._alwaysActive}
     get anchorPosRaw() {return this._anchorPos}
@@ -235,28 +216,10 @@ class Obj {
         this.relativeY = pos[1]
     }
     set radius(radius) {this._radius = radius<0?0:radius}
-    set color(color) {
-        if (this._color?.colorRaw?.toString() !== color?.toString() || !this._color) {
-            const potentialGradient = color?.colorRaw||color
-            if (potentialGradient?.positions===Gradient.PLACEHOLDER) {
-                color = potentialGradient.duplicate()
-                color.initPositions = this
-            }
-            this._color = Color.adjust(color)
-        }
-    }
-    set setupCB(cb) {this._setupCB = cb}
-    set setupResults(value) {this._setupResults = value}
-    set r(r) {this.colorObject.r = r}
-    set g(g) {this.colorObject.g = g}
-    set b(b) {this.colorObject.b = b}
-    set a(a) {this.colorObject.a = a}
-    set hue(hue) {this.colorObject.hue = hue}
-    set saturation(saturation) {this.colorObject.saturation = saturation}
-    set brightness(brightness) {this.colorObject.brightness = brightness}
     set initPos(initPos) {this._initPos = initPos}
     set initRadius(initRadius) {this._initRadius = initRadius}
-    set initColor(initColor) {this._initColor = initColor}
+    set setupCB(cb) {this._setupCB = cb}
+    set setupResults(value) {this._setupResults = value}
     set initialized(init) {this._initialized = init}
     set alwaysActive(alwaysActive) {this._alwaysActive = alwaysActive}
     set anchorPos(anchorPos) {this.anchorPosRaw = anchorPos}

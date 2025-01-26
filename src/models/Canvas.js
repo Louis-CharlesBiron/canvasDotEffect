@@ -14,7 +14,7 @@ class Canvas {
     static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
     static DEFAULT_CVSDE_ATTR = "_CVSDE"
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
-    static DEFAULT_CTX_SETTINGS = {"lineDashOffset":Line.DEFAULT_DASH_OFFSET, "lineDash":Line.DEFAULT_DASH, "lineJoin":Line.DEFAULT_JOIN, "lineCap":Line.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":Line.DEFAULT_WIDTH,  "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
+    static DEFAULT_CTX_SETTINGS = {"lineDashOffset":RenderStyle.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyle.DEFAULT_JOIN, "lineCap":RenderStyle.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":RenderStyle.DEFAULT_WIDTH,  "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
