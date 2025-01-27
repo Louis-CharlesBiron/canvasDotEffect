@@ -35,6 +35,11 @@ class Obj extends _HasColor {
         if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this.parent)
     }
 
+    // returns the value of the inital color declaration
+    getInitColor() {
+        return CDEUtils.isFunction(this._initColor) ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor||null
+    }
+
     // returns the value of the inital radius declaration
     getInitRadius() {
         return CDEUtils.isFunction(this._initRadius) ? this._initRadius(this.parent||this, this) : this._initRadius??null
@@ -204,7 +209,7 @@ class Obj extends _HasColor {
         else return this._anchorPos
     }
     get lastAnchorPos() {return this.#lastAnchorPos}
-    get hasAnchorPosChanged() {return this.#lastAnchorPos?.toString() !== this.anchorPos?.toString()}
+    get hasAnchorPosChanged() {return !CDEUtils.posEquals(this.#lastAnchorPos, this.anchorPos)}
 
     set x(x) {this._pos[0] = x}
     set y(y) {this._pos[1] = y}

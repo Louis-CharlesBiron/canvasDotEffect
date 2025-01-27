@@ -13,6 +13,7 @@ class Color {
     static DEFAULT_TEMPERANCE = 0
     static SEARCH_STARTS = {TOP_LEFT:"TOP_LEFT", BOTTOM_RIGHT:"BOTTOM_RIGHT"}
     static DEFAULT_SEARCH_START = Color.SEARCH_STARTS.TOP_LEFT
+    static DEFAULT_DECIMAL_ROUNDING_POINT = 3
     
     #rgba = null // cached rgba value
     #hsv = null  // cached hsv value
@@ -34,7 +35,7 @@ class Color {
     #updateCache() {
         if (this._format === Color.FORMATS.GRADIENT) this.#rgba = this.#hsv = []
         else {
-            this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : [...this._color])
+            this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : [...this._color]).map(v=>CDEUtils.round(v, Color.DEFAULT_DECIMAL_ROUNDING_POINT))
             this.#hsv = Color.convertTo(Color.FORMATS.HSV, this.#rgba)
         }
     }
@@ -127,6 +128,11 @@ class Color {
         return Array.isArray(arrayRgba) ? `rgba(${arrayRgba[0]}, ${arrayRgba[1]}, ${arrayRgba[2]}, ${arrayRgba[3]})` : null
     }
 
+    // creates an rgba array
+    static rgba(r=255, g=255, b=255, a=1) {
+        return [CDEUtils.round(r, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(g, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(b, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(a, Color.DEFAULT_DECIMAL_ROUNDING_POINT)]
+    }
+
     /**
      * Returns the first pos where the provided color is found in the canvas
      * @param {Canvas} canvas: Canvas instance
@@ -194,10 +200,10 @@ class Color {
         this._format = this.getFormat()
         this.#updateCache()
     }
-    set r(r) {this.#rgba[0] = r}
-    set g(g) {this.#rgba[1] = g}
-    set b(b) {this.#rgba[2] = b}
-    set a(a) {this.#rgba[3] = a}
+    set r(r) {this.#rgba[0] = CDEUtils.round(r, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
+    set g(g) {this.#rgba[1] = CDEUtils.round(g, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
+    set b(b) {this.#rgba[2] = CDEUtils.round(b, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
+    set a(a) {this.#rgba[3] = CDEUtils.round(a, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
     set hue(hue) {
         hue = hue%360
         if (this.#hsv[0] !== hue) {

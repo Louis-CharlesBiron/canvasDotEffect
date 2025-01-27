@@ -74,6 +74,7 @@ class Shape extends Obj {
         this._cvs.updateCachedAllEls()
     }
 
+    // DOC TODO
     static generate(yTrajectory, startOffset, length, gapX, yModifier, genCB) {
         yTrajectory??=x=>0
         startOffset??=[0,0]
@@ -89,15 +90,6 @@ class Shape extends Obj {
             lastDot = dot
         }
         return dots
-
-
-        // function to follow: fn,
-        // where to start: startPos,
-        // distance of the follow: length, 
-        // horizontal gaps, gapX
-        // vertical range of generation: genHeight,
-        //
-        // callback(dot, nextDot, shape)
     }
 
     /**

@@ -22,7 +22,7 @@ class Dot extends Obj {
             }
 
             // draw dot
-            RenderStyle.fill(ctx, RenderStyle.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
+            Render.fill(ctx, Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
         } else this.initialized = true
         super.draw(ctx, time, deltaTime)
     }

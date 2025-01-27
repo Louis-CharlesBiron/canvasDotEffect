@@ -14,7 +14,7 @@ class Canvas {
     static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
     static DEFAULT_CVSDE_ATTR = "_CVSDE"
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
-    static DEFAULT_CTX_SETTINGS = {"lineDashOffset":RenderStyle.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyle.DEFAULT_JOIN, "lineCap":RenderStyle.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":RenderStyle.DEFAULT_WIDTH,  "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
+    static DEFAULT_CTX_SETTINGS = {"lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":RenderStyles.DEFAULT_WIDTH,  "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
@@ -27,27 +27,29 @@ class Canvas {
     #cachedEls = []          // cached canvas elements to draw
 
     constructor(cvs, loopingCallback, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
-        this._cvs = cvs                                         // html canvas element
-        this._frame = cvsFrame??cvs?.parentElement              // html parent of canvas element
+        this._cvs = cvs                                                // html canvas element
+        this._frame = cvsFrame??cvs?.parentElement                     // html parent of canvas element
         this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)        // set styles selector for canvas
         this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true) // set styles selector for parent
         this._ctx = this._cvs.getContext("2d", {willReadFrequently})   // canvas context
-        this._settings = this.updateSettings(settings)          // set context settings
-        this._els={refs:[], defs:[]}                            // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
-        this._looping = false                                   // loop state
-        this._loopingCallback = loopingCallback                 // custom callback called along with the loop() function
-        this.fpsLimit = fpsLimit                                // delay between each frame to limit fps
-        this.#maxTime = this.#getMaxTime(fpsLimit)              // max time between frames
-        this._deltaTime = null                                  // useable delta time in seconds
-        this._fixedTimeStamp = null                             // fixed (offsets lag spikes) requestanimationframe timestamp in ms
-        this._windowListeners = this.#initWindowListeners()     // [onresize, onvisibilitychange]
-        this._viewPos = [0,0]                                   // context view offset
+        this._settings = this.updateSettings(settings)                 // set context settings
+        this._els={refs:[], defs:[]}                                   // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
+        this._looping = false                                          // loop state
+        this._loopingCallback = loopingCallback                        // custom callback called along with the loop() function
+        this.fpsLimit = fpsLimit                                       // delay between each frame to limit fps
+        this.#maxTime = this.#getMaxTime(fpsLimit)                     // max time between frames
+        this._deltaTime = null                                         // useable delta time in seconds
+        this._fixedTimeStamp = null                                    // fixed (offsets lag spikes) requestanimationframe timestamp in ms
+        this._windowListeners = this.#initWindowListeners()            // [onresize, onvisibilitychange]
+        this._viewPos = [0,0]                                          // context view offset
         const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
-        this.setSize(frameCBR.width, frameCBR.height)           // init size
-        this.#initStyles()                                      // init styles
-        this._typingDevice = new TypingDevice()                 // keyboard info
-        this._mouse = new Mouse()                               // mouse info
-        this._offset = this.updateOffset()                      // cvs page offset
+        this.setSize(frameCBR.width, frameCBR.height)                  // init size
+        this.#initStyles()                                             // init styles
+        this._typingDevice = new TypingDevice()                        // keyboard info
+        this._mouse = new Mouse()                                      // mouse info
+        this._offset = this.updateOffset()                             // cvs page offset
+
+        RenderStyles.DEFAULT_PROFILE.ctx = this._ctx
     }
 
     // sets css styles on the canvas and the parent
@@ -239,7 +241,7 @@ class Canvas {
         const r_ll = this.refs.length
         for (let i=0;i<r_ll;i++) {
             const ref = this.refs[i]
-            if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos=this._mouse.pos
+            if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos = this._mouse.pos
         }
         // custom move callback
         if (CDEUtils.isFunction(cb)) cb(e, this._mouse)

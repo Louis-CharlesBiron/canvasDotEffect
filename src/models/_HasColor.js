@@ -9,11 +9,6 @@ class _HasColor {// DOC TODO
         this._color = this._initColor            // the current color or gradient of the filled shape
     }
 
-    // returns the value of the inital color declaration
-    getInitColor() {
-        return CDEUtils.isFunction(this._initColor) ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor||null
-    }
-
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}
     get color() {return this._color?.color}

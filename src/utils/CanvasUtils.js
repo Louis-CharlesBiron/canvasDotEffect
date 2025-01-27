@@ -35,31 +35,31 @@ class CanvasUtils {
     
     // Generic function to draw an outer ring around a dot
     static drawOuterRing(dot, lineOrColor, radiusMultiplier) {
-        const isLine = lineOrColor instanceof RenderStyle, color = isLine ? lineOrColor.colorObject : lineOrColor
-        if (isLine) lineOrColor.stroke(dot.ctx, lineOrColor.lineType??RenderStyle.getArc(dot.pos, dot.radius*radiusMultiplier))
-        else RenderStyle.stroke(dot.ctx, RenderStyle.getArc(dot.pos, dot.radius*radiusMultiplier), color)
+        const isLine = lineOrColor instanceof RenderStyles, color = isLine ? lineOrColor.colorObject : lineOrColor
+        if (isLine) lineOrColor.stroke(dot.ctx, lineOrColor.lineType??Render.getArc(dot.pos, dot.radius*radiusMultiplier))
+        else Render.stroke(dot.ctx, Render.getArc(dot.pos, dot.radius*radiusMultiplier), color)
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
     static drawConnection(dot, source, lineOrColor, radiusPaddingMultiplier=0) {// DOC TODO
-        const [sx, sy] = source.pos||source, isLine = lineOrColor instanceof RenderStyle, color = isLine ? lineOrColor.colorObject : lineOrColor
+        const [sx, sy] = source.pos||source, isLine = lineOrColor instanceof RenderStyles, color = isLine ? lineOrColor.colorObject : lineOrColor
         
         // skip if not visible
         if (color[3]<CanvasUtils.LINE_VISIBILE_OPACITY || color.a<CanvasUtils.LINE_VISIBILE_OPACITY) return;
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
             const res = dot.getLinearIntersectPoints(source, source.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-            if (isLine) lineOrColor.stroke(dot.ctx, lineOrColor.lineType??RenderStyle.getLine(res.source.inner, res.target.inner))
-            else RenderStyle.stroke(dot.ctx, RenderStyle.getLine(res.source.inner, res.target.inner), color)
+            if (isLine) lineOrColor.stroke(dot.ctx, lineOrColor.lineType??Render.getLine(res.source.inner, res.target.inner))
+            else Render.stroke(dot.ctx, Render.getLine(res.source.inner, res.target.inner), color)
         } else {
-            if (isLine) lineOrColor.stroke(dot.ctx, lineOrColor.lineType??RenderStyle.getLine([sx, sy], dot.pos))
-            else RenderStyle.stroke(dot.ctx, RenderStyle.getLine([sx, sy], dot.pos), color)
+            if (isLine) lineOrColor.stroke(dot.ctx, lineOrColor.lineType??Render.getLine([sx, sy], dot.pos))
+            else Render.stroke(dot.ctx, Render.getLine([sx, sy], dot.pos), color)
         }
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
     static drawDotConnections(dot, lineOrColor, radiusPaddingMultiplier=0, isSourceOver=false) {// DOC TODO
-        const ctx = dot.ctx, dc_ll = dot.connections.length, isLine = lineOrColor instanceof RenderStyle, color = isLine ? lineOrColor.colorObject : lineOrColor
+        const ctx = dot.ctx, dc_ll = dot.connections.length, isLine = lineOrColor instanceof RenderStyles, color = isLine ? lineOrColor.colorObject : lineOrColor
 
         // skip if not visible
         if (color[3]<CanvasUtils.LINE_VISIBILE_OPACITY || color.a<CanvasUtils.LINE_VISIBILE_OPACITY) return;
@@ -70,11 +70,11 @@ class CanvasUtils {
             const c = dot.connections[i]
             if (radiusPaddingMultiplier) {
                 const res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-                if (isLine) lineOrColor.stroke(ctx, lineOrColor.lineType??RenderStyle.getLine(res.source.inner, res.target.inner))
-                else RenderStyle.stroke(ctx, RenderStyle.getLine(res.source.inner, res.target.inner), color)
+                if (isLine) lineOrColor.stroke(ctx, lineOrColor.lineType??Render.getLine(res.source.inner, res.target.inner))
+                else Render.stroke(ctx, Render.getLine(res.source.inner, res.target.inner), color)
             } else {
-                if (isLine) lineOrColor.stroke(ctx, lineOrColor.lineType??RenderStyle.getLine(dot.pos, c.pos))
-                else RenderStyle.stroke(ctx, RenderStyle.getLine(dot.pos, c.pos), color)
+                if (isLine) lineOrColor.stroke(ctx, lineOrColor.lineType??Render.getLine(dot.pos, c.pos))
+                else Render.stroke(ctx, Render.getLine(dot.pos, c.pos), color)
             }
         }
         

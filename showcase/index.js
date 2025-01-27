@@ -92,9 +92,9 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
 let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (ctx, dot, ratio, m, dist, shape)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS, ratio, Obj.DEFAULT_RADIUS)
 
-    if (dist < shape.limit) CanvasUtils.drawConnection(dot, dot.ratioPos, RenderStyle.TEMPLATE_LINE.update([dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)], null, 8, null, null, [5, 15]))
+    if (dist < shape.limit) CanvasUtils.drawConnection(dot, dot.ratioPos, [dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)])//RenderStyles.DEFAULT_PROFILE.updateStyles([dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)], null, 2, null, null, []))
     
-    CanvasUtils.drawDotConnections(dot, RenderStyle.TEMPLATE_LINE.update([255,0,0,1], null, 2, null, null, []))
+    CanvasUtils.drawDotConnections(dot, [255,0,0,1])
 }, ()=>draggableDotTester.dots[0].pos, null)
 
 
