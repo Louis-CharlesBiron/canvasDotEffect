@@ -14,6 +14,9 @@ class RenderStyles extends _HasColor {// DOC TODO
     static DEFAULT_DASH = []
     static DEFAULT_DASH_OFFSET = 0
     static DEFAULT_PROFILE = new RenderStyles(null, Color.DEFAULT_RGBA, RenderStyles.DEFAULT_WIDTH, RenderStyles.DEFAULT_JOIN, RenderStyles.DEFAULT_CAP, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH_OFFSET)
+    static PROFILE1 = RenderStyles.getNewProfile()
+    static PROFILE2 = RenderStyles.getNewProfile()
+    static PROFILE3 = RenderStyles.getNewProfile()
     static PROFILES = [RenderStyles.getNewProfile(), RenderStyles.getNewProfile(), RenderStyles.getNewProfile()]
     static #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
 
@@ -28,8 +31,7 @@ class RenderStyles extends _HasColor {// DOC TODO
     }
 
     static initializeProfiles(ctx) {
-        RenderStyles.DEFAULT_PROFILE.ctx = ctx
-        //this.color = this._color
+        RenderStyles.PROFILE1.ctx = RenderStyles.PROFILE2.ctx = RenderStyles.PROFILE3.ctx = RenderStyles.DEFAULT_PROFILE.ctx = ctx
         RenderStyles.PROFILES.forEach(profile=>profile.ctx = ctx)
     }
 
@@ -49,20 +51,20 @@ class RenderStyles extends _HasColor {// DOC TODO
     updateStyles(color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
         if (color) this.color = color
         if (lineWidth) this._lineWidth = lineWidth
-        if (lineCap) this._lineCap = lineCap
         if (lineJoin) this._lineJoin = lineJoin
+        if (lineCap) this._lineCap = lineCap
         if (lineDash) this._lineDash = lineDash
         if (lineDashOffset) this._lineDashOffset = lineDashOffset
         return this
     }
 
-    applyStyles(color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
-        const ctx = this._ctx, colorValue = Color.formatRgba(color)??color.color
+    applyStyles(color=this._color, lineWidth=this._lineWidth, lineJoin=this._lineJoin, lineCap=this._lineCap, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset) {
+        const ctx = this._ctx, colorValue = Color.formatRgba(color)??color?.color
         if (color && RenderStyles.#currentCtxStyles[0] !== colorValue) RenderStyles.#currentCtxStyles[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
         if (lineWidth && RenderStyles.#currentCtxStyles[1] !== lineWidth) RenderStyles.#currentCtxStyles[1] = ctx.lineWidth = lineWidth
         if (lineJoin && RenderStyles.#currentCtxStyles[2] !== lineJoin) RenderStyles.#currentCtxStyles[2] = ctx.lineJoin = lineJoin
         if (lineCap && RenderStyles.#currentCtxStyles[3] !== lineCap) RenderStyles.#currentCtxStyles[3] = ctx.lineCap = lineCap
-        if (lineDash && RenderStyles.#currentCtxStyles[4] !== lineDash) RenderStyles.#currentCtxStyles[4] = ctx.setLineDash(lineDash)
+        if (lineDash && RenderStyles.#currentCtxStyles[4] != lineDash) RenderStyles.#currentCtxStyles[4] = ctx.setLineDash(lineDash)
         if (lineDashOffset && RenderStyles.#currentCtxStyles[5] !== lineDashOffset) RenderStyles.#currentCtxStyles[5] = ctx.lineDashOffset = lineDashOffset
 
     }

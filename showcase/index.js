@@ -89,10 +89,10 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
 })
 
 // ALPHABET
-let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (ctx, dot, ratio, m, dist, shape)=>{
+let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (ctx, dot, ratio, m, dist, shape, cr, isActive)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS, ratio, Obj.DEFAULT_RADIUS)
 
-    if (dist < shape.limit) CanvasUtils.drawConnection(dot, dot.ratioPos, [dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)])//RenderStyles.DEFAULT_PROFILE.updateStyles([dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)], null, 2, null, null, []))
+    if (dist < shape.limit) CanvasUtils.drawConnection(dot, dot.ratioPos, RenderStyles.PROFILE1.updateStyles(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, null, null, [5, 25]), 2)
     
     CanvasUtils.drawDotConnections(dot, [255,0,0,1])
 }, ()=>draggableDotTester.dots[0].pos, null)
@@ -142,7 +142,6 @@ let animTester = new Shape([400,200],[
             if (prog === 1) {
                 ix = dot.x
                 ax = 0
-                //console.log(dot.x)
             }
         }, -1000, Anim.easeOutBack))
         

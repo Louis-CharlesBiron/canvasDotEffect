@@ -8,17 +8,22 @@ class Render {// DOC TODO
     static TYPES = {LINEAR:"getLine", QUADRATIC:"getQuadCurve", CUBIC_BEIZER:"getBeizerCurve", ARC:"getArc"}
     static PLACEHODLER = null
 
-        // TODO
     /*
+    TODO:
+    - make everyone use the draw manager         (Dot, FilledShape?, CanvasUtils)
+    - documentation for code and readme
+
+
+    TESTS:
+    - use gradient for color in renderStyles (should work :])
+
+
+    OPTIMISATIONS:
     - use cache for lines ?? (see Path2D?)
     - batch calls?
-    - make everyone use DrawManager (Dot, FilledShape?, CanvasUtils)
     - learn and check chrome profiling performance
 
     */
-
-    // Render (draw manager)
-    // Render.fill(path2d, renderStyles)
 
     static getLine(startPos, endPos) {
         return ctx=>{
@@ -54,7 +59,7 @@ class Render {// DOC TODO
     // draws 
     static stroke(ctx, lineType, renderStyles) {
         if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
-            else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
+        else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
 
         ctx.beginPath()
         lineType(ctx)
