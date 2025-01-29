@@ -10,7 +10,6 @@ class Render {// DOC TODO
 
     /*
     TODO:
-    - make everyone use the draw manager         (Dot, FilledShape?, CanvasUtils)
     - documentation for code and readme
 
 
@@ -58,20 +57,42 @@ class Render {// DOC TODO
 
     // draws 
     static stroke(ctx, lineType, renderStyles) {
-        if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
-        else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
+        if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+            if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
+            else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
 
-        ctx.beginPath()
-        lineType(ctx)
-        ctx.stroke()
+            ctx.beginPath()
+            lineType(ctx)
+            ctx.stroke()
+        }
     }
 
     static fill(ctx, lineType, renderStyles) {
-        if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
-        else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
+        if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+            if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
+            else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
 
-        ctx.beginPath()
-        lineType(ctx)
-        ctx.fill()
+            ctx.beginPath()
+            lineType(ctx)
+            ctx.fill()
+        }
+    }
+
+    static strokePath(ctx, path, renderStyles) {
+        if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+            if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
+            else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
+
+            ctx.stroke(path)
+        }
+    }
+
+    static fillPath(ctx, path, renderStyles) {
+        if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+            if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
+            else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
+
+            ctx.fill(path)
+        }
     }
 }

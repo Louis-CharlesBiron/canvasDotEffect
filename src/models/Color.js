@@ -14,6 +14,7 @@ class Color {
     static SEARCH_STARTS = {TOP_LEFT:"TOP_LEFT", BOTTOM_RIGHT:"BOTTOM_RIGHT"}
     static DEFAULT_SEARCH_START = Color.SEARCH_STARTS.TOP_LEFT
     static DEFAULT_DECIMAL_ROUNDING_POINT = 3
+    static OPACITY_VISIBILITY_THRESHOLD = 0.05
     
     #rgba = null // cached rgba value
     #hsv = null  // cached hsv value

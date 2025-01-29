@@ -202,7 +202,7 @@ class CanvasUtils {
         const ctx = dot.ctx, [sx, sy] = source.pos||source
         
         // skip if not visible
-        if (color[3]<CanvasUtils.LINE_VISIBILE_OPACITY || color.a<CanvasUtils.LINE_VISIBILE_OPACITY) return;
+        if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
 
         ctx.strokeStyle = Color.formatRgba(color)??color.color
         ctx.beginPath()
@@ -218,7 +218,7 @@ class CanvasUtils {
         const ctx = dot.ctx, dc_ll = dot.connections.length, colorValue = Color.formatRgba(color)??color.color
 
         // skip if not visible
-        if (color[3]<CanvasUtils.LINE_VISIBILE_OPACITY || color.a<CanvasUtils.LINE_VISIBILE_OPACITY) return;
+        if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
 
         if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
 

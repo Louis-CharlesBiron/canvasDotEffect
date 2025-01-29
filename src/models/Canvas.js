@@ -19,9 +19,9 @@ class Canvas {
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
 
-    #lastFrame = 0 
-    #lastLimitedFrame = 0 
-    #maxTime = null
+    #lastFrame = 0           // default last frame time
+    #lastLimitedFrame = 0    // last frame time for limited fps
+    #maxTime = null          // max time between frames
     #frameSkipsOffset = null // used to prevent significant frame gaps
     #timeStamp = null        // requestanimationframe timestamp in ms
     #cachedEls = []          // cached canvas elements to draw
@@ -146,7 +146,7 @@ class Canvas {
         const els = this.#cachedEls, els_ll = els.length
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
-            if (!el.draw || (!el.alwaysActive && el.initialized && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING))) continue
+            if (!el.alwaysActive && el.initialized && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING)) continue
             el.draw(this._ctx, this.timeStamp, this._deltaTime)
         }
     }
@@ -233,6 +233,16 @@ class Canvas {
     // removes any element from the canvas by instance type
     getObjs(instance) {
         return this._els.defs.filter(x=>x instanceof instance)
+    }
+
+    // saves the context parameters
+    save() {
+        this._ctx.save()
+    }
+    
+    // restore the saved context parameters
+    restore() {
+        this._ctx.save()
     }
 
     // called on mouse move

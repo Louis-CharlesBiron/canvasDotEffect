@@ -102,12 +102,14 @@ let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200]
 
 // SINGLE DRAGGABLE DOT
 let dragAnim1 = CanvasUtils.getDraggableDotCB()
-let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null, (ctx, dot, ratio, m, dist, shape)=>{
+let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null, (ctx, dot, ratio, m, dist, shape, sr, isActive)=>{
 
-    let mouseOn = dot.isWithin(m.pos, true)
-    if (mouseOn && m.clicked) dot.color = [255, 0, 0, 1]
-    else if (mouseOn) dot.color = [0, 254, 0, 1]
-    else dot.color = [255, 255, 255, 1]
+    if (isActive) {
+        let mouseOn = dot.isWithin(m.pos, true)
+        if (mouseOn && m.clicked) dot.color = [255, 0, 0, 1]
+        else if (mouseOn) dot.color = [0, 254, 0, 1]
+        else dot.color = [255, 255, 255, 1]
+    }
 
     CanvasUtils.drawOuterRing(dot, [255,255,255,CDEUtils.mod(0.3, ratio)], 3)
 
@@ -163,9 +165,8 @@ let generationTester = new Shape([100,600],
             dot.a = CDEUtils.mod(1, ratio, 0.8)
     })
 
+
 CVS.add(generationTester)
-
-
 CVS.add(animTester)
 CVS.add(draggableDotTester)
 CVS.add(testMore)
@@ -173,6 +174,10 @@ CVS.add(filledShapeTester)
 CVS.add(movementsTester)
 CVS.add(le)
 CVS.add(test2)
+
+let dupelicateTester = le.duplicate()
+CVS.add(dupelicateTester)
+dupelicateTester.moveBy([300, 300])
 
 // USER ACTIONS
 let mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"

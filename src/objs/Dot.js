@@ -13,7 +13,6 @@ class Dot extends Obj {
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
     draw(ctx, time, deltaTime) {
-        
         if (this.initialized) {
             // runs parent drawEffect callback if defined
             if (CDEUtils.isFunction(this.drawEffectCB)) {
@@ -22,7 +21,7 @@ class Dot extends Obj {
             }
 
             // draw dot
-            Render.fill(ctx, Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
+            if (this._radius) Render.fill(ctx, Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
         } else this.initialized = true
         super.draw(ctx, time, deltaTime)
     }

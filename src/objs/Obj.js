@@ -68,7 +68,7 @@ class Obj extends _HasColor {
         let anims = this._anims.currents
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         const a_ll = anims.length
-        for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
+        if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
     }
 
     // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the dot's radius)
