@@ -13,19 +13,15 @@ class Dot extends Obj {
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
     draw(ctx, time, deltaTime) {
-        
         if (this.initialized) {
             // runs parent drawEffect callback if defined
             if (CDEUtils.isFunction(this.drawEffectCB)) {
-                const dist = this.getDistance(), rawRatio = this.getRatio(dist)
-                this.drawEffectCB(ctx, this, rawRatio>1 ? 1 : rawRatio, this.mouse, dist, this._parent, this.parentSetupResults, rawRatio)
+                const dist = this.getDistance(), rawRatio = this.getRatio(dist), isActive = rawRatio<1
+                this.drawEffectCB(ctx, this, isActive?rawRatio:1, this.mouse, dist, this._parent, this.parentSetupResults, isActive, rawRatio)// DOC TODO
             }
 
             // draw dot
-            ctx.fillStyle = this.color
-            ctx.beginPath()
-            ctx.arc(this.x, this.y, this._radius, 0, CDEUtils.CIRC)
-            ctx.fill()
+            if (this._radius) Render.fill(ctx, Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
         } else this.initialized = true
         super.draw(ctx, time, deltaTime)
     }
@@ -67,8 +63,8 @@ class Dot extends Obj {
      *      target: [ [x, y], [x, y] ]
      * } The 2 intersection points for the target and for the source
      */
-    getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {
-        const [tx, ty] = target.pos||target, [sx, sy] = source.pos||source,
+    getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {// OPTIMIZE TODO
+        const [tx, ty] = target.pos??target, [sx, sy] = source.pos??source,
             [a, b, lfn] = CDEUtils.getLinearFn([sx,sy], [tx,ty]), t_r = targetPadding**2, s_r = sourcePadding**2,
             qA = (1+a**2)*2,
             s_qB = -(2*a*(b-sy)-2*sx),
@@ -77,7 +73,6 @@ class Dot extends Obj {
             t_qD = Math.sqrt(t_qB**2-(4*(qA/2)*((b-ty)**2+tx**2-t_r))),
             s_x1 = (s_qB+s_qD)/qA, s_x2 = (s_qB-s_qD)/qA, t_x1 = (t_qB+t_qD)/qA, t_x2 = (t_qB-t_qD)/qA,
             s_y1 = lfn(s_x1), s_y2 = lfn(s_x2), t_y1 = lfn(t_x1), t_y2 = lfn(t_x2)
-    
         return {source:{inner:[s_x1, s_y1], outer:[s_x2, s_y2]}, target:{outer:[t_x1, t_y1], inner:[t_x2, t_y2]}}
     }
 

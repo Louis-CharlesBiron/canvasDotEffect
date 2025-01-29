@@ -33,6 +33,12 @@ class CDEUtils {
         return typeof v === "function"
     }
 
+    // rounds a number to a specific decimal point
+    static round(num, decimals=1) {
+        const factor = 10**decimals
+        return Math.round(num*factor)/factor
+    }
+
     // Create an instance of the FPSCounter and run every frame: either getFpsRaw for raw fps AND/OR getFps for averaged fps
     static FPSCounter = class {
         constructor(avgSampleSize) {
@@ -84,7 +90,18 @@ class CDEUtils {
     static getValueFromRange(minMax) {
         return Array.isArray(minMax) ? CDEUtils.random(minMax[0], minMax[1]) : minMax 
     }
+
+    // Shallow array equals
+    static arrayEquals(arr1, arr2) {
+        if (arr1.length !== arr2.length) return false
+        return arr1.every((v, i)=>v===arr2[i])
+    }
     
+    // Pos array equals
+    static posEquals(arr1, arr2) {
+        return arr1==arr2 && arr1[0]===arr2[0] && arr1[1]===arr2[1]
+    }
+
     /**
     * Returns the interpolated number between (max) and (max - range) 
     * @param {Number} max: the max value to return
@@ -94,9 +111,8 @@ class CDEUtils {
                             [if range=max/2, only (max/2 to max) will be used] or
                             [if range=0, only (max to max) will be used]
     */
-    static mod(max, ratio, range) {
-        range??=max
-        return max-ratio*range+max*((range>=0)-1)
+    static mod(max, ratio, range=max) {
+        return max-ratio*range-(range<0)*max
     }
 
     // returns converted given degrees into radians 

@@ -8,10 +8,10 @@ class FilledShape extends Shape {
     #lastDotsPos = null
     constructor(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile) {
         super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)
-        this._initFillColor = fillColor                           // declaration color fill value
-        this._fillColor = this._initFillColor                     // the current color or gradient of the filled shape
-        this._path = null                                         // path perimeter delimiting the surface to fill
-        this._dynamicUpdates = dynamicUpdates                     // whether the shape's filling checks for updates every frame
+        this._initFillColor = fillColor       // declaration color fill value
+        this._fillColor = this._initFillColor // the current color or gradient of the filled shape
+        this._path = null                     // path perimeter delimiting the surface to fill
+        this._dynamicUpdates = dynamicUpdates // whether the shape's filling checks for updates every frame
     }
 
     // initializes the filled shape and creates its path
@@ -28,8 +28,7 @@ class FilledShape extends Shape {
         
         if (this.dots.length > 2) {
             if (this._dynamicUpdates) this.updatePath()
-            ctx.fillStyle = this.fillColor
-            ctx.fill(this._path)
+            Render.fillPath(this.ctx, this._path, this._fillColor)
         }
     }
 
@@ -45,7 +44,6 @@ class FilledShape extends Shape {
             const currentDotPos = this.dotsPositions
             if (currentDotPos !== this.#lastDotsPos) {
                 this.#lastDotsPos = currentDotPos
-
                 this._path = new Path2D()
                 this._path.moveTo(...this.dots[0].pos)
                 for (let i=1;i<d_ll;i++) this._path.lineTo(...this.dots[i].pos)

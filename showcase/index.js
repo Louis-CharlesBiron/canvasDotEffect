@@ -73,13 +73,12 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
     let dx=400, dy=200, dot = shape.dots.last()
     dot.g = 0
     dot.follow(3000, null, (prog, dot)=>{
-        let d = new Dot(null, 4, null, null, dot.pos)
-            d.playAnim(new Anim((progress)=>{
-                d.a=1-progress
-                if (progress==1) d.remove()
-            }, 1000))
-
-        shape.add(d)
+        //let d = new Dot(null, 4, null, null, dot.pos)
+        //    d.playAnim(new Anim((progress)=>{
+        //        d.a=1-progress
+        //        if (progress==1) d.remove()
+        //    }, 1000))
+        //shape.add(d)
     }, [[0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]]])
 
 
@@ -90,10 +89,10 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
 })
 
 // ALPHABET
-let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (ctx, dot, ratio, m, dist, shape)=>{
+let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (ctx, dot, ratio, m, dist, shape, cr, isActive)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS, ratio, Obj.DEFAULT_RADIUS)
 
-    if (dist < shape.limit) CanvasUtils.drawConnection(dot, [dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)], dot.ratioPos)
+    if (dist < shape.limit) CanvasUtils.drawConnection(dot, dot.ratioPos, RenderStyles.PROFILE1.updateStyles(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, null, null, [5, 25]), 2)
     
     CanvasUtils.drawDotConnections(dot, [255,0,0,1])
 }, ()=>draggableDotTester.dots[0].pos, null)
@@ -103,12 +102,14 @@ let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200]
 
 // SINGLE DRAGGABLE DOT
 let dragAnim1 = CanvasUtils.getDraggableDotCB()
-let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null, (ctx, dot, ratio, m, dist, shape)=>{
+let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null, (ctx, dot, ratio, m, dist, shape, sr, isActive)=>{
 
-    let mouseOn = dot.isWithin(m.pos, true)
-    if (mouseOn && m.clicked) dot.color = [255, 0, 0, 1]
-    else if (mouseOn) dot.color = [0, 254, 0, 1]
-    else dot.color = [255, 255, 255, 1]
+    if (isActive) {
+        let mouseOn = dot.isWithin(m.pos, true)
+        if (mouseOn && m.clicked) dot.color = [255, 0, 0, 1]
+        else if (mouseOn) dot.color = [0, 254, 0, 1]
+        else dot.color = [255, 255, 255, 1]
+    }
 
     CanvasUtils.drawOuterRing(dot, [255,255,255,CDEUtils.mod(0.3, ratio)], 3)
 
@@ -143,7 +144,6 @@ let animTester = new Shape([400,200],[
             if (prog === 1) {
                 ix = dot.x
                 ax = 0
-                //console.log(dot.x)
             }
         }, -1000, Anim.easeOutBack))
         
@@ -165,9 +165,8 @@ let generationTester = new Shape([100,600],
             dot.a = CDEUtils.mod(1, ratio, 0.8)
     })
 
+
 CVS.add(generationTester)
-
-
 CVS.add(animTester)
 CVS.add(draggableDotTester)
 CVS.add(testMore)
@@ -175,6 +174,10 @@ CVS.add(filledShapeTester)
 CVS.add(movementsTester)
 CVS.add(le)
 CVS.add(test2)
+
+let dupelicateTester = le.duplicate()
+CVS.add(dupelicateTester)
+dupelicateTester.moveBy([300, 300])
 
 // USER ACTIONS
 let mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"

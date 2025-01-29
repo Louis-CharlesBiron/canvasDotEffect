@@ -6,7 +6,6 @@
 // Provides generic canvas functions
 class CanvasUtils {
     static SHOW_CENTERS_DOT_ID = {}
-    static LINE_VISIBILE_OPACITY = 0.01
 
     // DEBUG // Can be used to display a dot at the specified shape pos (which is normally not visible)
     static toggleCenter(shape, radius=5, color=[255,0,0,1]) {
@@ -34,53 +33,49 @@ class CanvasUtils {
     }
     
     // Generic function to draw an outer ring around a dot
-    static drawOuterRing(dot, color, radiusMultiplier) {
-        const ctx = dot.ctx
-        ctx.strokeStyle = Color.formatRgba(color)??color.color
-        ctx.beginPath()
-        ctx.arc(dot.x, dot.y, dot.radius*radiusMultiplier, 0, CDEUtils.CIRC)
-        ctx.stroke()
+    static drawOuterRing(dot, renderStyles, radiusMultiplier) {
+        const color = renderStyles.colorObject??renderStyles
+
+        // skip if not visible
+        if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
+
+        Render.stroke(dot.ctx, Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
-    static drawConnection(dot, color, source, radiusPaddingMultiplier=0) {
-        const ctx = dot.ctx, [sx, sy] = source.pos||source
+    static drawConnection(dot, source, renderStyles, radiusPaddingMultiplier=0) {// DOC TODO
+        const [sx, sy] = source.pos||source, color = renderStyles.colorObject??renderStyles
         
         // skip if not visible
-        if (color[3]<CanvasUtils.LINE_VISIBILE_OPACITY || color.a<CanvasUtils.LINE_VISIBILE_OPACITY) return;
+        if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
 
-        ctx.strokeStyle = Color.formatRgba(color)??color.color
-        ctx.beginPath()
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
-            const res = dot.getLinearIntersectPoints(source, source.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-            Line.draw(ctx, Line.getLine(res.source.inner, res.target.inner), color)
-        } else Line.draw(ctx, Line.getLine([sx, sy], dot.pos), color)
-        ctx.stroke()
+            const res = dot.getLinearIntersectPoints(source, (source.radius??Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
+            Render.stroke(dot.ctx, Render.getLine(res.source.inner, res.target.inner), renderStyles)
+        } else {
+            Render.stroke(dot.ctx, Render.getLine([sx, sy], dot.pos), renderStyles)
+        }
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
-    static drawDotConnections(dot, color, radiusPaddingMultiplier=0, isSourceOver=false) {
-        const ctx = dot.ctx, dc_ll = dot.connections.length, colorValue = Color.formatRgba(color)??color.color
+    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, isSourceOver=false) {// DOC TODO
+        const ctx = dot.ctx, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles
 
         // skip if not visible
-        if (color[3]<CanvasUtils.LINE_VISIBILE_OPACITY || color.a<CanvasUtils.LINE_VISIBILE_OPACITY) return;
+        if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
 
         if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
 
         if (dc_ll) for (let i=0;i<dc_ll;i++) {
             const c = dot.connections[i]
-            ctx.strokeStyle = colorValue
-            ctx.beginPath()
             if (radiusPaddingMultiplier) {
                 const res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-                ctx.moveTo(res.source.inner[0], res.source.inner[1])
-                ctx.lineTo(res.target.inner[0], res.target.inner[1])
+                Render.stroke(ctx, Render.getLine(res.source.inner, res.target.inner), renderStyles)
             } else {
-                ctx.moveTo(dot.x, dot.y)
-                ctx.lineTo(c.x, c.y)
+                Render.stroke(ctx, Render.getLine(dot.pos, c.pos), renderStyles)
             }
-            ctx.stroke()
         }
+        
         if (!isSourceOver) ctx.globalCompositeOperation = "source-over"
     }
 
@@ -103,16 +98,6 @@ class CanvasUtils {
     // Generic function to rotate the gradient of an object
     static rotateGradient(obj, duration=1000, speed=1, isFillColor=false) {
         return obj.playAnim(new Anim((prog)=>obj[isFillColor?"fillColorRaw":"colorRaw"].rotation=-speed*360*prog, duration))
-    }
-
-    // Provides generic drawings
-    static DRAW = class {
-        static POINT(ctx, pos, radius, color) {
-            ctx.fillStyle = Color.formatRgba(color)??color.color
-            ctx.beginPath()
-            ctx.arc(...pos, radius, 0, CDEUtils.CIRC)
-            ctx.fill()
-        }
     }
 
     // Provides quick generic shape declarations

@@ -52,7 +52,7 @@ class Shape extends Obj {
     // adds one or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().map(dot=>{
-            if (dot.initColor==null) dot.initColor = this.colorObject
+            if (dot.initColor==null) dot.initColor = this.colorRaw
             if (dot.initRadius==null) dot.initRadius = this._radius
             if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
             dot.parent = this
@@ -74,6 +74,7 @@ class Shape extends Obj {
         this._cvs.updateCachedAllEls()
     }
 
+    // DOC TODO
     static generate(yTrajectory, startOffset, length, gapX, yModifier, genCB) {
         yTrajectory??=x=>0
         startOffset??=[0,0]
@@ -89,15 +90,6 @@ class Shape extends Obj {
             lastDot = dot
         }
         return dots
-
-
-        // function to follow: fn,
-        // where to start: startPos,
-        // distance of the follow: length, 
-        // horizontal gaps, gapX
-        // vertical range of generation: genHeight,
-        //
-        // callback(dot, nextDot, shape)
     }
 
     /**

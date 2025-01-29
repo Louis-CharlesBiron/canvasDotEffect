@@ -14,40 +14,42 @@ class Canvas {
     static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
     static DEFAULT_CVSDE_ATTR = "_CVSDE"
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
-    static DEFAULT_CTX_SETTINGS = {"lineDashOffset":Line.DEFAULT_DASH_OFFSET, "lineDash":Line.DEFAULT_DASH, "lineJoin":Line.DEFAULT_JOIN, "lineCap":Line.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":Line.DEFAULT_WIDTH,  "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
+    static DEFAULT_CTX_SETTINGS = {"lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":RenderStyles.DEFAULT_WIDTH,  "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
 
-    #lastFrame = 0 
-    #lastLimitedFrame = 0 
-    #maxTime = null
+    #lastFrame = 0           // default last frame time
+    #lastLimitedFrame = 0    // last frame time for limited fps
+    #maxTime = null          // max time between frames
     #frameSkipsOffset = null // used to prevent significant frame gaps
     #timeStamp = null        // requestanimationframe timestamp in ms
     #cachedEls = []          // cached canvas elements to draw
 
     constructor(cvs, loopingCallback, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
-        this._cvs = cvs                                         // html canvas element
-        this._frame = cvsFrame??cvs?.parentElement              // html parent of canvas element
+        this._cvs = cvs                                                // html canvas element
+        this._frame = cvsFrame??cvs?.parentElement                     // html parent of canvas element
         this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)        // set styles selector for canvas
         this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true) // set styles selector for parent
         this._ctx = this._cvs.getContext("2d", {willReadFrequently})   // canvas context
-        this._settings = this.updateSettings(settings)          // set context settings
-        this._els={refs:[], defs:[]}                            // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
-        this._looping = false                                   // loop state
-        this._loopingCallback = loopingCallback                 // custom callback called along with the loop() function
-        this.fpsLimit = fpsLimit                                // delay between each frame to limit fps
-        this.#maxTime = this.#getMaxTime(fpsLimit)              // max time between frames
-        this._deltaTime = null                                  // useable delta time in seconds
-        this._fixedTimeStamp = null                             // fixed (offsets lag spikes) requestanimationframe timestamp in ms
-        this._windowListeners = this.#initWindowListeners()     // [onresize, onvisibilitychange]
-        this._viewPos = [0,0]                                   // context view offset
+        this._settings = this.updateSettings(settings)                 // set context settings
+        this._els={refs:[], defs:[]}                                   // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
+        this._looping = false                                          // loop state
+        this._loopingCallback = loopingCallback                        // custom callback called along with the loop() function
+        this.fpsLimit = fpsLimit                                       // delay between each frame to limit fps
+        this.#maxTime = this.#getMaxTime(fpsLimit)                     // max time between frames
+        this._deltaTime = null                                         // useable delta time in seconds
+        this._fixedTimeStamp = null                                    // fixed (offsets lag spikes) requestanimationframe timestamp in ms
+        this._windowListeners = this.#initWindowListeners()            // [onresize, onvisibilitychange]
+        this._viewPos = [0,0]                                          // context view offset
         const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
-        this.setSize(frameCBR.width, frameCBR.height)           // init size
-        this.#initStyles()                                      // init styles
-        this._typingDevice = new TypingDevice()                 // keyboard info
-        this._mouse = new Mouse()                               // mouse info
-        this._offset = this.updateOffset()                      // cvs page offset
+        this.setSize(frameCBR.width, frameCBR.height)                  // init size
+        this.#initStyles()                                             // init styles
+        this._typingDevice = new TypingDevice()                        // keyboard info
+        this._mouse = new Mouse()                                      // mouse info
+        this._offset = this.updateOffset()                             // cvs page offset
+
+        RenderStyles.initializeProfiles(this._ctx)
     }
 
     // sets css styles on the canvas and the parent
@@ -144,7 +146,7 @@ class Canvas {
         const els = this.#cachedEls, els_ll = els.length
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
-            if (!el.draw || (!el.alwaysActive && el.initialized && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING))) continue
+            if (!el.alwaysActive && el.initialized && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING)) continue
             el.draw(this._ctx, this.timeStamp, this._deltaTime)
         }
     }
@@ -233,13 +235,23 @@ class Canvas {
         return this._els.defs.filter(x=>x instanceof instance)
     }
 
+    // saves the context parameters
+    save() {
+        this._ctx.save()
+    }
+    
+    // restore the saved context parameters
+    restore() {
+        this._ctx.save()
+    }
+
     // called on mouse move
     #mouseMovements(cb, e) {
         // update ratioPos to mouse pos if not overwritten
         const r_ll = this.refs.length
         for (let i=0;i<r_ll;i++) {
             const ref = this.refs[i]
-            if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos=this._mouse.pos
+            if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos = this._mouse.pos
         }
         // custom move callback
         if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
