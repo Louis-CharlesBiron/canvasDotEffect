@@ -32,22 +32,21 @@ class Gradient {
     /**
      * Given a shape, returns automatic positions values for linear or radial gradients
      * @param {Shape} obj: Instance of Shape or inheriting shape 
-     * @param {boolean} optimize: if enabled recalculates positions only when a dot changes pos (disable only for manual usage of this function) 
+     * @param {boolean} disableOptimization: if false, recalculates positions only when a dot changes pos (set to true only for manual usage of this function) 
      * @returns the new calculated positions or the current value of this._positions if the parameter 'shape' isn't an instance of Shape
      */
-    getAutomaticPositions(obj=this._initPositions, optimize=true) {
+    getAutomaticPositions(obj=this._initPositions, disableOptimization=false) {
         if (obj instanceof Shape) {
-            if (this.#hasShapeChanged(obj) || !optimize) {
+            if (this.#hasShapeChanged(obj) || disableOptimization) {
                 const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"),
                     smallestX = rangeX[0], smallestY = rangeY[0], biggestX = rangeX[1], biggestY = rangeY[1],
                     cx = smallestX+(biggestX-smallestX)/2, cy = smallestY+(biggestY-smallestY)/2
-
                 if (this._type===Gradient.TYPES.LINEAR) return this.#getLinearPositions(smallestX-cx, smallestY-cy, biggestX-cx, biggestY-cy, cx, cy)
                 else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(cx, cy, Math.max(biggestX-smallestX, biggestY-smallestY))
                 else return obj.getCenter()
             } else return this._positions
         } else if (obj instanceof Dot) {
-            if (this.#hasDotChanged(obj) || !optimize) {
+            if (this.#hasDotChanged(obj) || disableOptimization) {
                 if (this._type===Gradient.TYPES.LINEAR) return this.#getLinearPositions(obj.left-obj.x, obj.top-obj.y, obj.right-obj.x, obj.bottom-obj.y, obj.x, obj.y)
                 else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(obj.x, obj.y, obj.radius)
                 else return obj.pos_
@@ -95,7 +94,7 @@ class Gradient {
     }
 
     toString() {
-        return "G"+this._positions+this._colorStops+this._type+this._rotation
+        return +this._positions+this._colorStops+this._type+this._rotation
     }
 
     get ctx() {return this._ctx}

@@ -42,6 +42,12 @@ class Shape extends Obj {
     draw(ctx, time, deltaTime) {
         super.draw(ctx, time, deltaTime)
         if (CDEUtils.isFunction(this._ratioPosCB)) this._ratioPos = this._ratioPosCB(this)
+
+        const d_ll = this._dots.length
+        for (let i=0;i<d_ll;i++) {
+            const dot = this._dots[i]
+            //
+        }
     }
 
     // returns a separate copy of this Shape (only initialized for objects)

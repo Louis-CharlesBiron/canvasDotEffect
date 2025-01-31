@@ -174,7 +174,7 @@ class Color {
     }
 
     toString() {
-        return "C"+this._color.toString()
+        return this._color.toString()
     }
 
     // returns the usable value of the color

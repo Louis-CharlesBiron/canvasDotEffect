@@ -176,8 +176,12 @@ CVS.add(le)
 CVS.add(test2)
 
 let dupelicateTester = le.duplicate()
-CVS.add(dupelicateTester)
-dupelicateTester.moveBy([300, 300])
+for (let i=0;i<3;i++) {
+    CVS.add(dupelicateTester)
+    dupelicateTester.moveBy([100, 100])
+    dupelicateTester = dupelicateTester.duplicate()
+}
+
 
 // USER ACTIONS
 let mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"
