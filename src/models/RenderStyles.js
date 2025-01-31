@@ -3,11 +3,10 @@
 // Please don't use or credit this code as your own.
 //
 
-// Represents a drawn line
-class RenderStyles extends _HasColor {// DOC TODO
+// Represents styling profile for lines
+class RenderStyles extends _HasColor {
     static JOIN_TYPES = {MITER:"miter", BEVEL:"bevel", ROUND:"round"} // spike, flat, round
     static CAP_TYPES = {BUTT:"butt", SQUARE:"square", ROUND:"round"}  // short, long, round
-    static PLACEHODLER = null
     static DEFAULT_WIDTH = 2
     static DEFAULT_CAP = RenderStyles.CAP_TYPES.ROUND
     static DEFAULT_JOIN = RenderStyles.JOIN_TYPES.MITER
@@ -17,37 +16,40 @@ class RenderStyles extends _HasColor {// DOC TODO
     static PROFILE1 = RenderStyles.getNewProfile()
     static PROFILE2 = RenderStyles.getNewProfile()
     static PROFILE3 = RenderStyles.getNewProfile()
-    static PROFILES = [RenderStyles.getNewProfile(), RenderStyles.getNewProfile(), RenderStyles.getNewProfile()]
-    static #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
+    static PROFILES = []
+    static #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.#getStyles()
 
     constructor(ctx, color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
         super(color)
-        this._ctx = ctx
+        this._ctx = ctx                                                         // Canvas context
         this._lineWidth = lineWidth??RenderStyles.DEFAULT_WIDTH                 // width of drawn line
-        this._lineCap = lineCap??RenderStyles.DEFAULT_CAP                       // determines the shape of line ends
         this._lineJoin = lineJoin??RenderStyles.DEFAULT_JOIN                    // determines the shape of line joins
+        this._lineCap = lineCap??RenderStyles.DEFAULT_CAP                       // determines the shape of line ends
         this._lineDash = lineDash??RenderStyles.DEFAULT_DASH                    // gaps length within the line
         this._lineDashOffset = lineDashOffset??RenderStyles.DEFAULT_DASH_OFFSET // line gaps offset
     }
 
-    static initializeProfiles(ctx) {
+    // Ran on any Canvas instance creation, sets the ctx property off default
+    static initializeDefaultProfiles(ctx) {
         RenderStyles.PROFILE1.ctx = RenderStyles.PROFILE2.ctx = RenderStyles.PROFILE3.ctx = RenderStyles.DEFAULT_PROFILE.ctx = ctx
-        RenderStyles.PROFILES.forEach(profile=>profile.ctx = ctx)
     }
 
+    // returns a new profile based on the DEFAULT_PROFILE
     static getNewProfile() {
         return RenderStyles.DEFAULT_PROFILE.duplicate()
     }
 
+    // returns a separate copy of the profile
     duplicate() {
         return new RenderStyles(this._ctx, this._color, this._lineWidth, this._lineJoin, this._lineCap, this._lineDash, this._lineDashOffset)
     }
 
-    getStyles() {
+    // returns the profile's styles as an array
+    #getStyles() {
         return [this.color, this._lineWidth, this._lineJoin, this._lineCap, this._lineDash, this._lineDashOffset]
     }
 
-    // updates a line's attributes and returns the updated version
+    // updates a profile's attributes and returns the updated version
     updateStyles(color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
         if (color) this.color = color
         if (lineWidth) this._lineWidth = lineWidth
@@ -58,6 +60,7 @@ class RenderStyles extends _HasColor {// DOC TODO
         return this
     }
 
+    // directly applies the styles of the profile
     applyStyles(color=this._color, lineWidth=this._lineWidth, lineJoin=this._lineJoin, lineCap=this._lineCap, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset) {
         const ctx = this._ctx, colorValue = Color.formatRgba(color)??color.color
         if (color && RenderStyles.#currentCtxStyles[0] !== colorValue) RenderStyles.#currentCtxStyles[0] = ctx.strokeStyle = ctx.fillStyle = colorValue

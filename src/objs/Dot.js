@@ -17,7 +17,7 @@ class Dot extends Obj {
             // runs parent drawEffect callback if defined
             if (CDEUtils.isFunction(this.drawEffectCB)) {
                 const dist = this.getDistance(), rawRatio = this.getRatio(dist), isActive = rawRatio<1
-                this.drawEffectCB(ctx, this, isActive?rawRatio:1, this.mouse, dist, this._parent, this.parentSetupResults, isActive, rawRatio)// DOC TODO
+                this.drawEffectCB(ctx, this, isActive?rawRatio:1, this.mouse, dist, this._parent, this.parentSetupResults, isActive, rawRatio)
             }
 
             // draw dot

@@ -1867,15 +1867,6 @@ class Shape extends Obj {
             lastDot = dot
         }
         return dots
-
-
-        // function to follow: fn,
-        // where to start: startPos,
-        // distance of the follow: length, 
-        // horizontal gaps, gapX
-        // vertical range of generation: genHeight,
-        //
-        // callback(dot, nextDot, shape)
     }
 
     /**

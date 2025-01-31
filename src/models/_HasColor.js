@@ -3,10 +3,11 @@
 // Please don't use or credit this code as your own.
 //
 
-class _HasColor {// DOC TODO
+// Provides color attributes to other classes
+class _HasColor {
     constructor(color) {
-        this._initColor = color                  // declaration color value || (ctx, this)=>{return color value}
-        this._color = this._initColor            // the current color or gradient of the filled shape
+        this._initColor = color       // declaration color value || (ctx, this)=>{return color value}
+        this._color = this._initColor // the current color or gradient of the filled shape
     }
 
     get colorObject() {return this._color}

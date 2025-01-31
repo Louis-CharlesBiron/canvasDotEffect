@@ -43,22 +43,22 @@ class CanvasUtils {
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
-    static drawConnection(dot, source, renderStyles, radiusPaddingMultiplier=0) {// DOC TODO
-        const [sx, sy] = source.pos||source, color = renderStyles.colorObject??renderStyles
+    static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0) {
+        const endPos = target.pos??target, color = renderStyles.colorObject??renderStyles
         
         // skip if not visible
         if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
-            const res = dot.getLinearIntersectPoints(source, (source.radius??Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
+            const res = dot.getLinearIntersectPoints(target, (target.radius??Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
             Render.stroke(dot.ctx, Render.getLine(res.source.inner, res.target.inner), renderStyles)
         } else {
-            Render.stroke(dot.ctx, Render.getLine([sx, sy], dot.pos), renderStyles)
+            Render.stroke(dot.ctx, Render.getLine(dot.pos, endPos), renderStyles)
         }
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
-    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, isSourceOver=false) {// DOC TODO
+    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, isSourceOver=false) {
         const ctx = dot.ctx, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles
 
         // skip if not visible
@@ -115,7 +115,7 @@ class CanvasUtils {
     }
 
     // Provides generic follow paths
-    static FOLLOW_PATHS = class {// DOC TODO
+    static FOLLOW_PATHS = class {
         static INFINITY_SIGN(width, height, progressOffset) {
             width??=100
             height??=50
@@ -169,7 +169,7 @@ class CanvasUtils {
             }]]
         }
 
-        static SINE_WAVE(width = 100, height = 100) {
+        static SINE_WAVE(width, height) {
             width ??= 100
             height ??= 100
             return [[0, (prog)=>{
@@ -178,7 +178,7 @@ class CanvasUtils {
             }]]
         }
 
-        static COSINE_WAVE(width = 100, height = 100) {
+        static COSINE_WAVE(width, height) {
             width ??= 100
             height ??= 100
             return [[0, (prog)=>{
