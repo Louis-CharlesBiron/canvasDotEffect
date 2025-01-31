@@ -19,6 +19,8 @@
         - Grid Assets
     - Color
     - Gradient
+    - Render
+    - RenderStyles
     - Anim
     - Input Devices
         - TypingDevice
@@ -291,7 +293,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 - **initDots** -> Initial dots declaration. Can either be: an array of dots `[new Dot(...), existingDot, ...]`, a **String** (this will automatically call the shape's createFromString() function), or a callback `(Shape, Canvas)=>{... return anArrayOfDots}` 
 - ***dots*** -> Array of all the current dots contained by the shape. 
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
-- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(ctx, Dot, ratio, mouse, distance, parent, parentSetupResults rawRatio)=>{...}`.
+- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(ctx, Dot, ratio, mouse, distance, parent, parentSetupResults, isActive rawRatio)=>{...}`.
 - **ratioPosCB**? -> References the mouse position by default. Can be used to set a custom *ratioPos* target `(Shape, dots)=>{... return [x, y]}`. Can be disabled if set to `null`.
 - **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused) 
 
@@ -322,7 +324,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 5. Sets the dots' parent attribute to reference the shape.
 
 
-### **To modify dots' properties all at once** with the createFromString() function:
+### **To modify dots' properties all at once,** use the following functions:
 ###### - setRadius(radius),  setColor(color), setLimit(limit)
 ```js
     // Sets the radius of all dummyShape's dots to 10
@@ -333,6 +335,25 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
     
     // Sets the limit of all dummyShape's dots to 100
     dummyShape.setLimit(100)
+
+```
+
+### **To dynamically generate a formation of dots** use the `generate` functions:
+###### - generate(yTrajectory, startOffset, length, gapX, yModifier, generationCallback)
+```js
+    // Generating a sine wave based formation
+    const generatedDots = Shape.generate(
+        x=>Math.sin(x/50)*100, // make the y follow a sine wave pattern
+        [-50, 0],              // the generation start is offset by -50 horizontally
+        1000,                  // the generation will span 1000 px in length
+        10,                    // the generation is sectionned in 10px intervals
+        [5, -5],               // a range allowing random Y between the [min, max]
+        (dot, nextDot)=>{
+            dot.addConnection(nextDot) // adding a connection between each dot
+        }
+    )
+
+CVS.add(a)
 
 ```
 
@@ -856,6 +877,72 @@ const gradientShape = new FilledShape(
 
  
 
+# Render
+
+Render is a static class that centralizes most context operation. It provides functions to get types of lines and *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the line getters which allow more customization.
+
+#### Example use 1:
+###### - Manually drawing a custom line 
+```js
+    // Running in the drawEffectCB of a dummy shape...
+    {
+        ...
+        
+        // Drawing a beizer curve from [100, 100] to [100, 200], in red
+        Render.stroke(ctx, Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150]), [255, 0, 0, 1])
+        
+    }
+```
+
+# RenderStyles
+
+The RenderStyles class allows the customization of renders via style profiles when drawing with the *Render* class. By default, the following static profiles are created: `DEFAULT_PROFILE`, `PROFILE1`, `PROFILE2` and PROFILE3. There is also a static `PROFILES` to add custom profiles.
+
+#### **The RenderStyles constructor takes the following parameters:**
+- **ctx** -> The canvas context.
+- **color** -> Either an RGBA array `[r, g, b, a]` or a `Color` instance.
+- **lineWidth** -> The width in px of the drawn line.
+- **lineJoin** -> Determines the shape of line joins. Either: *miter*, *bevel* or *round*
+- **lineCap** -> Determines the shape of line ends. Either: *butt*, *square* or *round*
+- **lineDash** -> Gaps length within the line
+- **lineDashOffset** -> Custom callback ran upon the animation ending.
+
+
+**Note:** See [MDN Canvas API documentation](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineCap) for more information on line styling properties.
+
+#### Example use 1:
+###### - Styling a line (based on the example in *Render*)
+```js
+    // Running in the drawEffectCB of a dummy shape...
+    {
+        ...
+        
+        // Drawing a beizer curve from [100, 100] to [100, 200], using the styles from the PROFILE1
+        Render.stroke(ctx, Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150], RenderStyles.PROFILE1)
+        
+    }
+```
+
+#### Example use 2:
+###### - Styling connections
+```js
+    // Running in the drawEffectCB of a dummy shape...
+    {
+        ...
+    
+    // Drawing the connections between dots, and styling them with an updated version of PROFILE1
+    CanvasUtils.drawDotConnections(dot, RenderStyles.PROFILE1.updateStyles(
+        Color.rgba(255, 0, 0, CDEUtils.mod(1, ratio, 0.8)), // updating the color to a dynamically shaded red
+        4,      // updating the lineWidth to 4px
+        null,   // not updating the lineJoin
+        null,   // not updating the lineCap
+        [5] // updating the lineDash to 5px
+        )
+    )
+        
+    }
+```
+
 # Anim
 
 The Anim class allows the creation of smooth animations and the use of easings.
@@ -1098,29 +1185,35 @@ This function is used to make a dot throwable.
     }
 ```
 
-### drawConnection
-This function is used to draw a connection between a Dot and another pos/object. (Not to be confused with `drawDotConnections`)
-###### drawConnection(dot, color, source, radiusPaddingMultiplier=0)
+### drawLine
+This function is used to draw a connection between a Dot and another pos/object.
+###### drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0)
 ```js
     // (Running in the drawEffectCB() function of some shape...)
     {
         ...
         // Only if the distance with the ratioPos is lower than the shape's limit
         if (dist < shape.limit) {
-            // Draws a connection between the dot and the dot's ratioPos, adjusting the opacity of the line with the distance ratio
-            CanvasUtils.drawConnection(dot, [dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)], dot.ratioPos)
+            // Draws a line between the dot and the dot's ratioPos, adjusting the opacity of the line via the distance ratio
+            CanvasUtils.drawLine(
+                dot,        // start Dot
+                [200, 200], // end position (can also be a Dot)
+                RenderStyles.PROFILE1.updateStyles(
+                    Color.rgba(dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)) // updates only the color, but uses every previously set styles
+                )
+            )
         }
     }
 ```
 
 ### drawDotConnections
-This function is used to draw the connections between a Dot and the ones in its `connections` attribute. **(Especially useful when using a Grid!)** (Not to be confused with `drawConnections`)
-###### drawDotConnections(dot, color, radiusPaddingMultiplier=0, isSourceOver=false)
+This function is used to draw the connections between a Dot and the ones in its `connections` attribute. **(Especially useful when using a Grid!)**
+###### drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, isSourceOver=false)
 ```js
     // (Running in the drawEffectCB() function of some shape...)
     {
         ...
-        // Draws lines between the dot and its connections, using the shape's color, and with a 2.5x radius padding multiplier
+        // Draws lines between the dot and its connections, using the shape's color, and with a start padding of 2.5x the radius
         CanvasUtils.drawDotConnections(dot, shape.colorObject, 2.5)
     }
 ```
@@ -1128,6 +1221,17 @@ This function is used to draw the connections between a Dot and the ones in its 
  
 
 **Note:** Functions in this class only accept RGBA arrays or a Color instance for the *color* parameter.
+
+****
+### Generic follow paths
+The sub class FOLLOW_PATH provides generic follow paths.
+
+#### Example use 1:
+###### - Make a dot follow a circle of 200px radius, over 5 seconds
+```js
+    dummyShape.dots[0].follow(5000, Anim.linear, null, CanvasUtils.FOLLOW_PATHS.CIRCLE(400, 400))
+```
+
 
 ## CDEUtils
 The CDEUtils class provides utilities such as `random`, `clamp`, `FPSCounter`, and `mod`.
