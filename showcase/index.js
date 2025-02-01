@@ -18,7 +18,7 @@ let movementsTester = new Shape([300,300],[
     new Dot([0, 50]),
     new Dot([50, -50]),
     new Dot([50, 0]),
- ], null, normalColorTester, 100, (ctx, dot, ratio, m, dist)=>{
+ ], null, normalColorTester, 100, (render, dot, ratio, m, dist)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.8)
     //dot.r = CDEUtils.mod(255, ratio, -255)
     //dot.g = CDEUtils.mod(255, ratio, -255)
@@ -43,14 +43,14 @@ CanvasUtils.toggleCenter(movementsTester)
 let dragAnim2 = CanvasUtils.getDraggableDotCB()
 let filledShapeTester = new FilledShape(
     (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]], null, 90),
-    true, [0,0], [new Dot([100, 400]), new Dot([100, 450]), new Dot([150, 450]),new Dot([150, 400]),new Dot([125,325])], null, null, null, (ctx, dot, ratio, m, dist, shape)=>{
+    true, [0,0], [new Dot([100, 400]), new Dot([100, 450]), new Dot([150, 450]),new Dot([150, 400]),new Dot([125,325])], null, null, null, (render, dot, ratio, m, dist, shape)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
 }, null, null, null, true)
 filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
 
 let testMoreDragAnim = CanvasUtils.getDraggableDotCB()
-let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, "blue")], 15, (ctx, shape)=>new Gradient(ctx, shape, [[0, "red"], [1, "yellow"]], null, 90), null, (ctx, dot, ratio, m, dist, shape)=>{
+let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, "blue")], 15, (ctx, shape)=>new Gradient(ctx, shape, [[0, "red"], [1, "yellow"]], null, 90), null, (render, dot, ratio, m, dist, shape)=>{
     if (shape.dots[0].id == dot.id) {
         testMoreDragAnim(shape.dots[0], m, dist, ratio)
 
@@ -65,7 +65,7 @@ testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog
 
 
 let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
-(shape)=>{return shape.dots.length*2}, normalColorTester, 100, (ctx, dot, ratio, m, dist, parent, res)=>{
+(shape)=>{return shape.dots.length*2}, normalColorTester, 100, (render, dot, ratio, m, dist, parent, res)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
 
     CanvasUtils.drawDotConnections(dot, [255,0,0,CDEUtils.mod(1, ratio, 0.8)])
@@ -89,7 +89,7 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
 })
 
 // ALPHABET
-let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (ctx, dot, ratio, m, dist, shape, cr, isActive)=>{
+let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (render, dot, ratio, m, dist, shape, cr, isActive)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS, ratio, Obj.DEFAULT_RADIUS)
 
     if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, RenderStyles.PROFILE1.updateStyles(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, null, null, [5, 25]), 2)
@@ -102,7 +102,7 @@ let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200]
 
 // SINGLE DRAGGABLE DOT
 let dragAnim1 = CanvasUtils.getDraggableDotCB()
-let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null, (ctx, dot, ratio, m, dist, shape, sr, isActive)=>{
+let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null, (render, dot, ratio, m, dist, shape, sr, isActive)=>{
 
     if (isActive) {
         let mouseOn = dot.isWithin(m.pos, true)
@@ -149,7 +149,7 @@ let animTester = new Shape([400,200],[
         
 
     })
-], null, null, 25, (ctx, dot, ratio, m, dist)=>{
+], null, null, 25, (render, dot, ratio, m, dist)=>{
     CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)
 }, null, null, ()=>draggableDotTester.firstDot?.pos, true)
 
@@ -159,7 +159,7 @@ let generationTester = new Shape([100,600],
         //dot.addConnection(nextDot)
 
     }),
-    3, "red", 100, (ctx, dot, ratio, m, dist, parent)=>{
+    3, "red", 100, (render, dot, ratio, m, dist, parent)=>{
             CanvasUtils.drawDotConnections(dot, [255,0,0,1])
             dot.radius = CDEUtils.mod(dot.getInitRadius()*2, ratio, dot.getInitRadius()*2*0.8)
             dot.a = CDEUtils.mod(1, ratio, 0.8)

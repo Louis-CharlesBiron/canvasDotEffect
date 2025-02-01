@@ -14,7 +14,7 @@ class Canvas {
     static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
     static DEFAULT_CVSDE_ATTR = "_CVSDE"
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
-    static DEFAULT_CTX_SETTINGS = {"lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":RenderStyles.DEFAULT_WIDTH,  "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
+    static DEFAULT_CTX_SETTINGS = {"lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
@@ -48,6 +48,7 @@ class Canvas {
         this._typingDevice = new TypingDevice()                        // keyboard info
         this._mouse = new Mouse()                                      // mouse info
         this._offset = this.updateOffset()                             // cvs page offset
+        this._render = new Render(this._ctx)                           // render instance
 
         RenderStyles.initializeDefaultProfiles(this._ctx)
     }
@@ -84,6 +85,7 @@ class Canvas {
         }
     }
 
+    static TODEL = 0.0000000000000000000
     // main loop, runs every frame
     #loop(time) {
         this.#timeStamp = time
@@ -99,7 +101,8 @@ class Canvas {
             this.#lastFrame = time
         }
 
-        if (this._looping) CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
+        //if (this._looping && (Canvas.TODEL++) < 4) CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
+        CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
     }
 
     #loopCore(time) {
@@ -112,6 +115,7 @@ class Canvas {
 
             this.clear()
             this.draw()
+            this._render.drawBatched()
             
             if (CDEUtils.isFunction(this._loopingCallback)) this._loopingCallback()
 
@@ -147,7 +151,7 @@ class Canvas {
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
             if (!el.draw || (!el.alwaysActive && el.initialized && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING))) continue
-            el.draw(this._ctx, this.timeStamp, this._deltaTime)
+            el.draw(this._render, this.timeStamp, this._deltaTime)
         }
     }
 
@@ -363,6 +367,7 @@ class Canvas {
     get fpsLimit() {return this._fpsLimit==null||!isFinite(this._fpsLimit) ? null : 1/(this._fpsLimit/1000)}
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
+    get render() {return this._render}
 
 	set loopingCallback(_cb) {this._loopingCallback = _cb}
 	set width(w) {this.setSize(w, null)}

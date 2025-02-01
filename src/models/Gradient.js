@@ -8,6 +8,7 @@ class Gradient {
     static PLACEHOLDER = "PLACERHOLDER" // can be used to instantiate a Gradient without positions, and apply that of the object on assignement
     static TYPES = {LINEAR:"Linear", RADIAL:"Radial", CONIC:"Conic"}
     static DEFAULT_TYPE = Gradient.TYPES.LINEAR
+    static SERIALIZATION_SEPARATOR = "*"
 
     #lastDotsPos = null
     #lastRotation = null
@@ -83,18 +84,30 @@ class Gradient {
 
     // Creates and returns the gradient. Updates it if the initPositions is a Shape/Dot instance
     updateGradient() {
-        if (this._initPositions !== Gradient.PLACEHOLDER) {
-            this._positions = this.getAutomaticPositions()
-            if (this._type===Gradient.TYPES.CONIC) this._gradient = this._ctx.createConicGradient(CDEUtils.toRad(this._rotation), ...this._positions)
-            else this._gradient = this._ctx[`create${this._type}Gradient`](...this._positions[0], ...this._positions[1])
-            const cs_ll = this._colorStops.length
-            for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], this._colorStops[i][1].color)
-            return this._gradient
-        }
+        if (this._initPositions !== Gradient.PLACEHOLDER) return this._gradient = Gradient.getCanvasGradient(this._ctx, this._positions = this.getAutomaticPositions(), this._colorStops, this._type, this._rotation)
+    }
+
+    // DOC TODO
+    static getCanvasGradient(ctx, positions, colorStops, type, rotation) {
+        const canvasGradient = type===Gradient.TYPES.CONIC ? ctx.createConicGradient(CDEUtils.toRad(rotation), ...positions) : ctx[`create${type}Gradient`](...positions[0], ...positions[1]), cs_ll = colorStops.length
+        for (let i=0;i<cs_ll;i++) canvasGradient.addColorStop(colorStops[i][0], Color.getColorValue(colorStops[i][1]))
+        return canvasGradient
     }
 
     toString() {
-        return +this._positions+this._colorStops+this._type+this._rotation
+        const sep = Gradient.SERIALIZATION_SEPARATOR
+        return this._positions+sep+this._colorStops+sep+this._type+sep+this._rotation
+    }
+
+    // DOC TODO
+    static getCanvasGradientFromString(ctx, str) {
+        let [positions, colorStops, type, rotation] = str.split(Gradient.SERIALIZATION_SEPARATOR), splitPositions = positions.split(","), splitColorStops = colorStops.split(","), scs_ll = splitColorStops.length
+
+        positions = splitPositions.length===2 ? [+splitPositions[0], +splitPositions[1]] : [[+splitPositions[0], +splitPositions[1]], [+splitPositions[2], +splitPositions[3]]]
+        colorStops = []
+        for (let i=0;i<scs_ll;i+=2) colorStops.push([+splitColorStops[i], splitColorStops[i+1]])
+        
+        return Gradient.getCanvasGradient(ctx, positions, colorStops, type, +rotation)
     }
 
     get ctx() {return this._ctx}
@@ -113,5 +126,5 @@ class Gradient {
 	set positions(_positions) {this._positions = _positions}
 	set colorStops(_colorStops) {this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])}
     set type(type) {this._type = type}
-	set rotation(deg) {this._rotation = deg}
+	set rotation(deg) {this._rotation = CDEUtils.round(deg, 2)}
 }

@@ -134,6 +134,11 @@ class Color {
         return [CDEUtils.round(r, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(g, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(b, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(a, Color.DEFAULT_DECIMAL_ROUNDING_POINT)]
     }
 
+    static getColorValue(color) {
+        if (typeof color == "string" || color instanceof CanvasGradient) return color
+        else return Color.formatRgba(color) ?? color.color
+    }
+
     /**
      * Returns the first pos where the provided color is found in the canvas
      * @param {Canvas} canvas: Canvas instance

@@ -12,18 +12,18 @@ class Dot extends Obj {
     }
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
-    draw(ctx, time, deltaTime) {
+    draw(render, time, deltaTime) {
         if (this.initialized) {
             // runs parent drawEffect callback if defined
             if (CDEUtils.isFunction(this.drawEffectCB)) {
                 const dist = this.getDistance(), rawRatio = this.getRatio(dist), isActive = rawRatio<1
-                this.drawEffectCB(ctx, this, isActive?rawRatio:1, this.mouse, dist, this._parent, this.parentSetupResults, isActive, rawRatio)
+                this.drawEffectCB(render, this, isActive?rawRatio:1, this.mouse, dist, this._parent, this.parentSetupResults, isActive, rawRatio)
             }
 
             // draw dot
-            if (this._radius) Render.fill(ctx, Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
+            if (this._radius) render.fill(Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
         } else this.initialized = true
-        super.draw(ctx, time, deltaTime)
+        super.draw(time, deltaTime)
     }
 
     
@@ -84,6 +84,7 @@ class Dot extends Obj {
 
     get cvs() {return this._parent?.cvs}
     get ctx() {return this._parent?.cvs.ctx}
+    get render() {return this._parent?.cvs.render}
     get limit() {return this._parent?.limit}
     get drawEffectCB() {return this._parent?.drawEffectCB}
     get parent() {return this._parent}

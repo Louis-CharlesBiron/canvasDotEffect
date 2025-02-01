@@ -8,6 +8,7 @@ class Obj extends _HasColor {
     static DEFAULT_POS = [0,0]
     static DEFAULT_RADIUS = 5
     static ABSOLUTE_ANCHOR = "ABSOLUTE_ANCHOR"
+    static POSITION_PRECISION = 4 // TODO IMPLEMENT PROB
 
     #lastAnchorPos = [0,0]
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
@@ -60,7 +61,7 @@ class Obj extends _HasColor {
     }
 
     // Runs every frame
-    draw(ctx, time, deltaTime) {
+    draw(time, deltaTime) {
         // update pos according to anchor pos
         this.setAnchoredPos()
 
