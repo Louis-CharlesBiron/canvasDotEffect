@@ -15,7 +15,7 @@ let logo = new Shape([0,0], [
     new Dot([470, 350], 18, (ctx, dot)=>new Gradient(ctx, dot, [[0, "#B9ACE3"], [1, "#9ADBE4"]], null, 180)),
 ], 18, (ctx, shape)=>new Gradient(ctx, shape, [[0, "#AFB0E3"], [1, "#9ADBE4"]], null, 270), null,  (ctx, dot, ratio, m, dist, shape)=>{
     CanvasUtils.drawOuterRing(dot, RenderStyles.PROFILE1.updateStyles(dot.colorObject, 2, null, null, [0]), 1.8)
-    CanvasUtils.drawDotConnections(dot, RenderStyles.PROFILE2.updateStyles(shape.colorObject, 5, null, null, [15]), 2.5)
+    CanvasUtils.drawDotConnections(dot, RenderStyles.PROFILE2.updateStyles(shape.colorObject, 5, null, null, [0]), 2.5)
 }, null, (shape)=>{
     shape.dots[0].addConnection(shape.dots[1])
     shape.dots[0].addConnection(shape.dots[2])

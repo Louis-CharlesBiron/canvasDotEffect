@@ -87,7 +87,7 @@ class Gradient {
         if (this._initPositions !== Gradient.PLACEHOLDER) return this._gradient = Gradient.getCanvasGradient(this._ctx, this._positions = this.getAutomaticPositions(), this._colorStops, this._type, this._rotation)
     }
 
-    // DOC TODO
+    // returns a CanvasGradient instance from the provided parameters
     static getCanvasGradient(ctx, positions, colorStops, type, rotation) {
         const canvasGradient = type===Gradient.TYPES.CONIC ? ctx.createConicGradient(CDEUtils.toRad(rotation), ...positions) : ctx[`create${type}Gradient`](...positions[0], ...positions[1]), cs_ll = colorStops.length
         for (let i=0;i<cs_ll;i++) canvasGradient.addColorStop(colorStops[i][0], Color.getColorValue(colorStops[i][1]))
@@ -99,7 +99,7 @@ class Gradient {
         return this._positions+sep+this._colorStops.flat().join(Gradient.SERIALIZATION_COLOR_STOPS_SEPARATOR)+sep+this._type+sep+this._rotation
     }
 
-    // DOC TODO
+    // returns a CanvasGradient instance from a serialized Gradient string
     static getCanvasGradientFromString(ctx, str) {
         let [positions, colorStops, type, rotation] = str.split(Gradient.SERIALIZATION_SEPARATOR), splitPositions = positions.split(","), splitColorStops = colorStops.split(Gradient.SERIALIZATION_COLOR_STOPS_SEPARATOR), scs_ll = splitColorStops.length
 

@@ -292,7 +292,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 - **initDots** -> Initial dots declaration. Can either be: an array of dots `[new Dot(...), existingDot, ...]`, a **String** (this will automatically call the shape's createFromString() function), or a callback `(Shape, Canvas)=>{... return anArrayOfDots}` 
 - ***dots*** -> Array of all the current dots contained by the shape. 
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
-- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(ctx, Dot, ratio, mouse, distance, parent, parentSetupResults, isActive rawRatio)=>{...}`.
+- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, mouse, distance, parent, parentSetupResults, isActive rawRatio)=>{...}`.
 - **ratioPosCB**? -> References the mouse position by default. Can be used to set a custom *ratioPos* target `(Shape, dots)=>{... return [x, y]}`. Can be disabled if set to `null`.
 - **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused) 
 
@@ -428,7 +428,7 @@ CVS.add(a)
          new Dot([50, -50]),
          new Dot([50, 0]),
          new Dot([50, 50]),
-     ], null, normalColorTester, 100, (ctx, dot, ratio, mouse, dist)=>{
+     ], null, normalColorTester, 100, (render, dot, ratio, mouse, dist)=>{
      
          // Changes the opacity and color according to mouse distance
          dot.a = CDEUtils.mod(1, ratio, 0.8)
@@ -451,7 +451,7 @@ CVS.add(a)
 ###### - Single throwable dot, with color and radius effects
 ```js
     const dragAnim = CanvasUtils.getDraggableDotCB()
-    const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (ctx, dot, ratio, mouse, dist, shape)=>{
+    const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (render, dot, ratio, mouse, dist, shape)=>{
         
         // Checking if the mouse is over the dot and clicked, and changing the color according to the state
         const mouseOn = dot.isWithin(mouse.pos, true)
@@ -598,7 +598,7 @@ The Grid class is a derivative of the Shape class. It allows the creation of dot
         2,                                  // 2px dot radius
         null,                               // color is left undefined, the shape will assign it the default value
         null,                               // limit is left defined, default value assigned (100)
-        (ctx, dot, ratio)=>{                // This is the drawEffectCB, which gets call for every dot of the shape, every frame
+        (render, dot, ratio)=>{                // This is the drawEffectCB, which gets call for every dot of the shape, every frame
         
             // This will make a nice proximity effect when the mouse is close.
             // The mod() function and the ratio allow us to modify the dot radius with
@@ -820,10 +820,10 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
 ```js
     // Creating a gradient
     const customGradient = new Gradient(
-            CVS.ctx,                  // canvas context
-            [ [0, 0], [100, 100] ],   // setting manual position
-            [[0, "red"], [1, "blue"]],// goes from red to blue
-            Gradient.TYPES.LINEAR     // linear gradient
+            CVS.ctx,                   // canvas context
+            [ [0, 0], [100, 100] ],    // setting manual position
+            [[0, "red"], [1, "blue"]], // goes from red to blue
+            Gradient.TYPES.LINEAR      // linear gradient
         )
 
     // Assigning the gradient to a dummy filled shape
@@ -878,7 +878,10 @@ const gradientShape = new FilledShape(
 
 # Render
 
-Render is a static class that centralizes most context operation. It provides functions to get types of lines and *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the line getters which allow more customization.
+Render is a class that centralizes most context operation. It provides functions to get types of lines and *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization.  It is automatically instanciated by and linked to any Canvas instance.
+
+#### **The RenderStyles constructor takes the following parameters:**
+- **ctx** -> The canvas context.
 
 #### Example use 1:
 ###### - Manually drawing a custom line 
@@ -888,7 +891,7 @@ Render is a static class that centralizes most context operation. It provides fu
         ...
         
         // Drawing a beizer curve from [100, 100] to [100, 200], in red
-        render.batchStroke(ctx, Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150]), [255, 0, 0, 1])
+        render.stroke(Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150]), [255, 0, 0, 1])
         
     }
 ```
@@ -917,7 +920,7 @@ The RenderStyles class allows the customization of renders via style profiles wh
         ...
         
         // Drawing a beizer curve from [100, 100] to [100, 200], using the styles from the PROFILE1
-        render.batchStroke(ctx, Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150], RenderStyles.PROFILE1)
+        render.stroke(Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150], RenderStyles.PROFILE1)
         
     }
 ```
@@ -1098,7 +1101,7 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
     
     // Creating a mostly default shape, with a single dot
     const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null, 
-        (ctx, dot, ratio, m, dist, shape)=>{// drawEffectCB callback
+        (render, dot, ratio, m, dist, shape)=>{// drawEffectCB callback
     
             // Changing the dot's size based on mouse distance for an additional small effect
             dot.radius = CDEUtils.mod(shape.radius*2, ratio, shape.radius*2*0.5)
@@ -1223,7 +1226,9 @@ This function is used to draw the connections between a Dot and the ones in its 
 
 ****
 ### Generic follow paths
-The sub class FOLLOW_PATH provides generic follow paths.
+The sub class FOLLOW_PATHS provides generic follow paths.
+
+// TODO LIST ALL GENERIC PATHS
 
 #### Example use 1:
 ###### - Make a dot follow a circle of 200px radius, over 5 seconds

@@ -51,7 +51,7 @@ class CanvasUtils {
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
             const res = dot.getLinearIntersectPoints(target, (target.radius??Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-            dot.render.stroke(Render.getLine(res.source.inner, res.target.inner), renderStyles)
+            dot.render.stroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
         } else dot.render.stroke(Render.getLine(dot.pos, endPos), renderStyles)
     }
 
@@ -68,7 +68,7 @@ class CanvasUtils {
             const c = dot.connections[i]
             if (radiusPaddingMultiplier) {
                 const res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-                dot.render.stroke(Render.getLine(res.source.inner, res.target.inner), renderStyles)
+                dot.render.stroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
             } else dot.render.stroke(Render.getLine(dot.pos, c.pos), renderStyles)
         }
         

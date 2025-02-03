@@ -85,7 +85,6 @@ class Canvas {
         }
     }
 
-    static TODEL = 0.0000000000000000000
     // main loop, runs every frame
     #loop(time) {
         this.#timeStamp = time
@@ -101,7 +100,6 @@ class Canvas {
             this.#lastFrame = time
         }
 
-        //if (this._looping && (Canvas.TODEL++) < 4) CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
         CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
     }
 

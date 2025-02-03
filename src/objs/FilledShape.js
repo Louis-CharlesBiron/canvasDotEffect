@@ -28,7 +28,7 @@ class FilledShape extends Shape {
         
         if (this.dots.length > 2) {
             if (this._dynamicUpdates) this.updatePath()
-            render.fillPath(this._path, this._fillColor)
+            render.fill(this._path, this._fillColor)
         }
     }
 
