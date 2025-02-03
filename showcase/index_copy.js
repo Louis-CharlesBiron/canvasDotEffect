@@ -14,10 +14,8 @@ let logo = new Shape([0,0], [
     new Dot([350, 290], 16.5, (ctx, dot)=>new Gradient(ctx, dot, [[0, "#B9ACE3"], [1, "#9ADBE4"]], null, 90)),
     new Dot([470, 350], 18, (ctx, dot)=>new Gradient(ctx, dot, [[0, "#B9ACE3"], [1, "#9ADBE4"]], null, 180)),
 ], 18, (ctx, shape)=>new Gradient(ctx, shape, [[0, "#AFB0E3"], [1, "#9ADBE4"]], null, 270), null,  (ctx, dot, ratio, m, dist, shape)=>{
-    CanvasUtils.drawOuterRing(dot, dot.colorObject, 1.8)
-    CVS.updateSettings({"lineWidth":5})
-    CanvasUtils.drawDotConnections(dot, shape.colorObject, 2.5)
-    CVS.updateSettings({"lineWidth":2})
+    CanvasUtils.drawOuterRing(dot, RenderStyles.PROFILE1.updateStyles(dot.colorObject, 2, null, null, [0]), 1.8)
+    CanvasUtils.drawDotConnections(dot, RenderStyles.PROFILE2.updateStyles(shape.colorObject, 5, null, null, [15]), 2.5)
 }, null, (shape)=>{
     shape.dots[0].addConnection(shape.dots[1])
     shape.dots[0].addConnection(shape.dots[2])
@@ -46,9 +44,9 @@ CVS.add(logoBG)
 
 logoBG.scaleAt([1.15, 1.15], [350, 375])
 
-let textGrad = new Color(new Gradient(CVS.ctx, [[410, 325],[310,400]], [[0, "#AFB0E3"], [1, "#9ADBE4"]], null, 90))
+let textGradient = new Color(new Gradient(CVS.ctx, [[410, 325],[310,400]], [[0, "#AFB0E3"], [1, "#9ADBE4"]], null, 90))
 let logoLetters = new Grid("CDE", [5, 5], 38, null, [308,372], 0, null, 100, (ctx, dot, ratio, m, dist, shape)=>{
-    CanvasUtils.drawDotConnections(dot, textGrad, 0, true)
+    CanvasUtils.drawDotConnections(dot, textGradient, 0, true)
 })
 
 logoLetters.rotateAt(-25)
@@ -59,19 +57,17 @@ logoLetters.rotateAt(-25)
 let oktest = new Shape([110,250],[new Dot(), new Dot([10, 0],null,null,null,(dot, shape)=>shape.firstDot)], null, null, 100, (ctx, dot, ratio)=>{// SHAPE DRAW EFFECT CB
     
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
-    CanvasUtils.drawDotConnections(dot, [255,0,0,1])
+    CanvasUtils.drawDotConnections(dot, RenderStyles.PROFILE1.updateStyles([255,0,0,1], null, null, null, [5]))
 
 }, null, (shape)=>{// SHAPE SETUP CB
     
     shape.firstDot.follow(5000, null, (prog, dot)=>{
-        let d = new Dot(null, 4, null, null, dot.pos)
-        shape.add(d)
+        shape.add(new Dot(null, 4, null, null, dot.pos))
     }, CanvasUtils.FOLLOW_PATHS.CIRCLE(null, null, 0.5))
 
     
     shape.dots[1].follow(5000, Anim.LINEAR, (prog, dot)=>{
-        let d = new Dot(null, 2, "red", null, dot.pos)
-        shape.add(d)
+        shape.add(new Dot(null, 2, "red", null, dot.pos))
     }, CanvasUtils.FOLLOW_PATHS.RELATIVE(CanvasUtils.FOLLOW_PATHS.LINEAR(800, 0)))
 
     shape.firstDot.addConnection(shape.dots[1])

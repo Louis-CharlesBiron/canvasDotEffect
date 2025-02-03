@@ -9,6 +9,7 @@ class Gradient {
     static TYPES = {LINEAR:"Linear", RADIAL:"Radial", CONIC:"Conic"}
     static DEFAULT_TYPE = Gradient.TYPES.LINEAR
     static SERIALIZATION_SEPARATOR = "*"
+    static SERIALIZATION_COLOR_STOPS_SEPARATOR = "$"
 
     #lastDotsPos = null
     #lastRotation = null
@@ -20,7 +21,6 @@ class Gradient {
         this._positions = this.getAutomaticPositions()??this._initPositions // usable positions from initPositions
         this._colorStops = colorStops.map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
         this._rotation = rotation??0
-
         this._gradient = null // useable as a fillStyle
         this.updateGradient()
     }
@@ -57,7 +57,7 @@ class Gradient {
 
     #getLinearPositions(x, y, x2, y2, cx, cy) {
         const cosV = Math.cos(CDEUtils.toRad(this._rotation)), sinV = Math.sin(CDEUtils.toRad(this._rotation))
-        return [[(x*cosV-y*sinV)+cx, (x*sinV+y*cosV)+cy], [(x2*cosV-y2*sinV)+cx, (x2*sinV+y2*cosV)+cy]]
+        return [[CDEUtils.round((x*cosV-y*sinV)+cx), CDEUtils.round((x*sinV+y*cosV)+cy)], [CDEUtils.round((x2*cosV-y2*sinV)+cx), CDEUtils.round((x2*sinV+y2*cosV)+cy)]]
     }
 
     #getRadialPositions(x, y, coverRadius) {
@@ -96,12 +96,12 @@ class Gradient {
 
     toString() {
         const sep = Gradient.SERIALIZATION_SEPARATOR
-        return this._positions+sep+this._colorStops+sep+this._type+sep+this._rotation
+        return this._positions+sep+this._colorStops.flat().join(Gradient.SERIALIZATION_COLOR_STOPS_SEPARATOR)+sep+this._type+sep+this._rotation
     }
 
     // DOC TODO
     static getCanvasGradientFromString(ctx, str) {
-        let [positions, colorStops, type, rotation] = str.split(Gradient.SERIALIZATION_SEPARATOR), splitPositions = positions.split(","), splitColorStops = colorStops.split(","), scs_ll = splitColorStops.length
+        let [positions, colorStops, type, rotation] = str.split(Gradient.SERIALIZATION_SEPARATOR), splitPositions = positions.split(","), splitColorStops = colorStops.split(Gradient.SERIALIZATION_COLOR_STOPS_SEPARATOR), scs_ll = splitColorStops.length
 
         positions = splitPositions.length===2 ? [+splitPositions[0], +splitPositions[1]] : [[+splitPositions[0], +splitPositions[1]], [+splitPositions[2], +splitPositions[3]]]
         colorStops = []

@@ -46,6 +46,7 @@ class Render {
         path.moveTo(...startPos)
         path.quadraticCurveTo(...controlPos, ...endPos)
         return path
+        
     }
 
     // DOC TODO
@@ -78,14 +79,10 @@ class Render {
     // DOC TODO
     fill(path, renderStyles) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            const profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString() : RenderStyles.DEFAULT_PROFILE.toString(renderStyles)
-            if (!this._batchFills[profileKey]) this._batchFills[profileKey] = new Path2D()// fill may not need storing of the entire profile since only color is affected
+            const profileKey = renderStyles instanceof RenderStyles ? renderStyles.colorOnlyToString() : RenderStyles.DEFAULT_PROFILE.colorOnlyToString(renderStyles)
+            if (!this._batchFills[profileKey]) this._batchFills[profileKey] = new Path2D()
             this._batchFills[profileKey].addPath(path)
         } 
-        // else if (renderStyles.colorRaw instanceof Gradient) {// skip batching and draw if color is gradient
-        //     if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
-        //     else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
-        // }
     }
 
     // DOC TODO
@@ -96,18 +93,19 @@ class Render {
         for (let i=0;i<s_ll;i++) {
             let [profileKey, path] = strokes[i], [colorValue, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
             if (colorValue.includes(Gradient.SERIALIZATION_SEPARATOR)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
-            RenderStyles.applyStyles(this._ctx, colorValue, lineWidth, lineJoin, lineCap, lineDash.split(",").map(Number).filter(x=>x), lineDashOffset)
+            RenderStyles.applyStyles(this._ctx, colorValue, lineWidth, lineJoin, lineCap, lineDash?lineDash.split(",").map(Number).filter(x=>x):null, lineDashOffset)
             this._ctx.stroke(path)
         }
 
         for (let i=0;i<f_ll;i++) {
-            let [profileKey, path] = fills[i], [colorValue, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
+            let [colorValue, path] = fills[i]
             if (colorValue.includes(Gradient.SERIALIZATION_SEPARATOR)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
-            RenderStyles.applyStyles(this._ctx, colorValue, lineWidth, lineJoin, lineCap, lineDash.split(",").map(Number).filter(x=>x), lineDashOffset)
+            RenderStyles.applyStyles(this._ctx, colorValue)
             this._ctx.fill(path)
         }
 
-        this._batchStrokes = this._batchFills = {}
+        this._batchStrokes = {}
+        this._batchFills = {}
     }
 
     // DOC TODO

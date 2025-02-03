@@ -33,8 +33,8 @@ class Dot extends Obj {
     }
 
     // returns pythagorian distance between the ratio defining position and the dot
-    getDistance(fx,fy) {
-        return CDEUtils.getDist(fx??this.ratioPos[0], fy??this.ratioPos[1], this.x, this.y)
+    getDistance(fx=this.ratioPos[0], fy=this.ratioPos[1]) {
+        return CDEUtils.getDist(fx, fy, this.x, this.y)
     }
 
     // calculates the ratio based on distance and parent's limit

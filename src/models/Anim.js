@@ -22,13 +22,13 @@ class Anim {
     
     // progresses the animation 1 frame fowards (loop each frame) 
     getFrame(time, deltaTime) {
-        const isInfinite = Math.sign(this._duration)===-1
+        const isInfinite = this._duration<0, duration = isInfinite?-this._duration:this._duration
         if (!this._playCount || isInfinite) {
             // SET START TIME
             if (!this._startTime) this._startTime = time
             // PLAY ANIMATION
-            else if (time<this._startTime+Math.abs(this._duration)) {
-                this._progress = this._easing((time-this._startTime)/Math.abs(this._duration))
+            else if (time<this._startTime+duration) {
+                this._progress = this._easing((time-this._startTime)/duration)
                 this._animation(this._progress, this._playCount, deltaTime, this.progress)
             }
             // REPEAT IF NEGATIVE DURATION

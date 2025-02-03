@@ -56,6 +56,12 @@ class RenderStyles extends _HasColor {
         return colorValue+sep+lineWidth+sep+lineJoin+sep+lineCap+sep+lineDash+sep+lineDashOffset
     }
 
+    colorOnlyToString(color=this._color) {
+        let colorValue = Color.getColorValue(color)
+        if (colorValue instanceof CanvasGradient) colorValue = color.toString()
+        return colorValue
+    }
+
     // updates a profile's attributes and returns the updated version
     updateStyles(color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
         if (color) this.color = color

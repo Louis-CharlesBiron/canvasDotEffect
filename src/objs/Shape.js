@@ -42,12 +42,6 @@ class Shape extends Obj {
     draw(render, time, deltaTime) {
         super.draw(time, deltaTime)
         if (CDEUtils.isFunction(this._ratioPosCB)) this._ratioPos = this._ratioPosCB(this)
-
-        //const d_ll = this._dots.length
-        //for (let i=0;i<d_ll;i++) {
-        //    const dot = this._dots[i]
-        //    dot.display(render)
-        //}
     }
 
     // returns a separate copy of this Shape (only initialized for objects)
@@ -234,7 +228,6 @@ class Shape extends Obj {
             permimeter.moveTo(...this.dots[0].pos)
             for (let i=1;i<d_ll;i++) permimeter.lineTo(...this.dots[i].pos)
             permimeter.closePath()
-
             return this.ctx.isPointInPath(permimeter, ...pos)
         }
         return false

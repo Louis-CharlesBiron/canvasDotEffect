@@ -888,7 +888,7 @@ Render is a static class that centralizes most context operation. It provides fu
         ...
         
         // Drawing a beizer curve from [100, 100] to [100, 200], in red
-        Render.stroke(ctx, Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150]), [255, 0, 0, 1])
+        render.batchStroke(ctx, Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150]), [255, 0, 0, 1])
         
     }
 ```
@@ -917,7 +917,7 @@ The RenderStyles class allows the customization of renders via style profiles wh
         ...
         
         // Drawing a beizer curve from [100, 100] to [100, 200], using the styles from the PROFILE1
-        Render.stroke(ctx, Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150], RenderStyles.PROFILE1)
+        render.batchStroke(ctx, Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150], RenderStyles.PROFILE1)
         
     }
 ```

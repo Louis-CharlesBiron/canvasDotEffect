@@ -52,8 +52,8 @@ class Obj extends _HasColor {
     }
 
     setAnchoredPos() {
-        if (this.hasAnchorPosChanged) {
-            const anchorPos = this.anchorPos
+        const anchorPos = this.hasAnchorPosChanged
+        if (anchorPos) {
             this.relativeX += anchorPos[0]-this.lastAnchorPos[0]
             this.relativeY += anchorPos[1]-this.lastAnchorPos[1]
             this.lastAnchorPos = anchorPos
@@ -200,26 +200,32 @@ class Obj extends _HasColor {
     get alwaysActive() {return this._alwaysActive}
     get anchorPosRaw() {return this._anchorPos}
     get anchorPos() {// returns the anchorPos value
-        if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent?.pos_
+        if (Array.isArray(this._anchorPos)) return this._anchorPos
+        else if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent?.pos_
         else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_
         else if (this._anchorPos===Obj.ABSOLUTE_ANCHOR) return [0,0]
         else if (CDEUtils.isFunction(this._anchorPos)) {
             const res = this._anchorPos(this, this._cvs??this.parent)
             return [...(res?.pos_||res||[0,0])]
         }
-        else return this._anchorPos
     }
     get lastAnchorPos() {return this.#lastAnchorPos}
-    get hasAnchorPosChanged() {return !CDEUtils.posEquals(this.#lastAnchorPos, this.anchorPos)}
+    get hasAnchorPosChanged() {
+        const anchorPos = this.anchorPos
+        return !CDEUtils.posEquals(this.#lastAnchorPos, anchorPos)&&anchorPos
+    }
 
-    set x(x) {this._pos[0] = x}
-    set y(y) {this._pos[1] = y}
-    set pos(pos) {this._pos = pos}
-    set relativeX(x) {this._pos[0] = this.anchorPos[0]+x}
-    set relativeY(y) {this._pos[1] = this.anchorPos[1]+y}
+    set x(x) {this._pos[0] = CDEUtils.round(x, Obj.POSITION_PRECISION)}
+    set y(y) {this._pos[1] = CDEUtils.round(y, Obj.POSITION_PRECISION)}
+    set pos(pos) {
+        this.x = pos[0]
+        this.y = pos[1]
+    }
+    set relativeX(x) {this._pos[0] = CDEUtils.round(this.anchorPos[0]+x, Obj.POSITION_PRECISION)}
+    set relativeY(y) {this._pos[1] = CDEUtils.round(this.anchorPos[1]+y, Obj.POSITION_PRECISION)}
     set relativePos(pos) {
-        this.relativeX = pos[0]
-        this.relativeY = pos[1]
+        this.relativeX = CDEUtils.round(pos[0], Obj.POSITION_PRECISION)
+        this.relativeY = CDEUtils.round(pos[1], Obj.POSITION_PRECISION)
     }
     set radius(radius) {this._radius = radius<0?0:radius}
     set initPos(initPos) {this._initPos = initPos}
@@ -229,9 +235,7 @@ class Obj extends _HasColor {
     set initialized(init) {this._initialized = init}
     set alwaysActive(alwaysActive) {this._alwaysActive = alwaysActive}
     set anchorPos(anchorPos) {this.anchorPosRaw = anchorPos}
-    set anchorPosRaw(anchorPos) {
-        this._anchorPos = anchorPos
-    }
-    set lastAnchorPos(l) {this.#lastAnchorPos = l}
+    set anchorPosRaw(anchorPos) {this._anchorPos = anchorPos}
+    set lastAnchorPos(lastAnchorPos) {this.#lastAnchorPos = lastAnchorPos}
     
 }

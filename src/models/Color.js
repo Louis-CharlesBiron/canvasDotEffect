@@ -135,7 +135,8 @@ class Color {
     }
 
     static getColorValue(color) {
-        if (typeof color == "string" || color instanceof CanvasGradient) return color
+        if (typeof color==="string" || color instanceof CanvasGradient) return color
+        else if (color instanceof Gradient) return color.gradient
         else return Color.formatRgba(color) ?? color.color
     }
 
@@ -179,7 +180,9 @@ class Color {
     }
 
     toString() {
-        return this._color.toString()
+        let colorValue = Color.getColorValue(this._color)
+        if (colorValue instanceof CanvasGradient) colorValue = this._color.toString()
+        return colorValue
     }
 
     // returns the usable value of the color
@@ -232,4 +235,3 @@ class Color {
         }
     }
 }
-
