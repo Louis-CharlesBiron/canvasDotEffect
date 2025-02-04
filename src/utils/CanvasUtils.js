@@ -39,7 +39,7 @@ class CanvasUtils {
         // skip if not visible
         if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
 
-        dot.render.stroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
+        dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
@@ -51,8 +51,8 @@ class CanvasUtils {
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
             const res = dot.getLinearIntersectPoints(target, (target.radius??Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-            dot.render.stroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
-        } else dot.render.stroke(Render.getLine(dot.pos, endPos), renderStyles)
+            dot.render.batchStroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
+        } else dot.render.batchStroke(Render.getLine(dot.pos, endPos), renderStyles)
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
@@ -68,8 +68,8 @@ class CanvasUtils {
             const c = dot.connections[i]
             if (radiusPaddingMultiplier) {
                 const res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-                dot.render.stroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
-            } else dot.render.stroke(Render.getLine(dot.pos, c.pos), renderStyles)
+                dot.render.batchStroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
+            } else dot.render.batchStroke(Render.getLine(dot.pos, c.pos), renderStyles)
         }
         
         if (isDestinationOver) ctx.globalCompositeOperation = "source-over"

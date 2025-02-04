@@ -21,7 +21,7 @@ class Dot extends Obj {
             }
 
             // draw dot
-            if (this._radius) render.fill(Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
+            if (this._radius) render.batchFill(Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
         } else this.initialized = true
         super.draw(time, deltaTime)
     }
@@ -63,7 +63,7 @@ class Dot extends Obj {
      *      target: [ [x, y], [x, y] ]
      * } The 2 intersection points for the target and for the source
      */
-    getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {// OPTIMIZE TODO
+    getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {
         const [tx, ty] = target.pos??target, [sx, sy] = source.pos??source,
             [a, b, lfn] = CDEUtils.getLinearFn([sx,sy], [tx,ty]), t_r = targetPadding**2, s_r = sourcePadding**2,
             qA = (1+a**2)*2,
