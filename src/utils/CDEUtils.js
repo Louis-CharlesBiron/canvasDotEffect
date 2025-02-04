@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Sketchy array utils :)
 // Returns the element at the specified index, starting from the end of the array
 Array.prototype.last=function(index=0){return this[this.length-1-index]}
 // Adds an element to the specified index of the array
@@ -164,7 +163,3 @@ class CDEUtils {
     }
 
 }
-
-
-
-

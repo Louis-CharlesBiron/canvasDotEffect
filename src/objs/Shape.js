@@ -39,8 +39,8 @@ class Shape extends Obj {
     }
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
-    draw(ctx, time, deltaTime) {
-        super.draw(ctx, time, deltaTime)
+    draw(render, time, deltaTime) {
+        super.draw(time, deltaTime)
         if (CDEUtils.isFunction(this._ratioPosCB)) this._ratioPos = this._ratioPosCB(this)
     }
 
@@ -228,7 +228,6 @@ class Shape extends Obj {
             permimeter.moveTo(...this.dots[0].pos)
             for (let i=1;i<d_ll;i++) permimeter.lineTo(...this.dots[i].pos)
             permimeter.closePath()
-
             return this.ctx.isPointInPath(permimeter, ...pos)
         }
         return false
@@ -255,6 +254,7 @@ class Shape extends Obj {
 
     get cvs() {return this._cvs}
     get ctx() {return this._cvs.ctx}
+    get render() {return this._cvs.render}
     get dots() {return this._dots}
     get dotsPos() {return this._dots.map(dot=>dot.pos)}
     get limit() {return this._limit}

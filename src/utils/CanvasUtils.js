@@ -39,7 +39,7 @@ class CanvasUtils {
         // skip if not visible
         if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
 
-        Render.stroke(dot.ctx, Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
+        dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
@@ -51,32 +51,28 @@ class CanvasUtils {
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
             const res = dot.getLinearIntersectPoints(target, (target.radius??Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-            Render.stroke(dot.ctx, Render.getLine(res.source.inner, res.target.inner), renderStyles)
-        } else {
-            Render.stroke(dot.ctx, Render.getLine(dot.pos, endPos), renderStyles)
-        }
+            dot.render.batchStroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
+        } else dot.render.batchStroke(Render.getLine(dot.pos, endPos), renderStyles)
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
-    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, isSourceOver=false) {
+    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, isDestinationOver=true) {
         const ctx = dot.ctx, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles
 
         // skip if not visible
         if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
 
-        if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
+        if (isDestinationOver) ctx.globalCompositeOperation = "destination-over"
 
         if (dc_ll) for (let i=0;i<dc_ll;i++) {
             const c = dot.connections[i]
             if (radiusPaddingMultiplier) {
                 const res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-                Render.stroke(ctx, Render.getLine(res.source.inner, res.target.inner), renderStyles)
-            } else {
-                Render.stroke(ctx, Render.getLine(dot.pos, c.pos), renderStyles)
-            }
+                dot.render.batchStroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
+            } else dot.render.batchStroke(Render.getLine(dot.pos, c.pos), renderStyles)
         }
         
-        if (!isSourceOver) ctx.globalCompositeOperation = "source-over"
+        if (isDestinationOver) ctx.globalCompositeOperation = "source-over"
     }
 
     // Generic function to get a callback that can make a dot draggable and throwable
@@ -108,7 +104,7 @@ class CanvasUtils {
 
         static THROWABLE_DOT(pos, radius, color) {
             const dragAnim = CanvasUtils.getDraggableDotCB()
-            return new Shape(pos||[10,10],new Dot(), radius, color, null, (ctx, dot, ratio, m, dist, shape)=>{
+            return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, m, dist, shape)=>{
                 dragAnim(shape.firstDot, m, dist, ratio)
             })
         }

@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Sketchy array utils :)
 // Returns the element at the specified index, starting from the end of the array
 Array.prototype.last=function(index=0){return this[this.length-1-index]}
 // Adds an element to the specified index of the array
@@ -164,11 +163,6 @@ class CDEUtils {
     }
 
 }
-
-
-
-
-
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
 // Please don't use or credit this code as your own.
@@ -210,7 +204,7 @@ class CanvasUtils {
         // skip if not visible
         if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
 
-        Render.stroke(dot.ctx, Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
+        dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
@@ -222,32 +216,28 @@ class CanvasUtils {
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
             const res = dot.getLinearIntersectPoints(target, (target.radius??Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-            Render.stroke(dot.ctx, Render.getLine(res.source.inner, res.target.inner), renderStyles)
-        } else {
-            Render.stroke(dot.ctx, Render.getLine(dot.pos, endPos), renderStyles)
-        }
+            dot.render.batchStroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
+        } else dot.render.batchStroke(Render.getLine(dot.pos, endPos), renderStyles)
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
-    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, isSourceOver=false) {
+    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, isDestinationOver=true) {
         const ctx = dot.ctx, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles
 
         // skip if not visible
         if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
 
-        if (!isSourceOver) ctx.globalCompositeOperation = "destination-over"
+        if (isDestinationOver) ctx.globalCompositeOperation = "destination-over"
 
         if (dc_ll) for (let i=0;i<dc_ll;i++) {
             const c = dot.connections[i]
             if (radiusPaddingMultiplier) {
                 const res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-                Render.stroke(ctx, Render.getLine(res.source.inner, res.target.inner), renderStyles)
-            } else {
-                Render.stroke(ctx, Render.getLine(dot.pos, c.pos), renderStyles)
-            }
+                dot.render.batchStroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
+            } else dot.render.batchStroke(Render.getLine(dot.pos, c.pos), renderStyles)
         }
         
-        if (!isSourceOver) ctx.globalCompositeOperation = "source-over"
+        if (isDestinationOver) ctx.globalCompositeOperation = "source-over"
     }
 
     // Generic function to get a callback that can make a dot draggable and throwable
@@ -279,7 +269,7 @@ class CanvasUtils {
 
         static THROWABLE_DOT(pos, radius, color) {
             const dragAnim = CanvasUtils.getDraggableDotCB()
-            return new Shape(pos||[10,10],new Dot(), radius, color, null, (ctx, dot, ratio, m, dist, shape)=>{
+            return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, m, dist, shape)=>{
                 dragAnim(shape.firstDot, m, dist, ratio)
             })
         }
@@ -514,6 +504,12 @@ class Color {
         return [CDEUtils.round(r, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(g, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(b, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(a, Color.DEFAULT_DECIMAL_ROUNDING_POINT)]
     }
 
+    static getColorValue(color) {
+        if (typeof color==="string" || color instanceof CanvasGradient) return color
+        else if (color instanceof Gradient) return color.gradient
+        else return Color.formatRgba(color) ?? color.color
+    }
+
     /**
      * Returns the first pos where the provided color is found in the canvas
      * @param {Canvas} canvas: Canvas instance
@@ -554,7 +550,9 @@ class Color {
     }
 
     toString() {
-        return "C"+this._color.toString()
+        let colorValue = Color.getColorValue(this._color)
+        if (colorValue instanceof CanvasGradient) colorValue = this._color.toString()
+        return colorValue
     }
 
     // returns the usable value of the color
@@ -607,8 +605,6 @@ class Color {
         }
     }
 }
-
-
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
 // Please don't use or credit this code as your own.
@@ -625,15 +621,15 @@ class _HasColor {
     get colorRaw() {return this._color.colorRaw}
     get color() {return this._color?.color}
     get initColor() {return this._initColor}
-    get rgba() {return this.colorObject.rgba}
-    get r() {return this.colorObject.r}
-    get g() {return this.colorObject.g}
-    get b() {return this.colorObject.b}
-    get a() {return this.colorObject.a}
-    get hsv() {return this.colorObject.hsv}
-    get hue() {return this.colorObject.hue}
-    get saturation() {return this.colorObject.saturation}
-    get brightness() {return this.colorObject.brightness}
+    get rgba() {return this._color.rgba}
+    get r() {return this._color.r}
+    get g() {return this._color.g}
+    get b() {return this._color.b}
+    get a() {return this._color.a}
+    get hsv() {return this._color.hsv}
+    get hue() {return this._color.hue}
+    get saturation() {return this._color.saturation}
+    get brightness() {return this._color.brightness}
 
     set color(color) {
         if (this._color?.colorRaw?.toString() !== color?.toString() || !this._color) {
@@ -645,13 +641,13 @@ class _HasColor {
             this._color = Color.adjust(color)
         }
     }
-    set r(r) {this.colorObject.r = r}
-    set g(g) {this.colorObject.g = g}
-    set b(b) {this.colorObject.b = b}
-    set a(a) {this.colorObject.a = a}
-    set hue(hue) {this.colorObject.hue = hue}
-    set saturation(saturation) {this.colorObject.saturation = saturation}
-    set brightness(brightness) {this.colorObject.brightness = brightness}
+    set r(r) {this._color.r = r}
+    set g(g) {this._color.g = g}
+    set b(b) {this._color.b = b}
+    set a(a) {this._color.a = a}
+    set hue(hue) {this._color.hue = hue}
+    set saturation(saturation) {this._color.saturation = saturation}
+    set brightness(brightness) {this._color.brightness = brightness}
     set initColor(initColor) {this._initColor = initColor}
 }
 // all sources should be built with "D", this object provides all the cardinal and intercardinal directions that should link the dots to create symbols
@@ -1018,100 +1014,120 @@ class Mouse {
 class Render {
     static TYPES = {LINEAR:"getLine", QUADRATIC:"getQuadCurve", CUBIC_BEIZER:"getBeizerCurve", ARC:"getArc"}
 
+    constructor(ctx) {
+        this._ctx = ctx
+        this._batchStrokes = {}
+        this._batchFills = {}
+    }
+
     /*
     TODO:
     - documentation for code and readme
 
-
-    TESTS:
-    - use gradient for color in renderStyles (should work :])
-
-
     OPTIMISATIONS:
     - use cache for lines ?? (see Path2D?)
-    - batch calls?
-    - learn and check chrome profiling performance
-
     */
 
-    // DOC TODO
+    // instanciates and returns a path containing a line
     static getLine(startPos, endPos) {
-        return ctx=>{
-            ctx.moveTo(...startPos)
-            ctx.lineTo(...endPos)
-        }
+        const path = new Path2D()
+        path.moveTo(...startPos)
+        path.lineTo(...endPos)
+        return path
     }
 
-    // DOC TODO
+    // instanciates and returns a path containing a quadratic curve
     static getQuadCurve(startPos, endPos, controlPos) {
         controlPos ??= [startPos[1]+20, startPos[0]+20] // TODO
-        return ctx=>{
-            ctx.moveTo(...startPos)
-            ctx.quadraticCurveTo(...controlPos, ...endPos)
-        }
+
+        const path = new Path2D()
+        path.moveTo(...startPos)
+        path.quadraticCurveTo(...controlPos, ...endPos)
+        return path
+        
     }
 
-    // DOC TODO
+    // instanciates and returns a path containing a cubic beizer curve
     static getBeizerCurve(startPos, endPos, controlPos1, controlPos2) {
         controlPos1 ??= [startPos[1]+20, startPos[0]+20] // TODO
         controlPos2 ??= [endPos[1]+20, endPos[0]+20] // TODO
 
-        return ctx=>{
-            ctx.moveTo(...startPos)
-            ctx.bezierCurveTo(...controlPos1, ...controlPos2, ...endPos)
-        }
+        const path = new Path2D()
+        path.moveTo(...startPos)
+        path.bezierCurveTo(...controlPos1, ...controlPos2, ...endPos)
+        return path
     }
 
-    // DOC TODO
+    // instanciates and returns a path containing an arc
     static getArc(pos, radius, startRadian=0, endRadian=CDEUtils.CIRC) {
-        return ctx=>{
-            ctx.arc(pos[0], pos[1], radius, startRadian, endRadian)
+        const path = new Path2D()
+        path.arc(pos[0], pos[1], radius, startRadian, endRadian)
+        return path
+    }
+
+    // Queues a path to be stroked in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
+    batchStroke(path, renderStyles) {
+        if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+            const profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString() : RenderStyles.DEFAULT_PROFILE.toString(renderStyles)
+            if (!this._batchStrokes[profileKey]) this._batchStrokes[profileKey] = new Path2D()
+            this._batchStrokes[profileKey].addPath(path)
         }
     }
 
-    // DOC TODO
-    static stroke(ctx, lineType, renderStyles) {
+    // Queues a path to be filled in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
+    batchFill(path, renderStyles) {
+        if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+            const profileKey = renderStyles instanceof RenderStyles ? renderStyles.colorOnlyToString() : RenderStyles.DEFAULT_PROFILE.colorOnlyToString(renderStyles)
+            if (!this._batchFills[profileKey]) this._batchFills[profileKey] = new Path2D()
+            this._batchFills[profileKey].addPath(path)
+        } 
+    }
+
+    // Fills and strokes all batched path
+    drawBatched() {
+        const strokes = Object.entries(this._batchStrokes), s_ll = strokes.length,
+              fills = Object.entries(this._batchFills), f_ll = fills.length
+              
+        for (let i=0;i<s_ll;i++) {
+            let [profileKey, path] = strokes[i], [colorValue, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
+            if (colorValue.includes(Gradient.SERIALIZATION_SEPARATOR)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
+            RenderStyles.applyStyles(this._ctx, colorValue, lineWidth, lineJoin, lineCap, lineDash?lineDash.split(",").map(Number).filter(x=>x):null, lineDashOffset)
+            this._ctx.stroke(path)
+        }
+
+        for (let i=0;i<f_ll;i++) {
+            let [colorValue, path] = fills[i]
+            if (colorValue.includes(Gradient.SERIALIZATION_SEPARATOR)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
+            RenderStyles.applyStyles(this._ctx, colorValue)
+            this._ctx.fill(path)
+        }
+
+        this._batchStrokes = {}
+        this._batchFills = {}
+    }
+
+    // directly strokes a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
+    stroke(path, renderStyles) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
             if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
             else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
 
-            ctx.beginPath()
-            lineType(ctx)
-            ctx.stroke()
+            this._ctx.stroke(path)
         }
     }
 
-    // DOC TODO
-    static fill(ctx, lineType, renderStyles) {
+    // directly fills a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
+    fill(path, renderStyles) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
             if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
             else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
 
-            ctx.beginPath()
-            lineType(ctx)
-            ctx.fill()
+            this._ctx.fill(path)
         }
     }
 
-    // DOC TODO
-    static strokePath(ctx, path, renderStyles) {
-        if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
-            else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
-
-            ctx.stroke(path)
-        }
-    }
-
-    // DOC TODO
-    static fillPath(ctx, path, renderStyles) {
-        if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
-            else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
-
-            ctx.fill(path)
-        }
-    }
+    get ctx() {return this._ctx}
+    get batch() {return this._batch}
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -1127,11 +1143,12 @@ class RenderStyles extends _HasColor {
     static DEFAULT_JOIN = RenderStyles.JOIN_TYPES.MITER
     static DEFAULT_DASH = []
     static DEFAULT_DASH_OFFSET = 0
-    static DEFAULT_PROFILE = new RenderStyles(null, Color.DEFAULT_RGBA, RenderStyles.DEFAULT_WIDTH, RenderStyles.DEFAULT_JOIN, RenderStyles.DEFAULT_CAP, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH_OFFSET)
+    static DEFAULT_PROFILE = new RenderStyles(null, Color.DEFAULT_RGBA, RenderStyles.DEFAULT_WIDTH, RenderStyles.DEFAULT_JOIN, RenderStyles.DEFAULT_CAP, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH_OFFSET)
     static PROFILE1 = RenderStyles.getNewProfile()
     static PROFILE2 = RenderStyles.getNewProfile()
     static PROFILE3 = RenderStyles.getNewProfile()
     static PROFILES = []
+    static SERIALIZATION_SEPARATOR = "%"
     static #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.#getStyles()
 
     constructor(ctx, color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
@@ -1164,6 +1181,18 @@ class RenderStyles extends _HasColor {
         return [this.color, this._lineWidth, this._lineJoin, this._lineCap, this._lineDash, this._lineDashOffset]
     }
 
+    toString(color=this._color, lineWidth=this._lineWidth, lineJoin=this._lineJoin, lineCap=this._lineCap, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset) {
+        let sep = RenderStyles.SERIALIZATION_SEPARATOR, colorValue = Color.getColorValue(color)
+        if (colorValue instanceof CanvasGradient) colorValue = color.toString()
+        return colorValue+sep+lineWidth+sep+lineJoin+sep+lineCap+sep+lineDash+sep+lineDashOffset
+    }
+
+    colorOnlyToString(color=this._color) {
+        let colorValue = Color.getColorValue(color)
+        if (colorValue instanceof CanvasGradient) colorValue = color.toString()
+        return colorValue
+    }
+
     // updates a profile's attributes and returns the updated version
     updateStyles(color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
         if (color) this.color = color
@@ -1177,14 +1206,24 @@ class RenderStyles extends _HasColor {
 
     // directly applies the styles of the profile
     applyStyles(color=this._color, lineWidth=this._lineWidth, lineJoin=this._lineJoin, lineCap=this._lineCap, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset) {
-        const ctx = this._ctx, colorValue = Color.formatRgba(color)??color.color
+        const ctx = this._ctx, colorValue = Color.getColorValue(color)
         if (color && RenderStyles.#currentCtxStyles[0] !== colorValue) RenderStyles.#currentCtxStyles[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
         if (lineWidth && RenderStyles.#currentCtxStyles[1] !== lineWidth) RenderStyles.#currentCtxStyles[1] = ctx.lineWidth = lineWidth
         if (lineJoin && RenderStyles.#currentCtxStyles[2] !== lineJoin) RenderStyles.#currentCtxStyles[2] = ctx.lineJoin = lineJoin
         if (lineCap && RenderStyles.#currentCtxStyles[3] !== lineCap) RenderStyles.#currentCtxStyles[3] = ctx.lineCap = lineCap
         if (lineDash && RenderStyles.#currentCtxStyles[4] != lineDash) RenderStyles.#currentCtxStyles[4] = ctx.setLineDash(lineDash)
         if (lineDashOffset && RenderStyles.#currentCtxStyles[5] !== lineDashOffset) RenderStyles.#currentCtxStyles[5] = ctx.lineDashOffset = lineDashOffset
+    }
 
+    // directly applies the provided styles
+    static applyStyles(ctx, color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
+        const colorValue = Color.getColorValue(color)
+        if (color && RenderStyles.#currentCtxStyles[0] !== colorValue) RenderStyles.#currentCtxStyles[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
+        if (lineWidth && RenderStyles.#currentCtxStyles[1] !== lineWidth) RenderStyles.#currentCtxStyles[1] = ctx.lineWidth = lineWidth
+        if (lineJoin && RenderStyles.#currentCtxStyles[2] !== lineJoin) RenderStyles.#currentCtxStyles[2] = ctx.lineJoin = lineJoin
+        if (lineCap && RenderStyles.#currentCtxStyles[3] !== lineCap) RenderStyles.#currentCtxStyles[3] = ctx.lineCap = lineCap
+        if (lineDash && RenderStyles.#currentCtxStyles[4] != lineDash) RenderStyles.#currentCtxStyles[4] = ctx.setLineDash(lineDash)
+        if (lineDashOffset && RenderStyles.#currentCtxStyles[5] !== lineDashOffset) RenderStyles.#currentCtxStyles[5] = ctx.lineDashOffset = lineDashOffset
     }
 
 	get ctx() {return this._ctx}
@@ -1201,31 +1240,6 @@ class RenderStyles extends _HasColor {
 	set lineDash(_lineDash) {return this._lineDash = _lineDash}
 	set lineDashOffset(_lineDashOffset) {return this._lineDashOffset = _lineDashOffset}
 }
-
-
-
-/*
-let a = CanvasUtils.SHAPES.DEBUG_SHAPE([500, 500])
-a.drawEffectCB = (ctx, dot, r, m, d, p, res)=>{
-    if (dot.id==p.firstDot.id) {
-        let p1 = p.firstDot.pos, p2 = p.dots[3].pos
-
-
-        let perp = CDEUtils.getPerpendicularLinearFn(CDEUtils.getLinearFn(p1, p2)), rad = CDEUtils.getDist(...p1, ...p2)/4
-        console.log(rad)
-        let c1 = [perp[3][0]+rad*2, perp[2](perp[3][0]+rad)+rad/2],
-            c2 = [perp[3][0], perp[2](perp[3][0]-rad)+rad/2]
-
-        Line.draw(ctx, Line.getBeizerCurve(p1, p2, c1, c2), [0,0,255,1])
-        
-        CanvasUtils.DRAW.POINT(ctx, c1, 3, new Color("red"))
-        CanvasUtils.DRAW.POINT(ctx, c2, 3, new Color("green"))
-        
-    }
-}
-
-CVS.add(a)
-*/
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
 // Please don't use or credit this code as your own.
@@ -1242,7 +1256,7 @@ class Canvas {
     static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
     static DEFAULT_CVSDE_ATTR = "_CVSDE"
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
-    static DEFAULT_CTX_SETTINGS = {"lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":RenderStyles.DEFAULT_WIDTH,  "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
+    static DEFAULT_CTX_SETTINGS = {"lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
@@ -1276,6 +1290,7 @@ class Canvas {
         this._typingDevice = new TypingDevice()                        // keyboard info
         this._mouse = new Mouse()                                      // mouse info
         this._offset = this.updateOffset()                             // cvs page offset
+        this._render = new Render(this._ctx)                           // render instance
 
         RenderStyles.initializeDefaultProfiles(this._ctx)
     }
@@ -1327,7 +1342,7 @@ class Canvas {
             this.#lastFrame = time
         }
 
-        if (this._looping) CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
+        CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
     }
 
     #loopCore(time) {
@@ -1340,6 +1355,7 @@ class Canvas {
 
             this.clear()
             this.draw()
+            this._render.drawBatched()
             
             if (CDEUtils.isFunction(this._loopingCallback)) this._loopingCallback()
 
@@ -1374,8 +1390,8 @@ class Canvas {
         const els = this.#cachedEls, els_ll = els.length
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
-            if (!el.alwaysActive && el.initialized && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING)) continue
-            el.draw(this._ctx, this.timeStamp, this._deltaTime)
+            if (!el.draw || (!el.alwaysActive && el.initialized && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING))) continue
+            el.draw(this._render, this.timeStamp, this._deltaTime)
         }
     }
 
@@ -1591,6 +1607,7 @@ class Canvas {
     get fpsLimit() {return this._fpsLimit==null||!isFinite(this._fpsLimit) ? null : 1/(this._fpsLimit/1000)}
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
+    get render() {return this._render}
 
 	set loopingCallback(_cb) {this._loopingCallback = _cb}
 	set width(w) {this.setSize(w, null)}
@@ -1625,13 +1642,13 @@ class Anim {
     
     // progresses the animation 1 frame fowards (loop each frame) 
     getFrame(time, deltaTime) {
-        const isInfinite = Math.sign(this._duration)===-1
+        const isInfinite = this._duration<0, duration = isInfinite?-this._duration:this._duration
         if (!this._playCount || isInfinite) {
             // SET START TIME
             if (!this._startTime) this._startTime = time
             // PLAY ANIMATION
-            else if (time<this._startTime+Math.abs(this._duration)) {
-                this._progress = this._easing((time-this._startTime)/Math.abs(this._duration))
+            else if (time<this._startTime+duration) {
+                this._progress = this._easing((time-this._startTime)/duration)
                 this._animation(this._progress, this._playCount, deltaTime, this.progress)
             }
             // REPEAT IF NEGATIVE DURATION
@@ -1723,6 +1740,7 @@ class Obj extends _HasColor {
     static DEFAULT_POS = [0,0]
     static DEFAULT_RADIUS = 5
     static ABSOLUTE_ANCHOR = "ABSOLUTE_ANCHOR"
+    static POSITION_PRECISION = 4
 
     #lastAnchorPos = [0,0]
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
@@ -1766,8 +1784,8 @@ class Obj extends _HasColor {
     }
 
     setAnchoredPos() {
-        if (this.hasAnchorPosChanged) {
-            const anchorPos = this.anchorPos
+        const anchorPos = this.hasAnchorPosChanged
+        if (anchorPos) {
             this.relativeX += anchorPos[0]-this.lastAnchorPos[0]
             this.relativeY += anchorPos[1]-this.lastAnchorPos[1]
             this.lastAnchorPos = anchorPos
@@ -1775,7 +1793,7 @@ class Obj extends _HasColor {
     }
 
     // Runs every frame
-    draw(ctx, time, deltaTime) {
+    draw(time, deltaTime) {
         // update pos according to anchor pos
         this.setAnchoredPos()
 
@@ -1914,26 +1932,32 @@ class Obj extends _HasColor {
     get alwaysActive() {return this._alwaysActive}
     get anchorPosRaw() {return this._anchorPos}
     get anchorPos() {// returns the anchorPos value
-        if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent?.pos_
+        if (Array.isArray(this._anchorPos)) return this._anchorPos
+        else if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent?.pos_
         else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_
         else if (this._anchorPos===Obj.ABSOLUTE_ANCHOR) return [0,0]
         else if (CDEUtils.isFunction(this._anchorPos)) {
             const res = this._anchorPos(this, this._cvs??this.parent)
             return [...(res?.pos_||res||[0,0])]
         }
-        else return this._anchorPos
     }
     get lastAnchorPos() {return this.#lastAnchorPos}
-    get hasAnchorPosChanged() {return !CDEUtils.posEquals(this.#lastAnchorPos, this.anchorPos)}
+    get hasAnchorPosChanged() {
+        const anchorPos = this.anchorPos
+        return !CDEUtils.posEquals(this.#lastAnchorPos, anchorPos)&&anchorPos
+    }
 
-    set x(x) {this._pos[0] = x}
-    set y(y) {this._pos[1] = y}
-    set pos(pos) {this._pos = pos}
-    set relativeX(x) {this._pos[0] = this.anchorPos[0]+x}
-    set relativeY(y) {this._pos[1] = this.anchorPos[1]+y}
+    set x(x) {this._pos[0] = CDEUtils.round(x, Obj.POSITION_PRECISION)}
+    set y(y) {this._pos[1] = CDEUtils.round(y, Obj.POSITION_PRECISION)}
+    set pos(pos) {
+        this.x = pos[0]
+        this.y = pos[1]
+    }
+    set relativeX(x) {this._pos[0] = CDEUtils.round(this.anchorPos[0]+x, Obj.POSITION_PRECISION)}
+    set relativeY(y) {this._pos[1] = CDEUtils.round(this.anchorPos[1]+y, Obj.POSITION_PRECISION)}
     set relativePos(pos) {
-        this.relativeX = pos[0]
-        this.relativeY = pos[1]
+        this.relativeX = CDEUtils.round(pos[0], Obj.POSITION_PRECISION)
+        this.relativeY = CDEUtils.round(pos[1], Obj.POSITION_PRECISION)
     }
     set radius(radius) {this._radius = radius<0?0:radius}
     set initPos(initPos) {this._initPos = initPos}
@@ -1943,10 +1967,8 @@ class Obj extends _HasColor {
     set initialized(init) {this._initialized = init}
     set alwaysActive(alwaysActive) {this._alwaysActive = alwaysActive}
     set anchorPos(anchorPos) {this.anchorPosRaw = anchorPos}
-    set anchorPosRaw(anchorPos) {
-        this._anchorPos = anchorPos
-    }
-    set lastAnchorPos(l) {this.#lastAnchorPos = l}
+    set anchorPosRaw(anchorPos) {this._anchorPos = anchorPos}
+    set lastAnchorPos(lastAnchorPos) {this.#lastAnchorPos = lastAnchorPos}
     
 }
 // JS
@@ -1990,8 +2012,8 @@ class Shape extends Obj {
     }
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
-    draw(ctx, time, deltaTime) {
-        super.draw(ctx, time, deltaTime)
+    draw(render, time, deltaTime) {
+        super.draw(time, deltaTime)
         if (CDEUtils.isFunction(this._ratioPosCB)) this._ratioPos = this._ratioPosCB(this)
     }
 
@@ -2179,7 +2201,6 @@ class Shape extends Obj {
             permimeter.moveTo(...this.dots[0].pos)
             for (let i=1;i<d_ll;i++) permimeter.lineTo(...this.dots[i].pos)
             permimeter.closePath()
-
             return this.ctx.isPointInPath(permimeter, ...pos)
         }
         return false
@@ -2206,6 +2227,7 @@ class Shape extends Obj {
 
     get cvs() {return this._cvs}
     get ctx() {return this._cvs.ctx}
+    get render() {return this._cvs.render}
     get dots() {return this._dots}
     get dotsPos() {return this._dots.map(dot=>dot.pos)}
     get limit() {return this._limit}
@@ -2243,6 +2265,8 @@ class Gradient {
     static PLACEHOLDER = "PLACERHOLDER" // can be used to instantiate a Gradient without positions, and apply that of the object on assignement
     static TYPES = {LINEAR:"Linear", RADIAL:"Radial", CONIC:"Conic"}
     static DEFAULT_TYPE = Gradient.TYPES.LINEAR
+    static SERIALIZATION_SEPARATOR = "*"
+    static SERIALIZATION_COLOR_STOPS_SEPARATOR = "$"
 
     #lastDotsPos = null
     #lastRotation = null
@@ -2254,7 +2278,6 @@ class Gradient {
         this._positions = this.getAutomaticPositions()??this._initPositions // usable positions from initPositions
         this._colorStops = colorStops.map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
         this._rotation = rotation??0
-
         this._gradient = null // useable as a fillStyle
         this.updateGradient()
     }
@@ -2267,22 +2290,21 @@ class Gradient {
     /**
      * Given a shape, returns automatic positions values for linear or radial gradients
      * @param {Shape} obj: Instance of Shape or inheriting shape 
-     * @param {boolean} optimize: if enabled recalculates positions only when a dot changes pos (disable only for manual usage of this function) 
+     * @param {boolean} disableOptimization: if false, recalculates positions only when a dot changes pos (set to true only for manual usage of this function) 
      * @returns the new calculated positions or the current value of this._positions if the parameter 'shape' isn't an instance of Shape
      */
-    getAutomaticPositions(obj=this._initPositions, optimize=true) {
+    getAutomaticPositions(obj=this._initPositions, disableOptimization=false) {
         if (obj instanceof Shape) {
-            if (this.#hasShapeChanged(obj) || !optimize) {
+            if (this.#hasShapeChanged(obj) || disableOptimization) {
                 const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"),
                     smallestX = rangeX[0], smallestY = rangeY[0], biggestX = rangeX[1], biggestY = rangeY[1],
                     cx = smallestX+(biggestX-smallestX)/2, cy = smallestY+(biggestY-smallestY)/2
-
                 if (this._type===Gradient.TYPES.LINEAR) return this.#getLinearPositions(smallestX-cx, smallestY-cy, biggestX-cx, biggestY-cy, cx, cy)
                 else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(cx, cy, Math.max(biggestX-smallestX, biggestY-smallestY))
                 else return obj.getCenter()
             } else return this._positions
         } else if (obj instanceof Dot) {
-            if (this.#hasDotChanged(obj) || !optimize) {
+            if (this.#hasDotChanged(obj) || disableOptimization) {
                 if (this._type===Gradient.TYPES.LINEAR) return this.#getLinearPositions(obj.left-obj.x, obj.top-obj.y, obj.right-obj.x, obj.bottom-obj.y, obj.x, obj.y)
                 else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(obj.x, obj.y, obj.radius)
                 else return obj.pos_
@@ -2292,7 +2314,7 @@ class Gradient {
 
     #getLinearPositions(x, y, x2, y2, cx, cy) {
         const cosV = Math.cos(CDEUtils.toRad(this._rotation)), sinV = Math.sin(CDEUtils.toRad(this._rotation))
-        return [[(x*cosV-y*sinV)+cx, (x*sinV+y*cosV)+cy], [(x2*cosV-y2*sinV)+cx, (x2*sinV+y2*cosV)+cy]]
+        return [[CDEUtils.round((x*cosV-y*sinV)+cx), CDEUtils.round((x*sinV+y*cosV)+cy)], [CDEUtils.round((x2*cosV-y2*sinV)+cx), CDEUtils.round((x2*sinV+y2*cosV)+cy)]]
     }
 
     #getRadialPositions(x, y, coverRadius) {
@@ -2319,18 +2341,30 @@ class Gradient {
 
     // Creates and returns the gradient. Updates it if the initPositions is a Shape/Dot instance
     updateGradient() {
-        if (this._initPositions !== Gradient.PLACEHOLDER) {
-            this._positions = this.getAutomaticPositions()
-            if (this._type===Gradient.TYPES.CONIC) this._gradient = this._ctx.createConicGradient(CDEUtils.toRad(this._rotation), ...this._positions)
-            else this._gradient = this._ctx[`create${this._type}Gradient`](...this._positions[0], ...this._positions[1])
-            const cs_ll = this._colorStops.length
-            for (let i=0;i<cs_ll;i++) this._gradient.addColorStop(this._colorStops[i][0], this._colorStops[i][1].color)
-            return this._gradient
-        }
+        if (this._initPositions !== Gradient.PLACEHOLDER) return this._gradient = Gradient.getCanvasGradient(this._ctx, this._positions = this.getAutomaticPositions(), this._colorStops, this._type, this._rotation)
+    }
+
+    // returns a CanvasGradient instance from the provided parameters
+    static getCanvasGradient(ctx, positions, colorStops, type, rotation) {
+        const canvasGradient = type===Gradient.TYPES.CONIC ? ctx.createConicGradient(CDEUtils.toRad(rotation), ...positions) : ctx[`create${type}Gradient`](...positions[0], ...positions[1]), cs_ll = colorStops.length
+        for (let i=0;i<cs_ll;i++) canvasGradient.addColorStop(colorStops[i][0], Color.getColorValue(colorStops[i][1]))
+        return canvasGradient
     }
 
     toString() {
-        return "G"+this._positions+this._colorStops+this._type+this._rotation
+        const sep = Gradient.SERIALIZATION_SEPARATOR
+        return this._positions+sep+this._colorStops.flat().join(Gradient.SERIALIZATION_COLOR_STOPS_SEPARATOR)+sep+this._type+sep+this._rotation
+    }
+
+    // returns a CanvasGradient instance from a serialized Gradient string
+    static getCanvasGradientFromString(ctx, str) {
+        let [positions, colorStops, type, rotation] = str.split(Gradient.SERIALIZATION_SEPARATOR), splitPositions = positions.split(","), splitColorStops = colorStops.split(Gradient.SERIALIZATION_COLOR_STOPS_SEPARATOR), scs_ll = splitColorStops.length
+
+        positions = splitPositions.length===2 ? [+splitPositions[0], +splitPositions[1]] : [[+splitPositions[0], +splitPositions[1]], [+splitPositions[2], +splitPositions[3]]]
+        colorStops = []
+        for (let i=0;i<scs_ll;i+=2) colorStops.push([+splitColorStops[i], splitColorStops[i+1]])
+        
+        return Gradient.getCanvasGradient(ctx, positions, colorStops, type, +rotation)
     }
 
     get ctx() {return this._ctx}
@@ -2349,7 +2383,7 @@ class Gradient {
 	set positions(_positions) {this._positions = _positions}
 	set colorStops(_colorStops) {this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])}
     set type(type) {this._type = type}
-	set rotation(deg) {this._rotation = deg}
+	set rotation(deg) {this._rotation = CDEUtils.round(deg, 2)}
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -2376,12 +2410,12 @@ class FilledShape extends Shape {
     }
 
     // runs every frame, draws the shape if it is at least containing 3 dots
-    draw(ctx, time, deltaTime) {
-        super.draw(ctx, time, deltaTime)
+    draw(render, time, deltaTime) {
+        super.draw(render, time, deltaTime)
         
         if (this.dots.length > 2) {
             if (this._dynamicUpdates) this.updatePath()
-            Render.fillPath(this.ctx, this._path, this._fillColor)
+            render.fill(this._path, this._fillColor)
         }
     }
 
@@ -2520,18 +2554,18 @@ class Dot extends Obj {
     }
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
-    draw(ctx, time, deltaTime) {
+    draw(render, time, deltaTime) {
         if (this.initialized) {
             // runs parent drawEffect callback if defined
             if (CDEUtils.isFunction(this.drawEffectCB)) {
                 const dist = this.getDistance(), rawRatio = this.getRatio(dist), isActive = rawRatio<1
-                this.drawEffectCB(ctx, this, isActive?rawRatio:1, this.mouse, dist, this._parent, this.parentSetupResults, isActive, rawRatio)
+                this.drawEffectCB(render, this, isActive?rawRatio:1, this.mouse, dist, this._parent, this.parentSetupResults, isActive, rawRatio)
             }
 
             // draw dot
-            if (this._radius) Render.fill(ctx, Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
+            if (this._radius) render.batchFill(Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
         } else this.initialized = true
-        super.draw(ctx, time, deltaTime)
+        super.draw(time, deltaTime)
     }
 
     
@@ -2541,8 +2575,8 @@ class Dot extends Obj {
     }
 
     // returns pythagorian distance between the ratio defining position and the dot
-    getDistance(fx,fy) {
-        return CDEUtils.getDist(fx??this.ratioPos[0], fy??this.ratioPos[1], this.x, this.y)
+    getDistance(fx=this.ratioPos[0], fy=this.ratioPos[1]) {
+        return CDEUtils.getDist(fx, fy, this.x, this.y)
     }
 
     // calculates the ratio based on distance and parent's limit
@@ -2571,7 +2605,7 @@ class Dot extends Obj {
      *      target: [ [x, y], [x, y] ]
      * } The 2 intersection points for the target and for the source
      */
-    getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {// OPTIMIZE TODO
+    getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {
         const [tx, ty] = target.pos??target, [sx, sy] = source.pos??source,
             [a, b, lfn] = CDEUtils.getLinearFn([sx,sy], [tx,ty]), t_r = targetPadding**2, s_r = sourcePadding**2,
             qA = (1+a**2)*2,
@@ -2581,7 +2615,7 @@ class Dot extends Obj {
             t_qD = Math.sqrt(t_qB**2-(4*(qA/2)*((b-ty)**2+tx**2-t_r))),
             s_x1 = (s_qB+s_qD)/qA, s_x2 = (s_qB-s_qD)/qA, t_x1 = (t_qB+t_qD)/qA, t_x2 = (t_qB-t_qD)/qA,
             s_y1 = lfn(s_x1), s_y2 = lfn(s_x2), t_y1 = lfn(t_x1), t_y2 = lfn(t_x2)
-        return {source:{inner:[s_x1, s_y1], outer:[s_x2, s_y2]}, target:{outer:[t_x1, t_y1], inner:[t_x2, t_y2]}}
+        return [[[s_x1, s_y1], [s_x2, s_y2]], [[t_x2, t_y2], [t_x1, t_y1]]]
     }
 
     // deletes the dot
@@ -2592,6 +2626,7 @@ class Dot extends Obj {
 
     get cvs() {return this._parent?.cvs}
     get ctx() {return this._parent?.cvs.ctx}
+    get render() {return this._parent?.cvs.render}
     get limit() {return this._parent?.limit}
     get drawEffectCB() {return this._parent?.drawEffectCB}
     get parent() {return this._parent}

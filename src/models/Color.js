@@ -134,6 +134,12 @@ class Color {
         return [CDEUtils.round(r, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(g, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(b, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(a, Color.DEFAULT_DECIMAL_ROUNDING_POINT)]
     }
 
+    static getColorValue(color) {
+        if (typeof color==="string" || color instanceof CanvasGradient) return color
+        else if (color instanceof Gradient) return color.gradient
+        else return Color.formatRgba(color) ?? color.color
+    }
+
     /**
      * Returns the first pos where the provided color is found in the canvas
      * @param {Canvas} canvas: Canvas instance
@@ -174,7 +180,9 @@ class Color {
     }
 
     toString() {
-        return "C"+this._color.toString()
+        let colorValue = Color.getColorValue(this._color)
+        if (colorValue instanceof CanvasGradient) colorValue = this._color.toString()
+        return colorValue
     }
 
     // returns the usable value of the color
@@ -227,4 +235,3 @@ class Color {
         }
     }
 }
-
