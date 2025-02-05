@@ -34,21 +34,22 @@ class CanvasUtils {
     
     // Generic function to draw an outer ring around a dot
     static drawOuterRing(dot, renderStyles, radiusMultiplier) {
-        const color = renderStyles.colorObject??renderStyles
+        const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
 
         // skip if not visible
-        if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
+        if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
         dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
     static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0) {
-        const endPos = target.pos??target, color = renderStyles.colorObject??renderStyles
+        const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
         
         // skip if not visible
-        if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
+        if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
+        const endPos = target.pos??target
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
             const res = dot.getLinearIntersectPoints(target, (target.radius??Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
             dot.render.batchStroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
@@ -57,11 +58,11 @@ class CanvasUtils {
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
     static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, isDestinationOver=true) {
-        const ctx = dot.ctx, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles
+        const ctx = dot.ctx, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
 
         if (dc_ll) {
             // skip if not visible
-            if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
+            if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
             if (isDestinationOver) ctx.globalCompositeOperation = "destination-over"
 

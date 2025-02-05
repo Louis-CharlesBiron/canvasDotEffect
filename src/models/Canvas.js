@@ -118,7 +118,7 @@ class Canvas {
             if (CDEUtils.isFunction(this._loopingCallback)) this._loopingCallback()
 
             this._fixedTimeStamp = 0
-        } else if (time) {// maybe see if frame skipping is really necessary
+        } else if (time) {
             this._fixedTimeStamp = time-(this.#frameSkipsOffset += this.#maxTime)
             this.#frameSkipsOffset += this.#maxTime
         }   
@@ -139,8 +139,13 @@ class Canvas {
         return fpsLimit ? fpsLimit < 7 ? (((14-fpsLimit)*1.05)**3)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER : Math.max((360-fpsLimit)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER, 50) : Canvas.DEFAULT_MAX_DELTATIME_MS
     }
 
+    // updates cached canvas elements
     updateCachedAllEls() {
-        this.#cachedEls = this.refs.concat(this._els.refs.flatMap(source=>source.asSource)).concat(this._els.defs)
+        const cachedEls = []
+        cachedEls.push(...this.refs)
+        this._els.refs.forEach(source=>cachedEls.push(...source.asSource))
+        cachedEls.push(...this._els.defs)
+        this.#cachedEls = cachedEls
     }
 
     // calls the draw function on all canvas objects
@@ -367,7 +372,7 @@ class Canvas {
     get viewPos() {return this._viewPos}
     get render() {return this._render}
 
-	set loopingCallback(_cb) {this._loopingCallback = _cb}
+	set loopingCallback(loopingCallback) {this._loopingCallback = loopingCallback}
 	set width(w) {this.setSize(w, null)}
 	set height(h) {this.setSize(null, h)}
 	set offset(offset) {this._offset = offset}

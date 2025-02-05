@@ -29,7 +29,7 @@ class Dot extends Obj {
     
     // returns a separate copy of this Dot (only initialized for objects)
     duplicate() {
-        return this.initialized ? new Dot(this.pos_, this.radius, this.colorObject.duplicate(), this.setupCB) : null
+        return this.initialized ? new Dot(this.pos_, this.radius, this._color.duplicate(), this.setupCB) : null
     }
 
     // returns pythagorian distance between the ratio defining position and the dot

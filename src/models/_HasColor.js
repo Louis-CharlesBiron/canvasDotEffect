@@ -25,15 +25,18 @@ class _HasColor {
     get brightness() {return this._color.brightness}
 
     set color(color) {
-        if (this._color?.colorRaw?.toString() !== color?.toString() || !this._color) {
+        if (!this._color || this._color?.colorRaw?.toString() !== color?.toString()) {
             const potentialGradient = color?.colorRaw||color
             if (potentialGradient?.positions===Gradient.PLACEHOLDER) {
                 color = potentialGradient.duplicate()
                 color.initPositions = this
             }
-            this._color = Color.adjust(color)
+
+            this._color = Color.adjust(color) // TODO OPTIMIZE
         }
     }
+
+    
     set r(r) {this._color.r = r}
     set g(g) {this._color.g = g}
     set b(b) {this._color.b = b}

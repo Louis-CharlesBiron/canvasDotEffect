@@ -54,9 +54,10 @@ class Obj extends _HasColor {
     setAnchoredPos() {
         const anchorPos = this.hasAnchorPosChanged
         if (anchorPos) {
-            this.relativeX += anchorPos[0]-this.lastAnchorPos[0]
-            this.relativeY += anchorPos[1]-this.lastAnchorPos[1]
-            this.lastAnchorPos = anchorPos
+            const [anchorPosX, anchorPosY] = anchorPos
+            this.relativeX += anchorPosX-this.#lastAnchorPos[0]
+            this.relativeY += anchorPosY-this.#lastAnchorPos[1]
+            this.#lastAnchorPos = anchorPos
         }
     }
 

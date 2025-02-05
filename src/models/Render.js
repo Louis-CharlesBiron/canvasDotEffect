@@ -108,18 +108,19 @@ class Render {
     // Fills and strokes all batched path
     drawBatched() {
         const strokes = Object.entries(this._batchedStrokes), s_ll = strokes.length,
-              fills = Object.entries(this._batchedFills), f_ll = fills.length
+              fills = Object.entries(this._batchedFills), f_ll = fills.length,
+              gradientSep = Gradient.SERIALIZATION_SEPARATOR
               
         for (let i=0;i<s_ll;i++) {
-            let [profileKey, path] = strokes[i], [colorValue, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
-            if (colorValue.includes(Gradient.SERIALIZATION_SEPARATOR)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
-            RenderStyles.applyStyles(this._ctx, colorValue, lineWidth, lineJoin, lineCap, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset)
+            let [profileKey, path] = strokes[i], [colorValue, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
+            if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
+            RenderStyles.applyStyles(this._ctx, colorValue, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
             this._ctx.stroke(path)
         }
 
         for (let i=0;i<f_ll;i++) {
             let [colorValue, path] = fills[i]
-            if (colorValue.includes(Gradient.SERIALIZATION_SEPARATOR)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
+            if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
             RenderStyles.applyStyles(this._ctx, colorValue)
             this._ctx.fill(path)
         }
