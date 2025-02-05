@@ -23,7 +23,7 @@ class Grid extends Shape {
 
     // returns a separate copy of this Grid (only initialized for objects)
     duplicate() {
-        return this.initialized ? new Grid(this._keys, [...this._gaps], this._spacing, this._source, this.pos_, this.radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
+        return this.initialized ? new Grid(this._keys, CDEUtils.unlinkPosArray(this._gaps), this._spacing, this._source, this.pos_, this.radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
     }
 
     // Creates a formation of symbols

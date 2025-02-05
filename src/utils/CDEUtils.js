@@ -38,6 +38,10 @@ class CDEUtils {
         return Math.round(num*factor)/factor
     }
 
+    static unlinkPosArray(arr) {
+        return [arr[0], arr[1]]
+    }
+
     // Create an instance of the FPSCounter and run every frame: either getFpsRaw for raw fps AND/OR getFps for averaged fps
     static FPSCounter = class {
         constructor(avgSampleSize) {

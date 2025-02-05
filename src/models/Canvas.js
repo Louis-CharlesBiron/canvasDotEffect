@@ -155,7 +155,7 @@ class Canvas {
 
     // clears the canvas
     clear(pos1=[0,0], pos2=[this.width, this.height]) {
-        this._ctx.clearRect(...pos1, ...pos2)
+        this._ctx.clearRect(pos1[0], pos1[1], pos2[0], pos2[1])
     }
 
     // resets every fragile references

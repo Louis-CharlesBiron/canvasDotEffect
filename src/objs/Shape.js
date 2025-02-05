@@ -224,11 +224,14 @@ class Shape extends Obj {
     isWithin(pos) {
         const d_ll = this.dots.length
         if (d_ll > 2) {
-            const permimeter = new Path2D()
-            permimeter.moveTo(...this.dots[0].pos)
-            for (let i=1;i<d_ll;i++) permimeter.lineTo(...this.dots[i].pos)
+            const permimeter = new Path2D(), firstDotPos = this._dots[0].pos
+            permimeter.moveTo(firstDotPos[0], firstDotPos[1])
+            for (let i=1;i<d_ll;i++) {
+                const dotPos = this._dots[i].pos
+                permimeter.lineTo(dotPos[0], dotPos[1])
+            }
             permimeter.closePath()
-            return this.ctx.isPointInPath(permimeter, ...pos)
+            return this.ctx.isPointInPath(permimeter, pos[0], pos[1])
         }
         return false
     }

@@ -29,14 +29,18 @@ class Color {
     // returns a new instance of the same color
     duplicate(gradientPositions) {
         if (this._format === Color.FORMATS.GRADIENT) return new Color(this._color.duplicate(gradientPositions))
-        else return new Color([...this.#rgba])
+        else return new Color(Color.#unlinkRGBA(this.#rgba))
+    }
+
+    static #unlinkRGBA(rgba) {
+        return [rgba[0], rgba[1], rgba[2], rgba[3]]
     }
 
     // updates the cached rgba value
     #updateCache() {
         if (this._format === Color.FORMATS.GRADIENT) this.#rgba = this.#hsv = []
         else {
-            this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : [...this._color]).map(v=>CDEUtils.round(v, Color.DEFAULT_DECIMAL_ROUNDING_POINT))
+            this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : Color.#unlinkRGBA(this._color)).map(v=>CDEUtils.round(v, Color.DEFAULT_DECIMAL_ROUNDING_POINT))
             this.#hsv = Color.convertTo(Color.FORMATS.HSV, this.#rgba)
         }
     }
@@ -47,7 +51,7 @@ class Color {
 
         if (format===Color.FORMATS.RGBA) {
             if (inputFormat===Color.FORMATS.HEX) convertedColor = Color.#hexToRgba(color)
-            else if (inputFormat===Color.FORMATS.TEXT) convertedColor = [...Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color]]
+            else if (inputFormat===Color.FORMATS.TEXT) convertedColor = Color.#unlinkRGBA(Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color])
             else if (inputFormat===Color.FORMATS.HSV) convertedColor = Color.#hsvToRgba(color)
         } else if (format===Color.FORMATS.HEX) {
             if (inputFormat===Color.FORMATS.RGBA) convertedColor = Color.#rgbaToHex(color)

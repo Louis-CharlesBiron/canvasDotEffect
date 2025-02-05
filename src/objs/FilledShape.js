@@ -45,8 +45,12 @@ class FilledShape extends Shape {
             if (currentDotPos !== this.#lastDotsPos) {
                 this.#lastDotsPos = currentDotPos
                 this._path = new Path2D()
-                this._path.moveTo(...this.dots[0].pos)
-                for (let i=1;i<d_ll;i++) this._path.lineTo(...this.dots[i].pos)
+                const firstDotPos = this.dots[0].pos
+                this._path.moveTo(firstDotPos[0], firstDotPos[1])
+                for (let i=1;i<d_ll;i++) {
+                    const dotPos = this.dots[i].pos
+                    this._path.lineTo(dotPos[0], dotPos[1])
+                }
                 this._path.closePath()
             } 
         }
