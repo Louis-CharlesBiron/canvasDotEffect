@@ -5,7 +5,7 @@
 
 // Drawing manager, centralises most context operation
 class Render {
-    static TYPES = {LINEAR:"getLine", QUADRATIC:"getQuadCurve", CUBIC_BEIZER:"getBeizerCurve", ARC:"getArc"}
+    static PATH_TYPES = {LINEAR:"getLine", QUADRATIC:"getQuadCurve", CUBIC_BEIZER:"getBeizerCurve", ARC:"getArc", ARC_TO:"getArcTo", ELLIPSE:"getEllispe", RECT:"getRect", ROUND_RECT:"getRoundRect"}
 
     constructor(ctx) {
         this._ctx = ctx
@@ -46,7 +46,7 @@ class Render {
         controlPos2 ??= [endPos[1]+20, endPos[0]+20] // TODO
 
         const path = new Path2D()
-        path.moveTo(startPos[0],startPos[1])
+        path.moveTo(startPos[0], startPos[1])
         path.bezierCurveTo(controlPos1[0], controlPos1[1], controlPos2[0], controlPos2[1], endPos[0], endPos[1])
         return path
     }
@@ -58,8 +58,37 @@ class Render {
         return path
     }
 
+    // instanciates and returns a path containing an arcTo
+    static getArcTo(startPos, controlPos1, controlPos2, radius) {
+        const path = new Path2D()
+        path.moveTo(startPos[0], startPos[1])
+        path.arcTo(controlPos1[0], controlPos1[1], controlPos2[0], controlPos2[1], radius)
+        return path
+    }
+
+    // instanciates and returns a path containing an ellipse
+    static getEllispe(centerPos, radiusX, radiusY, startRadian=0, endRadian=CDEUtils.CIRC, counterclockwise=false) {
+        const path = new Path2D()
+        path.ellipse(centerPos[0], centerPos[1], radiusX, radiusY, startRadian, endRadian, counterclockwise)
+        return path
+    }
+
+    // instanciates and returns a path containing an rectangle
+    static getRect(pos, width, height) {
+        const path = new Path2D()
+        path.rect(pos[0], pos[1], width, height)
+        return path
+    }
+
+    // instanciates and returns a path containing an rounded rectangle
+    static getRoundRect(pos, width, height, radius) {
+        const path = new Path2D()
+        path.roundRect(pos[0], pos[1], width, height, radius)
+        return path
+    }
+
     // Queues a path to be stroked in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
-    batchStroke(path, renderStyles) {
+    batchStroke(path, renderStyles=Color.DEFAULT_RGBA) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString() : RenderStyles.DEFAULT_PROFILE.toString(renderStyles)
             if (!this._batchedStrokes[profileKey]) this._batchedStrokes[profileKey] = new Path2D()
@@ -68,7 +97,7 @@ class Render {
     }
 
     // Queues a path to be filled in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
-    batchFill(path, renderStyles) {
+    batchFill(path, renderStyles=Color.DEFAULT_RGBA) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const profileKey = renderStyles instanceof RenderStyles ? renderStyles.colorOnlyToString() : RenderStyles.DEFAULT_PROFILE.colorOnlyToString(renderStyles)
             if (!this._batchedFills[profileKey]) this._batchedFills[profileKey] = new Path2D()
@@ -100,7 +129,7 @@ class Render {
     }
 
     // directly strokes a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
-    stroke(path, renderStyles) {
+    stroke(path, renderStyles=Color.DEFAULT_RGBA) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
             if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
             else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
@@ -110,7 +139,7 @@ class Render {
     }
 
     // directly fills a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
-    fill(path, renderStyles) {
+    fill(path, renderStyles=Color.DEFAULT_RGBA) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
             if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
             else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)

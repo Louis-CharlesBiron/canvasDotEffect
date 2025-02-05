@@ -1228,12 +1228,78 @@ This function is used to draw the connections between a Dot and the ones in its 
 ### Generic follow paths
 The sub class FOLLOW_PATHS provides generic follow paths.
 
-// TODO LIST ALL GENERIC PATHS
+- #### Infinity Sign
+  **Provides a sideways "8" like follow path.**                                                                    
+  *`INFINITY_SIGN(width, height, progressOffset)`*
+
+- #### Circle
+  **Provides a circular follow path.**                                                                    
+  *`CIRCLE(width, height, progressOffset)`*
+
+- #### Rectangle
+  **Provides a rectangular follow path.**                                                                    
+  *`RECTANGLE(width, height, progressOffset)`*
+
+- #### Quadratic
+  **Provides a vertical quadratic curve follow path.**                                                                    
+  *`QUADRATIC(width, height, isFliped)`*
+
+- #### Linear
+  **Provides a linear follow path.**                                                                    
+  *`LINEAR(width, a)`*
+
+- #### Sine Wave
+  **Provides a sine wave like follow path.**                                                                    
+  *`SINE_WAVE(width, height)`*
+
+- #### Cosine Wave
+  **Similar to Sine Wave, provides a cosine wave like follow path.**                                            
+  *`COSINE_WAVE(width, height)`*
+
+- #### Relative
+  **Doesn't move the dot, unless provided a x/y value. Also accepts other generic follow paths as x/y values.**        *`RELATIVE(forceX?, forceY?)`*
+
 
 #### Example use 1:
 ###### - Make a dot follow a circle of 200px radius, over 5 seconds
 ```js
     dummyShape.dots[0].follow(5000, Anim.linear, null, CanvasUtils.FOLLOW_PATHS.CIRCLE(400, 400))
+```
+
+#### Example use 2:
+###### - Drawing a sine wave graph
+```js
+const manualSineWaveDrawer = new Shape([100, 100], [
+    new Dot(), // adding a blank dot
+    new Dot([10, 0],null,null,null,(dot, shape)=>shape.firstDot) // adding a dot with the first dot as its anchorPos
+], null, null, 100, (render, dot, ratio)=>{// shape's drawEffectCB
+
+    // drawing a dotted red line between the two dots
+    CanvasUtils.drawDotConnections(dot, RenderStyles.PROFILE1.updateStyles([255,0,0,1], null, null, null, [5]))
+
+    // simple radius hover effect
+    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
+
+}, null, (shape)=>{// Shape's setupCB
+    
+    // making the first dot follow a circle path over 5 seconds
+    shape.firstDot.follow(5000, null, (prog, dot)=>{
+        shape.add(new Dot(null, 4, null, null, dot.pos)) // creating a new dot each frame at the dot's pos
+    }, CanvasUtils.FOLLOW_PATHS.CIRCLE(null, null, 0.5))
+
+    
+    // making the second dot follow a linear path for its X value and not providing any forced Y value (The Y value will be changed via the anchorPos).
+    shape.dots[1].follow(5000, Anim.LINEAR, (prog, dot)=>{
+        shape.add(new Dot(null, 2, "red", null, dot.pos)) // creating a new dot each frame at the dot's pos
+    }, CanvasUtils.FOLLOW_PATHS.RELATIVE(CanvasUtils.FOLLOW_PATHS.LINEAR(800, 0)))
+
+    // adding a connection between the first and second dot
+    shape.firstDot.addConnection(shape.dots[1])
+
+}, null, true)
+
+// adding the shape to the canvas
+CVS.add(manualSineWaveDrawer)
 ```
 
 
