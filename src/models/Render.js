@@ -5,7 +5,9 @@
 
 // Drawing manager, centralises most context operation
 class Render {
-    static PATH_TYPES = {LINEAR:"getLine", QUADRATIC:"getQuadCurve", CUBIC_BEIZER:"getBeizerCurve", ARC:"getArc", ARC_TO:"getArcTo", ELLIPSE:"getEllispe", RECT:"getRect", ROUND_RECT:"getRoundRect"}
+    //static PATH_TYPES = {LINEAR:"getLine", QUADRATIC:"getQuadCurve", CUBIC_BEIZER:"getBeizerCurve", ARC:"getArc", ARC_TO:"getArcTo", ELLIPSE:"getEllispe", RECT:"getRect", ROUND_RECT:"getRoundRect"}
+    static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
+    static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve}
 
     constructor(ctx) {
         this._ctx = ctx
@@ -31,35 +33,52 @@ class Render {
 
     // instanciates and returns a path containing a quadratic curve
     static getQuadCurve(startPos, endPos, controlPos) {
-        controlPos ??= [startPos[1]+20, startPos[0]+20] // TODO
+        if (!Array.isArray(controlPos)) controlPos = Render.getDefaultQuadraticControlPos(startPos, endPos, controlPos||undefined)
 
         const path = new Path2D()
         path.moveTo(startPos[0],startPos[1])
         path.quadraticCurveTo(controlPos[0], controlPos[1], endPos[0], endPos[1])
         return path
-        
+    }
+
+    // returns a control pos to create a decent default quadratic curve
+    static getDefaultQuadraticControlPos(startPos, endPos, spread=1) {
+        return [endPos[0]*spread, startPos[1]*spread]
     }
 
     // instanciates and returns a path containing a cubic beizer curve
     static getBeizerCurve(startPos, endPos, controlPos1, controlPos2) {
-        controlPos1 ??= [startPos[1]+20, startPos[0]+20] // TODO
-        controlPos2 ??= [endPos[1]+20, endPos[0]+20] // TODO
-
+        //if (Array.isArray(controlPos1[0])) {
+        //    controlPos2 ??= controlPos1[1]
+        //    controlPos1 = controlPos1[0]
+        //} else 
+        if (!controlPos2 || !controlPos1) {
+            const controlPoses = Render.getDefaultBeizerControlPos(startPos, endPos, controlPos1||undefined)
+            controlPos1 = controlPoses[0]
+            controlPos2 ??= controlPoses[1]
+        }
+    
         const path = new Path2D()
         path.moveTo(startPos[0], startPos[1])
         path.bezierCurveTo(controlPos1[0], controlPos1[1], controlPos2[0], controlPos2[1], endPos[0], endPos[1])
         return path
     }
 
+    // returns 2 control positions to create a decent default beizer curve
+    static getDefaultBeizerControlPos(startPos, endPos, spread=0.75) {
+        const [startX, startY] = startPos, [endX, endY] = endPos
+        return [[startX+(endX-startX)*(1-spread), startY+(endY-startY)*spread], [endX-(endX-startX)*(1-spread), endY-(endY-startY)*spread]]
+    }
+
     // instanciates and returns a path containing an arc
-    static getArc(pos, radius, startRadian=0, endRadian=CDEUtils.CIRC) {
+    static getArc(pos, radius=5, startRadian=0, endRadian=CDEUtils.CIRC) {
         const path = new Path2D()
         path.arc(pos[0], pos[1], radius, startRadian, endRadian)
         return path
     }
 
     // instanciates and returns a path containing an arcTo
-    static getArcTo(startPos, controlPos1, controlPos2, radius) {
+    static getArcTo(startPos, controlPos1, controlPos2, radius) {// TODO SETUP DEFAULTS
         const path = new Path2D()
         path.moveTo(startPos[0], startPos[1])
         path.arcTo(controlPos1[0], controlPos1[1], controlPos2[0], controlPos2[1], radius)

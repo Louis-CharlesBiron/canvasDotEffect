@@ -68,7 +68,7 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
 (shape)=>{return shape.dots.length*2}, normalColorTester, 100, (render, dot, ratio, m, dist, parent, res)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
 
-    CanvasUtils.drawDotConnections(dot, [255,0,0,CDEUtils.mod(1, ratio, 0.8)])
+    CanvasUtils.drawDotConnections(dot, [255,0,0,CDEUtils.mod(1, ratio, 0.8)], false, Render.LINE_TYPES.QUADRATIC, CDEUtils.mod(2, ratio))
 }, undefined, (shape)=>{
     let dx=400, dy=200, dot = shape.dots.last()
     dot.g = 0
@@ -166,14 +166,15 @@ let generationTester = new Shape([100,600],
     })
 
 
+
 CVS.add(generationTester)
 CVS.add(animTester)
 CVS.add(draggableDotTester)
 CVS.add(testMore)
 CVS.add(filledShapeTester)
 CVS.add(movementsTester)
-CVS.add(le)
 CVS.add(test2)
+CVS.add(le)
 
 let dupelicateTester = le.duplicate()
 for (let i=0;i<3;i++) {
@@ -181,6 +182,7 @@ for (let i=0;i<3;i++) {
     dupelicateTester.moveBy([100, 100])
     dupelicateTester = dupelicateTester.duplicate()
 }
+
 
 
 // USER ACTIONS

@@ -212,15 +212,16 @@ class Canvas {
 
     // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "active" is false, it only initializes the obj, without adding it to the canvas
     add(objs, isDef, active=true) {
-        const l = objs.length??1
+        
+        const l = objs&&(objs.length??1)
         for (let i=0;i<l;i++) {
             const obj = objs[i]??objs
             if (!isDef) obj.cvs = this
             else obj.parent = this
             
             if (CDEUtils.isFunction(obj.initialize)) obj.initialize()
-
             if (active) this._els[isDef?"defs":"refs"].push(obj)
+
         }
         this.updateCachedAllEls()
     }
