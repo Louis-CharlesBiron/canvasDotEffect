@@ -9,10 +9,16 @@ class Render {
     static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
     static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve}
 
-    constructor(ctx) {
+    constructor(ctx) {// DOC TODO
         this._ctx = ctx
         this._batchedStrokes = {}
         this._batchedFills = {}
+
+        this._defaultProfile
+        this._profile1
+        this._profile2
+        this._profile3
+        this._profiles = []
     }
 
     /*

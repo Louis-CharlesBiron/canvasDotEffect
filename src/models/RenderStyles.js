@@ -5,7 +5,7 @@
 
 // Represents styling profile for lines
 class RenderStyles extends _HasColor {
-    static JOIN_TYPES = {MITER:"miter", BEVEL:"bevel", ROUND:"round"} // spike, flat, round
+    static JOIN_TYPES = {MITER:"miter", BEVEL:"bevel", ROUND:"round"} // spiky, flat, round
     static CAP_TYPES = {BUTT:"butt", SQUARE:"square", ROUND:"round"}  // short, long, round
     static DEFAULT_WIDTH = 2
     static DEFAULT_CAP = RenderStyles.CAP_TYPES.ROUND
