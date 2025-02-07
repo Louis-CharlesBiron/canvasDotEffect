@@ -46,7 +46,7 @@ class Shape extends Obj {
 
     // returns a separate copy of this Shape (only initialized for objects)
     duplicate() {
-        return this.initialized ? new Shape(this.pos_, this._dots.map(d=>d.duplicate()), this.radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
+        return this.initialized ? new Shape(this.pos_, this._dots.map(d=>d.duplicate()), this._radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
     }
 
     // adds one or many dots to the shape

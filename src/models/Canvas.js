@@ -25,6 +25,7 @@ class Canvas {
     #frameSkipsOffset = null // used to prevent significant frame gaps
     #timeStamp = null        // requestanimationframe timestamp in ms
     #cachedEls = []          // cached canvas elements to draw
+    #lastScrollValues = [window.scrollX, window.screenY]
 
     constructor(cvs, loopingCallback, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                                // html canvas element
@@ -62,17 +63,30 @@ class Canvas {
     // sets resize and visibility change listeners on the window
     #initWindowListeners() {
         const onresize=()=>this.setSize(),
-              onvisibilitychange=()=>{if (!document.hidden) this.resetReferences()}
+              onvisibilitychange=()=>{if (!document.hidden) this.resetReferences()},
+              onscroll=()=>{
+                const scrollX = window.scrollX, scrollY = window.scrollY
+                this.updateOffset()
+                this._mouse.updatePos({x:this._mouse.x+(scrollX-this.#lastScrollValues[0]), y:this._mouse.y+(scrollY-this.#lastScrollValues[1])}, {x:0, y:0})
+                this.#mouseMovements()
+                this.#lastScrollValues[0] = scrollX
+                this.#lastScrollValues[1] = scrollY
+            }
 
         window.addEventListener("resize", onresize)
         window.addEventListener("visibilitychange", onvisibilitychange)
-        return [()=>window.removeEventListener("resize", onresize), ()=>window.removeEventListener("visibilitychange", onvisibilitychange)]
+        window.addEventListener("scroll", onscroll)
+        return {
+            onrezise:()=>window.removeEventListner("resize", onresize),
+            onvisibilitychange:()=>window.removeEventListener("visibilitychange", onvisibilitychange),
+            onscroll:()=>window.removeEventListener("scroll", onscroll)
+        }
     }
 
     // updates the calculated canvas offset in the page
     updateOffset() {
         const {width, height, x, y} = this._cvs.getBoundingClientRect()
-        return this._offset = {x:Math.round((x+width)-this.width+window.scrollX)+this._viewPos[0], y:Math.round((y+height)-this.height+window.scrollY)+this._viewPos[1]}
+        return this._offset = {x:Math.round((x+width)-this.width)+this._viewPos[0], y:Math.round((y+height)-this.height)+this._viewPos[1]}
     }
 
     // starts the drawing loop

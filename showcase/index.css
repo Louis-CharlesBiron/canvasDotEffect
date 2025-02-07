@@ -7,6 +7,10 @@ html, body {
     height: 100%;
 }
 
+html {
+    overflow: visible;
+}
+
 #holder, #holder2 {
     width: 98%;
     height: 88%;
@@ -17,3 +21,15 @@ html, body {
     width: 100%;
     height: 50%;
 }
+
+#largeBody {
+    height: 10000px;
+    overflow: overlay;
+}
+
+.canvasas {
+    width: 100%;
+    height: 450px;
+}
+
+*::-webkit-scrollbar {width: 5px;}

@@ -450,8 +450,7 @@ CVS.add(a)
 #### Example use 2:
 ###### - Single throwable dot, with color and radius effects
 ```js
-    const dragAnim = CanvasUtils.getDraggableDotCB()
-    const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (render, dot, ratio, mouse, dist, shape)=>{
+    const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (render, dot, ratio, mouse, dist, shape, setupResults)=>{
         
         // Checking if the mouse is over the dot and clicked, and changing the color according to the state
         const mouseOn = dot.isWithin(mouse.pos, true)
@@ -463,10 +462,11 @@ CVS.add(a)
         CanvasUtils.drawOuterRing(dot, [255,255,255,CDEUtils.mod(0.3, ratio)], 3)
     
         // Making the dot drawable
+        const dragAnim = setupResults
         dragAnim(shape.firstDot, mouse, dist, ratio)
         
     }, null, (shape)=>{
-        
+
         // Accessing the dot
         const dot = shape.firstDot
         
@@ -474,6 +474,12 @@ CVS.add(a)
         dot.playAnim(new Anim((progress, i)=>{
             dot.radius = i%2?25*(1-prog):25*prog
         }, -750, Anim.easeOutQuad))
+
+        // Getting the dragging animation callback
+        const dragAnim = CanvasUtils.getDraggableDotCB()
+
+        // Making it available in the drawEffectCB as setupResults
+        return dragAnim
     })
     
     // Adding it to the canvas
@@ -1448,7 +1454,7 @@ After this, every dot will be initialized, and all canvas objects will be ready 
 - Putting `null` as any parameter value will assign it the default value.
 
 - Use the `mod()` function for effective ratio usages.
-- If needed and applicable, use the prebuilt event listeners.
+- If needed and applicable, use the available prebuilt event listeners.
 - More complex shapes can have very extensive declarations, declare them in a separate file(s) and use them in a centralized project file. 
 
  
