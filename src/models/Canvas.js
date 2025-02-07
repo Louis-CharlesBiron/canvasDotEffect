@@ -49,8 +49,6 @@ class Canvas {
         this._mouse = new Mouse()                                      // mouse info
         this._offset = this.updateOffset()                             // cvs page offset
         this._render = new Render(this._ctx)                           // render instance
-
-        RenderStyles.initializeDefaultProfiles(this._ctx)
     }
 
     // sets css styles on the canvas and the parent

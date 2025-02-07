@@ -43,7 +43,7 @@ class CanvasUtils {
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
-    static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread) {// DOC TODO
+    static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
         
         // skip if not visible
@@ -56,7 +56,7 @@ class CanvasUtils {
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
-    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, isDestinationOver=true) {// DOC TODO
+    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, isDestinationOver=true) {
         const ctx = dot.ctx, render = dot.render, dotPos = dot.pos, dotConnections = dot.connections,
               dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
 

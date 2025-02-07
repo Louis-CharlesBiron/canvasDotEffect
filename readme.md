@@ -807,7 +807,7 @@ The Color class represents a color and provides multiple utility functions such 
 The Gradient class allows the creation of custom linear / radial gradients. A Gradient instance can be used in the *color* and *fillColor* fields of canvas objects. 
 
 #### **The Gradient constructor takes the following parameters:**
-###### - `new Gradient(ctx, positions, isLinear, ...colorStops)`
+###### - `new Gradient(ctx, positions, colorStops, type, rotation)`
 - **ctx** -> The canvas context.
 - **positions** -> The positions of the gradient. Giving a Shape instance will position automatically the gradient according to the pos of its dots. For manual positions: **linear gradients**: `[ [x1, y1], [x2, y2] ]`, **radial gradients** `[ [x1, y1, r1], [x2, y2, r2] ]`, *conic gradients:* `[ x, y ]`.
 - **colorStops** -> An array containing the difference colors and their range `[0..1, color]`. Ex: `[ [0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"] ]`.
@@ -878,20 +878,33 @@ const gradientShape = new FilledShape(
 
 # Render
 
-Render is a class that centralizes most context operation. It provides functions to get types of lines and *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization.  It is automatically instanciated by and linked to any Canvas instance.
+Render is a class that centralizes most context operation. It provides functions to get types of lines and *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles (RenderStyles).  Finally, it is automatically instanciated by, and linked to, any Canvas instance.
 
-#### **The RenderStyles constructor takes the following parameters:**
+#### **The Render constructor takes the following parameters:**
 - **ctx** -> The canvas context.
 
 #### Example use 1:
-###### - Manually drawing a custom line 
+###### - Manually drawing a custom beizer curve 
 ```js
     // Running in the drawEffectCB of a dummy shape...
     {
         ...
         
-        // Drawing a beizer curve from [100, 100] to [100, 200], in red
-        render.stroke(Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150]), [255, 0, 0, 1])
+        // Drawing a beizer curve from [100, 100] to [100, 200], using the default control points, in red
+        render.stroke(Render.getBeizerCurve([100,100], [100, 200]), [255, 0, 0, 1])
+        
+    }
+```
+
+#### Example use 2:
+###### - Manually drawing a custom filled quadratic curve
+```js
+    // Running in the drawEffectCB of a dummy shape...
+    {
+        ...
+        
+        // Drawing a beizer curve from [100, 400] to [400, 300], using the default control points with 0.5 spread
+        render.fill(Render.getQuadCurve(startPos, endPos, Render.getDefaultQuadraticControlPos([100, 400], [400, 300], 0.5)))
         
     }
 ```
@@ -901,27 +914,57 @@ Render is a class that centralizes most context operation. It provides functions
 The RenderStyles class allows the customization of renders via style profiles when drawing with the *Render* class. By default, the following static profiles are created: `DEFAULT_PROFILE`, `PROFILE1`, `PROFILE2` and PROFILE3. There is also a static `PROFILES` to add custom profiles.
 
 #### **The RenderStyles constructor takes the following parameters:**
-- **ctx** -> The canvas context.
+- **render** -> The canvas Render instance.
 - **color** -> Either an RGBA array `[r, g, b, a]` or a `Color` instance.
 - **lineWidth** -> The width in px of the drawn line.
+- **lineDash** -> Gaps length within the line
+- **lineDashOffset** -> Offset in px of the start of the gaps (dashes).
 - **lineJoin** -> Determines the shape of line joins. Either: *miter*, *bevel* or *round*
 - **lineCap** -> Determines the shape of line ends. Either: *butt*, *square* or *round*
-- **lineDash** -> Gaps length within the line
-- **lineDashOffset** -> Custom callback ran upon the animation ending.
 
 
 **Note:** See [MDN Canvas API documentation](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineCap) for more information on line styling properties.
 
+
+### **To create a new style profile,** use the duplicate() function:
+###### -  duplicate(render?, color?, lineWidth?, lineDash?, lineDashOffset?, lineJoin?, lineCap?)
+```js
+    // Creating a new style profile from the RenderStyles' template profile
+    const myNewStyleProfile = RenderStyles.DEFAULT_PROFILE.duplicate(CVS.render)
+
+    // Adding a new style profile to the render's custom profile list
+    CVS.render.profiles.push(myNewStyleProfile)
+    
+    // the style profile is now accessible via render.profiles[indexOfTheProfile]
+```
+
+### **To reuse a style profile for multiple styles,** use the updateStyles() function:
+###### -  updateStyles(color?, lineWidth?, lineDash?, lineDashOffset?, lineJoin?, lineCap?)
+```js
+    {// Running in the drawEffectCB function of some shape...
+        
+        // ...
+        
+        // Drawing a line between a dot and its ratioPos, using the profile1 styles and updating the color, lineWidth, lineDash, lineDashOffset
+        CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.updateStyles(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25], 10))
+    
+        // Drawing a dot's connections, using again the profile1 styles and updating only the color, lineWidth
+        CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles([255,0,0,1], 2))
+    }
+
+```
+
+ 
+
 #### Example use 1:
-###### - Styling a line (based on the example in *Render*)
+###### - Styling a beizer curve (based on the example in *Render*)
 ```js
     // Running in the drawEffectCB of a dummy shape...
     {
         ...
         
-        // Drawing a beizer curve from [100, 100] to [100, 200], using the styles from the PROFILE1
-        render.stroke(Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150], RenderStyles.PROFILE1)
-        
+        // Drawing a beizer curve from [100, 100] to [100, 200], using the styles from the render's profile1
+        render.stroke(Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150], render.profile1)
     }
 ```
 
@@ -932,14 +975,14 @@ The RenderStyles class allows the customization of renders via style profiles wh
     {
         ...
     
-    // Drawing the connections between dots, and styling them with an updated version of PROFILE1
-    CanvasUtils.drawDotConnections(dot, RenderStyles.PROFILE1.updateStyles(
-        Color.rgba(255, 0, 0, CDEUtils.mod(1, ratio, 0.8)), // updating the color to a dynamically shaded red
-        4,      // updating the lineWidth to 4px
-        null,   // not updating the lineJoin
-        null,   // not updating the lineCap
-        [5] // updating the lineDash to 5px
-        )
+    // Drawing the connections between dots, and styling them with an updated version of render's profile1 and a custom lineType
+    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles(
+            Color.rgba(255, 0, 0, CDEUtils.mod(1, ratio, 0.8)), // updating the color to a dynamically shaded red
+            4,   // updating the lineWidth to 4px
+            [10] // updating the lineDash to 10px
+        ),
+        0, // no radius padding
+        Render.LINE_TYPES.CUBIC_BEIZER // using a default beizer curve
     )
         
     }
@@ -1063,7 +1106,6 @@ The TypingDevice class is automatically created and accessible by any Canvas ins
     CVS.setkeyup((e)=>{
         console.log("Custom callback: ", e)
     }, true)
-    
 ```
 
 ### **To get whether a certain key is down,** use the isDown() function:
@@ -1189,7 +1231,7 @@ This function is used to make a dot throwable.
 
 ### drawLine
 This function is used to draw a connection between a Dot and another pos/object.
-###### drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0)
+###### drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType, spread)
 ```js
     // (Running in the drawEffectCB() function of some shape...)
     {
@@ -1210,7 +1252,7 @@ This function is used to draw a connection between a Dot and another pos/object.
 
 ### drawDotConnections
 This function is used to draw the connections between a Dot and the ones in its `connections` attribute. **(Especially useful when using a Grid!)**
-###### drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, isSourceOver=false)
+###### drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType, spread, isSourceOver=false)
 ```js
     // (Running in the drawEffectCB() function of some shape...)
     {
