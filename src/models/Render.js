@@ -9,6 +9,7 @@ class Render {
     static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve}
 
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
+    #currentCtxTextStyles = TextStyles.DEFAULT_PROFILE.getStyles()
     constructor(ctx) {
         this._ctx = ctx           // Canvas context
         this._batchedStrokes = {} // current batch of strokes
@@ -20,15 +21,6 @@ class Render {
         this._profile3 = this._defaultProfile.duplicate()                   // default style profile 3
         this._profiles = []                                                 // list of custom style profiles
     }
-
-
-    /*
-    TODO:
-    - documentation for code and readme
-
-    OPTIMISATIONS:
-    - use cache for lines ?? (see Path2D?)
-    */
 
     // instanciates and returns a path containing a line
     static getLine(startPos, endPos) {
@@ -171,6 +163,11 @@ class Render {
         }
     }
 
+    // doc todo
+    strokeText(text, pos, textStyles, maxWidth) {
+
+    }
+
 	get ctx() {return this._ctx}
 	get batchedStrokes() {return this._batchedStrokes}
 	get batchedFills() {return this._batchedFills}
@@ -180,6 +177,7 @@ class Render {
 	get profile3() {return this._profile3}
 	get profiles() {return this._profiles}
 	get currentCtxStyles() {return this.#currentCtxStyles}
+	get currentCtxTextStyles() {return this.#currentCtxTextStyles}
 
 	set ctx(_ctx) {this._ctx = _ctx}
 	set defaultProfile(_defaultProfile) {this._defaultProfile = _defaultProfile}
@@ -188,5 +186,6 @@ class Render {
 	set profile3(_profile3) {this._profile3 = _profile3}
 	set profiles(_profiles) {this._profiles = _profiles}
 	set currentCtxStyles(currentCtxStyles) {this.#currentCtxStyles = currentCtxStyles}
+	set currentCtxTextStyles(currentCtxTextStyles) {this.#currentCtxTextStyles = currentCtxTextStyles}
 
 }
