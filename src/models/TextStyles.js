@@ -3,30 +3,54 @@
 // Please don't use or credit this code as your own.
 //
 
-// DOC TODO
+// Represents a styling profile for text
 class TextStyles extends _HasColor {
+    static CAPS_VARIANTS = {NORMAL:"normal", SMALL_CAPS:"small-caps", ALL_SMALL_CAPS:"all-small-caps", PETITE_CAPS:"petite-caps", ALL_PETITE_CAPS:"all-petite-caps", UNICASE:"unicase", TILTING_CAPS:"tilting-caps"}
+    static DIRECTIONS = {LEFT_TO_RIGHT:"ltr", RIGHT_TO_LEFT:"rtl", INHERIT:"inherit"}
+    static STRETCHES = {ULTRA_CONDENSED:"ultra-condensed", EXTRA_CONDENSED:"extra-condensed", CONDENSED:"condensed", SEMI_CONDENSED:"semi-condensed", NORMAL:"normal", SEMI_EXPANDED:"semi-expanded", EXPANDED:"expanded", EXTRA_EXPANDED:"extra-expanded", ULTRA_EXPANDED:"ultra-expanded"}
+    static KERNINGS = {AUTO:"auto", NORMAL:"normal", NONE:"none"}
+    static ALIGNMENTS = {LEFT:"left", RIGTH:"normal", CENTER:"center", START:"start", END:"end"}
+    static BASELINES = {TOP:"top", BOTTOM:"bottom", HANGING:"hanging", MIDDLE:"middle", ALPHABETIC:"alphabetic", IDEOGRAPHIC:"ideographic"}
+    static RENDERINGS = {AUTO:"auto", FAST:"optimizeSpeed", LEGIBLE:"optimizeLegibility", PRECISE:"geometricPrecision"}
+    static DEFAULT_FONT = "32px Arial"// todo change?
+    static DEFAULT_LETTER_SPACING = "2px"
+    static DEFAULT_WORD_SPACING = "4px"
+    static DEFAULT_FONT_VARIANT_CAPS = TextStyles.CAPS_VARIANTS.NORMAL
+    static DEFAULT_DIRECTION = TextStyles.DIRECTIONS.LEFT_TO_RIGHT
+    static DEFAULT_FONT_STRETCH = TextStyles.STRETCHES.NORMAL
+    static DEFAULT_FONT_KERNING = TextStyles.KERNINGS.NORMAL
+    static DEFAULT_TEXT_ALIGN = TextStyles.ALIGNMENTS.START
+    static DEFAULT_TEXT_BASELINE = TextStyles.BASELINES.ALPHABETIC
+    static DEFAULT_TEXT_RENDERING = TextStyles.RENDERINGS.FAST
     static SERIALIZATION_SEPARATOR = "!"
-    static DEFAULT_PROFILE = new TextStyles(null, Color.DEFAULT_RGBA)// TODO
-    //TODO DEFAULTS
+    static DEFAULT_PROFILE = new TextStyles(null, Color.DEFAULT_RGBA, TextStyles.DEFAULT_FONT, TextStyles.DEFAULT_LETTER_SPACING, TextStyles.DEFAULT_WORD_SPACING, TextStyles.DEFAULT_FONT_VARIANT_CAPS, TextStyles.DEFAULT_DIRECTION, TextStyles.DEFAULT_FONT_STRETCH, TextStyles.DEFAULT_FONT_KERNING, TextStyles.DEFAULT_TEXT_ALIGN, TextStyles.DEFAULT_TEXT_BASELINE, TextStyles.DEFAULT_TEXT_RENDERING)
     
 
     // TODO readme doc
     #ctx = null
-    constructor(render, color, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {// DOC TODO
+    constructor(render, color, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         super(color)
-        this._render = render                  // Canvas render instance
-        this.#ctx = render?.ctx                // Canvas context
-        this._font = font    
-        this._letterSpacing = letterSpacing
-        this._wordSpacing = wordSpacing    
-        this._fontVariantCaps = fontVariantCaps
-        this._direction = direction
-        this._fontStretch = fontStretch
-        this._fontKerning = fontKerning
-        this._textAlign = textAlign
-        this._textBaseline = textBaseline
-        this._textRendering = textRendering
+        if (render) this.color = this._initColor
+        this._render = render                                                        // Canvas render instance
+        this.#ctx = render?.ctx                                                      // Canvas context
+        this._font = font??TextStyles.DEFAULT_FONT                                   // text font-style, font-variant, font-weight, font-size, line-height, font-family
+        this._letterSpacing = letterSpacing??TextStyles.DEFAULT_LETTER_SPACING       // gaps in px between letters
+        this._wordSpacing = wordSpacing??TextStyles.DEFAULT_WORD_SPACING             // gaps in px between words
+        this._fontVariantCaps = fontVariantCaps??TextStyles.DEFAULT_FONT_VARIANT_CAPS// specifies alternative capitalization
+        this._direction = direction??TextStyles.DEFAULT_DIRECTION                    // text direction
+        this._fontStretch = fontStretch??TextStyles.DEFAULT_FONT_STRETCH             // text streching
+        this._fontKerning = fontKerning??TextStyles.DEFAULT_FONT_KERNING             // whether the default spacing of certain letters is uniform 
+        this._textAlign = textAlign??TextStyles.DEFAULT_TEXT_ALIGN                   // text horizontal alignment
+        this._textBaseline = textBaseline??TextStyles.DEFAULT_TEXT_BASELINE          // text vertical alignment
+        this._textRendering = textRendering??TextStyles.DEFAULT_TEXT_RENDERING       // text rendering optimization method
     }
+
+    // addFont() {
+    //    let f = new FontFace("test", "url(x)");
+//
+    //    f.load().then(() => {
+    //      // Ready to use the font in a canvas context
+    //    });}
 
     // provides information about the measured text
     measureText(text) {
@@ -40,14 +64,7 @@ class TextStyles extends _HasColor {
 
     // returns the profile's styles as an array
     getStyles() {
-        return [this.color, this._font, this._letterSpacing, this._wordSpacing, this._fontVariantCaps, this._direction, this._fontStretch, this._fontKerning, this._textAlign, this._textBaseline, this._textRendering]
-    }
-
-    // serializes the styles profile
-    toString(color=this._color, font=this._font, letterSpacing=this._letterSpacing, wordSpacing=this._wordSpacing, fontVariantCaps=this._fontVariantCaps, direction=this._direction, fontStretch=this._fontStretch, fontKerning=this._fontKerning, textAlign=this._textAlign, textBaseline=this._textBaseline, textRendering=this._textRendering) {
-        let sep = TextStyles.SERIALIZATION_SEPARATOR, colorValue = Color.getColorValue(color)
-        if (colorValue instanceof CanvasGradient) colorValue = color.toString()
-        return colorValue+sep+font+sep+letterSpacing+sep+wordSpacing+sep+fontVariantCaps+sep+direction+sep+fontStretch+sep+fontKerning+sep+textAlign+sep+textBaseline+sep+textRendering
+        return [this._font, this._letterSpacing, this._wordSpacing, this._fontVariantCaps, this._direction, this._fontStretch, this._fontKerning, this._textAlign, this._textBaseline, this._textRendering]
     }
 
     // updates a profile's attributes and returns the updated version
@@ -69,40 +86,23 @@ class TextStyles extends _HasColor {
     // directly applies the styles of the profile
     applyStyles(color=this._color, font=this._font, letterSpacing=this._letterSpacing, wordSpacing=this._wordSpacing, fontVariantCaps=this._fontVariantCaps, direction=this._direction, fontStretch=this._fontStretch, fontKerning=this._fontKerning, textAlign=this._textAlign, textBaseline=this._textBaseline, textRendering=this._textRendering) {
         const ctx = this.#ctx, colorValue = Color.getColorValue(color), currentTextStyles = this._render.currentCtxTextStyles
-        if (color && currentTextStyles[0] !== colorValue) currentTextStyles[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
-        if (font && currentTextStyles[1] !== font) currentTextStyles[1] = ctx.font = font
-        if (letterSpacing && currentTextStyles[2] !== letterSpacing) currentTextStyles[3] = ctx.letterSpacing = letterSpacing
-        if (wordSpacing && currentTextStyles[3] !== wordSpacing) currentTextStyles[3] = ctx.wordSpacing = wordSpacing
-        if (fontVariantCaps && currentTextStyles[4] !== fontVariantCaps) currentTextStyles[4] = ctx.fontVariantCaps = fontVariantCaps
-        if (direction && currentTextStyles[5] !== direction) currentTextStyles[5] = ctx.direction = direction
-        if (fontStretch && currentTextStyles[6] !== fontStretch) currentTextStyles[6] = ctx.fontStretch = fontStretch
-        if (fontKerning && currentTextStyles[7] !== fontKerning) currentTextStyles[7] = ctx.fontKerning = fontKerning
-        if (textAlign && currentTextStyles[8] !== textAlign) currentTextStyles[8] = ctx.textAlign = textAlign
-        if (textBaseline && currentTextStyles[9] !== textBaseline) currentTextStyles[9] = ctx.textBaseline = textBaseline
-        if (textRendering && currentTextStyles[10] !== textRendering) currentTextStyles[10] = ctx.textRendering = textRendering
+        if (color && this._render.currentCtxColor !== colorValue) this._render.currentCtxColor = ctx.strokeStyle = ctx.fillStyle = colorValue
+        if (font && currentTextStyles[0] !== font) currentTextStyles[0] = ctx.font = font
+        if (letterSpacing && currentTextStyles[1] !== letterSpacing) currentTextStyles[1] = ctx.letterSpacing = letterSpacing
+        if (wordSpacing && currentTextStyles[2] !== wordSpacing) currentTextStyles[2] = ctx.wordSpacing = wordSpacing
+        if (fontVariantCaps && currentTextStyles[3] !== fontVariantCaps) currentTextStyles[3] = ctx.fontVariantCaps = fontVariantCaps
+        if (direction && currentTextStyles[4] !== direction) currentTextStyles[4] = ctx.direction = direction
+        if (fontStretch && currentTextStyles[5] !== fontStretch) currentTextStyles[5] = ctx.fontStretch = fontStretch
+        if (fontKerning && currentTextStyles[6] !== fontKerning) currentTextStyles[6] = ctx.fontKerning = fontKerning
+        if (textAlign && currentTextStyles[7] !== textAlign) currentTextStyles[7] = ctx.textAlign = textAlign
+        if (textBaseline && currentTextStyles[8] !== textBaseline) currentTextStyles[8] = ctx.textBaseline = textBaseline
+        if (textRendering && currentTextStyles[9] !== textRendering) currentTextStyles[9] = ctx.textRendering = textRendering
     }
-
-    // directly applies the provided styles
-    static applyStyles(render, color, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
-        const ctx = render.ctx, colorValue = Color.getColorValue(color), currentTextStyles = render.currentCtxTextStyles
-        if (color && currentTextStyles[0] !== colorValue) currentTextStyles[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
-        if (font && currentTextStyles[1] !== font) currentTextStyles[1] = ctx.font = font
-        if (letterSpacing && currentTextStyles[2] !== letterSpacing) currentTextStyles[3] = ctx.letterSpacing = letterSpacing
-        if (wordSpacing && currentTextStyles[3] !== wordSpacing) currentTextStyles[3] = ctx.wordSpacing = wordSpacing
-        if (fontVariantCaps && currentTextStyles[4] !== fontVariantCaps) currentTextStyles[4] = ctx.fontVariantCaps = fontVariantCaps
-        if (direction && currentTextStyles[5] !== direction) currentTextStyles[5] = ctx.direction = direction
-        if (fontStretch && currentTextStyles[6] !== fontStretch) currentTextStyles[6] = ctx.fontStretch = fontStretch
-        if (fontKerning && currentTextStyles[7] !== fontKerning) currentTextStyles[7] = ctx.fontKerning = fontKerning
-        if (textAlign && currentTextStyles[8] !== textAlign) currentTextStyles[8] = ctx.textAlign = textAlign
-        if (textBaseline && currentTextStyles[9] !== textBaseline) currentTextStyles[9] = ctx.textBaseline = textBaseline
-        if (textRendering && currentTextStyles[10] !== textRendering) currentTextStyles[10] = ctx.textRendering = textRendering
-    }
-
 
     get render() {return this._render}
 	get font() {return this._font}
-	get letterSpacing() {return this._letterSpacing}
-	get wordSpacing() {return this._wordSpacing}
+	get letterSpacing() {return +this._letterSpacing.replace("px","")}
+	get wordSpacing() {return +this._wordSpacing.replace("px","")}
 	get fontVariantCaps() {return this._fontVariantCaps}
 	get direction() {return this._direction}
 	get fontStretch() {return this._fontStretch}
@@ -116,8 +116,8 @@ class TextStyles extends _HasColor {
         this.#ctx = render.ctx
     }
 	set font(_font) {this._font = _font}
-	set letterSpacing(_letterSpacing) {this._letterSpacing = _letterSpacing}
-	set wordSpacing(_wordSpacing) {this._wordSpacing = _wordSpacing}
+	set letterSpacing(_letterSpacing) {this._letterSpacing = typeof _letterSpacing==="number"?_letterSpacing+"px":_letterSpacing}
+	set wordSpacing(_wordSpacing) {this._wordSpacing = typeof _wordSpacing==="number"?_wordSpacing+"px":_wordSpacing}
 	set fontVariantCaps(_fontVariantCaps) {this._fontVariantCaps = _fontVariantCaps}
 	set direction(_direction) {this._direction = _direction}
 	set fontStretch(_fontStretch) {this._fontStretch = _fontStretch}

@@ -27,7 +27,7 @@ CVS.add(aasdasd)
 
 
 let textInputTest = new Grid("a", [5, 5], 50, null, [10,200], 0, null, null, (render, dot, ratio, m, dist, shape, cr, isActive)=>{
-    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles([255,0,0,1], 2, null, null, RenderStyles.JOIN_TYPES.BEVEL, RenderStyles.CAP_TYPES.SQUARE))
+    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles([255,0,0,1], 2, [0], null, RenderStyles.JOIN_TYPES.BEVEL, RenderStyles.CAP_TYPES.SQUARE))
 })
 
 function updateInput(e) {

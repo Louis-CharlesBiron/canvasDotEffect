@@ -3,7 +3,7 @@
 // Please don't use or credit this code as your own.
 //
 
-// Represents styling profile for lines
+// Represents a styling profile for paths
 class RenderStyles extends _HasColor {
     static JOIN_TYPES = {MITER:"miter", BEVEL:"bevel", ROUND:"round"} // spiky, flat, round
     static CAP_TYPES = {BUTT:"butt", SQUARE:"square", ROUND:"round"}  // short, long, round
@@ -34,7 +34,7 @@ class RenderStyles extends _HasColor {
 
     // returns the profile's styles as an array
     getStyles() {
-        return [this.color, this._lineWidth, this._lineDash, this._lineDashOffset, this._lineJoin, this._lineCap]
+        return [this._lineWidth, this._lineDash, this._lineDashOffset, this._lineJoin, this._lineCap]
     }
 
     // serializes the styles profile
@@ -65,35 +65,35 @@ class RenderStyles extends _HasColor {
     // directly applies the styles of the profile
     applyStyles(color=this._color, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
         const ctx = this.#ctx, colorValue = Color.getColorValue(color), currentStyles = this._render.currentCtxStyles
-        if (color && currentStyles[0] !== colorValue) currentStyles[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
-        if (lineWidth && currentStyles[1] !== lineWidth) currentStyles[1] = ctx.lineWidth = lineWidth
+        if (color && this._render.currentCtxColor !== colorValue) this._render.currentCtxColor = ctx.strokeStyle = ctx.fillStyle = colorValue
+        if (lineWidth && currentStyles[0] !== lineWidth) currentStyles[0] = ctx.lineWidth = lineWidth
         if (lineDash) {
             const lineDashString = lineDash.toString()
-            if (currentStyles[2] !== lineDashString) {
-                currentStyles[2] = lineDashString
+            if (currentStyles[1] !== lineDashString) {
+                currentStyles[1] = lineDashString
                 ctx.setLineDash(lineDash)
             }
         }
-        if (lineDashOffset && currentStyles[3] !== lineDashOffset) currentStyles[3] = ctx.lineDashOffset = lineDashOffset
-        if (lineJoin && currentStyles[4] !== lineJoin) currentStyles[4] = ctx.lineJoin = lineJoin
-        if (lineCap && currentStyles[5] !== lineCap) currentStyles[5] = ctx.lineCap = lineCap
+        if (lineDashOffset && currentStyles[2] !== lineDashOffset) currentStyles[2] = ctx.lineDashOffset = lineDashOffset
+        if (lineJoin && currentStyles[3] !== lineJoin) currentStyles[3] = ctx.lineJoin = lineJoin
+        if (lineCap && currentStyles[4] !== lineCap) currentStyles[4] = ctx.lineCap = lineCap
     }
 
     // directly applies the provided styles
     static applyStyles(render, color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         const ctx = render.ctx, colorValue = Color.getColorValue(color), currentStyles = render.currentCtxStyles
-        if (color && currentStyles[0] !== colorValue) currentStyles[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
-        if (lineWidth && currentStyles[1] !== lineWidth) currentStyles[1] = ctx.lineWidth = lineWidth
+        if (color && render.currentCtxColor !== colorValue) render.currentCtxColor = ctx.strokeStyle = ctx.fillStyle = colorValue
+        if (lineWidth && currentStyles[0] !== lineWidth) currentStyles[0] = ctx.lineWidth = lineWidth
         if (lineDash) {
             const lineDashString = lineDash.toString()
-            if (currentStyles[2] !== lineDashString) {
-                currentStyles[2] = lineDashString
+            if (currentStyles[1] !== lineDashString) {
+                currentStyles[1] = lineDashString
                 ctx.setLineDash(lineDash)
             }
         }
-        if (lineDashOffset && currentStyles[3] !== lineDashOffset) currentStyles[3] = ctx.lineDashOffset = lineDashOffset
-        if (lineJoin && currentStyles[4] !== lineJoin) currentStyles[4] = ctx.lineJoin = lineJoin
-        if (lineCap && currentStyles[5] !== lineCap) currentStyles[5] = ctx.lineCap = lineCap
+        if (lineDashOffset && currentStyles[2] !== lineDashOffset) currentStyles[2] = ctx.lineDashOffset = lineDashOffset
+        if (lineJoin && currentStyles[3] !== lineJoin) currentStyles[3] = ctx.lineJoin = lineJoin
+        if (lineCap && currentStyles[4] !== lineCap) currentStyles[4] = ctx.lineCap = lineCap
     }
 
 
