@@ -286,11 +286,24 @@ class Canvas {
             // update pos and direction angle
             this._mouse.updatePos(e, this._offset)
             this._mouse.calcAngle()            
-
             this.#mouseMovements(cb, e)
+        }, ontouchmove=e=>{
+            const touches = e.touches
+            if (touches.length===1) {
+                e.preventDefault()
+                e.x = CDEUtils.round(touches[0].clientX, 1)
+                e.y = CDEUtils.round(touches[0].clientY, 1)
+                this._mouse.updatePos(e, this._offset)
+                this._mouse.calcAngle()            
+                this.#mouseMovements(cb, e)
+            }
         }
         this._frame.addEventListener("mousemove", onmousemove)
-        return ()=>this._frame.removeEventListener("mousemove", onmousemove)
+        this._frame.addEventListener("touchmove", ontouchmove)
+        return ()=>{
+            this._frame.removeEventListener("mousemove", onmousemove)
+            this._frame.removeEventListener("touchmove", ontouchmove)
+        }
     }
 
     // defines the onmouseleave listener
@@ -312,16 +325,52 @@ class Canvas {
 
     // defines the onmousedown listener
     setmousedown(cb) {
-        const onmousedown=e=>this.#mouseClicks(cb, e)
+        let isTouch = false
+        const ontouchstart=e=>{
+            isTouch = true
+            const touches = e.touches
+            if (touches.length===1) {
+                e.preventDefault()
+                e.x = CDEUtils.round(touches[0].clientX, 1)
+                e.y = CDEUtils.round(touches[0].clientY, 1)
+                e.button = 0
+                this.#mouseClicks(cb, e)
+            }
+        }, onmousedown=e=>{
+            if (!isTouch) this.#mouseClicks(cb, e)
+            isTouch = false
+        }
+        this._frame.addEventListener("touchstart", ontouchstart)
         this._frame.addEventListener("mousedown", onmousedown)
-        return ()=>this._frame.removeEventListener("mousedown", onmousedown)
+        return ()=>{
+            this._frame.removeEventListener("touchstart", ontouchstart)
+            this._frame.removeEventListener("mousedown", onmousedown)
+        }
     }
 
     // defines the onmouseup listener
     setmouseup(cb) {
-        const onmouseup=e=>this.#mouseClicks(cb, e)
+        let isTouch = false
+        const ontouchend=e=>{
+            isTouch = true
+            const changedTouches = e.changedTouches
+            if (!e.touches.length) {
+                e.preventDefault()
+                e.x = CDEUtils.round(changedTouches[0].clientX, 1)
+                e.y = CDEUtils.round(changedTouches[0].clientY, 1)
+                e.button = 0
+                this.#mouseClicks(cb, e)
+            }
+        }, onmouseup=e=>{
+            if (!isTouch) this.#mouseClicks(cb, e)
+            isTouch = false
+        }
+        this._frame.addEventListener("touchend", ontouchend)
         this._frame.addEventListener("mouseup", onmouseup)
-        return ()=>this._frame.removeEventListener("mouseup", onmouseup)
+        return ()=>{
+            this._frame.removeEventListener("touchend", ontouchend)
+            this._frame.removeEventListener("mouseup", onmouseup)
+        }
     }
 
     // defines the onkeydown listener

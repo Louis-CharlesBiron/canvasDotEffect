@@ -48,7 +48,7 @@ class Mouse {
 
     // given an mouse event, sets the current mouse active buttons
     setMouseClicks(e) {
-        const v = e.type==="mousedown"
+        const v = e.type==="mousedown"||e.type==="touchstart"
         if (e.button===0) this._clicked = v
         else if (e.button===1) this._scrollClicked = v
         else if (e.button===2) this._rightClicked = v
