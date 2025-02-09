@@ -112,7 +112,7 @@ class Canvas {
             this.#lastFrame = time
         }
 
-        CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
+        if (this._looping) CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
     }
 
     #loopCore(time) {
@@ -262,7 +262,7 @@ class Canvas {
     
     // restore the saved context parameters
     restore() {
-        this._ctx.save()
+        this._ctx.restore()
     }
 
     // called on mouse move
