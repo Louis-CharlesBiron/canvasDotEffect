@@ -7,29 +7,32 @@
 **CanvasDotEffect is a lightweight JS library that helps create customizable and interactive dot-based effects using the Canvas API.**
 
 # Table of content
-- Getting Started / Minimal setup
-- Classes
-    - Canvas
-    - Obj
-    - Dot
-    - Shape
-    - Filled Shape
-    - Grid
-        - Grid Assets
-    - Color
-    - Gradient
-    - Render
-    - RenderStyles
-    - Anim
-    - Input Devices
-        - TypingDevice
-        - Mouse
-    - Utilities
-      - CanvasUtils
-      - CDEUtils
-- Execution order
-- Intended practices
-- Credits
+# Table of Contents
+
+- [Getting Started / Minimal setup](#getting-started--minimal-setup)
+- [Classes](#classes)
+  - [Canvas](#canvas)
+  - [Obj](#obj)
+  - [Dot](#dot)
+  - [Shape](#shape)
+  - [Filled Shape](#filled-shape)
+  - [Grid](#grid)
+    - [Grid Assets](#grid-assets)
+  - [Color](#color)
+  - [Gradient](#gradient)
+  - [Render](#render)
+  - [RenderStyles](#renderstyles)
+  - [Anim](#anim)
+  - [Input Devices](#input-devices)
+    - [TypingDevice](#typingdevice)
+    - [Mouse](#mouse)
+  - [Utilities](#utilities)
+    - [CanvasUtils](#canvasutils)
+    - [CDEUtils](#cdeutils)
+- [Execution order](#execution-order)
+- [Intended practices](#intended-practices)
+- [Credits](#credits)
+
 
 
 ## Getting Started / Minimal setup
