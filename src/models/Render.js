@@ -12,7 +12,7 @@ class Render {
 
     #currentCtxColor = Color.DEFAULT_COLOR_VALUE
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
-    #currentCtxTextStyles = TextStyles.DEFAULT_PROFILE.getStyles()
+    #currentCtxTextStyles = TextDisplay.DEFAULT_PROFILE.getStyles()
     constructor(ctx) {
         this._ctx = ctx           // Canvas context
         this._batchedStrokes = {} // current batch of strokes
@@ -24,7 +24,7 @@ class Render {
         this._profile3 = this._defaultProfile.duplicate()                  // default style profile 3
         this._profiles = []                                                // list of custom style profiles
 
-        this._defaultTextProfile = TextStyles.DEFAULT_PROFILE.duplicate(this)// default style profile template
+        this._defaultTextProfile = TextDisplay.DEFAULT_PROFILE.duplicate(this)// default style profile template
         this._textProfile1 = this._defaultTextProfile.duplicate()            // default style profile 1
         this._textProfile2 = this._defaultTextProfile.duplicate()            // default style profile 2
         this._textProfile3 = this._defaultTextProfile.duplicate()            // default style profile 3
@@ -172,20 +172,20 @@ class Render {
         }
     }
 
-    // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
+    // directly strokes text on the canvas. TextDisplay can either be a strict color or a TextDisplay profile
     strokeText(text, pos, textStyles=Color.DEFAULT_RGBA, maxWidth=undefined) {
         if (textStyles[3]??textStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            if (textStyles instanceof TextStyles) textStyles.applyStyles()
+            if (textStyles instanceof TextDisplay) textStyles.applyStyles()
             else this._defaultTextProfile.applyStyles(textStyles)
 
             this._ctx.strokeText(text, pos[0], pos[1], maxWidth)
         }
     }
 
-    // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
+    // directly fills text on the canvas. TextDisplay can either be a strict color or a TextDisplay profile
     fillText(text, pos, textStyles=Color.DEFAULT_RGBA, maxWidth=undefined) {
         if (textStyles[3]??textStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            if (textStyles instanceof TextStyles) textStyles.applyStyles()
+            if (textStyles instanceof TextDisplay) textStyles.applyStyles()
             else this._defaultTextProfile.applyStyles(textStyles)
 
             this._ctx.fillText(text, pos[0], pos[1], maxWidth)

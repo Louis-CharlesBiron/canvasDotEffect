@@ -21,7 +21,7 @@
   - [Gradient](#gradient)
   - [Render](#render)
   - [RenderStyles](#renderstyles)
-  - [TextStyles](#textStyles)
+  - [TextDisplay](#textStyles)
   - [Anim](#anim)
   - [Input Devices](#input-devices)
     - [TypingDevice](#typingdevice)
@@ -887,7 +887,7 @@ const gradientShape = new FilledShape(
 
 # [Render](#table-of-contents)
 
-Render is a class that centralizes most context operation. It provides functions to get *lines* and *text*, as well as functions to *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles for lines and text (RenderStyles, TextStyles). Finally, it is automatically instanciated by, and linked to, any Canvas instance.
+Render is a class that centralizes most context operation. It provides functions to get *lines* and *text*, as well as functions to *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles for lines and text (RenderStyles, TextDisplay). Finally, it is automatically instanciated by, and linked to, any Canvas instance.
 
 #### **The Render constructor takes the following parameters:**
 - **ctx** -> The canvas context.
@@ -1010,9 +1010,9 @@ The RenderStyles class allows the customization of renders via style profiles wh
     }
 ```
 
-# [TextStyles](#table-of-contents)
+# [TextDisplay](#table-of-contents)
 
-The TextStyles class (similar to RenderStyles) allows the customization of text via style profiles when drawing text with the *Render* class. By default, the following profiles are created and accessible via any Render instance: `defaultTextProfile`, `textProfile1`, `textProfile2` and `textProfile3`. There is also a `textProfiles` array to add more custom profiles. (Most functions from RenderStyles apply very similarly to TextStyles)
+The TextDisplay class (similar to RenderStyles) allows the customization of text via style profiles when drawing text with the *Render* class. By default, the following profiles are created and accessible via any Render instance: `defaultTextProfile`, `textProfile1`, `textProfile2` and `textProfile3`. There is also a `textProfiles` array to add more custom profiles. (Most functions from RenderStyles apply very similarly to TextDisplay)
 
 #### **The RenderStyles constructor takes the following parameters:**
 - **render** -> The canvas Render instance.

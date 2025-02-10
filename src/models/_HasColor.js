@@ -3,11 +3,16 @@
 // Please don't use or credit this code as your own.
 //
 
-// Provides color attributes to other classes
+// Abstract class, provides color attributes to other classes
 class _HasColor {
     constructor(color) {
         this._initColor = color       // declaration color value || (ctx, this)=>{return color value}
         this._color = this._initColor // the current color or gradient of the filled shape
+    }
+    
+    // returns the value of the inital color declaration
+    getInitColor() {
+        return CDEUtils.isFunction(this._initColor) ? this._initColor(this) : this._initColor||null
     }
 
     get colorObject() {return this._color}

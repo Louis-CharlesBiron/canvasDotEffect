@@ -4,20 +4,17 @@
 //
 
 // Abstract canvas obj class
-class Obj extends _HasColor {
+class _BaseObj extends _HasColor {
     static DEFAULT_POS = [0,0]
-    static DEFAULT_RADIUS = 5
-    static ABSOLUTE_ANCHOR = "ABSOLUTE_ANCHOR"
+    static ABSOLUTE_ANCHOR = [0,0]
     static POSITION_PRECISION = 4
 
     #lastAnchorPos = [0,0]
-    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
+    constructor(pos, color, setupCB, anchorPos, alwaysActive) {
         super(color)
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
         this._initPos = pos||[0,0]               // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = [0,0]                        // current position from the center of the object : [x,y]
-        this._initRadius = radius                // initial object's radius
-        this._radius = this._initRadius          // current object's radius
         this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
         this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
@@ -29,8 +26,7 @@ class Obj extends _HasColor {
 
     // Runs when the object gets added to a canvas instance
     initialize() {
-        this._pos = this.getInitPos()||Obj.DEFAULT_POS
-        this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
+        this._pos = this.getInitPos()||_BaseObj.DEFAULT_POS
         this.color = this.getInitColor()
         this.setAnchoredPos()
         if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this.parent)
@@ -39,11 +35,6 @@ class Obj extends _HasColor {
     // returns the value of the inital color declaration
     getInitColor() {
         return CDEUtils.isFunction(this._initColor) ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor||null
-    }
-
-    // returns the value of the inital radius declaration
-    getInitRadius() {
-        return CDEUtils.isFunction(this._initRadius) ? this._initRadius(this.parent||this, this) : this._initRadius??null
     }
 
     // returns the value of the inital pos declaration
@@ -71,18 +62,6 @@ class Obj extends _HasColor {
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         const a_ll = anims.length
         if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
-    }
-
-    // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the dot's radius)
-    isWithin(pos, circularDetection) {
-        const [x,y]=pos
-        return  (CDEUtils.isDefined(x)&&CDEUtils.isDefined(y)) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection===1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
-    }
-
-    // Returns the [top, right, bottom, left] distances between the canvas borders, according to the object's size
-    posDistances(pos=this._pos) {
-        const [x,y]=pos, cw=this._cvs.width, ch=this._cvs.height
-        return [y-this.height/2, cw-(x+this.width/2), ch-(y+this.height/2), x-this.width/2]
     }
 
     // Teleports to given coords
@@ -183,19 +162,11 @@ class Obj extends _HasColor {
     get relativeX() {return this.x-this.anchorPos[0]}
     get relativeY() {return this.y-this.anchorPos[1]}
     get relativePos() {return [this.relativeX, this.relativeY]}
-    get radius() {return this._radius}
-    get top() {return this.y-this._radius}
-    get bottom() {return this.y+this._radius}
-    get right() {return this.x+this._radius}
-    get left() {return this.x-this._radius}
     get stringPos() {return this.x+","+this.y}
 	get initPos() {return this._initPos}
-    get width() {return this._radius*2}
-    get height() {return this._radius*2}
     get currentBacklogAnim() {return this._anims.backlog[0]}
     get anims() {return this._anims}
     get setupCB() {return this._setupCB}
-    get initRadius() {return this._initRadius}
     get setupResults() {return this._setupResults}
     get initialized() {return this._initialized}
     get alwaysActive() {return this._alwaysActive}
@@ -203,8 +174,7 @@ class Obj extends _HasColor {
     get anchorPos() {// returns the anchorPos value
         if (Array.isArray(this._anchorPos)) return this._anchorPos
         else if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent?.pos_
-        else if (this._anchorPos instanceof Obj) return this._anchorPos.pos_
-        else if (this._anchorPos===Obj.ABSOLUTE_ANCHOR) return [0,0]
+        else if (this._anchorPos instanceof _BaseObj) return this._anchorPos.pos_
         else if (CDEUtils.isFunction(this._anchorPos)) {
             const res = this._anchorPos(this, this._cvs??this.parent)
             return CDEUtils.unlinkPosArray((res?.pos_||res||[0,0]))
@@ -216,21 +186,19 @@ class Obj extends _HasColor {
         return !CDEUtils.posEquals(this.#lastAnchorPos, anchorPos)&&anchorPos
     }
 
-    set x(x) {this._pos[0] = CDEUtils.round(x, Obj.POSITION_PRECISION)}
-    set y(y) {this._pos[1] = CDEUtils.round(y, Obj.POSITION_PRECISION)}
+    set x(x) {this._pos[0] = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)}
+    set y(y) {this._pos[1] = CDEUtils.round(y, _BaseObj.POSITION_PRECISION)}
     set pos(pos) {
         this.x = pos[0]
         this.y = pos[1]
     }
-    set relativeX(x) {this._pos[0] = CDEUtils.round(this.anchorPos[0]+x, Obj.POSITION_PRECISION)}
-    set relativeY(y) {this._pos[1] = CDEUtils.round(this.anchorPos[1]+y, Obj.POSITION_PRECISION)}
+    set relativeX(x) {this._pos[0] = CDEUtils.round(this.anchorPos[0]+x, _BaseObj.POSITION_PRECISION)}
+    set relativeY(y) {this._pos[1] = CDEUtils.round(this.anchorPos[1]+y, _BaseObj.POSITION_PRECISION)}
     set relativePos(pos) {
-        this.relativeX = CDEUtils.round(pos[0], Obj.POSITION_PRECISION)
-        this.relativeY = CDEUtils.round(pos[1], Obj.POSITION_PRECISION)
+        this.relativeX = CDEUtils.round(pos[0], _BaseObj.POSITION_PRECISION)
+        this.relativeY = CDEUtils.round(pos[1], _BaseObj.POSITION_PRECISION)
     }
-    set radius(radius) {this._radius = radius<0?0:radius}
     set initPos(initPos) {this._initPos = initPos}
-    set initRadius(initRadius) {this._initRadius = initRadius}
     set setupCB(cb) {this._setupCB = cb}
     set setupResults(value) {this._setupResults = value}
     set initialized(init) {this._initialized = init}

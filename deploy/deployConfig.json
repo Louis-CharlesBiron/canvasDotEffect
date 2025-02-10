@@ -1,3 +1,3 @@
 {
-    "wrapOrder": "CDEUtils.js CanvasUtils.js Color.js _HasColor.js GridAssets.js TypingDevice.js Mouse.js Render.js TextStyles.js RenderStyles.js Canvas.js Anim.js Obj.js Shape.js Gradient.js FilledShape.js Grid.js Dot.js"
+    "wrapOrder": "CDEUtils.js CanvasUtils.js Color.js _HasColor.js GridAssets.js TypingDevice.js Mouse.js Render.js RenderStyles.js Canvas.js Anim.js _BaseObj.js TextDisplay.js Obj.js Shape.js Gradient.js FilledShape.js Grid.js Dot.js"
 }
