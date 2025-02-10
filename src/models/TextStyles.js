@@ -12,7 +12,7 @@ class TextStyles extends _HasColor {
     static ALIGNMENTS = {LEFT:"left", RIGTH:"normal", CENTER:"center", START:"start", END:"end"}
     static BASELINES = {TOP:"top", BOTTOM:"bottom", HANGING:"hanging", MIDDLE:"middle", ALPHABETIC:"alphabetic", IDEOGRAPHIC:"ideographic"}
     static RENDERINGS = {AUTO:"auto", FAST:"optimizeSpeed", LEGIBLE:"optimizeLegibility", PRECISE:"geometricPrecision"}
-    static DEFAULT_FONT = "32px Arial"// todo change?
+    static DEFAULT_FONT = "32px Arial"
     static DEFAULT_LETTER_SPACING = "2px"
     static DEFAULT_WORD_SPACING = "4px"
     static DEFAULT_FONT_VARIANT_CAPS = TextStyles.CAPS_VARIANTS.NORMAL
@@ -26,7 +26,6 @@ class TextStyles extends _HasColor {
     static DEFAULT_PROFILE = new TextStyles(null, Color.DEFAULT_RGBA, TextStyles.DEFAULT_FONT, TextStyles.DEFAULT_LETTER_SPACING, TextStyles.DEFAULT_WORD_SPACING, TextStyles.DEFAULT_FONT_VARIANT_CAPS, TextStyles.DEFAULT_DIRECTION, TextStyles.DEFAULT_FONT_STRETCH, TextStyles.DEFAULT_FONT_KERNING, TextStyles.DEFAULT_TEXT_ALIGN, TextStyles.DEFAULT_TEXT_BASELINE, TextStyles.DEFAULT_TEXT_RENDERING)
     
 
-    // TODO readme doc
     #ctx = null
     constructor(render, color, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         super(color)
@@ -44,13 +43,6 @@ class TextStyles extends _HasColor {
         this._textBaseline = textBaseline??TextStyles.DEFAULT_TEXT_BASELINE          // text vertical alignment
         this._textRendering = textRendering??TextStyles.DEFAULT_TEXT_RENDERING       // text rendering optimization method
     }
-
-    // addFont() {
-    //    let f = new FontFace("test", "url(x)");
-//
-    //    f.load().then(() => {
-    //      // Ready to use the font in a canvas context
-    //    });}
 
     // provides information about the measured text
     measureText(text) {

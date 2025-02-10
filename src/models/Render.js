@@ -82,7 +82,7 @@ class Render {
     }
 
     // instanciates and returns a path containing an arcTo
-    static getArcTo(startPos, controlPos1, controlPos2, radius) {// TODO SETUP DEFAULTS
+    static getArcTo(startPos, controlPos1, controlPos2, radius) {
         const path = new Path2D()
         path.moveTo(startPos[0], startPos[1])
         path.arcTo(controlPos1[0], controlPos1[1], controlPos2[0], controlPos2[1], radius)
