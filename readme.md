@@ -6,30 +6,33 @@
 
 **CanvasDotEffect is a lightweight JS library that helps create customizable and interactive dot-based effects using the Canvas API.**
 
-# Table of content
-- Getting Started / Minimal setup
-- Classes
-    - Canvas
-    - Obj
-    - Dot
-    - Shape
-    - Filled Shape
-    - Grid
-        - Grid Assets
-    - Color
-    - Gradient
-    - Render
-    - RenderStyles
-    - Anim
-    - Input Devices
-        - TypingDevice
-        - Mouse
-    - Utilities
-      - CanvasUtils
-      - CDEUtils
-- Execution order
-- Intended practices
-- Credits
+# Table of Contents
+
+- [Getting Started / Minimal setup](#getting-started--minimal-setup)
+- [Classes](#classes)
+  - [Canvas](#canvas)
+  - [Obj](#obj)
+  - [Dot](#dot)
+  - [Shape](#shape)
+  - [Filled Shape](#filled-shape)
+  - [Grid](#grid)
+    - [Grid Assets](#grid-assets)
+  - [Color](#color)
+  - [Gradient](#gradient)
+  - [Render](#render)
+  - [RenderStyles](#renderstyles)
+  - [TextStyles](#textStyles)
+  - [Anim](#anim)
+  - [Input Devices](#input-devices)
+    - [TypingDevice](#typingdevice)
+    - [Mouse](#mouse)
+  - [Utilities](#utilities)
+    - [CanvasUtils](#canvasutils)
+    - [CDEUtils](#cdeutils)
+- [Execution order](#execution-order)
+- [Intended practices](#intended-practices)
+- [Credits](#credits)
+
 
 
 ## Getting Started / Minimal setup
@@ -96,12 +99,12 @@
 
 
 
-# Class descriptions
+# [Class descriptions](#table-of-contents)
 The following sections are a short documentation of each class, basically what it does and what are the most important aspects of it.
 
  
 
-# Canvas
+# [Canvas](#table-of-contents)
 
 The Canvas class is the core of the project. It manages the main loop, the window listeners, the delta time, the HTML canvas element, all the canvas objects, and much more.
 
@@ -170,7 +173,7 @@ The Canvas class is the core of the project. It manages the main loop, the windo
 ```
  
 
-# Obj
+# [Obj](#table-of-contents)
 
 The Obj class is the template class of any canvas object. **It should not be directly instantiated.**
 
@@ -215,7 +218,7 @@ The Obj class is the template class of any canvas object. **It should not be dir
 
  
 
-# Dot
+# [Dot](#table-of-contents)
 
 The dot class is **meant** to be the *core* of all effects. It appears as a circular dot on the canvas by default.
 
@@ -278,7 +281,7 @@ Its other attributes are:
 
  
 
-# Shape
+# [Shape](#table-of-contents)
 
 The Shape class (or its inheritors) plays a crucial part in creating proper effects. It provides the needed control over a group of dots and is used to make pretty much any effect. An empty shape (containing no dots) on its own is not visible by default.
 
@@ -292,7 +295,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 - **initDots** -> Initial dots declaration. Can either be: an array of dots `[new Dot(...), existingDot, ...]`, a **String** (this will automatically call the shape's createFromString() function), or a callback `(Shape, Canvas)=>{... return anArrayOfDots}` 
 - ***dots*** -> Array of all the current dots contained by the shape. 
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
-- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, mouse, distance, parent, parentSetupResults, isActive rawRatio)=>{...}`.
+- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, mouse, distance, parent, parentSetupResults, isActive, rawRatio)=>{...}`.
 - **ratioPosCB**? -> References the mouse position by default. Can be used to set a custom *ratioPos* target `(Shape, dots)=>{... return [x, y]}`. Can be disabled if set to `null`.
 - **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused) 
 
@@ -514,7 +517,7 @@ CVS.add(a)
 
  
 
-# Filled Shape
+# [Filled Shape](#table-of-contents)
 
 The FilledShape class is a derivative of the Shape class. It allows to fill the area delimited by the shape's dots.
 
@@ -561,7 +564,7 @@ The FilledShape class is a derivative of the Shape class. It allows to fill the 
 
  
 
-# Grid 
+# [Grid](#table-of-contents) 
 
 The Grid class is a derivative of the Shape class. It allows the creation of dot-based symbols / text. To create your own set of symbols (source), see the *Grid Assets* section.
 
@@ -625,7 +628,7 @@ The Grid class is a derivative of the Shape class. It allows the creation of dot
 
  
 
-# Grid Assets
+# [Grid Assets](#table-of-contents)
 This class contains the source declarations used by the Grid class. A source is basically a set of symbols, just like a font is a set of letters / numbers. You can create your own symbols and sources using the Grid Assets class. Sources are simply mapping *key* (any character, "A", "0", "%", ...) to *symbol* (a custom formation of dots).
 
 ### **The '`D`' constant:**
@@ -765,7 +768,7 @@ A symbol has this structure: `[...[index, directions]]`. It is composed of a mai
 
  
 
-# Color
+# [Color](#table-of-contents)
 
 The Color class represents a color and provides multiple utility functions such as HSV control, RGBA control, color finding, color format conversions, and color normalization.
 
@@ -808,7 +811,7 @@ The Color class represents a color and provides multiple utility functions such 
 
  
 
-# Gradient
+# [Gradient](#table-of-contents)
 
 The Gradient class allows the creation of custom linear / radial gradients. A Gradient instance can be used in the *color* and *fillColor* fields of canvas objects. 
 
@@ -882,9 +885,9 @@ const gradientShape = new FilledShape(
 
  
 
-# Render
+# [Render](#table-of-contents)
 
-Render is a class that centralizes most context operation. It provides functions to get types of lines and *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles (RenderStyles).  Finally, it is automatically instanciated by, and linked to, any Canvas instance.
+Render is a class that centralizes most context operation. It provides functions to get *lines* and *text*, as well as functions to *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles for lines and text (RenderStyles, TextStyles). Finally, it is automatically instanciated by, and linked to, any Canvas instance.
 
 #### **The Render constructor takes the following parameters:**
 - **ctx** -> The canvas context.
@@ -914,10 +917,23 @@ Render is a class that centralizes most context operation. It provides functions
         
     }
 ```
+    
+#### Example use 3:
+###### - Drawing text
+```js
+    // Running in the drawEffectCB of a dummy shape...
+    {
+        ...
+        
+        // Drawing "Hello World!" at [100, 100] using the styles from textProfile1
+        render.fillText("Hello World!", [100, 100], render.textProfile1)
+        
+    }
+```
 
-# RenderStyles
+# [RenderStyles](#table-of-contents)
 
-The RenderStyles class allows the customization of renders via style profiles when drawing with the *Render* class. By default, the following static profiles are created: `DEFAULT_PROFILE`, `PROFILE1`, `PROFILE2` and PROFILE3. There is also a static `PROFILES` to add custom profiles.
+The RenderStyles class allows the customization of renders via style profiles when drawing with the *Render* class. By default, the following profiles are created and accessible via any Render instance: `defaultProfile`, `profile1`, `profile2` and `profile3`. There is also a `profiles` array to add more custom profiles.
 
 #### **The RenderStyles constructor takes the following parameters:**
 - **render** -> The canvas Render instance.
@@ -994,7 +1010,29 @@ The RenderStyles class allows the customization of renders via style profiles wh
     }
 ```
 
-# Anim
+# [TextStyles](#table-of-contents)
+
+The TextStyles class (similar to RenderStyles) allows the customization of text via style profiles when drawing text with the *Render* class. By default, the following profiles are created and accessible via any Render instance: `defaultTextProfile`, `textProfile1`, `textProfile2` and `textProfile3`. There is also a `textProfiles` array to add more custom profiles. (Most functions from RenderStyles apply very similarly to TextStyles)
+
+#### **The RenderStyles constructor takes the following parameters:**
+- **render** -> The canvas Render instance.
+- **color** -> Either an RGBA array `[r, g, b, a]` or a `Color` instance.
+- **font** -> The text font properties as a string. Ex: "32px Arial"
+- **letterSpacing** -> The gap in pixels between the letters.
+- **wordSpacing** -> Then gaps in pixels between the words.
+- **fontVariantCaps** -> Specifies an alternative capitalization style.
+- **direction** -> Specifies the text writting direction.
+- **fontStretch** -> The text streching property.
+- **fontKerning** -> Whether the default spacing of certain letters is uniform.
+- **textAlign** -> The text horizontal alignment.
+- **textBaseline** -> The text vertical alignment.
+- **textRendering** -> The text rendering optimization method.
+
+
+**Note:** See [MDN Canvas API documentation](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/font) for more information on text styling properties.
+
+
+# [Anim](#table-of-contents)
 
 The Anim class allows the creation of smooth animations and the use of easings.
 
@@ -1083,9 +1121,9 @@ Use the playAnim() function on any canvas object. All objects have an `anims` pr
 ```
 
  
-# Input Devices
+# [Input Devices](#table-of-contents)
 
-## TypingDevice
+## [TypingDevice](#table-of-contents)
 The TypingDevice class is automatically created and accessible by any Canvas instance. It provides information about the user's keyboard, such as the current keys pressed.
 
 **Note:** for setting the *keyup* and *keydown* event listeners, use the prebuilt functions from the Canvas class.
@@ -1123,7 +1161,7 @@ The TypingDevice class is automatically created and accessible by any Canvas ins
     console.log("Is the 'a' key down: ", isKey_A_down)
 ```
 
-## Mouse
+## [Mouse](#table-of-contents)
 
 The Mouse class is automatically created and accessible by any Canvas instance. It provides information about the user's mouse, such a position, speed, direction, and buttons pressed.
 
@@ -1181,9 +1219,9 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 
  
 
-# Utilities
+# [Utilities](#table-of-contents)
 
-## CanvasUtils
+## [CanvasUtils](#table-of-contents)
 The CanvasUtils class provides generic functions for common effects.
 
 ### DrawOuterRing
@@ -1351,7 +1389,7 @@ CVS.add(manualSineWaveDrawer)
 ```
 
 
-## CDEUtils
+## [CDEUtils](#table-of-contents)
 The CDEUtils class provides utilities such as `random`, `clamp`, `FPSCounter`, and `mod`.
 
 ### Linear interpolation (mod)
@@ -1388,7 +1426,7 @@ This function is used to run a callback for a specific amount of time.
 ###### repeatedTimeout(iterationCount, callback, delay=5)
 
 
-# Execution Order
+# [Execution Order](#table-of-contents)
 
 ### Level 1: Static setup
 **This is mostly the declaration state, nothing is fully created / usable just yet.**
@@ -1449,7 +1487,7 @@ After this, every dot will be initialized, and all canvas objects will be ready 
 
 
 
-# Intended Practices
+# [Intended Practices](#table-of-contents)
 
 - Putting `null` as any parameter value will assign it the default value.
 
@@ -1460,6 +1498,6 @@ After this, every dot will be initialized, and all canvas objects will be ready 
  
 
 ****
-### Credits
+### [Credits](#table-of-contents)
 
 Made by Louis-Charles Biron !

@@ -5,30 +5,31 @@
 
 // Drawing manager, centralises most context operation
 class Render {
+    static COMPOSITE_OPERATIONS = {SOURCE_OVER: "source-over", SOURCE_IN: "source-in", SOURCE_OUT: "source-out", SOURCE_ATOP: "source-atop", DESTINATION_OVER: "destination-over", DESTINATION_IN: "destination-in", DESTINATION_OUT: "destination-out", DESTINATION_ATOP: "destination-atop", LIGHTER: "lighter", COPY: "copy", XOR: "xor", MULTIPLY: "multiply", SCREEN: "screen", OVERLAY: "overlay", DARKEN: "darken", LIGHTEN: "lighten", COLOR_DODGE: "color-dodge", COLOR_BURN: "color-burn", HARD_LIGHT: "hard-light", SOFT_LIGHT: "soft-light", DIFFERENCE: "difference", EXCLUSION: "exclusion", HUE: "hue", SATURATION: "saturation", COLOR: "color", LUMINOSITY: "luminosity",}
+    static DEFAULT_COMPOSITE_OPERATION = Render.COMPOSITE_OPERATIONS.SOURCE_OVER
     static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
     static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve}
 
+    #currentCtxColor = Color.DEFAULT_COLOR_VALUE
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
+    #currentCtxTextStyles = TextStyles.DEFAULT_PROFILE.getStyles()
     constructor(ctx) {
         this._ctx = ctx           // Canvas context
         this._batchedStrokes = {} // current batch of strokes
         this._batchedFills = {}   // current batch of fills
 
-        this._defaultProfile = RenderStyles.DEFAULT_PROFILE.duplicate(this) // default style profile template
-        this._profile1 = this._defaultProfile.duplicate()                   // default style profile 1
-        this._profile2 = this._defaultProfile.duplicate()                   // default style profile 2
-        this._profile3 = this._defaultProfile.duplicate()                   // default style profile 3
-        this._profiles = []                                                 // list of custom style profiles
+        this._defaultProfile = RenderStyles.DEFAULT_PROFILE.duplicate(this)// default style profile template
+        this._profile1 = this._defaultProfile.duplicate()                  // default style profile 1
+        this._profile2 = this._defaultProfile.duplicate()                  // default style profile 2
+        this._profile3 = this._defaultProfile.duplicate()                  // default style profile 3
+        this._profiles = []                                                // list of custom style profiles
+
+        this._defaultTextProfile = TextStyles.DEFAULT_PROFILE.duplicate(this)// default style profile template
+        this._textProfile1 = this._defaultTextProfile.duplicate()            // default style profile 1
+        this._textProfile2 = this._defaultTextProfile.duplicate()            // default style profile 2
+        this._textProfile3 = this._defaultTextProfile.duplicate()            // default style profile 3
+        this._textProfiles = []                                              // list of custom style profiles
     }
-
-
-    /*
-    TODO:
-    - documentation for code and readme
-
-    OPTIMISATIONS:
-    - use cache for lines ?? (see Path2D?)
-    */
 
     // instanciates and returns a path containing a line
     static getLine(startPos, endPos) {
@@ -81,7 +82,7 @@ class Render {
     }
 
     // instanciates and returns a path containing an arcTo
-    static getArcTo(startPos, controlPos1, controlPos2, radius) {// TODO SETUP DEFAULTS
+    static getArcTo(startPos, controlPos1, controlPos2, radius) {
         const path = new Path2D()
         path.moveTo(startPos[0], startPos[1])
         path.arcTo(controlPos1[0], controlPos1[1], controlPos2[0], controlPos2[1], radius)
@@ -171,6 +172,26 @@ class Render {
         }
     }
 
+    // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
+    strokeText(text, pos, textStyles=Color.DEFAULT_RGBA, maxWidth=undefined) {
+        if (textStyles[3]??textStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+            if (textStyles instanceof TextStyles) textStyles.applyStyles()
+            else this._defaultTextProfile.applyStyles(textStyles)
+
+            this._ctx.strokeText(text, pos[0], pos[1], maxWidth)
+        }
+    }
+
+    // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
+    fillText(text, pos, textStyles=Color.DEFAULT_RGBA, maxWidth=undefined) {
+        if (textStyles[3]??textStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+            if (textStyles instanceof TextStyles) textStyles.applyStyles()
+            else this._defaultTextProfile.applyStyles(textStyles)
+
+            this._ctx.fillText(text, pos[0], pos[1], maxWidth)
+        }
+    }
+
 	get ctx() {return this._ctx}
 	get batchedStrokes() {return this._batchedStrokes}
 	get batchedFills() {return this._batchedFills}
@@ -179,7 +200,14 @@ class Render {
 	get profile2() {return this._profile2}
 	get profile3() {return this._profile3}
 	get profiles() {return this._profiles}
+    get defaultTextProfile() {return this._defaultTextProfile}
+	get textProfile1() {return this._textProfile1}
+	get textProfile2() {return this._textProfile2}
+	get textProfile3() {return this._textProfile3}
+	get textProfiles() {return this._textProfiles}
+	get currentCtxColor() {return this.#currentCtxColor}
 	get currentCtxStyles() {return this.#currentCtxStyles}
+	get currentCtxTextStyles() {return this.#currentCtxTextStyles}
 
 	set ctx(_ctx) {this._ctx = _ctx}
 	set defaultProfile(_defaultProfile) {this._defaultProfile = _defaultProfile}
@@ -187,6 +215,13 @@ class Render {
 	set profile2(_profile2) {this._profile2 = _profile2}
 	set profile3(_profile3) {this._profile3 = _profile3}
 	set profiles(_profiles) {this._profiles = _profiles}
+    set defaultTextProfile(_defaultTextProfile) {this._defaultTextProfile = _defaultTextProfile}
+	set textProfile1(_textProfile1) {this._textProfile1 = _textProfile1}
+	set textProfile2(_textProfile2) {this._textProfile2 = _textProfile2}
+	set textProfile3(_textProfile3) {this._textProfile3 = _textProfile3}
+	set textProfiles(_textProfiles) {this._textProfiles = _textProfiles}
+	set currentCtxColor(currentCtxColor) {this.#currentCtxColor = currentCtxColor}
 	set currentCtxStyles(currentCtxStyles) {this.#currentCtxStyles = currentCtxStyles}
+	set currentCtxTextStyles(currentCtxTextStyles) {this.#currentCtxTextStyles = currentCtxTextStyles}
 
 }

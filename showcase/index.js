@@ -94,7 +94,7 @@ let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200]
 
     if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.updateStyles(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25]), 2)
     
-    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles([255,0,0,1], 2, null, null, RenderStyles.JOIN_TYPES.BEVEL, RenderStyles.CAP_TYPES.SQUARE))
+    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles([255,0,0,1], 2, [0]))
 }, ()=>draggableDotTester.dots[0].pos, null)
 
 
@@ -163,8 +163,17 @@ let generationTester = new Shape([100,600],
             CanvasUtils.drawDotConnections(dot, [255,0,0,1])
             dot.radius = CDEUtils.mod(dot.getInitRadius()*2, ratio, dot.getInitRadius()*2*0.8)
             dot.a = CDEUtils.mod(1, ratio, 0.8)
-    })
+})
 
+let textValue = "bonjour", textTester = CanvasUtils.SHAPES.DEBUG_SHAPE(null, new Dot()), textGradient = new Color(new Gradient(CVS.ctx, [[450, 50],[650,150]], [[0, "red"], [1, "blue"]], null, 90), true)
+CVS.render.textProfile1.updateStyles(textGradient)
+textTester.drawEffectCB=(render)=>{
+    render.fillText(textValue, [500, 100], render.textProfile1)
+}
+textTester.playAnim(new Anim((prog)=>textGradient.colorRaw.rotation=360*prog, -1000))
+
+
+CVS.add(textTester)
 
 
 CVS.add(generationTester)

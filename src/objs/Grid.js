@@ -12,8 +12,8 @@ class Grid extends Shape {
 
         this._keys = keys                                 // keys to convert to source's values as a string
         this._gaps = gaps ?? Grid.DEFAULT_GAPS            // [x, y] gap length within the dots
-        this._spacing = spacing ?? this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
         this._source = source ?? GridAssets.fontSource5x5 // symbols' source
+        this._spacing = spacing ?? this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
     }
 
     initialize() {
@@ -50,7 +50,7 @@ class Grid extends Shape {
     }
 
     // updates the current keys
-    setKeys(keys) {
+    setKeys(keys) {// TODO OPTIMIZE
         super.clear()
         this._keys = keys
         super.add(this.createGrid())

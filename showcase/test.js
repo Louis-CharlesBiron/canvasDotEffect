@@ -14,7 +14,7 @@ const fpsCounter2 = new CDEUtils.FPSCounter(), CVS2 = new Canvas(canvas2, ()=>{/
 
 // DECLARE OBJS
 
-let a = new Shape([300,100],[
+let aasdasd = new Shape([300,100],[
     new Dot([-50, -50]),new Dot([-50, 0]),new Dot([-50, 50]),new Dot([0, -50]),new Dot([0, 0]),new Dot([0, 50]),new Dot([50, -50]),new Dot([50, 0]),
 ], 20, (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]], null, 90), 100, (render, dot, ratio, m, dist)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.8)
@@ -22,11 +22,28 @@ let a = new Shape([300,100],[
     if (dot.id % 5 == 0) CanvasUtils.drawOuterRing(dot, render.profile1.updateStyles(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 15], CDEUtils.mod(50, ratio)), 5)
     else CanvasUtils.drawOuterRing(dot, render.profile1.updateStyles(Color.rgba(255,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [CDEUtils.mod(100, ratio)], 0), 5)
 })
+CVS.add(aasdasd)
 
-CVS.add(a)
 
 
-let asd = a.duplicate()
+let textInputTest = new Grid("a", [5, 5], 50, null, [10,200], 0, null, null, (render, dot, ratio, m, dist, shape, cr, isActive)=>{
+    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles([255,0,0,1], 2, [0], null, RenderStyles.JOIN_TYPES.BEVEL, RenderStyles.CAP_TYPES.SQUARE))
+})
+
+function updateInput(e) {
+    let k = e.key.toLowerCase(), v = textInputTest.keys
+    e.preventDefault()
+    if (k=="backspace") textInputTest.setKeys(v.slice(0, v.length-1))
+    else if (k=="enter") textInputTest.setKeys(v+"\n")
+    else textInputTest.setKeys(v+k)
+}
+
+CVS.add(textInputTest)
+
+
+
+
+let asd = aasdasd.duplicate()
 CVS2.add(asd)
 
 
@@ -57,7 +74,7 @@ CVS.setmousemove(mMove)
 CVS.setmouseleave(mMove)
 CVS.setmousedown()
 CVS.setmouseup()
-CVS.setkeydown()
+CVS.setkeydown(updateInput)
 CVS.setkeyup()
 
 let mMove2=m=>mouseInfo2.textContent = "("+m.x+", "+m.y+")"

@@ -38,6 +38,10 @@ class CDEUtils {
         return Math.round(num*factor)/factor
     }
 
+    static unlinkPosArray(arr) {
+        return [arr[0], arr[1]]
+    }
+
     // Create an instance of the FPSCounter and run every frame: either getFpsRaw for raw fps AND/OR getFps for averaged fps
     static FPSCounter = class {
         constructor(avgSampleSize) {
@@ -199,45 +203,49 @@ class CanvasUtils {
     
     // Generic function to draw an outer ring around a dot
     static drawOuterRing(dot, renderStyles, radiusMultiplier) {
-        const color = renderStyles.colorObject??renderStyles
+        const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
 
         // skip if not visible
-        if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
+        if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
         dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
-    static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0) {
-        const endPos = target.pos??target, color = renderStyles.colorObject??renderStyles
+    static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread) {
+        const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
         
         // skip if not visible
-        if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
+        if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
             const res = dot.getLinearIntersectPoints(target, (target.radius??Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-            dot.render.batchStroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
-        } else dot.render.batchStroke(Render.getLine(dot.pos, endPos), renderStyles)
+            dot.render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
+        } else dot.render.batchStroke(lineType(dot.pos, target.pos??target, spread), renderStyles)
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
-    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, isDestinationOver=true) {
-        const ctx = dot.ctx, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles
+    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, isDestinationOver=true) {
+        const ctx = dot.ctx, render = dot.render, dotPos = dot.pos, dotConnections = dot.connections,
+              dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
 
-        // skip if not visible
-        if (color[3]<Color.OPACITY_VISIBILITY_THRESHOLD || color.a<Color.OPACITY_VISIBILITY_THRESHOLD) return;
+        if (dc_ll) {
+            // skip if not visible
+            if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
-        if (isDestinationOver) ctx.globalCompositeOperation = "destination-over"
+            if (isDestinationOver) ctx.globalCompositeOperation = "destination-over"
 
-        if (dc_ll) for (let i=0;i<dc_ll;i++) {
-            const c = dot.connections[i]
             if (radiusPaddingMultiplier) {
-                const res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-                dot.render.batchStroke(Render.getLine(res[0][0], res[1][0]), renderStyles)
-            } else dot.render.batchStroke(Render.getLine(dot.pos, c.pos), renderStyles)
+                const dotRadiusPadding = dot.radius*radiusPaddingMultiplier
+                for (let i=0;i<dc_ll;i++) {
+                    const c = dotConnections[i], res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dotRadiusPadding)
+                    render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
+                }
+            } else for (let i=0;i<dc_ll;i++) render.batchStroke(lineType(dotPos, dotConnections[i].pos, spread), renderStyles)
+
+            
+            if (isDestinationOver) ctx.globalCompositeOperation = "source-over"
         }
-        
-        if (isDestinationOver) ctx.globalCompositeOperation = "source-over"
     }
 
     // Generic function to get a callback that can make a dot draggable and throwable
@@ -377,9 +385,11 @@ class CanvasUtils {
 class Color {
     static DEFAULT_COLOR = "aliceblue"
     static DEFAULT_RGBA = [240, 248, 255, 1]
+    static DEFAULT_COLOR_VALUE = "rgba(240, 248, 255, 1)"
     static CSS_COLOR_TO_RGBA_CONVERTIONS = {aliceblue:[240,248,255,1],antiquewhite:[250,235,215,1],aqua:[0,255,255,1],aquamarine:[127,255,212,1],azure:[240,255,255,1],beige:[245,245,220,1],bisque:[255,228,196,1],black:[0,0,0,1],blanchedalmond:[255,235,205,1],blue:[0,0,255,1],blueviolet:[138,43,226,1],brown:[165,42,42,1],burlywood:[222,184,135,1],cadetblue:[95,158,160,1],chartreuse:[127,255,0,1],chocolate:[210,105,30,1],coral:[255,127,80,1],cornflowerblue:[100,149,237,1],cornsilk:[255,248,220,1],crimson:[220,20,60,1],cyan:[0,255,255,1],darkblue:[0,0,139,1],darkcyan:[0,139,139,1],darkgoldenrod:[184,134,11,1],darkgray:[169,169,169,1],darkgreen:[0,100,0,1],darkkhaki:[189,183,107,1],darkmagenta:[139,0,139,1],darkolivegreen:[85,107,47,1],darkorange:[255,140,0,1],darkorchid:[153,50,204,1],darkred:[139,0,0,1],darksalmon:[233,150,122,1],darkseagreen:[143,188,143,1],darkslateblue:[72,61,139,1],darkslategray:[47,79,79,1],darkturquoise:[0,206,209,1],darkviolet:[148,0,211,1],deeppink:[255,20,147,1],deepskyblue:[0,191,255,1],dimgray:[105,105,105,1],dodgerblue:[30,144,255,1],firebrick:[178,34,34,1],floralwhite:[255,250,240,1],forestgreen:[34,139,34,1],fuchsia:[255,0,255,1],gainsboro:[220,220,220,1],ghostwhite:[248,248,255,1],gold:[255,215,0,1],goldenrod:[218,165,32,1],gray:[128,128,128,1],green:[0,128,0,1],greenyellow:[173,255,47,1],honeydew:[240,255,240,1],hotpink:[255,105,180,1],indianred:[205,92,92,1],indigo:[75,0,130,1],ivory:[255,255,240,1],khaki:[240,230,140,1],lavender:[230,230,250,1],lavenderblush:[255,240,245,1],lawngreen:[124,252,0,1],lemonchiffon:[255,250,205,1],lightblue:[173,216,230,1],lightcoral:[240,128,128,1],lightcyan:[224,255,255,1],lightgoldenrodyellow:[250,250,210,1],lightgray:[211,211,211,1],lightgreen:[144,238,144,1],lightpink:[255,182,193,1],lightsalmon:[255,160,122,1],lightseagreen:[32,178,170,1],lightskyblue:[135,206,250,1],lightslategray:[119,136,153,1],lightsteelblue:[176,224,230,1],lightyellow:[255,255,224,1],lime:[0,255,0,1],limegreen:[50,205,50,1],linen:[250,240,230,1],magenta:[255,0,255,1],maroon:[128,0,0,1],mediumaquamarine:[102,205,170,1],mediumblue:[0,0,205,1],mediumorchid:[186,85,211,1],mediumpurple:[147,112,219,1],mediumseagreen:[60,179,113,1],mediumslateblue:[123,104,238,1],mediumspringgreen:[0,250,154,1],mediumturquoise:[72,209,204,1],mediumvioletred:[199,21,133,1],midnightblue:[25,25,112,1],mintcream:[245,255,250,1],mistyrose:[255,228,225,1],moccasin:[255,228,181,1],navajowhite:[255,222,173,1],navy:[0,0,128,1],oldlace:[253,245,230,1],olive:[128,128,0,1],olivedrab:[107,142,35,1],orange:[255,165,0,1],orangered:[255,69,0,1],orchid:[218,112,214,1],palegoldenrod:[238,232,170,1],palegreen:[152,251,152,1],paleturquoise:[175,238,238,1],palevioletred:[219,112,147,1],papayawhip:[255,239,213,1],peachpuff:[255,218,185,1],peru:[205,133,63,1],pink:[255,192,203,1],plum:[221,160,221,1],powderblue:[176,224,230,1],purple:[128,0,128,1],rebeccapurple:[102,51,153,1],red:[255,0,0,1],rosybrown:[188,143,143,1],royalblue:[65,105,225,1],saddlebrown:[139,69,19,1],salmon:[250,128,114,1],sandybrown:[244,164,96,1],seagreen:[46,139,87,1],seashell:[255,245,238,1],sienna:[160,82,45,1],silver:[192,192,192,1],skyblue:[135,206,235,1],slateblue:[106,90,205,1],slategray:[112,128,144,1],snow:[255,250,250,1],springgreen:[0,255,127,1],steelblue:[70,130,180,1],tan:[210,180,140,1],teal:[0,128,128,1],thistle:[216,191,216,1],tomato:[255,99,71,1],turquoise:[64,224,208,1],violet:[238,130,238,1],wheat:[245,222,179,1],white:[255,255,255,1],whitesmoke:[245,245,245,1],yellow:[255,255,0,1],yellowgreen:[154,205,50,1]}
     static RGBA_TO_CSS_COLOR_CONVERTIONS = {"240,248,255,1":"aliceblue","250,235,215,1":"antiquewhite","0,255,255,1":"aqua","127,255,212,1":"aquamarine","240,255,255,1":"azure","245,245,220,1":"beige","255,228,196,1":"bisque","0,0,0,1":"black","255,235,205,1":"blanchedalmond","0,0,255,1":"blue","138,43,226,1":"blueviolet","165,42,42,1":"brown","222,184,135,1":"burlywood","95,158,160,1":"cadetblue","127,255,0,1":"chartreuse","210,105,30,1":"chocolate","255,127,80,1":"coral","100,149,237,1":"cornflowerblue","255,248,220,1":"cornsilk","220,20,60,1":"crimson","0,0,139,1":"darkblue","0,139,139,1":"darkcyan","184,134,11,1":"darkgoldenrod","169,169,169,1":"darkgray","0,100,0,1":"darkgreen","189,183,107,1":"darkkhaki","139,0,139,1":"darkmagenta","85,107,47,1":"darkolivegreen","255,140,0,1":"darkorange","153,50,204,1":"darkorchid","139,0,0,1":"darkred","233,150,122,1":"darksalmon","143,188,143,1":"darkseagreen","72,61,139,1":"darkslateblue","47,79,79,1":"darkslategray","0,206,209,1":"darkturquoise","148,0,211,1":"darkviolet","255,20,147,1":"deeppink","0,191,255,1":"deepskyblue","105,105,105,1":"dimgray","30,144,255,1":"dodgerblue","178,34,34,1":"firebrick","255,250,240,1":"floralwhite","34,139,34,1":"forestgreen","220,220,220,1":"gainsboro","248,248,255,1":"ghostwhite","255,215,0,1":"gold","218,165,32,1":"goldenrod","128,128,128,1":"gray","0,128,0,1":"green","173,255,47,1":"greenyellow","240,255,240,1":"honeydew","255,105,180,1":"hotpink","205,92,92,1":"indianred","75,0,130,1":"indigo","255,255,240,1":"ivory","240,230,140,1":"khaki","230,230,250,1":"lavender","255,240,245,1":"lavenderblush","124,252,0,1":"lawngreen","255,250,205,1":"lemonchiffon","173,216,230,1":"lightblue","240,128,128,1":"lightcoral","224,255,255,1":"lightcyan","250,250,210,1":"lightgoldenrodyellow","211,211,211,1":"lightgray","144,238,144,1":"lightgreen","255,182,193,1":"lightpink","255,160,122,1":"lightsalmon","32,178,170,1":"lightseagreen","135,206,250,1":"lightskyblue","119,136,153,1":"lightslategray","176,224,230,1":"lightsteelblue","255,255,224,1":"lightyellow","0,255,0,1":"lime","50,205,50,1":"limegreen","250,240,230,1":"linen","255,0,255,1":"magenta","128,0,0,1":"maroon","102,205,170,1":"mediumaquamarine","0,0,205,1":"mediumblue","186,85,211,1":"mediumorchid","147,112,219,1":"mediumpurple","60,179,113,1":"mediumseagreen","123,104,238,1":"mediumslateblue","0,250,154,1":"mediumspringgreen","72,209,204,1":"mediumturquoise","199,21,133,1":"mediumvioletred","25,25,112,1":"midnightblue","245,255,250,1":"mintcream","255,228,225,1":"mistyrose","255,228,181,1":"moccasin","255,222,173,1":"navajowhite","0,0,128,1":"navy","253,245,230,1":"oldlace","128,128,0,1":"olive","107,142,35,1":"olivedrab","255,165,0,1":"orange","255,69,0,1":"orangered","218,112,214,1":"orchid","238,232,170,1":"palegoldenrod","152,251,152,1":"palegreen","175,238,238,1":"paleturquoise","219,112,147,1":"palevioletred","255,239,213,1":"papayawhip","255,218,185,1":"peachpuff","205,133,63,1":"peru","255,192,203,1":"pink","221,160,221,1":"plum","128,0,128,1":"purple","102,51,153,1":"rebeccapurple","255,0,0,1":"red","188,143,143,1":"rosybrown","65,105,225,1":"royalblue","139,69,19,1":"saddlebrown","250,128,114,1":"salmon","244,164,96,1":"sandybrown","46,139,87,1":"seagreen","255,245,238,1":"seashell","160,82,45,1":"sienna","192,192,192,1":"silver","135,206,235,1":"skyblue","106,90,205,1":"slateblue","112,128,144,1":"slategray","255,250,250,1":"snow","0,255,127,1":"springgreen","70,130,180,1":"steelblue","210,180,140,1":"tan","0,128,128,1":"teal","216,191,216,1":"thistle","255,99,71,1":"tomato","64,224,208,1":"turquoise","238,130,238,1":"violet","245,222,179,1":"wheat","255,255,255,1":"white","245,245,245,1":"whitesmoke","255,255,0,1":"yellow","154,205,50,1":"yellowgreen"}
     static FORMATS = {RGBA:"RGBA", TEXT:"TEXT", HEX:"HEX", GRADIENT:"GRADIENT", COLOR:"COLOR", HSV:"HSVA"}
+    static STRICT_FORMATS = {RGBA:"RGBA", COLOR:"COLOR"}
     static DEFAULT_TEMPERANCE = 0
     static SEARCH_STARTS = {TOP_LEFT:"TOP_LEFT", BOTTOM_RIGHT:"BOTTOM_RIGHT"}
     static DEFAULT_SEARCH_START = Color.SEARCH_STARTS.TOP_LEFT
@@ -389,8 +399,8 @@ class Color {
     #rgba = null // cached rgba value
     #hsv = null  // cached hsv value
     constructor(color, isChannel=false) {
-        this._color = color instanceof Color ? color.colorRaw : color||Color.DEFAULT_COLOR // the color value declaration, in any format
-        this._format = this.getFormat()
+        this._color = color instanceof Color ? color._color : color||Color.DEFAULT_COLOR // the color value declaration, in any format
+        this._format = Color.getFormat(this._color)
         this.#updateCache()
 
         this._isChannel = isChannel // if true, this instance will be used as a color channel and will not duplicate
@@ -399,35 +409,44 @@ class Color {
     // returns a new instance of the same color
     duplicate(gradientPositions) {
         if (this._format === Color.FORMATS.GRADIENT) return new Color(this._color.duplicate(gradientPositions))
-        else return new Color([...this.#rgba])
+        else return new Color(Color.#unlinkRGBA(this.#rgba))
+    }
+
+    static #unlinkRGBA(rgba) {
+        return [rgba[0], rgba[1], rgba[2], rgba[3]]
     }
 
     // updates the cached rgba value
     #updateCache() {
         if (this._format === Color.FORMATS.GRADIENT) this.#rgba = this.#hsv = []
         else {
-            this.#rgba = (this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : [...this._color]).map(v=>CDEUtils.round(v, Color.DEFAULT_DECIMAL_ROUNDING_POINT))
+            this.#rgba = this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : Color.#unlinkRGBA(this._color)
+            const rgba = this.#rgba, DDRP = Color.DEFAULT_DECIMAL_ROUNDING_POINT
+            rgba[0] = CDEUtils.round(rgba[0], DDRP)
+            rgba[1] = CDEUtils.round(rgba[1], DDRP)
+            rgba[2] = CDEUtils.round(rgba[2], DDRP)
+            rgba[3] = CDEUtils.round(rgba[3], DDRP)
             this.#hsv = Color.convertTo(Color.FORMATS.HSV, this.#rgba)
         }
     }
 
     // converts a color to another color format
     static convertTo(format=Color.FORMATS.RGBA, color) {
-        let inputFormat = this.getFormat(color), convertedColor = color
+        let inputFormat = Color.getFormat(color), convertedColor = color, RGBA=Color.FORMATS.RGBA, HEX=Color.FORMATS.HEX, TEXT=Color.FORMATS.TEXT, HSV=Color.FORMATS.HSV
 
-        if (format===Color.FORMATS.RGBA) {
-            if (inputFormat===Color.FORMATS.HEX) convertedColor = Color.#hexToRgba(color)
-            else if (inputFormat===Color.FORMATS.TEXT) convertedColor = [...Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color]]
-            else if (inputFormat===Color.FORMATS.HSV) convertedColor = Color.#hsvToRgba(color)
-        } else if (format===Color.FORMATS.HEX) {
-            if (inputFormat===Color.FORMATS.RGBA) convertedColor = Color.#rgbaToHex(color)
-            else Color.#rgbaToHex(Color.convertTo(Color.FORMATS.RGBA, color))
-        } else if (format===Color.FORMATS.TEXT) {
-            if (inputFormat===Color.FORMATS.RGBA) convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[color.toString()] ?? color
-            else convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[Color.convertTo(Color.FORMATS.RGBA, color).toString()] ?? color
-        } else if (format===Color.FORMATS.HSV) {
-            if (inputFormat===Color.FORMATS.RGBA) convertedColor = Color.#rgbaToHsv(color)
-            else convertedColor = Color.#rgbaToHsv(Color.convertTo(Color.FORMATS.RGBA, color))
+        if (format===RGBA) {
+            if (inputFormat===HEX) convertedColor = Color.#hexToRgba(color)
+            else if (inputFormat===TEXT) convertedColor = Color.#unlinkRGBA(Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color])
+            else if (inputFormat===HSV) convertedColor = Color.#hsvToRgba(color)
+        } else if (format===HEX) {
+            if (inputFormat===RGBA) convertedColor = Color.#rgbaToHex(color)
+            else Color.#rgbaToHex(Color.convertTo(RGBA, color))
+        } else if (format===TEXT) {
+            if (inputFormat===RGBA) convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[color.toString()] ?? color
+            else convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[Color.convertTo(RGBA, color).toString()] ?? color
+        } else if (format===HSV) {
+            if (inputFormat===RGBA) convertedColor = Color.#rgbaToHsv(color)
+            else convertedColor = Color.#rgbaToHsv(Color.convertTo(RGBA, color))
         }
 
         return convertedColor
@@ -483,10 +502,6 @@ class Color {
     // returns the format of the provided color
     static getFormat(color) {
         return Array.isArray(color) ? (color.length === 4 ? Color.FORMATS.RGBA : Color.FORMATS.HSV) : color instanceof Color ? Color.FORMATS.COLOR : color instanceof Gradient ? Color.FORMATS.GRADIENT : color.includes("#") ? Color.FORMATS.HEX : Color.FORMATS.TEXT
-    }
-    // instance version
-    getFormat(color=this._color) {
-        return Color.getFormat(color)
     }
 
     // ajust color values to Color instances
@@ -576,7 +591,7 @@ class Color {
 
     set color(color) {
         this._color = color
-        this._format = this.getFormat()
+        this._format = Color.getFormat(color)
         this.#updateCache()
     }
     set r(r) {this.#rgba[0] = CDEUtils.round(r, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
@@ -632,15 +647,18 @@ class _HasColor {
     get brightness() {return this._color.brightness}
 
     set color(color) {
-        if (this._color?.colorRaw?.toString() !== color?.toString() || !this._color) {
+        if (!this._color || this._color?.colorRaw?.toString() !== color?.toString()) {
             const potentialGradient = color?.colorRaw||color
             if (potentialGradient?.positions===Gradient.PLACEHOLDER) {
                 color = potentialGradient.duplicate()
                 color.initPositions = this
             }
-            this._color = Color.adjust(color)
+
+            this._color = Color.adjust(color) // TODO OPTIMIZE
         }
     }
+
+    
     set r(r) {this._color.r = r}
     set g(g) {this._color.g = g}
     set b(b) {this._color.b = b}
@@ -950,7 +968,7 @@ class Mouse {
 
     // given an mouse event, sets the current mouse active buttons
     setMouseClicks(e) {
-        const v = e.type==="mousedown"
+        const v = e.type==="mousedown"||e.type==="touchstart"
         if (e.button===0) this._clicked = v
         else if (e.button===1) this._scrollClicked = v
         else if (e.button===2) this._rightClicked = v
@@ -1012,181 +1030,402 @@ class Mouse {
 
 // Drawing manager, centralises most context operation
 class Render {
-    static TYPES = {LINEAR:"getLine", QUADRATIC:"getQuadCurve", CUBIC_BEIZER:"getBeizerCurve", ARC:"getArc"}
+    static COMPOSITE_OPERATIONS = {SOURCE_OVER: "source-over", SOURCE_IN: "source-in", SOURCE_OUT: "source-out", SOURCE_ATOP: "source-atop", DESTINATION_OVER: "destination-over", DESTINATION_IN: "destination-in", DESTINATION_OUT: "destination-out", DESTINATION_ATOP: "destination-atop", LIGHTER: "lighter", COPY: "copy", XOR: "xor", MULTIPLY: "multiply", SCREEN: "screen", OVERLAY: "overlay", DARKEN: "darken", LIGHTEN: "lighten", COLOR_DODGE: "color-dodge", COLOR_BURN: "color-burn", HARD_LIGHT: "hard-light", SOFT_LIGHT: "soft-light", DIFFERENCE: "difference", EXCLUSION: "exclusion", HUE: "hue", SATURATION: "saturation", COLOR: "color", LUMINOSITY: "luminosity",}
+    static DEFAULT_COMPOSITE_OPERATION = Render.COMPOSITE_OPERATIONS.SOURCE_OVER
+    static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
+    static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve}
 
+    #currentCtxColor = Color.DEFAULT_COLOR_VALUE
+    #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
+    #currentCtxTextStyles = TextStyles.DEFAULT_PROFILE.getStyles()
     constructor(ctx) {
-        this._ctx = ctx
-        this._batchStrokes = {}
-        this._batchFills = {}
+        this._ctx = ctx           // Canvas context
+        this._batchedStrokes = {} // current batch of strokes
+        this._batchedFills = {}   // current batch of fills
+
+        this._defaultProfile = RenderStyles.DEFAULT_PROFILE.duplicate(this)// default style profile template
+        this._profile1 = this._defaultProfile.duplicate()                  // default style profile 1
+        this._profile2 = this._defaultProfile.duplicate()                  // default style profile 2
+        this._profile3 = this._defaultProfile.duplicate()                  // default style profile 3
+        this._profiles = []                                                // list of custom style profiles
+
+        this._defaultTextProfile = TextStyles.DEFAULT_PROFILE.duplicate(this)// default style profile template
+        this._textProfile1 = this._defaultTextProfile.duplicate()            // default style profile 1
+        this._textProfile2 = this._defaultTextProfile.duplicate()            // default style profile 2
+        this._textProfile3 = this._defaultTextProfile.duplicate()            // default style profile 3
+        this._textProfiles = []                                              // list of custom style profiles
     }
-
-    /*
-    TODO:
-    - documentation for code and readme
-
-    OPTIMISATIONS:
-    - use cache for lines ?? (see Path2D?)
-    */
 
     // instanciates and returns a path containing a line
     static getLine(startPos, endPos) {
         const path = new Path2D()
-        path.moveTo(...startPos)
-        path.lineTo(...endPos)
+        path.moveTo(startPos[0],startPos[1])
+        path.lineTo(endPos[0], endPos[1])
         return path
     }
 
     // instanciates and returns a path containing a quadratic curve
     static getQuadCurve(startPos, endPos, controlPos) {
-        controlPos ??= [startPos[1]+20, startPos[0]+20] // TODO
+        if (!Array.isArray(controlPos)) controlPos = Render.getDefaultQuadraticControlPos(startPos, endPos, controlPos||undefined)
 
         const path = new Path2D()
-        path.moveTo(...startPos)
-        path.quadraticCurveTo(...controlPos, ...endPos)
+        path.moveTo(startPos[0],startPos[1])
+        path.quadraticCurveTo(controlPos[0], controlPos[1], endPos[0], endPos[1])
         return path
-        
+    }
+
+    // returns a control pos to create a decent default quadratic curve
+    static getDefaultQuadraticControlPos(startPos, endPos, spread=1) {
+        return [endPos[0]*spread, startPos[1]*spread]
     }
 
     // instanciates and returns a path containing a cubic beizer curve
     static getBeizerCurve(startPos, endPos, controlPos1, controlPos2) {
-        controlPos1 ??= [startPos[1]+20, startPos[0]+20] // TODO
-        controlPos2 ??= [endPos[1]+20, endPos[0]+20] // TODO
-
+        if (!controlPos2 || !controlPos1) {
+            const controlPoses = Render.getDefaultBeizerControlPos(startPos, endPos, controlPos1||undefined)
+            controlPos1 = controlPoses[0]
+            controlPos2 ??= controlPoses[1]
+        }
+    
         const path = new Path2D()
-        path.moveTo(...startPos)
-        path.bezierCurveTo(...controlPos1, ...controlPos2, ...endPos)
+        path.moveTo(startPos[0], startPos[1])
+        path.bezierCurveTo(controlPos1[0], controlPos1[1], controlPos2[0], controlPos2[1], endPos[0], endPos[1])
         return path
     }
 
+    // returns 2 control positions to create a decent default beizer curve
+    static getDefaultBeizerControlPos(startPos, endPos, spread=0.75) {
+        const [startX, startY] = startPos, [endX, endY] = endPos
+        return [[startX+(endX-startX)*(1-spread), startY+(endY-startY)*spread], [endX-(endX-startX)*(1-spread), endY-(endY-startY)*spread]]
+    }
+
     // instanciates and returns a path containing an arc
-    static getArc(pos, radius, startRadian=0, endRadian=CDEUtils.CIRC) {
+    static getArc(pos, radius=5, startRadian=0, endRadian=CDEUtils.CIRC) {
         const path = new Path2D()
         path.arc(pos[0], pos[1], radius, startRadian, endRadian)
         return path
     }
 
+    // instanciates and returns a path containing an arcTo
+    static getArcTo(startPos, controlPos1, controlPos2, radius) {// TODO SETUP DEFAULTS
+        const path = new Path2D()
+        path.moveTo(startPos[0], startPos[1])
+        path.arcTo(controlPos1[0], controlPos1[1], controlPos2[0], controlPos2[1], radius)
+        return path
+    }
+
+    // instanciates and returns a path containing an ellipse
+    static getEllispe(centerPos, radiusX, radiusY, startRadian=0, endRadian=CDEUtils.CIRC, counterclockwise=false) {
+        const path = new Path2D()
+        path.ellipse(centerPos[0], centerPos[1], radiusX, radiusY, startRadian, endRadian, counterclockwise)
+        return path
+    }
+
+    // instanciates and returns a path containing an rectangle
+    static getRect(pos, width, height) {
+        const path = new Path2D()
+        path.rect(pos[0], pos[1], width, height)
+        return path
+    }
+
+    // instanciates and returns a path containing an rounded rectangle
+    static getRoundRect(pos, width, height, radius) {
+        const path = new Path2D()
+        path.roundRect(pos[0], pos[1], width, height, radius)
+        return path
+    }
+
     // Queues a path to be stroked in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
-    batchStroke(path, renderStyles) {
+    batchStroke(path, renderStyles=Color.DEFAULT_RGBA) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            const profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString() : RenderStyles.DEFAULT_PROFILE.toString(renderStyles)
-            if (!this._batchStrokes[profileKey]) this._batchStrokes[profileKey] = new Path2D()
-            this._batchStrokes[profileKey].addPath(path)
+            const profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString() : this._defaultProfile.toString(renderStyles)
+            if (!this._batchedStrokes[profileKey]) this._batchedStrokes[profileKey] = new Path2D()
+            this._batchedStrokes[profileKey].addPath(path)
         }
     }
 
     // Queues a path to be filled in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
-    batchFill(path, renderStyles) {
+    batchFill(path, renderStyles=Color.DEFAULT_RGBA) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            const profileKey = renderStyles instanceof RenderStyles ? renderStyles.colorOnlyToString() : RenderStyles.DEFAULT_PROFILE.colorOnlyToString(renderStyles)
-            if (!this._batchFills[profileKey]) this._batchFills[profileKey] = new Path2D()
-            this._batchFills[profileKey].addPath(path)
+            const profileKey = renderStyles instanceof RenderStyles ? renderStyles.colorOnlyToString() : this._defaultProfile.colorOnlyToString(renderStyles)
+            if (!this._batchedFills[profileKey]) this._batchedFills[profileKey] = new Path2D()
+            this._batchedFills[profileKey].addPath(path)
         } 
     }
 
     // Fills and strokes all batched path
     drawBatched() {
-        const strokes = Object.entries(this._batchStrokes), s_ll = strokes.length,
-              fills = Object.entries(this._batchFills), f_ll = fills.length
+        const strokes = Object.entries(this._batchedStrokes), s_ll = strokes.length,
+              fills = Object.entries(this._batchedFills), f_ll = fills.length,
+              gradientSep = Gradient.SERIALIZATION_SEPARATOR
               
         for (let i=0;i<s_ll;i++) {
-            let [profileKey, path] = strokes[i], [colorValue, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
-            if (colorValue.includes(Gradient.SERIALIZATION_SEPARATOR)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
-            RenderStyles.applyStyles(this._ctx, colorValue, lineWidth, lineJoin, lineCap, lineDash?lineDash.split(",").map(Number).filter(x=>x):null, lineDashOffset)
+            let [profileKey, path] = strokes[i], [colorValue, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
+            if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
+            RenderStyles.applyStyles(this, colorValue, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
             this._ctx.stroke(path)
         }
 
         for (let i=0;i<f_ll;i++) {
             let [colorValue, path] = fills[i]
-            if (colorValue.includes(Gradient.SERIALIZATION_SEPARATOR)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
-            RenderStyles.applyStyles(this._ctx, colorValue)
+            if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
+            RenderStyles.applyStyles(this, colorValue)
             this._ctx.fill(path)
         }
 
-        this._batchStrokes = {}
-        this._batchFills = {}
+        this._batchedStrokes = {}
+        this._batchedFills = {}
     }
 
     // directly strokes a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
-    stroke(path, renderStyles) {
+    stroke(path, renderStyles=Color.DEFAULT_RGBA) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
             if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
-            else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
+            else this._defaultProfile.applyStyles(renderStyles)
 
             this._ctx.stroke(path)
         }
     }
 
     // directly fills a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
-    fill(path, renderStyles) {
+    fill(path, renderStyles=Color.DEFAULT_RGBA) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
             if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
-            else RenderStyles.DEFAULT_PROFILE.applyStyles(renderStyles)
+            else this._defaultProfile.applyStyles(renderStyles)
 
             this._ctx.fill(path)
         }
     }
 
-    get ctx() {return this._ctx}
-    get batch() {return this._batch}
+    // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
+    strokeText(text, pos, textStyles=Color.DEFAULT_RGBA, maxWidth=undefined) {
+        if (textStyles[3]??textStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+            if (textStyles instanceof TextStyles) textStyles.applyStyles()
+            else this._defaultTextProfile.applyStyles(textStyles)
+
+            this._ctx.strokeText(text, pos[0], pos[1], maxWidth)
+        }
+    }
+
+    // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
+    fillText(text, pos, textStyles=Color.DEFAULT_RGBA, maxWidth=undefined) {
+        if (textStyles[3]??textStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+            if (textStyles instanceof TextStyles) textStyles.applyStyles()
+            else this._defaultTextProfile.applyStyles(textStyles)
+
+            this._ctx.fillText(text, pos[0], pos[1], maxWidth)
+        }
+    }
+
+	get ctx() {return this._ctx}
+	get batchedStrokes() {return this._batchedStrokes}
+	get batchedFills() {return this._batchedFills}
+	get defaultProfile() {return this._defaultProfile}
+	get profile1() {return this._profile1}
+	get profile2() {return this._profile2}
+	get profile3() {return this._profile3}
+	get profiles() {return this._profiles}
+    get defaultTextProfile() {return this._defaultTextProfile}
+	get textProfile1() {return this._textProfile1}
+	get textProfile2() {return this._textProfile2}
+	get textProfile3() {return this._textProfile3}
+	get textProfiles() {return this._textProfiles}
+	get currentCtxColor() {return this.#currentCtxColor}
+	get currentCtxStyles() {return this.#currentCtxStyles}
+	get currentCtxTextStyles() {return this.#currentCtxTextStyles}
+
+	set ctx(_ctx) {this._ctx = _ctx}
+	set defaultProfile(_defaultProfile) {this._defaultProfile = _defaultProfile}
+	set profile1(_profile1) {this._profile1 = _profile1}
+	set profile2(_profile2) {this._profile2 = _profile2}
+	set profile3(_profile3) {this._profile3 = _profile3}
+	set profiles(_profiles) {this._profiles = _profiles}
+    set defaultTextProfile(_defaultTextProfile) {this._defaultTextProfile = _defaultTextProfile}
+	set textProfile1(_textProfile1) {this._textProfile1 = _textProfile1}
+	set textProfile2(_textProfile2) {this._textProfile2 = _textProfile2}
+	set textProfile3(_textProfile3) {this._textProfile3 = _textProfile3}
+	set textProfiles(_textProfiles) {this._textProfiles = _textProfiles}
+	set currentCtxColor(currentCtxColor) {this.#currentCtxColor = currentCtxColor}
+	set currentCtxStyles(currentCtxStyles) {this.#currentCtxStyles = currentCtxStyles}
+	set currentCtxTextStyles(currentCtxTextStyles) {this.#currentCtxTextStyles = currentCtxTextStyles}
+
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
 // Please don't use or credit this code as your own.
 //
 
-// Represents styling profile for lines
+// Represents a styling profile for text
+class TextStyles extends _HasColor {
+    static CAPS_VARIANTS = {NORMAL:"normal", SMALL_CAPS:"small-caps", ALL_SMALL_CAPS:"all-small-caps", PETITE_CAPS:"petite-caps", ALL_PETITE_CAPS:"all-petite-caps", UNICASE:"unicase", TILTING_CAPS:"tilting-caps"}
+    static DIRECTIONS = {LEFT_TO_RIGHT:"ltr", RIGHT_TO_LEFT:"rtl", INHERIT:"inherit"}
+    static STRETCHES = {ULTRA_CONDENSED:"ultra-condensed", EXTRA_CONDENSED:"extra-condensed", CONDENSED:"condensed", SEMI_CONDENSED:"semi-condensed", NORMAL:"normal", SEMI_EXPANDED:"semi-expanded", EXPANDED:"expanded", EXTRA_EXPANDED:"extra-expanded", ULTRA_EXPANDED:"ultra-expanded"}
+    static KERNINGS = {AUTO:"auto", NORMAL:"normal", NONE:"none"}
+    static ALIGNMENTS = {LEFT:"left", RIGTH:"normal", CENTER:"center", START:"start", END:"end"}
+    static BASELINES = {TOP:"top", BOTTOM:"bottom", HANGING:"hanging", MIDDLE:"middle", ALPHABETIC:"alphabetic", IDEOGRAPHIC:"ideographic"}
+    static RENDERINGS = {AUTO:"auto", FAST:"optimizeSpeed", LEGIBLE:"optimizeLegibility", PRECISE:"geometricPrecision"}
+    static DEFAULT_FONT = "32px Arial"// todo change?
+    static DEFAULT_LETTER_SPACING = "2px"
+    static DEFAULT_WORD_SPACING = "4px"
+    static DEFAULT_FONT_VARIANT_CAPS = TextStyles.CAPS_VARIANTS.NORMAL
+    static DEFAULT_DIRECTION = TextStyles.DIRECTIONS.LEFT_TO_RIGHT
+    static DEFAULT_FONT_STRETCH = TextStyles.STRETCHES.NORMAL
+    static DEFAULT_FONT_KERNING = TextStyles.KERNINGS.NORMAL
+    static DEFAULT_TEXT_ALIGN = TextStyles.ALIGNMENTS.START
+    static DEFAULT_TEXT_BASELINE = TextStyles.BASELINES.ALPHABETIC
+    static DEFAULT_TEXT_RENDERING = TextStyles.RENDERINGS.FAST
+    static SERIALIZATION_SEPARATOR = "!"
+    static DEFAULT_PROFILE = new TextStyles(null, Color.DEFAULT_RGBA, TextStyles.DEFAULT_FONT, TextStyles.DEFAULT_LETTER_SPACING, TextStyles.DEFAULT_WORD_SPACING, TextStyles.DEFAULT_FONT_VARIANT_CAPS, TextStyles.DEFAULT_DIRECTION, TextStyles.DEFAULT_FONT_STRETCH, TextStyles.DEFAULT_FONT_KERNING, TextStyles.DEFAULT_TEXT_ALIGN, TextStyles.DEFAULT_TEXT_BASELINE, TextStyles.DEFAULT_TEXT_RENDERING)
+    
+
+    // TODO readme doc
+    #ctx = null
+    constructor(render, color, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
+        super(color)
+        if (render) this.color = this._initColor
+        this._render = render                                                        // Canvas render instance
+        this.#ctx = render?.ctx                                                      // Canvas context
+        this._font = font??TextStyles.DEFAULT_FONT                                   // text font-style, font-variant, font-weight, font-size, line-height, font-family
+        this._letterSpacing = letterSpacing??TextStyles.DEFAULT_LETTER_SPACING       // gaps in px between letters
+        this._wordSpacing = wordSpacing??TextStyles.DEFAULT_WORD_SPACING             // gaps in px between words
+        this._fontVariantCaps = fontVariantCaps??TextStyles.DEFAULT_FONT_VARIANT_CAPS// specifies alternative capitalization
+        this._direction = direction??TextStyles.DEFAULT_DIRECTION                    // text direction
+        this._fontStretch = fontStretch??TextStyles.DEFAULT_FONT_STRETCH             // text streching
+        this._fontKerning = fontKerning??TextStyles.DEFAULT_FONT_KERNING             // whether the default spacing of certain letters is uniform 
+        this._textAlign = textAlign??TextStyles.DEFAULT_TEXT_ALIGN                   // text horizontal alignment
+        this._textBaseline = textBaseline??TextStyles.DEFAULT_TEXT_BASELINE          // text vertical alignment
+        this._textRendering = textRendering??TextStyles.DEFAULT_TEXT_RENDERING       // text rendering optimization method
+    }
+
+    // addFont() {
+    //    let f = new FontFace("test", "url(x)");
+//
+    //    f.load().then(() => {
+    //      // Ready to use the font in a canvas context
+    //    });}
+
+    // provides information about the measured text
+    measureText(text) {
+        return this._render.ctx.measureText(text)
+    }
+
+    // returns a separate copy of the profile
+    duplicate(render=this._render, color=this._color, font=this._font, letterSpacing=this._letterSpacing, wordSpacing=this._wordSpacing, fontVariantCaps=this._fontVariantCaps, direction=this._direction, fontStretch=this._fontStretch, fontKerning=this._fontKerning, textAlign=this._textAlign, textBaseline=this._textBaseline, textRendering=this._textRendering) {
+        return new TextStyles(render, color, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
+    }
+
+    // returns the profile's styles as an array
+    getStyles() {
+        return [this._font, this._letterSpacing, this._wordSpacing, this._fontVariantCaps, this._direction, this._fontStretch, this._fontKerning, this._textAlign, this._textBaseline, this._textRendering]
+    }
+
+    // updates a profile's attributes and returns the updated version
+    updateStyles(color, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
+        if (color) this.color = color
+        if (font) this._font = font
+        if (letterSpacing) this._letterSpacing = letterSpacing
+        if (wordSpacing) this._wordSpacing = wordSpacing
+        if (fontVariantCaps) this._fontVariantCaps = fontVariantCaps
+        if (direction) this._direction = direction
+        if (fontStretch) this._fontStretch = fontStretch
+        if (fontKerning) this._fontKerning = fontKerning 
+        if (textAlign) this._textAlign = textAlign 
+        if (textBaseline) this._textBaseline = textBaseline 
+        if (textRendering) this._textRendering = textRendering 
+        return this
+    }
+
+    // directly applies the styles of the profile
+    applyStyles(color=this._color, font=this._font, letterSpacing=this._letterSpacing, wordSpacing=this._wordSpacing, fontVariantCaps=this._fontVariantCaps, direction=this._direction, fontStretch=this._fontStretch, fontKerning=this._fontKerning, textAlign=this._textAlign, textBaseline=this._textBaseline, textRendering=this._textRendering) {
+        const ctx = this.#ctx, colorValue = Color.getColorValue(color), currentTextStyles = this._render.currentCtxTextStyles
+        if (color && this._render.currentCtxColor !== colorValue) this._render.currentCtxColor = ctx.strokeStyle = ctx.fillStyle = colorValue
+        if (font && currentTextStyles[0] !== font) currentTextStyles[0] = ctx.font = font
+        if (letterSpacing && currentTextStyles[1] !== letterSpacing) currentTextStyles[1] = ctx.letterSpacing = letterSpacing
+        if (wordSpacing && currentTextStyles[2] !== wordSpacing) currentTextStyles[2] = ctx.wordSpacing = wordSpacing
+        if (fontVariantCaps && currentTextStyles[3] !== fontVariantCaps) currentTextStyles[3] = ctx.fontVariantCaps = fontVariantCaps
+        if (direction && currentTextStyles[4] !== direction) currentTextStyles[4] = ctx.direction = direction
+        if (fontStretch && currentTextStyles[5] !== fontStretch) currentTextStyles[5] = ctx.fontStretch = fontStretch
+        if (fontKerning && currentTextStyles[6] !== fontKerning) currentTextStyles[6] = ctx.fontKerning = fontKerning
+        if (textAlign && currentTextStyles[7] !== textAlign) currentTextStyles[7] = ctx.textAlign = textAlign
+        if (textBaseline && currentTextStyles[8] !== textBaseline) currentTextStyles[8] = ctx.textBaseline = textBaseline
+        if (textRendering && currentTextStyles[9] !== textRendering) currentTextStyles[9] = ctx.textRendering = textRendering
+    }
+
+    get render() {return this._render}
+	get font() {return this._font}
+	get letterSpacing() {return +this._letterSpacing.replace("px","")}
+	get wordSpacing() {return +this._wordSpacing.replace("px","")}
+	get fontVariantCaps() {return this._fontVariantCaps}
+	get direction() {return this._direction}
+	get fontStretch() {return this._fontStretch}
+	get fontKerning() {return this._fontKerning}
+	get textAlign() {return this._textAlign}
+	get textBaseline() {return this._textBaseline}
+	get textRendering() {return this._textRendering}
+
+	set render(render) {
+        this._render = render
+        this.#ctx = render.ctx
+    }
+	set font(_font) {this._font = _font}
+	set letterSpacing(_letterSpacing) {this._letterSpacing = typeof _letterSpacing==="number"?_letterSpacing+"px":_letterSpacing}
+	set wordSpacing(_wordSpacing) {this._wordSpacing = typeof _wordSpacing==="number"?_wordSpacing+"px":_wordSpacing}
+	set fontVariantCaps(_fontVariantCaps) {this._fontVariantCaps = _fontVariantCaps}
+	set direction(_direction) {this._direction = _direction}
+	set fontStretch(_fontStretch) {this._fontStretch = _fontStretch}
+	set fontKerning(_fontKerning) {this._fontKerning = _fontKerning}
+	set textAlign(_textAlign) {this._textAlign = _textAlign}
+	set textBaseline(_textBaseline) {this._textBaseline = _textBaseline}
+	set textRendering(_textRendering) {this._textRendering = _textRendering}
+
+}
+// JS
+// Canvas Dot Effect by Louis-Charles Biron
+// Please don't use or credit this code as your own.
+//
+
+// Represents a styling profile for paths
 class RenderStyles extends _HasColor {
-    static JOIN_TYPES = {MITER:"miter", BEVEL:"bevel", ROUND:"round"} // spike, flat, round
+    static JOIN_TYPES = {MITER:"miter", BEVEL:"bevel", ROUND:"round"} // spiky, flat, round
     static CAP_TYPES = {BUTT:"butt", SQUARE:"square", ROUND:"round"}  // short, long, round
     static DEFAULT_WIDTH = 2
     static DEFAULT_CAP = RenderStyles.CAP_TYPES.ROUND
     static DEFAULT_JOIN = RenderStyles.JOIN_TYPES.MITER
     static DEFAULT_DASH = []
     static DEFAULT_DASH_OFFSET = 0
-    static DEFAULT_PROFILE = new RenderStyles(null, Color.DEFAULT_RGBA, RenderStyles.DEFAULT_WIDTH, RenderStyles.DEFAULT_JOIN, RenderStyles.DEFAULT_CAP, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH_OFFSET)
-    static PROFILE1 = RenderStyles.getNewProfile()
-    static PROFILE2 = RenderStyles.getNewProfile()
-    static PROFILE3 = RenderStyles.getNewProfile()
-    static PROFILES = []
     static SERIALIZATION_SEPARATOR = "%"
-    static #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.#getStyles()
+    static DEFAULT_PROFILE = new RenderStyles(null, Color.DEFAULT_RGBA, RenderStyles.DEFAULT_WIDTH, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH_OFFSET, RenderStyles.DEFAULT_JOIN, RenderStyles.DEFAULT_CAP)
 
-    constructor(ctx, color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
+    #ctx = null
+    constructor(render, color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         super(color)
-        this._ctx = ctx                                                         // Canvas context
+        this._render = render                                                   // Canvas render instance
+        this.#ctx = render?.ctx                                                 // Canvas context
         this._lineWidth = lineWidth??RenderStyles.DEFAULT_WIDTH                 // width of drawn line
-        this._lineJoin = lineJoin??RenderStyles.DEFAULT_JOIN                    // determines the shape of line joins
-        this._lineCap = lineCap??RenderStyles.DEFAULT_CAP                       // determines the shape of line ends
         this._lineDash = lineDash??RenderStyles.DEFAULT_DASH                    // gaps length within the line
         this._lineDashOffset = lineDashOffset??RenderStyles.DEFAULT_DASH_OFFSET // line gaps offset
-    }
-
-    // Ran on any Canvas instance creation, sets the ctx property off default
-    static initializeDefaultProfiles(ctx) {
-        RenderStyles.PROFILE1.ctx = RenderStyles.PROFILE2.ctx = RenderStyles.PROFILE3.ctx = RenderStyles.DEFAULT_PROFILE.ctx = ctx
-    }
-
-    // returns a new profile based on the DEFAULT_PROFILE
-    static getNewProfile() {
-        return RenderStyles.DEFAULT_PROFILE.duplicate()
+        this._lineJoin = lineJoin??RenderStyles.DEFAULT_JOIN                    // determines the shape of line joins
+        this._lineCap = lineCap??RenderStyles.DEFAULT_CAP                       // determines the shape of line ends
     }
 
     // returns a separate copy of the profile
-    duplicate() {
-        return new RenderStyles(this._ctx, this._color, this._lineWidth, this._lineJoin, this._lineCap, this._lineDash, this._lineDashOffset)
+    duplicate(render=this._render, color=this._color, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
+        return new RenderStyles(render, color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
     }
 
     // returns the profile's styles as an array
-    #getStyles() {
-        return [this.color, this._lineWidth, this._lineJoin, this._lineCap, this._lineDash, this._lineDashOffset]
+    getStyles() {
+        return [this._lineWidth, this._lineDash, this._lineDashOffset, this._lineJoin, this._lineCap]
     }
 
-    toString(color=this._color, lineWidth=this._lineWidth, lineJoin=this._lineJoin, lineCap=this._lineCap, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset) {
+    // serializes the styles profile
+    toString(color=this._color, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
         let sep = RenderStyles.SERIALIZATION_SEPARATOR, colorValue = Color.getColorValue(color)
         if (colorValue instanceof CanvasGradient) colorValue = color.toString()
-        return colorValue+sep+lineWidth+sep+lineJoin+sep+lineCap+sep+lineDash+sep+lineDashOffset
+        return colorValue+sep+lineWidth+sep+lineDash+sep+lineDashOffset+sep+lineJoin+sep+lineCap
     }
 
+    // serializes the styles profile, but only the color value
     colorOnlyToString(color=this._color) {
         let colorValue = Color.getColorValue(color)
         if (colorValue instanceof CanvasGradient) colorValue = color.toString()
@@ -1194,46 +1433,62 @@ class RenderStyles extends _HasColor {
     }
 
     // updates a profile's attributes and returns the updated version
-    updateStyles(color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
+    updateStyles(color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         if (color) this.color = color
         if (lineWidth) this._lineWidth = lineWidth
-        if (lineJoin) this._lineJoin = lineJoin
-        if (lineCap) this._lineCap = lineCap
         if (lineDash) this._lineDash = lineDash
         if (lineDashOffset) this._lineDashOffset = lineDashOffset
+        if (lineJoin) this._lineJoin = lineJoin
+        if (lineCap) this._lineCap = lineCap
         return this
     }
 
     // directly applies the styles of the profile
-    applyStyles(color=this._color, lineWidth=this._lineWidth, lineJoin=this._lineJoin, lineCap=this._lineCap, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset) {
-        const ctx = this._ctx, colorValue = Color.getColorValue(color)
-        if (color && RenderStyles.#currentCtxStyles[0] !== colorValue) RenderStyles.#currentCtxStyles[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
-        if (lineWidth && RenderStyles.#currentCtxStyles[1] !== lineWidth) RenderStyles.#currentCtxStyles[1] = ctx.lineWidth = lineWidth
-        if (lineJoin && RenderStyles.#currentCtxStyles[2] !== lineJoin) RenderStyles.#currentCtxStyles[2] = ctx.lineJoin = lineJoin
-        if (lineCap && RenderStyles.#currentCtxStyles[3] !== lineCap) RenderStyles.#currentCtxStyles[3] = ctx.lineCap = lineCap
-        if (lineDash && RenderStyles.#currentCtxStyles[4] != lineDash) RenderStyles.#currentCtxStyles[4] = ctx.setLineDash(lineDash)
-        if (lineDashOffset && RenderStyles.#currentCtxStyles[5] !== lineDashOffset) RenderStyles.#currentCtxStyles[5] = ctx.lineDashOffset = lineDashOffset
+    applyStyles(color=this._color, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
+        const ctx = this.#ctx, colorValue = Color.getColorValue(color), currentStyles = this._render.currentCtxStyles
+        if (color && this._render.currentCtxColor !== colorValue) this._render.currentCtxColor = ctx.strokeStyle = ctx.fillStyle = colorValue
+        if (lineWidth && currentStyles[0] !== lineWidth) currentStyles[0] = ctx.lineWidth = lineWidth
+        if (lineDash) {
+            const lineDashString = lineDash.toString()
+            if (currentStyles[1] !== lineDashString) {
+                currentStyles[1] = lineDashString
+                ctx.setLineDash(lineDash)
+            }
+        }
+        if (lineDashOffset && currentStyles[2] !== lineDashOffset) currentStyles[2] = ctx.lineDashOffset = lineDashOffset
+        if (lineJoin && currentStyles[3] !== lineJoin) currentStyles[3] = ctx.lineJoin = lineJoin
+        if (lineCap && currentStyles[4] !== lineCap) currentStyles[4] = ctx.lineCap = lineCap
     }
 
     // directly applies the provided styles
-    static applyStyles(ctx, color, lineWidth, lineJoin, lineCap, lineDash, lineDashOffset) {
-        const colorValue = Color.getColorValue(color)
-        if (color && RenderStyles.#currentCtxStyles[0] !== colorValue) RenderStyles.#currentCtxStyles[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
-        if (lineWidth && RenderStyles.#currentCtxStyles[1] !== lineWidth) RenderStyles.#currentCtxStyles[1] = ctx.lineWidth = lineWidth
-        if (lineJoin && RenderStyles.#currentCtxStyles[2] !== lineJoin) RenderStyles.#currentCtxStyles[2] = ctx.lineJoin = lineJoin
-        if (lineCap && RenderStyles.#currentCtxStyles[3] !== lineCap) RenderStyles.#currentCtxStyles[3] = ctx.lineCap = lineCap
-        if (lineDash && RenderStyles.#currentCtxStyles[4] != lineDash) RenderStyles.#currentCtxStyles[4] = ctx.setLineDash(lineDash)
-        if (lineDashOffset && RenderStyles.#currentCtxStyles[5] !== lineDashOffset) RenderStyles.#currentCtxStyles[5] = ctx.lineDashOffset = lineDashOffset
+    static applyStyles(render, color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
+        const ctx = render.ctx, colorValue = Color.getColorValue(color), currentStyles = render.currentCtxStyles
+        if (color && render.currentCtxColor !== colorValue) render.currentCtxColor = ctx.strokeStyle = ctx.fillStyle = colorValue
+        if (lineWidth && currentStyles[0] !== lineWidth) currentStyles[0] = ctx.lineWidth = lineWidth
+        if (lineDash) {
+            const lineDashString = lineDash.toString()
+            if (currentStyles[1] !== lineDashString) {
+                currentStyles[1] = lineDashString
+                ctx.setLineDash(lineDash)
+            }
+        }
+        if (lineDashOffset && currentStyles[2] !== lineDashOffset) currentStyles[2] = ctx.lineDashOffset = lineDashOffset
+        if (lineJoin && currentStyles[3] !== lineJoin) currentStyles[3] = ctx.lineJoin = lineJoin
+        if (lineCap && currentStyles[4] !== lineCap) currentStyles[4] = ctx.lineCap = lineCap
     }
 
-	get ctx() {return this._ctx}
+
+	get render() {return this._render}
 	get lineWidth() {return this._lineWidth}
 	get lineCap() {return this._lineCap}
 	get lineJoin() {return this._lineJoin}
 	get lineDash() {return this._lineDash}
 	get lineDashOffset() {return this._lineDashOffset}
 
-	set ctx(ctx) {this._ctx = ctx}
+	set render(render) {
+        this._render = render
+        this.#ctx = render.ctx
+    }
 	set lineWidth(_lineWidth) {return this._lineWidth = _lineWidth}
 	set lineCap(_lineCap) {return this._lineCap = _lineCap}
 	set lineJoin(_lineJoin) {return this._lineJoin = _lineJoin}
@@ -1256,7 +1511,7 @@ class Canvas {
     static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
     static DEFAULT_CVSDE_ATTR = "_CVSDE"
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
-    static DEFAULT_CTX_SETTINGS = {"lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
+    static DEFAULT_CTX_SETTINGS = {"font":TextStyles.DEFAULT_FONT, "letterSpacing":TextStyles.DEFAULT_LETTER_SPACING, "wordSpacing":TextStyles.DEFAULT_WORD_SPACING, "fontVariantCaps":TextStyles.DEFAULT_FONT_VARIANT_CAPS, "direction":TextStyles.DEFAULT_DIRECTION, "fontSretch":TextStyles.DEFAULT_FONT_STRETCH, "fontKerning":TextStyles.DEFAULT_FONT_KERNING, "textAlign":TextStyles.DEFAULT_TEXT_ALIGN, "textBaseline":TextStyles.DEFAULT_TEXT_BASELINE, "textRendering":TextStyles.DEFAULT_TEXT_RENDERING, "lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "imageSmoothingEnabled":true, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR, "willReadFrequently":false}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
@@ -1267,6 +1522,7 @@ class Canvas {
     #frameSkipsOffset = null // used to prevent significant frame gaps
     #timeStamp = null        // requestanimationframe timestamp in ms
     #cachedEls = []          // cached canvas elements to draw
+    #lastScrollValues = [window.scrollX, window.screenY]
 
     constructor(cvs, loopingCallback, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                                // html canvas element
@@ -1291,8 +1547,6 @@ class Canvas {
         this._mouse = new Mouse()                                      // mouse info
         this._offset = this.updateOffset()                             // cvs page offset
         this._render = new Render(this._ctx)                           // render instance
-
-        RenderStyles.initializeDefaultProfiles(this._ctx)
     }
 
     // sets css styles on the canvas and the parent
@@ -1306,17 +1560,30 @@ class Canvas {
     // sets resize and visibility change listeners on the window
     #initWindowListeners() {
         const onresize=()=>this.setSize(),
-              onvisibilitychange=()=>{if (!document.hidden) this.resetReferences()}
+              onvisibilitychange=()=>{if (!document.hidden) this.resetReferences()},
+              onscroll=()=>{
+                const scrollX = window.scrollX, scrollY = window.scrollY
+                this.updateOffset()
+                this._mouse.updatePos({x:this._mouse.x+(scrollX-this.#lastScrollValues[0]), y:this._mouse.y+(scrollY-this.#lastScrollValues[1])}, {x:0, y:0})
+                this.#mouseMovements()
+                this.#lastScrollValues[0] = scrollX
+                this.#lastScrollValues[1] = scrollY
+            }
 
         window.addEventListener("resize", onresize)
         window.addEventListener("visibilitychange", onvisibilitychange)
-        return [()=>window.removeEventListener("resize", onresize), ()=>window.removeEventListener("visibilitychange", onvisibilitychange)]
+        window.addEventListener("scroll", onscroll)
+        return {
+            onrezise:()=>window.removeEventListner("resize", onresize),
+            onvisibilitychange:()=>window.removeEventListener("visibilitychange", onvisibilitychange),
+            onscroll:()=>window.removeEventListener("scroll", onscroll)
+        }
     }
 
     // updates the calculated canvas offset in the page
     updateOffset() {
         const {width, height, x, y} = this._cvs.getBoundingClientRect()
-        return this._offset = {x:Math.round((x+width)-this.width+window.scrollX)+this._viewPos[0], y:Math.round((y+height)-this.height+window.scrollY)+this._viewPos[1]}
+        return this._offset = {x:Math.round((x+width)-this.width)+this._viewPos[0], y:Math.round((y+height)-this.height)+this._viewPos[1]}
     }
 
     // starts the drawing loop
@@ -1360,7 +1627,7 @@ class Canvas {
             if (CDEUtils.isFunction(this._loopingCallback)) this._loopingCallback()
 
             this._fixedTimeStamp = 0
-        } else if (time) {// maybe see if frame skipping is really necessary
+        } else if (time) {
             this._fixedTimeStamp = time-(this.#frameSkipsOffset += this.#maxTime)
             this.#frameSkipsOffset += this.#maxTime
         }   
@@ -1381,8 +1648,13 @@ class Canvas {
         return fpsLimit ? fpsLimit < 7 ? (((14-fpsLimit)*1.05)**3)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER : Math.max((360-fpsLimit)*Canvas.DEFAULT_MAXDELAY_MULTIPLIER, 50) : Canvas.DEFAULT_MAX_DELTATIME_MS
     }
 
+    // updates cached canvas elements
     updateCachedAllEls() {
-        this.#cachedEls = this.refs.concat(this._els.refs.flatMap(source=>source.asSource)).concat(this._els.defs)
+        const cachedEls = []
+        cachedEls.push(...this.refs)
+        this._els.refs.forEach(source=>cachedEls.push(...source.asSource))
+        cachedEls.push(...this._els.defs)
+        this.#cachedEls = cachedEls
     }
 
     // calls the draw function on all canvas objects
@@ -1397,7 +1669,7 @@ class Canvas {
 
     // clears the canvas
     clear(pos1=[0,0], pos2=[this.width, this.height]) {
-        this._ctx.clearRect(...pos1, ...pos2)
+        this._ctx.clearRect(pos1[0], pos1[1], pos2[0], pos2[1])
     }
 
     // resets every fragile references
@@ -1449,15 +1721,16 @@ class Canvas {
 
     // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "active" is false, it only initializes the obj, without adding it to the canvas
     add(objs, isDef, active=true) {
-        const l = objs.length??1
+        
+        const l = objs&&(objs.length??1)
         for (let i=0;i<l;i++) {
             const obj = objs[i]??objs
             if (!isDef) obj.cvs = this
             else obj.parent = this
             
             if (CDEUtils.isFunction(obj.initialize)) obj.initialize()
-
             if (active) this._els[isDef?"defs":"refs"].push(obj)
+
         }
         this.updateCachedAllEls()
     }
@@ -1486,7 +1759,7 @@ class Canvas {
     
     // restore the saved context parameters
     restore() {
-        this._ctx.save()
+        this._ctx.restore()
     }
 
     // called on mouse move
@@ -1510,11 +1783,24 @@ class Canvas {
             // update pos and direction angle
             this._mouse.updatePos(e, this._offset)
             this._mouse.calcAngle()            
-
             this.#mouseMovements(cb, e)
+        }, ontouchmove=e=>{
+            const touches = e.touches
+            if (touches.length===1) {
+                e.preventDefault()
+                e.x = CDEUtils.round(touches[0].clientX, 1)
+                e.y = CDEUtils.round(touches[0].clientY, 1)
+                this._mouse.updatePos(e, this._offset)
+                this._mouse.calcAngle()            
+                this.#mouseMovements(cb, e)
+            }
         }
         this._frame.addEventListener("mousemove", onmousemove)
-        return ()=>this._frame.removeEventListener("mousemove", onmousemove)
+        this._frame.addEventListener("touchmove", ontouchmove)
+        return ()=>{
+            this._frame.removeEventListener("mousemove", onmousemove)
+            this._frame.removeEventListener("touchmove", ontouchmove)
+        }
     }
 
     // defines the onmouseleave listener
@@ -1536,16 +1822,52 @@ class Canvas {
 
     // defines the onmousedown listener
     setmousedown(cb) {
-        const onmousedown=e=>this.#mouseClicks(cb, e)
+        let isTouch = false
+        const ontouchstart=e=>{
+            isTouch = true
+            const touches = e.touches
+            if (touches.length===1) {
+                e.preventDefault()
+                e.x = CDEUtils.round(touches[0].clientX, 1)
+                e.y = CDEUtils.round(touches[0].clientY, 1)
+                e.button = 0
+                this.#mouseClicks(cb, e)
+            }
+        }, onmousedown=e=>{
+            if (!isTouch) this.#mouseClicks(cb, e)
+            isTouch = false
+        }
+        this._frame.addEventListener("touchstart", ontouchstart)
         this._frame.addEventListener("mousedown", onmousedown)
-        return ()=>this._frame.removeEventListener("mousedown", onmousedown)
+        return ()=>{
+            this._frame.removeEventListener("touchstart", ontouchstart)
+            this._frame.removeEventListener("mousedown", onmousedown)
+        }
     }
 
     // defines the onmouseup listener
     setmouseup(cb) {
-        const onmouseup=e=>this.#mouseClicks(cb, e)
+        let isTouch = false
+        const ontouchend=e=>{
+            isTouch = true
+            const changedTouches = e.changedTouches
+            if (!e.touches.length) {
+                e.preventDefault()
+                e.x = CDEUtils.round(changedTouches[0].clientX, 1)
+                e.y = CDEUtils.round(changedTouches[0].clientY, 1)
+                e.button = 0
+                this.#mouseClicks(cb, e)
+            }
+        }, onmouseup=e=>{
+            if (!isTouch) this.#mouseClicks(cb, e)
+            isTouch = false
+        }
+        this._frame.addEventListener("touchend", ontouchend)
         this._frame.addEventListener("mouseup", onmouseup)
-        return ()=>this._frame.removeEventListener("mouseup", onmouseup)
+        return ()=>{
+            this._frame.removeEventListener("touchend", ontouchend)
+            this._frame.removeEventListener("mouseup", onmouseup)
+        }
     }
 
     // defines the onkeydown listener
@@ -1609,7 +1931,7 @@ class Canvas {
     get viewPos() {return this._viewPos}
     get render() {return this._render}
 
-	set loopingCallback(_cb) {this._loopingCallback = _cb}
+	set loopingCallback(loopingCallback) {this._loopingCallback = loopingCallback}
 	set width(w) {this.setSize(w, null)}
 	set height(h) {this.setSize(null, h)}
 	set offset(offset) {this._offset = offset}
@@ -1780,15 +2102,16 @@ class Obj extends _HasColor {
 
     // returns the value of the inital pos declaration
     getInitPos() {
-        return CDEUtils.isFunction(this._initPos) ? [...this._initPos(this._cvs??this.parent, this)] : [...this.adjustPos(this._initPos)]
+        return CDEUtils.isFunction(this._initPos) ? CDEUtils.unlinkPosArray(this._initPos(this._cvs??this.parent, this)) : CDEUtils.unlinkPosArray(this.adjustPos(this._initPos))
     }
 
     setAnchoredPos() {
         const anchorPos = this.hasAnchorPosChanged
         if (anchorPos) {
-            this.relativeX += anchorPos[0]-this.lastAnchorPos[0]
-            this.relativeY += anchorPos[1]-this.lastAnchorPos[1]
-            this.lastAnchorPos = anchorPos
+            const [anchorPosX, anchorPosY] = anchorPos
+            this.relativeX += anchorPosX-this.#lastAnchorPos[0]
+            this.relativeY += anchorPosY-this.#lastAnchorPos[1]
+            this.#lastAnchorPos = anchorPos
         }
     }
 
@@ -1910,7 +2233,7 @@ class Obj extends _HasColor {
     get x() {return this._pos[0]}
     get y() {return this._pos[1]}
     get pos() {return this._pos}
-    get pos_() {return [...this._pos]} // static position
+    get pos_() {return CDEUtils.unlinkPosArray(this._pos)} // unlinked position
     get relativeX() {return this.x-this.anchorPos[0]}
     get relativeY() {return this.y-this.anchorPos[1]}
     get relativePos() {return [this.relativeX, this.relativeY]}
@@ -1938,7 +2261,7 @@ class Obj extends _HasColor {
         else if (this._anchorPos===Obj.ABSOLUTE_ANCHOR) return [0,0]
         else if (CDEUtils.isFunction(this._anchorPos)) {
             const res = this._anchorPos(this, this._cvs??this.parent)
-            return [...(res?.pos_||res||[0,0])]
+            return CDEUtils.unlinkPosArray((res?.pos_||res||[0,0]))
         }
     }
     get lastAnchorPos() {return this.#lastAnchorPos}
@@ -2007,8 +2330,8 @@ class Shape extends Obj {
         this.setRadius(this.getInitRadius(), true)
         this.setColor(this.getInitColor(), true)
 
-        if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this?.parent)
         this.initialized = true
+        if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this?.parent)
     }
 
     // runs every frame, updates the ratioPos if ratioPosCB is defined
@@ -2019,7 +2342,7 @@ class Shape extends Obj {
 
     // returns a separate copy of this Shape (only initialized for objects)
     duplicate() {
-        return this.initialized ? new Shape(this.pos_, this._dots.map(d=>d.duplicate()), this.radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
+        return this.initialized ? new Shape(this.pos_, this._dots.map(d=>d.duplicate()), this._radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
     }
 
     // adds one or many dots to the shape
@@ -2197,11 +2520,14 @@ class Shape extends Obj {
     isWithin(pos) {
         const d_ll = this.dots.length
         if (d_ll > 2) {
-            const permimeter = new Path2D()
-            permimeter.moveTo(...this.dots[0].pos)
-            for (let i=1;i<d_ll;i++) permimeter.lineTo(...this.dots[i].pos)
+            const permimeter = new Path2D(), firstDotPos = this._dots[0].pos
+            permimeter.moveTo(firstDotPos[0], firstDotPos[1])
+            for (let i=1;i<d_ll;i++) {
+                const dotPos = this._dots[i].pos
+                permimeter.lineTo(dotPos[0], dotPos[1])
+            }
             permimeter.closePath()
-            return this.ctx.isPointInPath(permimeter, ...pos)
+            return this.ctx.isPointInPath(permimeter, pos[0], pos[1])
         }
         return false
     }
@@ -2309,6 +2635,9 @@ class Gradient {
                 else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(obj.x, obj.y, obj.radius)
                 else return obj.pos_
             } return this._positions
+        } else if (this._type===Gradient.TYPES.LINEAR) {
+            const [[x, y], [x2, y2]] = obj, cx = x+(x2-x)/2, cy = y+(y2-y)/2
+            return this.#getLinearPositions(x-cx, y-cy, x2-cx, y2-cy, cx, cy)
         } else return this._positions
     }
 
@@ -2318,7 +2647,7 @@ class Gradient {
     }
 
     #getRadialPositions(x, y, coverRadius) {
-        return [[x, y, coverRadius],[x, y, coverRadius*0.25]]
+        return [[x, y, coverRadius], [x, y, coverRadius*0.25]]
     }
 
     #hasShapeChanged(shape) {
@@ -2346,7 +2675,7 @@ class Gradient {
 
     // returns a CanvasGradient instance from the provided parameters
     static getCanvasGradient(ctx, positions, colorStops, type, rotation) {
-        const canvasGradient = type===Gradient.TYPES.CONIC ? ctx.createConicGradient(CDEUtils.toRad(rotation), ...positions) : ctx[`create${type}Gradient`](...positions[0], ...positions[1]), cs_ll = colorStops.length
+        const canvasGradient = type===Gradient.TYPES.CONIC ? ctx.createConicGradient(CDEUtils.toRad(rotation), positions[0], positions[1]) : ctx[`create${type}Gradient`](...positions[0], ...positions[1]), cs_ll = colorStops.length
         for (let i=0;i<cs_ll;i++) canvasGradient.addColorStop(colorStops[i][0], Color.getColorValue(colorStops[i][1]))
         return canvasGradient
     }
@@ -2373,17 +2702,27 @@ class Gradient {
     get type() {return this._type}
 	get colorStops() {return this._colorStops}
 	get rotation() {return this._rotation}
+	get isDynamic() {return this._initPositions instanceof Shape || this._initPositions instanceof Dot}
     get gradient() {
         // Automatic dynamic positions updates when using a shape instance
-        if (this._initPositions instanceof Shape || this._initPositions instanceof Dot) this.updateGradient()
+        if (this.isDynamic) this.updateGradient()
         return this._gradient
     }
-	set ctx(_ctx) {this._ctx = _ctx}
+
     set initPositions(initPositions) {this._initPositions = initPositions}
-	set positions(_positions) {this._positions = _positions}
-	set colorStops(_colorStops) {this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])}
+	set positions(_positions) {
+        this._positions = _positions
+        if (!this.isDynamic) this.updateGradient()
+    }
+	set colorStops(_colorStops) {
+        this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])
+        if (!this.isDynamic) this.updateGradient()
+    }
     set type(type) {this._type = type}
-	set rotation(deg) {this._rotation = CDEUtils.round(deg, 2)}
+	set rotation(deg) {
+        this._rotation = CDEUtils.round(deg, 2)%350
+        if (!this.isDynamic) this.updateGradient()
+    }
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -2421,7 +2760,7 @@ class FilledShape extends Shape {
 
     // returns a separate copy of this FilledShape (only initialized for objects)
     duplicate() {
-        return this.initialized ? new FilledShape((_,shape)=>this.fillColorRaw instanceof Gradient?this.fillColorRaw.duplicate(Array.isArray(this.fillColorRaw.initPositions)?null:shape):this.fillColorObject.duplicate(), this._dynamicUpdates, this.pos_, this._dots.map(d=>d.duplicate()), this.radius, (_,shape)=>this.colorRaw instanceof Gradient?this.colorRaw.duplicate(Array.isArray(this.colorRaw.initPositions)?null:shape):this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
+        return this.initialized ? new FilledShape((_,shape)=>this.fillColorRaw instanceof Gradient?this.fillColorRaw.duplicate(Array.isArray(this.fillColorRaw.initPositions)?null:shape):this._fillColor.duplicate(), this._dynamicUpdates, this.pos_, this._dots.map(d=>d.duplicate()), this.radius, (_,shape)=>this.colorRaw instanceof Gradient?this.colorRaw.duplicate(Array.isArray(this.colorRaw.initPositions)?null:shape):this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
     }
 
     // updates the path perimeter if the dots pos have changed
@@ -2432,8 +2771,12 @@ class FilledShape extends Shape {
             if (currentDotPos !== this.#lastDotsPos) {
                 this.#lastDotsPos = currentDotPos
                 this._path = new Path2D()
-                this._path.moveTo(...this.dots[0].pos)
-                for (let i=1;i<d_ll;i++) this._path.lineTo(...this.dots[i].pos)
+                const firstDotPos = this.dots[0].pos
+                this._path.moveTo(firstDotPos[0], firstDotPos[1])
+                for (let i=1;i<d_ll;i++) {
+                    const dotPos = this.dots[i].pos
+                    this._path.lineTo(dotPos[0], dotPos[1])
+                }
                 this._path.closePath()
             } 
         }
@@ -2465,8 +2808,8 @@ class Grid extends Shape {
 
         this._keys = keys                                 // keys to convert to source's values as a string
         this._gaps = gaps ?? Grid.DEFAULT_GAPS            // [x, y] gap length within the dots
-        this._spacing = spacing ?? this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
         this._source = source ?? GridAssets.fontSource5x5 // symbols' source
+        this._spacing = spacing ?? this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
     }
 
     initialize() {
@@ -2476,7 +2819,7 @@ class Grid extends Shape {
 
     // returns a separate copy of this Grid (only initialized for objects)
     duplicate() {
-        return this.initialized ? new Grid(this._keys, [...this._gaps], this._spacing, this._source, this.pos_, this.radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
+        return this.initialized ? new Grid(this._keys, CDEUtils.unlinkPosArray(this._gaps), this._spacing, this._source, this.pos_, this.radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
     }
 
     // Creates a formation of symbols
@@ -2503,7 +2846,7 @@ class Grid extends Shape {
     }
 
     // updates the current keys
-    setKeys(keys) {
+    setKeys(keys) {// TODO OPTIMIZE
         super.clear()
         this._keys = keys
         super.add(this.createGrid())
@@ -2571,7 +2914,7 @@ class Dot extends Obj {
     
     // returns a separate copy of this Dot (only initialized for objects)
     duplicate() {
-        return this.initialized ? new Dot(this.pos_, this.radius, this.colorObject.duplicate(), this.setupCB) : null
+        return new Dot(this.getInitPos(), this._radius, this._color.duplicate(), this._setupCB)
     }
 
     // returns pythagorian distance between the ratio defining position and the dot

@@ -52,6 +52,9 @@ class Gradient {
                 else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(obj.x, obj.y, obj.radius)
                 else return obj.pos_
             } return this._positions
+        } else if (this._type===Gradient.TYPES.LINEAR) {
+            const [[x, y], [x2, y2]] = obj, cx = x+(x2-x)/2, cy = y+(y2-y)/2
+            return this.#getLinearPositions(x-cx, y-cy, x2-cx, y2-cy, cx, cy)
         } else return this._positions
     }
 
@@ -61,7 +64,7 @@ class Gradient {
     }
 
     #getRadialPositions(x, y, coverRadius) {
-        return [[x, y, coverRadius],[x, y, coverRadius*0.25]]
+        return [[x, y, coverRadius], [x, y, coverRadius*0.25]]
     }
 
     #hasShapeChanged(shape) {
@@ -116,15 +119,25 @@ class Gradient {
     get type() {return this._type}
 	get colorStops() {return this._colorStops}
 	get rotation() {return this._rotation}
+	get isDynamic() {return this._initPositions instanceof Shape || this._initPositions instanceof Dot}
     get gradient() {
         // Automatic dynamic positions updates when using a shape instance
-        if (this._initPositions instanceof Shape || this._initPositions instanceof Dot) this.updateGradient()
+        if (this.isDynamic) this.updateGradient()
         return this._gradient
     }
-	set ctx(_ctx) {this._ctx = _ctx}
+
     set initPositions(initPositions) {this._initPositions = initPositions}
-	set positions(_positions) {this._positions = _positions}
-	set colorStops(_colorStops) {this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])}
+	set positions(_positions) {
+        this._positions = _positions
+        if (!this.isDynamic) this.updateGradient()
+    }
+	set colorStops(_colorStops) {
+        this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])
+        if (!this.isDynamic) this.updateGradient()
+    }
     set type(type) {this._type = type}
-	set rotation(deg) {this._rotation = CDEUtils.round(deg, 2)}
+	set rotation(deg) {
+        this._rotation = CDEUtils.round(deg, 2)%350
+        if (!this.isDynamic) this.updateGradient()
+    }
 }
