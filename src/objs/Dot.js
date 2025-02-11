@@ -7,8 +7,8 @@
 class Dot extends Obj {
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
         super(pos, radius, color, setupCB, anchorPos, alwaysActive)
-        this._parent = null               // the instance containing the dot's parent (Shape)
-        this._connections = []            // array of Dot to draw a connecting line to
+        this._parent = null     // the object containing the dot
+        this._connections = []  // array of Dot to draw a connecting line to
     }
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
@@ -94,6 +94,5 @@ class Dot extends Obj {
     get parentSetupResults() {return this._parent?.setupResults}
 
     set limit(limit) {this._parent.limit = limit}
-    set parent(p) {this._parent = p}
     set connections(c) {return this._connections = c}
 }

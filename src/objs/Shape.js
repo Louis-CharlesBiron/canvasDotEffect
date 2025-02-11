@@ -19,7 +19,7 @@ class Shape extends Obj {
         this._fragile = fragile||false           // whether the shape resets on document visibility change
 
         this._rotation = 0                       // the shape's rotation in degrees 
-        this._scale = [1,1]                      // the shape's scale factor: [scaleX, scaleY] 
+        this._scale = [1,1]                      // the shape's scale factors: [scaleX, scaleY] 
     }
 
     // initializes the shape, adds its dots and initializes them
@@ -55,7 +55,7 @@ class Shape extends Obj {
             if (dot.initColor==null) dot.initColor = this.colorRaw
             if (dot.initRadius==null) dot.initRadius = this._radius
             if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
-            dot.parent = this
+            dot._parent = this
             dot.initialize()
             return dot
         }))
@@ -266,7 +266,7 @@ class Shape extends Obj {
     get ratioPos() {return this._ratioPos}
     get ratioPosCB() {return this._ratioPosCB}
     get rotation() {return this._rotation}
-    get rotation() {return this._scale}
+    get scale() {return this._scale}
     get lastDotsPos() {return this._lastDotsPos}
     get dotsPositions() {// returns a string containing all the dot's position
         let currentDotPos="", d_ll = this.dots.length
