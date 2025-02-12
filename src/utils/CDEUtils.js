@@ -38,6 +38,7 @@ class CDEUtils {
         return Math.round(num*factor)/factor
     }
 
+    // creates a copy of the provided array. (only for length 2)
     static unlinkArr2(arr) {
         return [arr[0], arr[1]]
     }

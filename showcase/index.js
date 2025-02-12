@@ -160,9 +160,9 @@ let generationTester = new Shape([100,600],
 
     }),
     3, "red", 100, (render, dot, ratio, m, dist, parent)=>{
-            CanvasUtils.drawDotConnections(dot, [255,0,0,1])
-            dot.radius = CDEUtils.mod(dot.getInitRadius()*2, ratio, dot.getInitRadius()*2*0.8)
-            dot.a = CDEUtils.mod(1, ratio, 0.8)
+        CanvasUtils.drawDotConnections(dot, [255,0,0,1])
+        dot.radius = CDEUtils.mod(dot.getInitRadius()*2, ratio, dot.getInitRadius()*2*0.8)
+        dot.a = CDEUtils.mod(1, ratio, 0.8)
 })
 
 
@@ -181,6 +181,15 @@ for (let i = 0;i<20;i++) {
     CVS.add(t, true)
     if (!aa) aa = t
 }
+
+const testText2 = new TextDisplay("Test § ->", [100, 550], "lightblue")
+CVS.add(testText2, true)
+
+const loopTODObetter = CanvasUtils.SHAPES.DEBUG_SHAPE([0,0], new Dot())
+loopTODObetter.drawEffectCB=(render, dot, ratio, mouse)=>{
+    CanvasUtils.lookAt(testText2, mouse)
+}
+CVS.add(loopTODObetter)
 
 
 
