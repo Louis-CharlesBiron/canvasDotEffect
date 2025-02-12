@@ -20,7 +20,7 @@ class Anim {
         this._playCount = 0    // how many time the animation has played
     }
     
-    // progresses the animation 1 frame fowards (loop each frame) 
+    // progresses the animation 1 frame fowards (loops each frame) 
     getFrame(time, deltaTime) {
         const isInfinite = this._duration<0, duration = isInfinite?-this._duration:this._duration
         if (!this._playCount || isInfinite) {

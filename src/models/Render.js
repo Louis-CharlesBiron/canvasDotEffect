@@ -9,6 +9,7 @@ class Render {
     static DEFAULT_COMPOSITE_OPERATION = Render.COMPOSITE_OPERATIONS.SOURCE_OVER
     static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
     static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve}
+    static DRAW_METHODS = {FILL:"FILL", STROKE:"STROKE"}
 
     #currentCtxColor = Color.DEFAULT_COLOR_VALUE
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
@@ -173,23 +174,21 @@ class Render {
     }
 
     // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    strokeText(text, pos, textStyles=Color.DEFAULT_RGBA, maxWidth=undefined) {
-        if (textStyles[3]??textStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            if (textStyles instanceof TextStyles) textStyles.applyStyles()
-            else this._defaultTextProfile.applyStyles(textStyles)
-
-            this._ctx.strokeText(text, pos[0], pos[1], maxWidth)
-        }
+    strokeText(text, pos, color, textStyles, maxWidth=undefined) {
+        const colorValue = Color.getColorValue(color)
+        if (textStyles instanceof TextStyles) textStyles.applyStyles()
+        else this._defaultTextProfile.applyStyles(textStyles)
+        if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
+        this._ctx.strokeText(text, pos[0], pos[1], maxWidth)
     }
 
     // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    fillText(text, pos, textStyles=Color.DEFAULT_RGBA, maxWidth=undefined) {
-        if (textStyles[3]??textStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            if (textStyles instanceof TextStyles) textStyles.applyStyles()
-            else this._defaultTextProfile.applyStyles(textStyles)
-
-            this._ctx.fillText(text, pos[0], pos[1], maxWidth)
-        }
+    fillText(text, pos, color, textStyles, maxWidth=undefined) {
+        const colorValue = Color.getColorValue(color)
+        if (textStyles instanceof TextStyles) textStyles.applyStyles()
+        else this._defaultTextProfile.applyStyles(textStyles)
+        if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
+        this._ctx.fillText(text, pos[0], pos[1], maxWidth)
     }
 
 	get ctx() {return this._ctx}

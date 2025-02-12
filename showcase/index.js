@@ -165,15 +165,23 @@ let generationTester = new Shape([100,600],
             dot.a = CDEUtils.mod(1, ratio, 0.8)
 })
 
-let textValue = "bonjour", textTester = CanvasUtils.SHAPES.DEBUG_SHAPE(null, new Dot()), textGradient = new Color(new Gradient(CVS.ctx, [[450, 50],[650,150]], [[0, "red"], [1, "blue"]], null, 90), true)
-CVS.render.textProfile1.updateStyles(textGradient)
-textTester.drawEffectCB=(render)=>{
-    render.fillText(textValue, [500, 100], render.textProfile1)
+
+let textValue = "BONJOUR, LOL?? :D", textGradient = new Color(new Gradient(CVS.ctx, Gradient.PLACEHOLDER, [[0, "gold"], [0.5, "red"], [1, "gold"]], null, 90), true), aa = null
+for (let i = 0;i<20;i++) {
+    let t = new TextDisplay(()=>textValue, [100, 100+1*i], textGradient, render=>render.textProfile1.updateStyles("18px arial", 25, null), "FILL", null, null, ()=>testMore.firstDot)
+    
+    t.playAnim(new Anim(prog=>{
+        textGradient.colorRaw.rotation = -360*prog
+        t.scale = [Math.sin(Math.PI*prog*2), 2.5*Math.sin(Math.PI*prog*2)]
+
+    },-3000))
+    t.playAnim(new Anim(prog=>{
+        t.rotation = -360*prog
+    },-22500))
+    CVS.add(t, true)
+    if (!aa) aa = t
 }
-textTester.playAnim(new Anim((prog)=>textGradient.colorRaw.rotation=360*prog, -1000))
 
-
-CVS.add(textTester)
 
 
 CVS.add(generationTester)

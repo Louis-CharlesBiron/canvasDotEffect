@@ -18,6 +18,7 @@ class RenderStyles extends _HasColor {
     #ctx = null
     constructor(render, color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         super(color)
+        if (render) this.color = this.getInitColor()
         this._render = render                                                   // Canvas render instance
         this.#ctx = render?.ctx                                                 // Canvas context
         this._lineWidth = lineWidth??RenderStyles.DEFAULT_WIDTH                 // width of drawn line

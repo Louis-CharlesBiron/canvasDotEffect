@@ -3,11 +3,16 @@
 // Please don't use or credit this code as your own.
 //
 
-// Provides color attributes to other classes
+// Abstract class, provides color attributes to other classes
 class _HasColor {
     constructor(color) {
         this._initColor = color       // declaration color value || (ctx, this)=>{return color value}
-        this._color = this._initColor // the current color or gradient of the filled shape
+        this._color = this._initColor // the current color or gradient of the object
+    }
+    
+    // returns the value of the inital color declaration
+    getInitColor() {
+        return CDEUtils.isFunction(this._initColor) ? this._initColor(this) : this._initColor||null
     }
 
     get colorObject() {return this._color}
@@ -28,7 +33,8 @@ class _HasColor {
         if (!this._color || this._color?.colorRaw?.toString() !== color?.toString()) {
             const potentialGradient = color?.colorRaw||color
             if (potentialGradient?.positions===Gradient.PLACEHOLDER) {
-                color = potentialGradient.duplicate()
+                if (!color.isChannel) color = potentialGradient.duplicate()
+                else color = potentialGradient 
                 color.initPositions = this
             }
 

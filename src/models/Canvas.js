@@ -28,28 +28,28 @@ class Canvas {
     #lastScrollValues = [window.scrollX, window.screenY]
 
     constructor(cvs, loopingCallback, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
-        this._cvs = cvs                                                // html canvas element
-        this._frame = cvsFrame??cvs?.parentElement                     // html parent of canvas element
-        this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)        // set styles selector for canvas
-        this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true) // set styles selector for parent
-        this._ctx = this._cvs.getContext("2d", {willReadFrequently})   // canvas context
-        this._settings = this.updateSettings(settings)                 // set context settings
-        this._els={refs:[], defs:[]}                                   // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
-        this._looping = false                                          // loop state
-        this._loopingCallback = loopingCallback                        // custom callback called along with the loop() function
-        this.fpsLimit = fpsLimit                                       // delay between each frame to limit fps
-        this.#maxTime = this.#getMaxTime(fpsLimit)                     // max time between frames
-        this._deltaTime = null                                         // useable delta time in seconds
-        this._fixedTimeStamp = null                                    // fixed (offsets lag spikes) requestanimationframe timestamp in ms
-        this._windowListeners = this.#initWindowListeners()            // [onresize, onvisibilitychange]
-        this._viewPos = [0,0]                                          // context view offset
+        this._cvs = cvs                                               // html canvas element
+        this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
+        this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)       // set styles selector for canvas
+        this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true)// set styles selector for parent
+        this._ctx = this._cvs.getContext("2d", {willReadFrequently})  // canvas context
+        this._settings = this.updateSettings(settings)                // set context settings
+        this._els={refs:[], defs:[]}                                  // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
+        this._looping = false                                         // loop state
+        this._loopingCallback = loopingCallback                       // custom callback called along with the loop() function
+        this.fpsLimit = fpsLimit                                      // delay between each frame to limit fps
+        this.#maxTime = this.#getMaxTime(fpsLimit)                    // max time between frames
+        this._deltaTime = null                                        // useable delta time in seconds
+        this._fixedTimeStamp = null                                   // fixed (offsets lag spikes) requestanimationframe timestamp in ms
+        this._windowListeners = this.#initWindowListeners()           // [onresize, onvisibilitychange]
+        this._viewPos = [0,0]                                         // context view offset
         const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
-        this.setSize(frameCBR.width, frameCBR.height)                  // init size
-        this.#initStyles()                                             // init styles
-        this._typingDevice = new TypingDevice()                        // keyboard info
-        this._mouse = new Mouse()                                      // mouse info
-        this._offset = this.updateOffset()                             // cvs page offset
-        this._render = new Render(this._ctx)                           // render instance
+        this.setSize(frameCBR.width, frameCBR.height)                 // init size
+        this.#initStyles()                                            // init styles
+        this._typingDevice = new TypingDevice()                       // keyboard info
+        this._mouse = new Mouse()                                     // mouse info
+        this._offset = this.updateOffset()                            // cvs page offset
+        this._render = new Render(this._ctx)                          // render instance
     }
 
     // sets css styles on the canvas and the parent
@@ -223,13 +223,12 @@ class Canvas {
     }
 
     // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "active" is false, it only initializes the obj, without adding it to the canvas
-    add(objs, isDef, active=true) {
-        
+    add(objs, isDef, active=true) {// TODO, automate def and ref
         const l = objs&&(objs.length??1)
         for (let i=0;i<l;i++) {
             const obj = objs[i]??objs
             if (!isDef) obj.cvs = this
-            else obj.parent = this
+            else obj._parent = this
             
             if (CDEUtils.isFunction(obj.initialize)) obj.initialize()
             if (active) this._els[isDef?"defs":"refs"].push(obj)
