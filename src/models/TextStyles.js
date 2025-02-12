@@ -24,7 +24,7 @@ class TextStyles {
     static DEFAULT_TEXT_RENDERING = TextStyles.RENDERINGS.FAST
     static DEFAULT_PROFILE = new TextStyles(null, TextStyles.DEFAULT_FONT, TextStyles.DEFAULT_LETTER_SPACING, TextStyles.DEFAULT_WORD_SPACING, TextStyles.DEFAULT_FONT_VARIANT_CAPS, TextStyles.DEFAULT_DIRECTION, TextStyles.DEFAULT_FONT_STRETCH, TextStyles.DEFAULT_FONT_KERNING, TextStyles.DEFAULT_TEXT_ALIGN, TextStyles.DEFAULT_TEXT_BASELINE, TextStyles.DEFAULT_TEXT_RENDERING)
 
-    #ctx = null// TODO UPDATE DOC
+    #ctx = null
     constructor(render, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         this._render = render                                                        // Canvas render instance
         this.#ctx = render?.ctx                                                      // Canvas context
@@ -53,8 +53,8 @@ class TextStyles {
     // updates a profile's attributes and returns the updated version
     updateStyles(font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         if (font) this._font = font
-        if (letterSpacing) this._letterSpacing = letterSpacing
-        if (wordSpacing) this._wordSpacing = wordSpacing
+        if (letterSpacing) this._letterSpacing = typeof letterSpacing==="number"?letterSpacing+"px":letterSpacing
+        if (wordSpacing) this._wordSpacing = typeof wordSpacing==="number"?wordSpacing+"px":wordSpacing
         if (fontVariantCaps) this._fontVariantCaps = fontVariantCaps
         if (direction) this._direction = direction
         if (fontStretch) this._fontStretch = fontStretch

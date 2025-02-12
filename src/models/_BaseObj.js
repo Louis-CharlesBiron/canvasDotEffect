@@ -39,7 +39,7 @@ class _BaseObj extends _HasColor {
 
     // returns the value of the inital pos declaration
     getInitPos() {
-        return CDEUtils.isFunction(this._initPos) ? CDEUtils.unlinkPosArray(this._initPos(this._cvs??this.parent, this)) : CDEUtils.unlinkPosArray(this.adjustPos(this._initPos))
+        return CDEUtils.isFunction(this._initPos) ? CDEUtils.unlinkArr2(this._initPos(this._cvs??this.parent, this)) : CDEUtils.unlinkArr2(this.adjustPos(this._initPos))
     }
 
     setAnchoredPos() {
@@ -158,7 +158,7 @@ class _BaseObj extends _HasColor {
     get x() {return this._pos[0]}
     get y() {return this._pos[1]}
     get pos() {return this._pos}
-    get pos_() {return CDEUtils.unlinkPosArray(this._pos)} // unlinked position
+    get pos_() {return CDEUtils.unlinkArr2(this._pos)} // unlinked position
     get relativeX() {return this.x-this.anchorPos[0]}
     get relativeY() {return this.y-this.anchorPos[1]}
     get relativePos() {return [this.relativeX, this.relativeY]}
@@ -177,13 +177,13 @@ class _BaseObj extends _HasColor {
         else if (this._anchorPos instanceof _BaseObj) return this._anchorPos.pos_
         else if (CDEUtils.isFunction(this._anchorPos)) {
             const res = this._anchorPos(this, this._cvs??this.parent)
-            return CDEUtils.unlinkPosArray((res?.pos_||res||[0,0]))
+            return CDEUtils.unlinkArr2((res?.pos_||res||[0,0]))
         }
     }
     get lastAnchorPos() {return this.#lastAnchorPos}
     get hasAnchorPosChanged() {
         const anchorPos = this.anchorPos
-        return !CDEUtils.posEquals(this.#lastAnchorPos, anchorPos)&&anchorPos
+        return !CDEUtils.arr2Equals(this.#lastAnchorPos, anchorPos)&&anchorPos
     }
 
     set x(x) {this._pos[0] = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)}

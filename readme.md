@@ -17,11 +17,12 @@
   - [Filled Shape](#filled-shape)
   - [Grid](#grid)
     - [Grid Assets](#grid-assets)
+  - [TextDisplay](#textdisplay)
   - [Color](#color)
   - [Gradient](#gradient)
   - [Render](#render)
+  - [TextStyles](#textStyles)
   - [RenderStyles](#renderstyles)
-  - [TextDisplay](#textStyles)
   - [Anim](#anim)
   - [Input Devices](#input-devices)
     - [TypingDevice](#typingdevice)
@@ -765,6 +766,50 @@ A symbol has this structure: `[...[index, directions]]`. It is composed of a mai
     // Other symbols ...
 }
 ```
+ 
+
+# [TextDisplay](#table-of-contents)
+
+The TextDisplay class allows the drawing of text as an canvas object.
+
+#### **The TextDisplay constructor takes the following parameters:**
+###### - `new TextDisplay(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, anchorPos, alwaysActive)`
+- *pos, color, setupCB, anchorPos, alwaysActive* -> See the Obj / *_BaseObj* class.
+- **text** -> The text to be displayed. Either a `String` or a callback `(parent, this)=>{... return "textToDisplay"}`.
+- **textStyles** -> The style profile to be used for styling the text. Either a `TextStyles` or  a callback `(render)=>{... return TextStyles}`.
+- **drawMethod** -> The draw method used when drawing the text, Either `"FILL"` or `"STROKE"`.
+- **maxWidth**? -> The max width in pixels of the drawn text.
+
+**Its other attributes are:**
+- **parent** -> The parent of the DisplayText object. (Most likely a Canvas instance) 
+- **rotation** -> The text's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
+- **scale** -> The text's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
+- **size** -> The text's *width* and *height* in pixels `[width, height]`. Does not take into account scaling, use the `trueSize` getter for adjusted size.
+
+#### Example use 1:
+###### - Drawing a simple spinning text
+```js
+const helloWorldText = new TextDisplay(
+    "Hello World!", // Displayed text
+    [200, 100],     // positionned at [200, 100]
+    "lightblue",    // colored lightblue
+    (render)=>render.textProfile1.updateStyles("italic 24px monospace"), // using the textProfile1 styles, only over writting the font
+    null, // leaving drawMethod to the default value ("FILL")
+    null, // leaving maxWidth to the default value (undefined)
+    (textDisplay)=>{
+    
+        // adding a spin animation, repeating every 3 seconds
+        textDisplay.playAnim(new Anim(prog=>{
+            // Updating the horizontal scale to go from 1, to -1, back to 1
+            textDisplay.scale = [Math.sin(Math.PI*prog*2), 1]
+        },-3000))
+        
+    })
+
+// Adding the object to the canvas as a definition, because it doesn't not contain any children.
+CVS.add(helloWorldText, true)
+
+```
 
  
 
@@ -890,6 +935,7 @@ const gradientShape = new FilledShape(
 Render is a class that centralizes most context operation. It provides functions to get *lines* and *text*, as well as functions to *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles for lines and text (RenderStyles, TextDisplay). Finally, it is automatically instanciated by, and linked to, any Canvas instance.
 
 #### **The Render constructor takes the following parameters:**
+###### - `new Render(ctx)`
 - **ctx** -> The canvas context.
 
 #### Example use 1:
@@ -917,25 +963,13 @@ Render is a class that centralizes most context operation. It provides functions
         
     }
 ```
-    
-#### Example use 3:
-###### - Drawing text
-```js
-    // Running in the drawEffectCB of a dummy shape...
-    {
-        ...
-        
-        // Drawing "Hello World!" at [100, 100] using the styles from textProfile1
-        render.fillText("Hello World!", [100, 100], render.textProfile1)
-        
-    }
-```
 
 # [RenderStyles](#table-of-contents)
 
 The RenderStyles class allows the customization of renders via style profiles when drawing with the *Render* class. By default, the following profiles are created and accessible via any Render instance: `defaultProfile`, `profile1`, `profile2` and `profile3`. There is also a `profiles` array to add more custom profiles.
 
 #### **The RenderStyles constructor takes the following parameters:**
+###### - `new RenderStyles(render, color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)`
 - **render** -> The canvas Render instance.
 - **color** -> Either an RGBA array `[r, g, b, a]` or a `Color` instance.
 - **lineWidth** -> The width in px of the drawn line.
@@ -1010,14 +1044,14 @@ The RenderStyles class allows the customization of renders via style profiles wh
     }
 ```
 
-# [TextDisplay](#table-of-contents)
+# [TextStyles](#table-of-contents)
 
-The TextDisplay class (similar to RenderStyles) allows the customization of text via style profiles when drawing text with the *Render* class. By default, the following profiles are created and accessible via any Render instance: `defaultTextProfile`, `textProfile1`, `textProfile2` and `textProfile3`. There is also a `textProfiles` array to add more custom profiles. (Most functions from RenderStyles apply very similarly to TextDisplay)
+The TextStyles class (similar to TextStyles) allows the customization of text via style profiles when drawing text with the *TextDisplay* class. By default, the following profiles are created and accessible via any Render instance: `defaultTextProfile`, `textProfile1`, `textProfile2` and `textProfile3`. There is also a `textProfiles` array to add more custom profiles. *(Most functions from TextStyles apply very similarly to TextStyles)*
 
-#### **The RenderStyles constructor takes the following parameters:**
+#### **The TextStyles constructor takes the following parameters:**
+###### - `new TextStyles(render, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)`
 - **render** -> The canvas Render instance.
-- **color** -> Either an RGBA array `[r, g, b, a]` or a `Color` instance.
-- **font** -> The text font properties as a string. Ex: "32px Arial"
+- **font** -> The text font properties as a string. Ex: "italic 32px Arial"
 - **letterSpacing** -> The gap in pixels between the letters.
 - **wordSpacing** -> Then gaps in pixels between the words.
 - **fontVariantCaps** -> Specifies an alternative capitalization style.

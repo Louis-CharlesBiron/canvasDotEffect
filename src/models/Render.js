@@ -174,16 +174,20 @@ class Render {
     }
 
     // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    strokeText(pos, textStyles=Color.DEFAULT_RGBA, maxWidth=undefined) {
+    strokeText(text, pos, color, textStyles, maxWidth=undefined) {
+        const colorValue = Color.getColorValue(color)
         if (textStyles instanceof TextStyles) textStyles.applyStyles()
         else this._defaultTextProfile.applyStyles(textStyles)
+        if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
         this._ctx.strokeText(text, pos[0], pos[1], maxWidth)
     }
 
     // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    fillText(text, pos, textStyles=Color.DEFAULT_RGBA, maxWidth=undefined) {
+    fillText(text, pos, color, textStyles, maxWidth=undefined) {
+        const colorValue = Color.getColorValue(color)
         if (textStyles instanceof TextStyles) textStyles.applyStyles()
         else this._defaultTextProfile.applyStyles(textStyles)
+        if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
         this._ctx.fillText(text, pos[0], pos[1], maxWidth)
     }
 

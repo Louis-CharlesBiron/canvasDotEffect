@@ -3,20 +3,13 @@
 // Please don't use or credit this code as your own.
 //
 
-// TODO UPDATE TO TEXT OBJECT
-// TODO DOC
+// Displays text as an object
 class TextDisplay extends _BaseObj {
-    static MEASUREMENT_CTX = new OffscreenCanvas(1, 1).getContext("2d") 
-    /*
-        - setup obj functions overrides: draw, initialize, etc
-        - setup l'utilisation de render
-        - setup scaling / rotation, dynamic gradients
+    static MEASUREMENT_CTX = new OffscreenCanvas(1,1).getContext("2d") 
 
-        - documentation
-    */
-    constructor(textValue, pos, color, textStyles, drawMethod, maxWidth, setupCB, anchorPos, alwaysActive) {
+    constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, anchorPos, alwaysActive)
-        this._textValue = textValue??""      // displayed text value
+        this._text = text??""                // displayed text
         this._textStyles = textStyles        // current object's textStyles
         this._drawMethod = drawMethod?.toUpperCase()??Render.DRAW_METHODS.FILL // text draw method, either "fill" or "stroke"
         this._maxWidth = maxWidth??undefined // maximal width of the displayed text in px
@@ -26,49 +19,89 @@ class TextDisplay extends _BaseObj {
         this._scale = [1,1]  // the text's scale factors: [scaleX, scaleY]
         this._size = null    // the text's default size [width, height]
     }
-
-    getSize(textStyles=this._textStyles, textValue=this._textValue) {
-        TextStyles.applyStyles(TextDisplay.MEASUREMENT_CTX, ...textStyles.getStyles())
-        const {width, actualBoundingBoxAscent, actualBoundingBoxDescent} = TextDisplay.MEASUREMENT_CTX.measureText(textValue)
-        return [this._maxWidth||width, actualBoundingBoxAscent+actualBoundingBoxDescent]
-    }
     
     initialize() {
-        const render = this._parent.render
-        this._textStyles = CDEUtils.isFunction(this._textStyles) ? this._textStyles(render, this) : this._textStyles??render.defaultTextProfile
+        this._textStyles = CDEUtils.isFunction(this._textStyles) ? this._textStyles(this.render, this) : this._textStyles??this.render.defaultTextProfile
         this._size = this.getSize()
         super.initialize()
     }
 
     draw(render, time, deltaTime) {
-        if (this.a > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            const ctx = render.ctx, x = this.x, y = this.y
+        if (this.initialized) {
+            if (this.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+                const ctx = render.ctx, x = this.x, y = this.y, hasScaling = this._scale[0]!==1||this._scale[1]!==1
 
+                if (this._rotation || hasScaling) {
+                    ctx.translate(x, y)
+                    if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
+                    if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
+                    ctx.translate(-x, -y)
+                }
 
-            ctx.save()
-            if (this._rotation) {
-                ctx.translate(x, y)
-                ctx.rotate(CDEUtils.toRad(this._rotation))
-                ctx.translate(-x, -y)
+                if (this._drawMethod==="FILL") render.fillText(this.getTextValue(), this._pos, this._color, this._textStyles, this._maxWidth)
+                else render.strokeText(this.getTextValue(), this._pos, this._color, this._textStyles, this._maxWidth)
+                ctx.setTransform(1,0,0,1,0,0)
             }
-
-            // TODO SCALE
-
-            if (this._drawMethod==="FILL") render.fillText(this._textValue, this._pos, this._textStyles, this._maxWidth)
-            else render.strokeText(this._textValue, this._pos, this._textStyles, this._maxWidth)
-            ctx.restore()
-        }
+        } else this.initialized = true
 
         super.draw(time, deltaTime)
     }
 
-    // TODO
-    // returns a separate copy of the profile
-    //duplicate(render=this._render, color=this._color, font=this._font, letterSpacing=this._letterSpacing, wordSpacing=this._wordSpacing, fontVariantCaps=this._fontVariantCaps, direction=this._direction, fontStretch=this._fontStretch, fontKerning=this._fontKerning, textAlign=this._textAlign, textBaseline=this._textBaseline, textRendering=this._textRendering) {
-    //    return new TextDisplay(render, color, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
-    //}
+    // Returns the width and height of the text, according to the textStyles, excluding the scale or rotation
+    getSize(textStyles=this._textStyles, text=this.getTextValue()) {
+        TextStyles.applyStyles(TextDisplay.MEASUREMENT_CTX, ...textStyles.getStyles())
+        const {width, actualBoundingBoxAscent, actualBoundingBoxDescent} = TextDisplay.MEASUREMENT_CTX.measureText(text)
+        return [CDEUtils.round(this._maxWidth||width, 2), actualBoundingBoxAscent+actualBoundingBoxDescent]
+    }
 
-	get textValue() {return this._textValue}
+    // Returns the current text value
+    getTextValue() {
+        return CDEUtils.isFunction(this._text) ? this._text(this._parent, this) : this._text
+    }
+
+    // Rotates the text by a specified degree increment around its pos
+    rotateBy(deg) {// clock-wise
+        this._rotation = (this._rotation+deg)%360
+    }
+
+    // Rotates the text to a specified degree around its pos
+    rotateAt(deg) {
+        this._rotation = deg%360
+    }
+
+    // Smoothly rotates the text to a specified degree around its pos
+    rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, isUnique=false, force=false) {
+        const ir = this._rotation, dr = deg-this._rotation
+        return this.playAnim(new Anim((prog)=>this.rotateAt(ir+dr*prog), time, easing), isUnique, force)
+    }
+
+    // Scales the dots by a specified amount [scaleX, scaleY] from its pos
+    scaleBy(scale) {
+        let [scaleX, scaleY] = scale
+        if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
+        if (!CDEUtils.isDefined(scaleY)) scaleY = this._scale[1]
+        this._scale[0] *= scaleX
+        this._scale[1] *= scaleY
+    }
+
+    // Scales the dots to a specified amount [scaleX, scaleY] from its pos
+    scaleAt(scale) {
+        this.scale = scale
+    }
+
+    // Smoothly scales the dots to a specified amount [scaleX, scaleY] from its pos
+    scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=false, force=false) {
+        const is = CDEUtils.unlinkArr2(this._scale), dsX = scale[0]-is[0], dsY = scale[1]-is[1]
+
+        return this.playAnim(new Anim(prog=>this.scaleAt([is[0]+dsX*prog, is[1]+dsY*prog], centerPos), time, easing), isUnique, force)
+    }
+
+    // returns a separate copy of this textDisplay instance
+    duplicate(text=this._text, pos=this.pos_, color=this._color.duplicate(), textStyles=this._textStyles, drawMethod=this._drawMethod, maxWidth=this._maxWidth, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
+        return this.initialized ? new TextDisplay(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, anchorPos, alwaysActive) : null
+    }
+
+	get text() {return this._text}
 	get textStyles() {return this._textStyles}
 	get drawMethod() {return this._drawMethod}
 	get maxWidth() {return this._maxWidth}
@@ -76,11 +109,11 @@ class TextDisplay extends _BaseObj {
     get rotation() {return this._rotation}
     get scale() {return this._scale}
     get size() {return this._size}
+    get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
     get render() {return this._parent.render}
-    get ctx() {return this._parent.render.ctx}
 
-	set textValue(_textValue) {
-        this._textValue = _textValue
+	set text(_text) {
+        this._text = _text
         this._size = this.getSize()
     }
 	set textStyles(_textStyles) {
@@ -92,6 +125,12 @@ class TextDisplay extends _BaseObj {
         this._maxWidth = _maxWidth??undefined
         this._size = this.getSize()
     }
-    set rotation(_rotation) {return this._rotation = _rotation%360}
-    set scale(_scale) {this._scale = _scale}
+    set rotation(_rotation) {this._rotation = _rotation%360}
+    set scale(_scale) {
+        let [scaleX, scaleY] = _scale
+        if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
+        if (!CDEUtils.isDefined(scaleY)) scaleY = this._scale[1]
+        this._scale[0] = scaleX
+        this._scale[1] = scaleY
+    }
 }

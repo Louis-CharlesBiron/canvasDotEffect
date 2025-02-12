@@ -11,14 +11,16 @@ class Gradient {
     static SERIALIZATION_SEPARATOR = "*"
     static SERIALIZATION_COLOR_STOPS_SEPARATOR = "$"
 
-    #lastDotsPos = null
     #lastRotation = null
+    #lastType = null
+    #lastDotsPos = null
     #lastDotPos = null
+    #lastTextPos = null
     constructor(ctx, positions, colorStops, type, rotation) {
-        this._ctx = ctx                                                     // canvas context
-        this._initPositions = positions                                     // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
-        this._type = type||Gradient.DEFAULT_TYPE                            // type of gradient
-        this._positions = this.getAutomaticPositions()??this._initPositions // usable positions from initPositions
+        this._ctx = ctx                          // canvas context
+        this._initPositions = positions          // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
+        this._type = type||Gradient.DEFAULT_TYPE // type of gradient
+        this._positions = this._initPositions    // usable positions from initPositions
         this._colorStops = colorStops.map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
         this._rotation = rotation??0
         this._gradient = null // useable as a fillStyle
@@ -38,7 +40,7 @@ class Gradient {
      */
     getAutomaticPositions(obj=this._initPositions, disableOptimization=false) {
         if (obj instanceof Shape) {
-            if (this.#hasShapeChanged(obj) || disableOptimization) {
+            if (this.#hasFoundamentalsChanged() || this.#hasShapeChanged(obj) || disableOptimization) {
                 const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"),
                     smallestX = rangeX[0], smallestY = rangeY[0], biggestX = rangeX[1], biggestY = rangeY[1],
                     cx = smallestX+(biggestX-smallestX)/2, cy = smallestY+(biggestY-smallestY)/2
@@ -47,9 +49,16 @@ class Gradient {
                 else return obj.getCenter()
             } else return this._positions
         } else if (obj instanceof Dot) {
-            if (this.#hasDotChanged(obj) || disableOptimization) {
+            if (this.#hasFoundamentalsChanged() || this.#hasDotChanged(obj) || disableOptimization) {
                 if (this._type===Gradient.TYPES.LINEAR) return this.#getLinearPositions(obj.left-obj.x, obj.top-obj.y, obj.right-obj.x, obj.bottom-obj.y, obj.x, obj.y)
                 else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(obj.x, obj.y, obj.radius)
+                else return obj.pos_
+            } return this._positions
+        } else if (obj instanceof TextDisplay) {
+            if (this.#hasFoundamentalsChanged() || this.#hasTextDisplayChanged(obj) || disableOptimization) {
+                const [width, height] = obj.trueSize, [cx, cy] = obj.pos, left = cx-width/2, right = cx+width/2, top = cy-height/2, bottom = cy+height/2
+                if (this._type===Gradient.TYPES.LINEAR) return this.#getLinearPositions(left-cx, top-cy, right-cx, bottom-cy, cx, cy)
+                else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(cx, cy, Math.max(right-left, bottom-top))
                 else return obj.pos_
             } return this._positions
         } else if (this._type===Gradient.TYPES.LINEAR) {
@@ -67,25 +76,39 @@ class Gradient {
         return [[x, y, coverRadius], [x, y, coverRadius*0.25]]
     }
 
+    #hasFoundamentalsChanged() {
+        if (this.#lastRotation !== this._rotation || this.#lastType !== this._type) {
+            this.#lastRotation = this._rotation
+            this.#lastType = this._type
+            return true
+        } else return false
+    }
+
     #hasShapeChanged(shape) {
         const currentDotsPos = shape.dotsPositions
-        if (this.#lastRotation !== this._rotation || currentDotsPos !== this.#lastDotsPos) {
+        if (currentDotsPos !== this.#lastDotsPos) {
             this.#lastDotsPos = currentDotsPos
-            this.#lastRotation = this._rotation
             return true
         } else return false
     }
     
     #hasDotChanged(dot) {
         const currentDotPos = dot.stringPos
-        if (this.#lastRotation !== this._rotation || currentDotPos !== this.#lastDotPos) {
+        if (currentDotPos !== this.#lastDotPos) {
             this.#lastDotPos = currentDotPos
-            this.#lastRotation = this._rotation
             return true
         } else return false
     }
 
-    // Creates and returns the gradient. Updates it if the initPositions is a Shape/Dot instance
+    #hasTextDisplayChanged(textDisplay) {
+        const pos = textDisplay.trueSize+textDisplay.pos
+        if (pos !== this.#lastTextPos) {
+            this.#lastTextPos = pos
+            return true
+        } else return false
+    }
+
+    // Creates and returns the gradient. Updates it if the initPositions is a Shape/Dot/TextDisplay instance
     updateGradient() {
         if (this._initPositions !== Gradient.PLACEHOLDER) return this._gradient = Gradient.getCanvasGradient(this._ctx, this._positions = this.getAutomaticPositions(), this._colorStops, this._type, this._rotation)
     }
@@ -119,7 +142,7 @@ class Gradient {
     get type() {return this._type}
 	get colorStops() {return this._colorStops}
 	get rotation() {return this._rotation}
-	get isDynamic() {return this._initPositions instanceof Shape || this._initPositions instanceof Dot}
+	get isDynamic() {return this._initPositions instanceof Shape || this._initPositions instanceof Dot || this._initPositions instanceof TextDisplay}
     get gradient() {
         // Automatic dynamic positions updates when using a shape instance
         if (this.isDynamic) this.updateGradient()

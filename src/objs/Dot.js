@@ -3,7 +3,7 @@
 // Please don't use or credit this code as your own.
 //
 
-// The main component to create Effect, can be used on it's on, but designed to be contained by a Shape instance
+// The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
 class Dot extends Obj {
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
         super(pos, radius, color, setupCB, anchorPos, alwaysActive)
