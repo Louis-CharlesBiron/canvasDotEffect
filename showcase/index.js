@@ -187,9 +187,12 @@ CVS.add(testText2, true)
 
 const loopTODObetter = CanvasUtils.SHAPES.DEBUG_SHAPE([0,0], new Dot())
 loopTODObetter.drawEffectCB=(render, dot, ratio, mouse)=>{
-    CanvasUtils.lookAt(testText2, mouse)
+    CanvasUtils.lookAt(testText2, filledShapeTester.firstDot)
 }
 CVS.add(loopTODObetter)
+
+let imageTester = new ImageDisplay(ImageDisplay.getImage("./img/logo.png"), [-250, 75], [250], null, ()=>testMore.firstDot)
+CVS.add(imageTester, true)
 
 
 

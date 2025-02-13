@@ -191,6 +191,10 @@ class Render {
         this._ctx.fillText(text, pos[0], pos[1], maxWidth)
     }
 
+    drawImage(img, pos, size) {
+        this._ctx.drawImage(img, pos[0], pos[1], size[0], size[1])
+    }
+
 	get ctx() {return this._ctx}
 	get batchedStrokes() {return this._batchedStrokes}
 	get batchedFills() {return this._batchedFills}
