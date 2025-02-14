@@ -166,7 +166,7 @@ let generationTester = new Shape([100,600],
 })
 
 
-let textValue = "BONJOUR, LOL?? :D", textGradient = new Color(new Gradient(CVS.ctx, Gradient.PLACEHOLDER, [[0, "gold"], [0.5, "red"], [1, "gold"]], null, 90), true), aa = null
+let textValue = "BONJOUR, LOL?? :D", textGradient = new Color(new Gradient(CVS.ctx, Gradient.PLACEHOLDER, [[0, "gold"], [0.5, "red"], [1, "gold"]], null, 90), true)
 for (let i = 0;i<20;i++) {
     let t = new TextDisplay(()=>textValue, [100, 100+1*i], textGradient, render=>render.textProfile1.updateStyles("18px arial", 25, null), "FILL", null, null, ()=>testMore.firstDot)
     
@@ -179,7 +179,6 @@ for (let i = 0;i<20;i++) {
         t.rotation = -360*prog
     },-22500))
     CVS.add(t, true)
-    if (!aa) aa = t
 }
 
 const testText2 = new TextDisplay("Test § ->", [100, 550], "lightblue")
@@ -191,8 +190,7 @@ loopTODObetter.drawEffectCB=(render, dot, ratio, mouse)=>{
 }
 CVS.add(loopTODObetter)
 
-let imageTester = new ImageDisplay(ImageDisplay.getImage("./img/logo.png"), [-250, 75], [250], null, ()=>testMore.firstDot)
-CVS.add(imageTester, true)
+let imageTester = new ImageDisplay(ImageDisplay.loadImage("./img/logo.png"), [-250, 75], [250], null, ()=>testMore.firstDot)
 
 
 
@@ -204,6 +202,7 @@ CVS.add(filledShapeTester)
 CVS.add(movementsTester)
 CVS.add(test2)
 CVS.add(le)
+CVS.add(imageTester, true)
 
 let dupelicateTester = le.duplicate()
 for (let i=0;i<3;i++) {
