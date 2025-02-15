@@ -7,33 +7,16 @@
 class ImageDisplay extends _BaseObj {
     static SUPPORTED_IMAGE_FORMATS = ["jpg","jpeg","png","gif","svg","webp","bmp","tiff","ico","heif","heic"]
     static SUPPORTED_VIDEO_FORMATS = ["mp4","webm","ogv","mov","avi","mkv","flv","wmv","3gp","m4v"]
-    static SOURCE_TYPES = {
-        FILE_PATH:"string",
-        DYNAMIC:"[object Object]",
-        CAMERA:"CAMERA",
-        CAPTURE:"CAPTURE",
-        IMAGE:HTMLImageElement,
-        SVG:SVGImageElement,
-        BITMAP_PROMISE:Promise,
-        BITMAP:ImageBitmap,
-        VIDEO:HTMLVideoElement,
-        VIDEO_FRAME:VideoFrame,
-        CANVAS:HTMLCanvasElement,
-        OFFSCREEN_CANVAS:OffscreenCanvas
-    }
+    static DEFAULT_WIDTH = 128
+    static DEFAULT_HEIGHT = 128
+    static SOURCE_TYPES = {FILE_PATH:"string", DYNAMIC:"[object Object]", CAMERA:"CAMERA", CAPTURE:"CAPTURE", IMAGE:HTMLImageElement, SVG:SVGImageElement, BITMAP_PROMISE:Promise, BITMAP:ImageBitmap, VIDEO:HTMLVideoElement, VIDEO_FRAME:VideoFrame, CANVAS:HTMLCanvasElement, OFFSCREEN_CANVAS:OffscreenCanvas}
     static RESOLUTIONS = {SD:[640, 480], HD:[1280, 720], FULL_HD:[1920, 1080], "4K":[3840,2160], FOURK:[3840,2160], MAX:[3840,2160]}
     static CAMERA_FACING_MODES = {USER:"user", ENVIRONMENT:"environment"}
     static DEFAULT_FACING_MODE = ImageDisplay.CAMERA_FACING_MODES.USER
     static DEFAULT_CAMERA_RESOLUTION = ImageDisplay.RESOLUTIONS.HD
     static DEFAULT_CAMERA_FRAME_RATE = 30
     static DEFAULT_CAMERA_SETTINGS = ImageDisplay.loadCamera()
-    static DEFAULT_CAMERAS = {
-        CAMERA_SD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.SD),
-        CAMERA_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.HD),
-        CAMERA_FULL_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FULL_HD),
-        CAMERA_4K:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FOURK),
-        CAMERA:ImageDisplay.DEFAULT_CAMERA_SETTINGS,
-    }
+    static DEFAULT_CAMERAS = {CAMERA_SD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.SD), CAMERA_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.HD), CAMERA_FULL_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FULL_HD), CAMERA_4K:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FOURK), CAMERA:ImageDisplay.DEFAULT_CAMERA_SETTINGS,}
     static CAPTURE_MEDIA_SOURCES = {SCREEN:"screen", WINDOW:"window", TAB:"tab"}
     static CAPTURE_CURSOR = {ALWAYS:"always", MOTION:"motion", NONE:"none"}
     static DEFAULT_CAPTURE_RESOLUTION = ImageDisplay.RESOLUTIONS.HD
@@ -41,30 +24,14 @@ class ImageDisplay extends _BaseObj {
     static DEFAULT_CAPTURE_FRAME_RATE = 30
     static DEFAULT_CAPTURE_CURSOR = "always"
     static DEFAULT_CAPTURE_SETTINGS = ImageDisplay.loadCapture()
-    static DEFAULT_CAPTURES = {
-        CAPTURE_SD:ImageDisplay.loadCapture(ImageDisplay.RESOLUTIONS.SD),
-        CAPTURE_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.HD),
-        CAPTURE_FULL_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FULL_HD),
-        CAPTURE_4k:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FOURK),
-        CAPTURE:ImageDisplay.DEFAULT_CAPTURE_SETTINGS
-    }
-
-
-    /**
-        TODO:
-        
-        documentation
-
-        color implementation?
-        pattern
-        source croping?
-     */
+    static DEFAULT_CAPTURES = {CAPTURE_SD:ImageDisplay.loadCapture(ImageDisplay.RESOLUTIONS.SD), CAPTURE_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.HD), CAPTURE_FULL_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FULL_HD), CAPTURE_4k:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FOURK), CAPTURE:ImageDisplay.DEFAULT_CAPTURE_SETTINGS}
 
     constructor(source, pos, size, setupCB, anchorPos, alwaysActive) {
         super(pos, null, setupCB, anchorPos, alwaysActive)
-        this._source = source??"" // the initial source of the displayed image
-        this._size = size         // the display size of the image (resizes)
-        this._data = null         // the usable data source
+        this._source = source??""            // the initial source of the displayed image
+        this._size = size                    // the display size of the image (resizes)
+        this._data = null                    // the usable data source
+        this._sourceCroppingPositions = null // data source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
 
         this._parent = null  // the parent object (Canvas)
         this._rotation = 0   // the displayed image's rotation in degrees 
@@ -77,16 +44,13 @@ class ImageDisplay extends _BaseObj {
             const extension = dataSrc.split(".")[dataSrc.split(".").length-1]
             if (ImageDisplay.SUPPORTED_IMAGE_FORMATS.includes(extension)) ImageDisplay.loadImage(dataSrc).onload=e=>this.#initData(e.target)
             else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) this.#initVideoDataSource(ImageDisplay.loadVideo(dataSrc))
-        }
-        else if (dataSrc instanceof types.IMAGE || dataSrc instanceof types.SVG) {
+        } else if (dataSrc instanceof types.IMAGE || dataSrc instanceof types.SVG) {
             if (dataSrc.complete && dataSrc.src) this.#initData(dataSrc)
             else dataSrc.onload=()=>this.#initData(dataSrc)
-        }
-        else if (dataSrc.toString()===types.DYNAMIC) {
+        } else if (dataSrc.toString()===types.DYNAMIC) {
             if (dataSrc.type===types.CAMERA) this.#initCameraDataSource(dataSrc.settings)
             else if (dataSrc.type===types.CAPTURE) this.#initCaptureDataSource(dataSrc.settings)
-        }
-        else if (dataSrc instanceof types.VIDEO) this.#initVideoDataSource(dataSrc)
+        } else if (dataSrc instanceof types.VIDEO) this.#initVideoDataSource(dataSrc)
         else if (dataSrc instanceof types.CANVAS || dataSrc instanceof types.BITMAP) this.#initData(dataSrc)
         else if (dataSrc instanceof types.OFFSCREEN_CANVAS) this.#initData(dataSrc.transferToImageBitmap(), dataSrc.width, dataSrc.height)
         else if (dataSrc instanceof types.BITMAP_PROMISE) dataSrc.then(bitmap=>this.#initData(bitmap))
@@ -101,7 +65,7 @@ class ImageDisplay extends _BaseObj {
 
     draw(render, time, deltaTime) {
         if (this.initialized) {
-            const ctx = render.ctx, x = this.centerX, y = this.centerY, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation || hasScaling
+            const ctx = render.ctx, x = this.centerX, y = this.centerY, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
 
             if (hasTransforms) {
                 ctx.translate(x, y)
@@ -110,11 +74,46 @@ class ImageDisplay extends _BaseObj {
                 ctx.translate(-x, -y)
             }
 
-            render.drawImage(this._data, this._pos, this._size)
+            render.drawImage(this._data, this._pos, this._size, this._sourceCroppingPositions)
 
             if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
         }
         super.draw(time, deltaTime)
+    }
+
+    // initializes a data source
+    #initData(dataSource, width=dataSource.width||ImageDisplay.DEFAULT_WIDTH, height=dataSource.height||ImageDisplay.DEFAULT_HEIGHT) {
+        this._data = dataSource
+        if (!this._size) this._size = [width, height]
+        if (!CDEUtils.isDefined(this._size[0])) this._size = [width, this._size[1]]
+        if (!CDEUtils.isDefined(this._size[1])) this._size = [this._size[0], height]
+        this._initialized = true
+        if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this._parent, this._data)
+    }
+
+    // Initializes a video data source
+    #initVideoDataSource(dataSource) {
+        dataSource.onloadeddata=()=>this.#initData(dataSource, dataSource.videoWidth, dataSource.videoHeight)
+    }
+
+    // Initializes a camera capture data source
+    #initCameraDataSource(settings=true) {
+        navigator.mediaDevices.getUserMedia({video:settings}).then(src=>{
+            const video = document.createElement("video")
+            video.srcObject = src
+            video.autoplay = true
+            video.oncanplay=()=>this.#initData(video, video.videoWidth, video.videoHeight)
+        })
+    }
+
+    // Initializes a screen capture data source
+    #initCaptureDataSource(settings=true) {
+        navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>{
+            const video = document.createElement("video")
+            video.srcObject = src
+            video.autoplay = true
+            video.oncanplay=()=>this.#initData(video, video.videoWidth, video.videoHeight)
+        })
     }
 
     // Returns a usable image source
@@ -161,45 +160,10 @@ class ImageDisplay extends _BaseObj {
                 height:{ideal:resolution?.[1]}
             }
         }
-    }  
-
-    // initializes a data source
-    #initData(dataSource, width=dataSource.width, height=dataSource.height) {
-        this._data = dataSource
-        if (!this._size) this._size = [width, height]
-        if (!CDEUtils.isDefined(this._size[0])) this._size = [width, this._size[1]]
-        if (!CDEUtils.isDefined(this._size[1])) this._size = [this._size[0], height]
-        this._initialized = true
-        if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this._parent, this._data)
     }
 
-    // Initializes a video data source
-    #initVideoDataSource(dataSource) {
-        dataSource.onloadeddata=()=>this.#initData(dataSource, dataSource.videoWidth, dataSource.videoHeight)
-    }
-
-    // Initializes a camera capture data source
-    #initCameraDataSource(settings=true) {
-        navigator.mediaDevices.getUserMedia({video:settings}).then(src=>{
-            const video = document.createElement("video")
-            video.srcObject = src
-            video.autoplay = true
-            video.oncanplay=()=>this.#initData(video, video.videoWidth, video.videoHeight)
-        })
-    }
-
-    // Initializes a screen capture data source
-    #initCaptureDataSource(settings=true) {
-        navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>{
-            const video = document.createElement("video")
-            video.srcObject = src
-            video.autoplay = true
-            video.oncanplay=()=>this.#initData(video, video.videoWidth, video.videoHeight)
-        })
-    }
-
-    // Rotates the image by a specified degree increment around its center pos
-    rotateBy(deg) {// clock-wise
+    // Rotates the image clock-wise by a specified degree increment around its center pos
+    rotateBy(deg) {
         this._rotation = (this._rotation+deg)%360
     }
 
@@ -240,11 +204,6 @@ class ImageDisplay extends _BaseObj {
         return this.initialized ? new ImageDisplay(source, pos, size, setupCB, anchorPos, alwaysActive) : null
     }
 
-    // doc todo
-    aspectRatioScale() {
-        // TODO
-    }
-
     // Plays the source (use only if the source is a video)
     playVideo() {
         this._data.play()
@@ -258,7 +217,13 @@ class ImageDisplay extends _BaseObj {
 
     get source() {return this._source}
 	get size() {return this._size}
+    get width() {return this._size[0]}
+    get height() {return this._size[1]}
     get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
+    get naturalSize() {
+        const data = this._data
+        return [data?.displayWidth||data?.videoWidth||data?.width, data?.displayHeight||data?.videoHeight||data?.height]
+    }
 	get data() {return this._data}
 	get parent() {return this._parent}
 	get rotation() {return this._rotation}
@@ -275,8 +240,11 @@ class ImageDisplay extends _BaseObj {
     get currentTime() {return this._data?.currentTime}
     get loop() {return this._data?.loop}
     get isLooping() {return this.loop}
+	get sourceCroppingPositions() {return this._sourceCroppingPositions}
 
 	set size(_size) {this._size = _size}
+	set width(width) {this._size[0] = width}
+	set height(height) {this._size[1] = height}
 	set data(_data) {this._data = _data}
     set rotation(_rotation) {this._rotation = _rotation%360}
     set scale(_scale) {
@@ -296,5 +264,13 @@ class ImageDisplay extends _BaseObj {
     set currentTime(currentTime) {this._data.currentTime = currentTime}
     set loop(loop) {this._data.loop = loop}
     set isLooping(isLooping) {this.loop = isLooping}
-
+	set sourceCroppingPositions(_sourceCroppingPositions) {this._sourceCroppingPositions = _sourceCroppingPositions}
+	set sourceCroppingStartPos(startPos) {
+        if (Array.isArray(this._sourceCroppingPositions)) this._sourceCroppingPositions[0] = startPos
+        else this._sourceCroppingPositions = [startPos, [startPos[0]+ImageDisplay.DEFAULT_WIDTH, startPos[1]+ImageDisplay.DEFAULT_HEIGHT]]
+    }
+    set sourceCroppingEndPos(endPos) {
+        if (Array.isArray(this._sourceCroppingPositions)) this._sourceCroppingPositions[1] = endPos
+        else this._sourceCroppingPositions = [[0,0], endPos]
+    }
 }

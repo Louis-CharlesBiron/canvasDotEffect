@@ -191,8 +191,12 @@ class Render {
         this._ctx.fillText(text, pos[0], pos[1], maxWidth)
     }
 
-    drawImage(img, pos, size) {
-        this._ctx.drawImage(img, pos[0], pos[1], size[0], size[1])
+    drawImage(img, pos, size, croppingPositions) {
+        if (croppingPositions) {
+            const [[cropStartX, cropStartY], [cropEndX, cropEndY]] = croppingPositions
+            this._ctx.drawImage(img, cropStartX, cropStartY, cropEndX-cropStartX, cropEndY-cropStartX, pos[0], pos[1], size[0], size[1])
+        }
+        else this._ctx.drawImage(img, pos[0], pos[1], size[0], size[1])
     }
 
 	get ctx() {return this._ctx}
