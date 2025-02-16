@@ -18,6 +18,7 @@
   - [Grid](#grid)
     - [Grid Assets](#grid-assets)
   - [TextDisplay](#textdisplay)
+  - [ImageDisplay](#imagedisplay)
   - [Color](#color)
   - [Gradient](#gradient)
   - [Render](#render)
@@ -188,7 +189,7 @@ The Obj class is the template class of any canvas object. **It should not be dir
 - **color** -> Either a Color instance `new Color("red")`, a string `"red"`, a hex value `#FF0000` or a RGBA array `[255, 0, 0, 1]`
 - **setupCB** -> Custom callback called on the object's initialization `(this, this?.parent)=>{}`s
 - ***setupResults*** -> The value returned by the `setupCB` call.
-- **anchorPos** -> The reference point from which the object's pos will be set. Can either be a pos `[x,y]`, another canvas object instance, or a callback `(this, Canvas or parent)=>{... return [x,y]}` (Defaults to the parent's pos, or `[0, 0]` if the object has no parent)
+- **anchorPos** -> The reference point from which the object's pos will be set. Can either be a pos `[x,y]`, another canvas object instance, or a callback `(this, Canvas or parent)=>{... return [x,y]}` (Defaults to the parent's pos, or `[0, 0]` if the object has no parent). If your *anchorPos* references another object, make sure it is defined and initialized when used as the *anchorPos* value.
 - **alwaysActive** -> Whether the object stays active when outside the canvas bounds.
 - ***initialized*** -> Whether the object has been initialized.
 
@@ -781,7 +782,7 @@ The TextDisplay class allows the drawing of text as an canvas object.
 - **maxWidth**? -> The max width in pixels of the drawn text.
 
 **Its other attributes are:**
-- **parent** -> The parent of the DisplayText object. (Most likely a Canvas instance) 
+- **parent** -> The parent of the TextDisplay object. (Most likely a Canvas instance) 
 - **rotation** -> The text's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
 - **scale** -> The text's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
 - **size** -> The text's *width* and *height* in pixels `[width, height]`. Does not take into account scaling, use the `trueSize` getter for adjusted size.
@@ -810,6 +811,95 @@ const helloWorldText = new TextDisplay(
 CVS.add(helloWorldText, true)
 
 ```
+ 
+
+# [ImageDisplay](#table-of-contents)
+
+The ImageDisplay class allows the drawing of images, videos and live camera/screen feed.
+
+#### **The TextDisplay constructor takes the following parameters:**
+###### - `new TextDisplay(source, pos, size, setupCB, anchorPos, alwaysActive)`
+- *pos, setupCB, anchorPos, alwaysActive* -> See the Obj / *_BaseObj* class.
+- **source** -> The initial source declaration of the image. Either a `String` or one of `ImageDisplay.SOURCE_TYPES`.
+- **size** -> The display size of the image `[width, height]`. (Resizes the image)
+
+**Its other attributes are:**
+- **data** -> The usable data source for drawing the image.
+- **sourceCroppingPositions** -> The data source cropping positions. Delimits a rectangle which indicates the area to be drawn: `[ [startX, startY], [endX, endY] ]`. (Defaults to no cropping)
+- **parent** -> The parent of the ImageDisplay object. (Most likely a Canvas instance) 
+- **rotation** -> The image's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
+- **scale** -> The image's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
+
+#### Example use 1:
+###### - Drawing an image from the web
+```js
+// Creating an ImageDisplay with a url pointing to an image
+const myCoolImage = new ImageDisplay("https://static.wikia.nocookie.net/ftgd/images/9/97/ExtremeDemon.png/revision/latest?cb=20240801164829")
+
+// Adding the object to the canvas as a definition, because it doesn't not contain any children.
+CVS.add(myCoolImage, true)
+```
+
+#### Example use 2:
+###### - Drawing an image from a file, resizing it, and cropping it
+```js
+// Creating an ImageDisplay with loading a local file, and ajusting the sizes
+const myCoolImage = new ImageDisplay(
+    "./img/logo.png", // local file located at [currentFolder]/img/logo.png
+    [0,0],            // position of the top-left corner
+    [100, 100]        // rezises the image to 100x100
+)
+
+// Cropping the source image to use only from [20, 20] to [150, 150]
+myCoolImage.sourceCroppingPositions = [[20,20], [150, 150]]
+
+// Adding the object to the canvas as a definition, because it doesn't not contain any children.
+CVS.add(myCoolImage, true)
+```
+
+#### Example use 3:
+###### - Drawing and playing a video
+```js
+// Creating an ImageDisplay playing a video
+const dummyVideo = new ImageDisplay(
+    "./img/vidTest.mp4", // local file located at [currentFolder]/img/vidTest.mp4
+    null, // using default pos ([0, 0])
+    null, // using natural size (default)
+    (video)=>{
+        // SetupCB, runs when the source is loaded
+
+        // Automatically starts the video once loaded
+        video.playVideo()
+    }
+)
+
+// Adding the object to the canvas as a definition
+CVS.add(dummyVideo, true)
+```
+
+#### Example use 4:
+###### - Drawing live feeds from the camera and from the screen
+```js
+// Creating an ImageDisplay displaying the camera (requires user permission)
+const cameraFeed = new ImageDisplay(
+    ImageDisplay.loadCamera(), // get the camera, with default settings
+    [0,0], // draw at origin
+    ImageDisplay.RESOLUTIONS.SD // shrink it down to 640x480
+)
+
+// Creating an ImageDisplay displaying a screen (requires user actions and permisson)
+const screenFeed = new ImageDisplay(
+    ImageDisplay.loadCapture(), // get the screen capture, with default settings
+    [640,0], // draw next to the camera display
+    [1920/4, 1080/4] // resize it to Full HD divided by 4
+)
+
+// Adding both objects to the canvas as a definitions
+CVS.add(cameraFeed, true)
+CVS.add(screenFeed, true)
+```
+
+**Note:** Canvas image smoothing property is disabled by default to improve performances.
 
  
 

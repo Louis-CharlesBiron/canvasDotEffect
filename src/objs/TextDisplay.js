@@ -29,9 +29,9 @@ class TextDisplay extends _BaseObj {
     draw(render, time, deltaTime) {
         if (this.initialized) {
             if (this.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-                const ctx = render.ctx, x = this.x, y = this.y, hasScaling = this._scale[0]!==1||this._scale[1]!==1
+                const ctx = render.ctx, x = this._pos[0], y = this._pos[1], hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation || hasScaling
 
-                if (this._rotation || hasScaling) {
+                if (hasTransforms) {
                     ctx.translate(x, y)
                     if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                     if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -40,7 +40,8 @@ class TextDisplay extends _BaseObj {
 
                 if (this._drawMethod==="FILL") render.fillText(this.getTextValue(), this._pos, this._color, this._textStyles, this._maxWidth)
                 else render.strokeText(this.getTextValue(), this._pos, this._color, this._textStyles, this._maxWidth)
-                ctx.setTransform(1,0,0,1,0,0)
+                
+                if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
             }
         } else this.initialized = true
 
@@ -75,7 +76,7 @@ class TextDisplay extends _BaseObj {
         return this.playAnim(new Anim((prog)=>this.rotateAt(ir+dr*prog), time, easing), isUnique, force)
     }
 
-    // Scales the dots by a specified amount [scaleX, scaleY] from its pos
+    // Scales the text by a specified amount [scaleX, scaleY] from its pos
     scaleBy(scale) {
         let [scaleX, scaleY] = scale
         if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
@@ -84,12 +85,12 @@ class TextDisplay extends _BaseObj {
         this._scale[1] *= scaleY
     }
 
-    // Scales the dots to a specified amount [scaleX, scaleY] from its pos
+    // Scales the text to a specified amount [scaleX, scaleY] from its pos
     scaleAt(scale) {
         this.scale = scale
     }
 
-    // Smoothly scales the dots to a specified amount [scaleX, scaleY] from its pos
+    // Smoothly scales the text to a specified amount [scaleX, scaleY] from its pos
     scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=false, force=false) {
         const is = CDEUtils.unlinkArr2(this._scale), dsX = scale[0]-is[0], dsY = scale[1]-is[1]
 
