@@ -133,11 +133,12 @@ class Render {
     drawBatched() {
         const strokes = Object.entries(this._batchedStrokes), s_ll = strokes.length,
               fills = Object.entries(this._batchedFills), f_ll = fills.length,
-              gradientSep = Gradient.SERIALIZATION_SEPARATOR
+              gradientSep = Gradient.SERIALIZATION_SEPARATOR, patternSep = Pattern.SERIALIZATION_SEPARATOR
               
         for (let i=0;i<s_ll;i++) {
             let [profileKey, path] = strokes[i], [colorValue, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
+            else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]]
             RenderStyles.applyStyles(this, colorValue, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
             this._ctx.stroke(path)
         }
@@ -145,6 +146,7 @@ class Render {
         for (let i=0;i<f_ll;i++) {
             let [colorValue, path] = fills[i]
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
+            else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]]
             RenderStyles.applyStyles(this, colorValue)
             this._ctx.fill(path)
         }

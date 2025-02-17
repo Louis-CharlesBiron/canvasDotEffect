@@ -10,6 +10,7 @@ class ImageDisplay extends _BaseObj {
     static DEFAULT_WIDTH = 128
     static DEFAULT_HEIGHT = 128
     static SOURCE_TYPES = {FILE_PATH:"string", DYNAMIC:"[object Object]", CAMERA:"CAMERA", CAPTURE:"CAPTURE", IMAGE:HTMLImageElement, SVG:SVGImageElement, BITMAP_PROMISE:Promise, BITMAP:ImageBitmap, VIDEO:HTMLVideoElement, VIDEO_FRAME:VideoFrame, CANVAS:HTMLCanvasElement, OFFSCREEN_CANVAS:OffscreenCanvas}
+    static DYNAMIC_SOURCE_TYPES = {VIDEO:HTMLVideoElement, CANVAS:HTMLCanvasElement}
     static RESOLUTIONS = {SD:[640, 480], HD:[1280, 720], FULL_HD:[1920, 1080], "4K":[3840,2160], FOURK:[3840,2160], MAX:[3840,2160]}
     static CAMERA_FACING_MODES = {USER:"user", ENVIRONMENT:"environment"}
     static DEFAULT_FACING_MODE = ImageDisplay.CAMERA_FACING_MODES.USER
@@ -39,32 +40,21 @@ class ImageDisplay extends _BaseObj {
     }
 
     initialize() {
-        const types = ImageDisplay.SOURCE_TYPES, dataSrc = this._source
-        if (typeof dataSrc===types.FILE_PATH) {
-            const extension = dataSrc.split(".")[dataSrc.split(".").length-1]
-            if (ImageDisplay.SUPPORTED_IMAGE_FORMATS.includes(extension)) ImageDisplay.loadImage(dataSrc).onload=e=>this.#initData(e.target)
-            else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) this.#initVideoDataSource(ImageDisplay.loadVideo(dataSrc))
-        } else if (dataSrc instanceof types.IMAGE || dataSrc instanceof types.SVG) {
-            if (dataSrc.complete && dataSrc.src) this.#initData(dataSrc)
-            else dataSrc.onload=()=>this.#initData(dataSrc)
-        } else if (dataSrc.toString()===types.DYNAMIC) {
-            if (dataSrc.type===types.CAMERA) this.#initCameraDataSource(dataSrc.settings)
-            else if (dataSrc.type===types.CAPTURE) this.#initCaptureDataSource(dataSrc.settings)
-        } else if (dataSrc instanceof types.VIDEO) this.#initVideoDataSource(dataSrc)
-        else if (dataSrc instanceof types.CANVAS || dataSrc instanceof types.BITMAP) this.#initData(dataSrc)
-        else if (dataSrc instanceof types.OFFSCREEN_CANVAS) this.#initData(dataSrc.transferToImageBitmap(), dataSrc.width, dataSrc.height)
-        else if (dataSrc instanceof types.BITMAP_PROMISE) dataSrc.then(bitmap=>this.#initData(bitmap))
-        else if (dataSrc instanceof types.VIDEO_FRAME) {
-            this.#initData(dataSrc, dataSrc.displayHeight, dataSrc.displayWidth)
-            dataSrc.close()
-        }
+        ImageDisplay.initializeDataSource(this._source, (data, size)=>{
+            this._data = data
+            if (!this._size) this._size = size
+            if (!CDEUtils.isDefined(this._size[0])) this._size = [size[0], this._size[1]]
+            if (!CDEUtils.isDefined(this._size[1])) this._size = [this._size[0], size[1]]
+            this._initialized = true
+            if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this._parent, this._data)
+        })
 
         this._pos = this.getInitPos()||_BaseObj.DEFAULT_POS
         this.setAnchoredPos()
     }
 
     draw(render, time, deltaTime) {
-        if (this.initialized) {
+        if (this.initialized && (this._data.src || this._data.srcObject.active)) {
             const ctx = render.ctx, x = this.centerX, y = this.centerY, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
 
             if (hasTransforms) {
@@ -81,55 +71,73 @@ class ImageDisplay extends _BaseObj {
         super.draw(time, deltaTime)
     }
 
+    static initializeDataSource(dataSrc, loadCallback) {
+        const types = ImageDisplay.SOURCE_TYPES
+        if (typeof dataSrc===types.FILE_PATH) {
+            const extension = dataSrc.split(".")[dataSrc.split(".").length-1]
+            if (ImageDisplay.SUPPORTED_IMAGE_FORMATS.includes(extension)) ImageDisplay.loadImage(dataSrc).onload=e=>ImageDisplay.#initData(e.target, loadCallback)
+            else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) ImageDisplay.#initVideoDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback)
+        } else if (dataSrc instanceof types.IMAGE || dataSrc instanceof types.SVG) {
+            if (dataSrc.complete && dataSrc.src) ImageDisplay.#initData(dataSrc, loadCallback)
+            else dataSrc.onload=()=>ImageDisplay.#initData(dataSrc, loadCallback)
+        } else if (dataSrc.toString()===types.DYNAMIC) {
+            if (dataSrc.type===types.CAMERA) ImageDisplay.#initCameraDataSource(dataSrc.settings, loadCallback)
+            else if (dataSrc.type===types.CAPTURE) ImageDisplay.#initCaptureDataSource(dataSrc.settings, loadCallback)
+        } else if (dataSrc instanceof types.VIDEO) ImageDisplay.#initVideoDataSource(dataSrc, loadCallback)
+        else if (dataSrc instanceof types.CANVAS || dataSrc instanceof types.BITMAP) ImageDisplay.#initData(dataSrc, loadCallback)
+        else if (dataSrc instanceof types.OFFSCREEN_CANVAS) ImageDisplay.#initData(dataSrc.transferToImageBitmap(), loadCallback, dataSrc.width, dataSrc.height)
+        else if (dataSrc instanceof types.BITMAP_PROMISE) dataSrc.then(bitmap=>ImageDisplay.#initData(bitmap, loadCallback))
+        else if (dataSrc instanceof types.VIDEO_FRAME) {
+            ImageDisplay.#initData(dataSrc, loadCallback, dataSrc.displayHeight, dataSrc.displayWidth)
+            dataSrc.close()
+        }
+    }
+
     // initializes a data source
-    #initData(dataSource, width=dataSource.width||ImageDisplay.DEFAULT_WIDTH, height=dataSource.height||ImageDisplay.DEFAULT_HEIGHT) {
-        this._data = dataSource
-        if (!this._size) this._size = [width, height]
-        if (!CDEUtils.isDefined(this._size[0])) this._size = [width, this._size[1]]
-        if (!CDEUtils.isDefined(this._size[1])) this._size = [this._size[0], height]
-        this._initialized = true
-        if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this._parent, this._data)
+    static #initData(dataSource, loadCallback, width=dataSource.width||ImageDisplay.DEFAULT_WIDTH, height=dataSource.height||ImageDisplay.DEFAULT_HEIGHT) {
+        if (CDEUtils.isFunction(loadCallback)) loadCallback(dataSource, [width, height])
     }
 
     // Initializes a video data source
-    #initVideoDataSource(dataSource) {
-        dataSource.onloadeddata=()=>this.#initData(dataSource, dataSource.videoWidth, dataSource.videoHeight)
+    static #initVideoDataSource(dataSource, loadCallback) {
+        dataSource.onloadeddata=()=>this.#initData(dataSource, loadCallback, dataSource.videoWidth, dataSource.videoHeight)
     }
 
     // Initializes a camera capture data source
-    #initCameraDataSource(settings=true) {
+    static #initCameraDataSource(settings=true, loadCallback) {
         navigator.mediaDevices.getUserMedia({video:settings}).then(src=>{
             const video = document.createElement("video")
             video.srcObject = src
             video.autoplay = true
-            video.oncanplay=()=>this.#initData(video, video.videoWidth, video.videoHeight)
+            video.oncanplay=()=>this.#initData(video, loadCallback, video.videoWidth, video.videoHeight)
         })
     }
 
     // Initializes a screen capture data source
-    #initCaptureDataSource(settings=true) {
+    static #initCaptureDataSource(settings=true, loadCallback) {
         navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>{
             const video = document.createElement("video")
             video.srcObject = src
             video.autoplay = true
-            video.oncanplay=()=>this.#initData(video, video.videoWidth, video.videoHeight)
+            video.oncanplay=()=>this.#initData(video, loadCallback, video.videoWidth, video.videoHeight)
         })
     }
 
     // Returns a usable image source
-    static loadImage(filepath) {
+    static loadImage(path) {
         const image = new Image()
-        image.src = filepath
+        image.src = path
         return image
     }
 
     // Returns a usable video source
-    static loadVideo(filepath, looping=false, autoPlay=false) {
+    static loadVideo(path, looping=false, autoPlay=false) {
         const video = document.createElement("video")
-        video.src = filepath
+        video.src = path
         video.preload = "auto"
         video.loop = looping
         video.autoplay = autoPlay
+        video.mute = true
         return video
     }
 
@@ -229,7 +237,7 @@ class ImageDisplay extends _BaseObj {
 	get rotation() {return this._rotation}
 	get scale() {return this._scale}
     get centerX() {return this._pos[0]+this._size[0]/2}
-    get centerY() {return this._pos[0]+this._size[0]/2}
+    get centerY() {return this._pos[1]+this._size[1]/2}
     get centerPos() {return [this.centerX, this.centerY]}
     get video() {return this._data}
     get image() {return this._data}

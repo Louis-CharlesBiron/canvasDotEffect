@@ -31,10 +31,10 @@ class _HasColor {
 
     set color(color) {
         if (!this._color || this._color?.colorRaw?.toString() !== color?.toString()) {
-            const potentialGradient = color?.colorRaw||color
-            if (potentialGradient?.positions===Gradient.PLACEHOLDER) {
-                if (!color.isChannel) color = potentialGradient.duplicate()
-                else color = potentialGradient 
+            const specialColor = color?.colorRaw||color
+            if (specialColor?.positions===Gradient.PLACEHOLDER) {
+                if (!color.isChannel) color = specialColor.duplicate()
+                else color = specialColor 
                 color.initPositions = this
             }
 

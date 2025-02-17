@@ -29,7 +29,7 @@ class TextDisplay extends _BaseObj {
     draw(render, time, deltaTime) {
         if (this.initialized) {
             if (this.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-                const ctx = render.ctx, x = this._pos[0], y = this._pos[1], hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation || hasScaling
+                const ctx = render.ctx, x = this._pos[0], y = this._pos[1], hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation || hasScaling, textValue = this.getTextValue()
 
                 if (hasTransforms) {
                     ctx.translate(x, y)
@@ -38,8 +38,16 @@ class TextDisplay extends _BaseObj {
                     ctx.translate(-x, -y)
                 }
 
-                if (this._drawMethod==="FILL") render.fillText(this.getTextValue(), this._pos, this._color, this._textStyles, this._maxWidth)
-                else render.strokeText(this.getTextValue(), this._pos, this._color, this._textStyles, this._maxWidth)
+                if (textValue.includes("\n")) {
+                    const lines = textValue.split("\n"), lines_ll = lines.length, lineHeight = this.trueSize[1]
+                    for (let i=0;i<lines_ll;i++) {
+                        if (this._drawMethod==="FILL") render.fillText(lines[i], [x, y+i*lineHeight], this._color, this._textStyles, this._maxWidth)
+                        else render.strokeText(lines[i], [x, y+i*lineHeight], this._color, this._textStyles, this._maxWidth)
+                    }
+                } else {
+                    if (this._drawMethod==="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth)
+                    else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth)
+                }
                 
                 if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
             }

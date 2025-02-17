@@ -19,11 +19,11 @@ class Gradient {
     constructor(ctx, positions, colorStops, type, rotation) {
         this._ctx = ctx                          // canvas context
         this._initPositions = positions          // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
+        this._positions = positions              // usable positions from initPositions
         this._type = type||Gradient.DEFAULT_TYPE // type of gradient
-        this._positions = this._initPositions    // usable positions from initPositions
         this._colorStops = colorStops.map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
-        this._rotation = rotation??0
-        this._gradient = null // useable as a fillStyle
+        this._rotation = rotation??0             // rotation of the gradient, not applicable for radial type
+        this._gradient = null                    // useable as a fillStyle
         this.updateGradient()
     }
 
