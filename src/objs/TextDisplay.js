@@ -13,6 +13,7 @@ class TextDisplay extends _BaseObj {
         this._textStyles = textStyles        // current object's textStyles
         this._drawMethod = drawMethod?.toUpperCase()??Render.DRAW_METHODS.FILL // text draw method, either "fill" or "stroke"
         this._maxWidth = maxWidth??undefined // maximal width of the displayed text in px
+        this._lineHeigth = null              // lineHeight in px of the text for multi-line display
 
         this._parent = null  // the parent object of the text (Canvas)
         this._rotation = 0   // the text's rotation in degrees 
@@ -23,6 +24,7 @@ class TextDisplay extends _BaseObj {
     initialize() {
         this._textStyles = CDEUtils.isFunction(this._textStyles) ? this._textStyles(this.render, this) : this._textStyles??this.render.defaultTextProfile
         this._size = this.getSize()
+        this._lineHeigth ??= this.trueSize[1]
         super.initialize()
     }
 
@@ -38,16 +40,8 @@ class TextDisplay extends _BaseObj {
                     ctx.translate(-x, -y)
                 }
 
-                if (textValue.includes("\n")) {
-                    const lines = textValue.split("\n"), lines_ll = lines.length, lineHeight = this.trueSize[1]
-                    for (let i=0;i<lines_ll;i++) {
-                        if (this._drawMethod==="FILL") render.fillText(lines[i], [x, y+i*lineHeight], this._color, this._textStyles, this._maxWidth)
-                        else render.strokeText(lines[i], [x, y+i*lineHeight], this._color, this._textStyles, this._maxWidth)
-                    }
-                } else {
-                    if (this._drawMethod==="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth)
-                    else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth)
-                }
+                if (this._drawMethod==="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth)
+                else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth)
                 
                 if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
             }
@@ -118,6 +112,7 @@ class TextDisplay extends _BaseObj {
     get rotation() {return this._rotation}
     get scale() {return this._scale}
     get size() {return this._size}
+    get lineHeigth() {return this._lineHeigth}
     get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
     get render() {return this._parent.render}
 
@@ -142,4 +137,5 @@ class TextDisplay extends _BaseObj {
         this._scale[0] = scaleX
         this._scale[1] = scaleY
     }
+    set lineHeigth(lineHeigth) {this._lineHeigth = lineHeigth}
 }

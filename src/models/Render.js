@@ -138,7 +138,7 @@ class Render {
         for (let i=0;i<s_ll;i++) {
             let [profileKey, path] = strokes[i], [colorValue, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
-            else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]]
+            else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].pattern
             RenderStyles.applyStyles(this, colorValue, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
             this._ctx.stroke(path)
         }
@@ -146,7 +146,7 @@ class Render {
         for (let i=0;i<f_ll;i++) {
             let [colorValue, path] = fills[i]
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
-            else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]]
+            else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].pattern
             RenderStyles.applyStyles(this, colorValue)
             this._ctx.fill(path)
         }
@@ -176,21 +176,31 @@ class Render {
     }
 
     // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    strokeText(text, pos, color, textStyles, maxWidth=undefined) {
-        const colorValue = Color.getColorValue(color)
-        if (textStyles instanceof TextStyles) textStyles.applyStyles()
-        else this._defaultTextProfile.applyStyles(textStyles)
-        if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
-        this._ctx.strokeText(text, pos[0], pos[1], maxWidth)
+    strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight) {
+        if (text) {
+            const colorValue = Color.getColorValue(color)
+            if (textStyles instanceof TextStyles) textStyles.applyStyles()
+            else this._defaultTextProfile.applyStyles(textStyles)
+            if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
+            if (text.includes("\n")) {
+                const lines = text.split("\n"), lines_ll = lines.length
+                for (let i=0;i<lines_ll;i++) this._ctx.strokeText(lines[i], pos[0], pos[1]+i*lineHeight, maxWidth)
+            } else this._ctx.strokeText(text, pos[0], pos[1], maxWidth)
+        }
     }
 
     // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    fillText(text, pos, color, textStyles, maxWidth=undefined) {
-        const colorValue = Color.getColorValue(color)
-        if (textStyles instanceof TextStyles) textStyles.applyStyles()
-        else this._defaultTextProfile.applyStyles(textStyles)
-        if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
-        this._ctx.fillText(text, pos[0], pos[1], maxWidth)
+    fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight) {
+        if (text) {
+            const colorValue = Color.getColorValue(color)
+            if (textStyles instanceof TextStyles) textStyles.applyStyles()
+            else this._defaultTextProfile.applyStyles(textStyles)
+            if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
+            if (text.includes("\n")) {
+                const lines = text.split("\n"), lines_ll = lines.length
+                for (let i=0;i<lines_ll;i++) this._ctx.fillText(lines[i], pos[0], pos[1]+i*lineHeight, maxWidth)
+            } else this._ctx.fillText(text, pos[0], pos[1], maxWidth)
+        }
     }
 
     drawImage(img, pos, size, croppingPositions) {

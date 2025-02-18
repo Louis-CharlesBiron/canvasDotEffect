@@ -147,7 +147,7 @@ class Color {
     }
 
     static getColorValue(color) {
-        if (typeof color==="string" || color instanceof CanvasGradient) return color
+        if (typeof color==="string" || color instanceof CanvasGradient || color instanceof CanvasPattern) return color
         else if (color instanceof Gradient) return color.gradient
         else if (color instanceof Pattern) return color.pattern
         else return Color.formatRgba(color) ?? color.color
@@ -194,8 +194,7 @@ class Color {
 
     toString() {
         let colorValue = Color.getColorValue(this._color)
-        if (colorValue instanceof CanvasGradient) colorValue = this._color.toString()
-        else if (colorValue instanceof CanvasGradient) colorValue = this._color.toString()
+        if (colorValue instanceof CanvasGradient || colorValue instanceof CanvasPattern) colorValue = this._color.toString()
         return colorValue
     }
 

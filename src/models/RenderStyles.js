@@ -41,14 +41,14 @@ class RenderStyles extends _HasColor {
     // serializes the styles profile
     toString(color=this._color, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
         let sep = RenderStyles.SERIALIZATION_SEPARATOR, colorValue = Color.getColorValue(color)
-        if (colorValue instanceof CanvasGradient) colorValue = color.toString()
+        if (colorValue instanceof CanvasGradient || colorValue instanceof CanvasPattern) colorValue = color.toString()
         return colorValue+sep+lineWidth+sep+lineDash+sep+lineDashOffset+sep+lineJoin+sep+lineCap
     }
 
     // serializes the styles profile, but only the color value
     colorOnlyToString(color=this._color) {
         let colorValue = Color.getColorValue(color)
-        if (colorValue instanceof CanvasGradient) colorValue = color.toString()
+        if (colorValue instanceof CanvasGradient || colorValue instanceof CanvasPattern) colorValue = color.toString()
         return colorValue
     }
 

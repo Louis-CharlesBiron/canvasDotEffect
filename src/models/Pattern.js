@@ -10,12 +10,14 @@ class Pattern {
     static PLACEHOLDER_COLOR = "transparent"
     static REPETITION_MODES = {REPEAT:"repeat", REPEAT_X:"repeat-x", REPEAT_Y:"repeat-y", NONE:"no-repeat"}
     static DEFAULT_REPETITION_MODE = Pattern.REPETITION_MODES.REPEAT//
-    static DEFAULT_FRAME_RATE = 10
+    static DEFAULT_FRAME_RATE = 30
     static LOADED_PATTERN_SOURCES = []
     static SERIALIZATION_SEPARATOR = "!"
 
     /* 
-        delete this._source (bad memory usage)?
+        delete this._source (bad memory usage)?? prob no?
+
+        add an auto update to canvas source
     */
 
     // doc todo
@@ -33,6 +35,8 @@ class Pattern {
         this._data = null
         this._pattern = null
 
+        Pattern.LOADED_PATTERN_SOURCES[this._id] = this
+
         ImageDisplay.initializeDataSource(this._source, (data, size)=>{
             this._data = data
             this.updatePattern()
@@ -44,14 +48,14 @@ class Pattern {
         if (time) {
             if (this.#lastUpdateTime > time) this.#lastUpdateTime = time
             if (time-this.#lastUpdateTime >= 1/this._frameRate) this.#lastUpdateTime = time
-            else return this._pattern;
+            else return this._pattern??Pattern.PLACEHOLDER_COLOR
         }
-        return Pattern.LOADED_PATTERN_SOURCES[this._id] = this._pattern = this._ctx.createPattern(this._data, this._repeatMode)
+        this._pattern = this._ctx.createPattern(this._data, this._repeatMode)
+        return this._pattern
     }
 
     toString() {
-        const sep = Pattern.SERIALIZATION_SEPARATOR 
-        return this._id+sep+this._positions+sep+this._repeatMode+sep+this._sourceCroppingPositions
+        return this._id+Pattern.SERIALIZATION_SEPARATOR
     }
 
     get pattern() {

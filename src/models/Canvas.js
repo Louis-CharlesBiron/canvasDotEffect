@@ -35,7 +35,7 @@ class Canvas {
         this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true)// set styles selector for parent
         this._ctx = this._cvs.getContext("2d", {willReadFrequently})  // canvas context
         this._settings = this.updateSettings(settings)                // set context settings
-        this._els={refs:[], defs:[]}                                  // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
+        this._els = {refs:[], defs:[]}                                // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
         this._looping = false                                         // loop state
         this._loopingCallback = loopingCallback                       // custom callback called along with the loop() function
         this.fpsLimit = fpsLimit                                      // delay between each frame to limit fps
@@ -241,8 +241,12 @@ class Canvas {
 
     // removes any element from the canvas by id
     remove(id) {
-        this._els.defs = this._els.defs.filter(el=>el.id!==id)
-        this._els.refs = this._els.refs.filter(source=>source.id!==id)
+        if (id==="*") {
+            this._els = {refs:[], defs:[]}
+        } else {
+            this._els.defs = this._els.defs.filter(el=>el.id!==id)
+            this._els.refs = this._els.refs.filter(source=>source.id!==id)
+        }
         this.updateCachedAllEls()
     }
 
