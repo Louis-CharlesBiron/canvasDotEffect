@@ -87,8 +87,7 @@ class ImageDisplay extends _BaseObj {
             if (dataSrc.type===types.CAMERA) ImageDisplay.#initCameraDataSource(dataSrc.settings, loadCallback)
             else if (dataSrc.type===types.CAPTURE) ImageDisplay.#initCaptureDataSource(dataSrc.settings, loadCallback)
         } else if (dataSrc instanceof types.VIDEO) ImageDisplay.#initVideoDataSource(dataSrc, loadCallback)
-        else if (dataSrc instanceof types.CANVAS || dataSrc instanceof types.BITMAP) ImageDisplay.#initData(dataSrc, loadCallback)
-        else if (dataSrc instanceof types.OFFSCREEN_CANVAS) ImageDisplay.#initData(dataSrc.transferToImageBitmap(), loadCallback, dataSrc.width, dataSrc.height)
+        else if (dataSrc instanceof types.CANVAS || dataSrc instanceof types.BITMAP || dataSrc instanceof types.OFFSCREEN_CANVAS) ImageDisplay.#initData(dataSrc, loadCallback)
         else if (dataSrc instanceof types.BITMAP_PROMISE) dataSrc.then(bitmap=>ImageDisplay.#initData(bitmap, loadCallback))
         else if (dataSrc instanceof types.VIDEO_FRAME) {
             ImageDisplay.#initData(dataSrc, loadCallback, dataSrc.displayHeight, dataSrc.displayWidth)
