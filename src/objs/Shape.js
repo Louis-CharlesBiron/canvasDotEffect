@@ -168,7 +168,7 @@ class Shape extends Obj {
     }
 
     // Rotates the dots by a specified degree increment around a specified center point
-    rotateBy(deg, centerPos=this.pos) {// clock-wise, from the top
+    rotateBy(deg, centerPos=this.getCenter()) {// clock-wise, from the top
         const [cx, cy] = centerPos
         this._dots.forEach(dot=>{
             const x = dot.x-cx, y = dot.y-cy,
@@ -182,12 +182,12 @@ class Shape extends Obj {
     }
 
     // Rotates the dots to a specified degree around a specified center point
-    rotateAt(deg, centerPos=this.pos) {
+    rotateAt(deg, centerPos=this.getCenter()) {
         this.rotateBy(360-(this._rotation-deg), centerPos)
     }
 
     // Smoothly rotates the dots to a specified degree around a specified center point
-    rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=true, force=true) {
+    rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, centerPos=this.getCenter(), isUnique=true, force=true) {
         const ir = this._rotation, dr = deg-this._rotation
 
         return this.playAnim(new Anim((prog)=>{
@@ -196,7 +196,7 @@ class Shape extends Obj {
     }
 
     // Scales the dots by a specified amount [scaleX, scaleY] from a specified center point
-    scaleBy(scale, centerPos=this.pos) {
+    scaleBy(scale, centerPos=this.getCenter()) {
         const [scaleX, scaleY] = scale, [cx, cy] = centerPos
         this._dots.forEach(dot=>{
             dot.x = (dot.x-cx)*scaleX+cx
@@ -206,13 +206,13 @@ class Shape extends Obj {
     }
 
     // Scales the dots to a specified amount [scaleX, scaleY] from a specified center point
-    scaleAt(scale, centerPos=this.pos) {
+    scaleAt(scale, centerPos=this.getCenter()) {
         const dsX = scale[0]/this._scale[0], dsY = scale[1]/this._scale[1]
         this.scaleBy([dsX, dsY], centerPos)
     }
 
     // Smoothly scales the dots by a specified amount [scaleX, scaleY] from a specified center point
-    scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=true, force=true) {
+    scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.getCenter(), isUnique=true, force=true) {
         const is = this._scale, dsX = scale[0]-this._scale[0], dsY = scale[1]-this._scale[1]
 
         return this.playAnim(new Anim(prog=>{

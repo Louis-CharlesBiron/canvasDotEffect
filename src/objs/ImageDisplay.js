@@ -29,9 +29,8 @@ class ImageDisplay extends _BaseObj {
 
     constructor(source, pos, size, setupCB, anchorPos, alwaysActive) {
         super(pos, null, setupCB, anchorPos, alwaysActive)
-        this._source = source??""            // the initial source of the displayed image
+        this._source = source                  // the data source
         this._size = size                    // the display size of the image (resizes)
-        this._data = null                    // the usable data source
         this._sourceCroppingPositions = null // data source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
 
         this._parent = null  // the parent object (Canvas)
@@ -41,12 +40,13 @@ class ImageDisplay extends _BaseObj {
 
     initialize() {
         ImageDisplay.initializeDataSource(this._source, (data, size)=>{
-            this._data = data
+            this._source = data
             if (!this._size) this._size = size
             if (!CDEUtils.isDefined(this._size[0])) this._size = [size[0], this._size[1]]
             if (!CDEUtils.isDefined(this._size[1])) this._size = [this._size[0], size[1]]
             this._initialized = true
-            if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this._parent, this._data)
+            if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this._parent, this._source)
+
         })
 
         this._pos = this.getInitPos()||_BaseObj.DEFAULT_POS
@@ -54,7 +54,9 @@ class ImageDisplay extends _BaseObj {
     }
 
     draw(render, time, deltaTime) {
-        if (this.initialized && (this._data.src || this._data.srcObject.active)) {
+        if (this.initialized) {
+            if (this._source instanceof HTMLVideoElement && (!this._source.src && !this._source.srcObject?.active)) return;
+
             const ctx = render.ctx, x = this.centerX, y = this.centerY, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
 
             if (hasTransforms) {
@@ -64,7 +66,8 @@ class ImageDisplay extends _BaseObj {
                 ctx.translate(-x, -y)
             }
 
-            render.drawImage(this._data, this._pos, this._size, this._sourceCroppingPositions)
+            if (this._source instanceof HTMLCanvasElement) render.drawLateImage(this._source, this._pos, this._size, this._sourceCroppingPositions)
+            else render.drawImage(this._source, this._pos, this._size, this._sourceCroppingPositions)
 
             if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
         }
@@ -214,46 +217,45 @@ class ImageDisplay extends _BaseObj {
 
     // Plays the source (use only if the source is a video)
     playVideo() {
-        this._data.play()
+        this._source.play()
     }
 
     // Pauses the source (use only if the source is a video)
     pauseVideo() {
-        this._data.pause()
+        this._source.pause()
     }
 
 
-    get source() {return this._source}
 	get size() {return this._size}
     get width() {return this._size[0]}
     get height() {return this._size[1]}
     get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
     get naturalSize() {
-        const data = this._data
+        const data = this._source
         return [data?.displayWidth||data?.videoWidth||data?.width, data?.displayHeight||data?.videoHeight||data?.height]
     }
-	get data() {return this._data}
+	get data() {return this._source}
 	get parent() {return this._parent}
 	get rotation() {return this._rotation}
 	get scale() {return this._scale}
     get centerX() {return this._pos[0]+this._size[0]/2}
     get centerY() {return this._pos[1]+this._size[1]/2}
     get centerPos() {return [this.centerX, this.centerY]}
-    get video() {return this._data}
-    get image() {return this._data}
-    get paused() {return this._data?.paused}
+    get video() {return this._source}
+    get image() {return this._source}
+    get paused() {return this._source?.paused}
     get isPaused() {return this.paused}
-    get playbackRate() {return this._data?.playbackRate}
+    get playbackRate() {return this._source?.playbackRate}
     get speed() {return this.playbackRate}
-    get currentTime() {return this._data?.currentTime}
-    get loop() {return this._data?.loop}
+    get currentTime() {return this._source?.currentTime}
+    get loop() {return this._source?.loop}
     get isLooping() {return this.loop}
 	get sourceCroppingPositions() {return this._sourceCroppingPositions}
 
 	set size(_size) {this._size = _size}
 	set width(width) {this._size[0] = width}
 	set height(height) {this._size[1] = height}
-	set data(_data) {this._data = _data}
+	set data(_data) {this._source = _data}
     set rotation(_rotation) {this._rotation = _rotation%360}
     set scale(_scale) {
         let [scaleX, scaleY] = _scale
@@ -263,14 +265,14 @@ class ImageDisplay extends _BaseObj {
         this._scale[1] = scaleY
     }
     set paused(paused) {
-        if (paused) this._data.pause()
-        else this._data.play()
+        if (paused) this._source.pause()
+        else this._source.play()
     }
     set isPaused(isPaused) {this.paused = isPaused}
-    set playbackRate(playbackRate) {this._data.playbackRate = playbackRate}
+    set playbackRate(playbackRate) {this._source.playbackRate = playbackRate}
     set speed(speed) {this.playbackRate = speed}
-    set currentTime(currentTime) {this._data.currentTime = currentTime}
-    set loop(loop) {this._data.loop = loop}
+    set currentTime(currentTime) {this._source.currentTime = currentTime}
+    set loop(loop) {this._source.loop = loop}
     set isLooping(isLooping) {this.loop = isLooping}
 	set sourceCroppingPositions(_sourceCroppingPositions) {this._sourceCroppingPositions = _sourceCroppingPositions}
 	set sourceCroppingStartPos(startPos) {

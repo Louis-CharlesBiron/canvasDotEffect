@@ -185,7 +185,7 @@ The Obj class is the template class of any canvas object. **It should not be dir
 - ***pos*** -> Array containing the `[x, y]` position of the object.
 - ***initRadius*** -> Initial radius declaration. Can either be a number or a callback `(parent or this)=>{... return radius}`
 - **radius** -> The radius in px object the dot (Or the radius of its dots if is a Shape).
-- ***initColor*** -> Initial color declaration. Can either be a color value (see ↓) or a callback `(ctx, this)=>{... return colorValue}`
+- ***initColor*** -> Initial color declaration. Can either be a color value (see ↓) or a callback `(render, this)=>{... return colorValue}`
 - **color** -> Either a Color instance `new Color("red")`, a string `"red"`, a hex value `#FF0000` or a RGBA array `[255, 0, 0, 1]`
 - **setupCB** -> Custom callback called on the object's initialization `(this, this?.parent)=>{}`s
 - ***setupResults*** -> The value returned by the `setupCB` call.
@@ -527,7 +527,7 @@ The FilledShape class is a derivative of the Shape class. It allows to fill the 
 #### **The FilledShape constructor takes the following parameters:**
 ###### - `new FilledShape(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)`
 - *pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
-- **fillColor** -> Defines the color of the shape's filling. Either a color value, a Gradient instance, or a callback returning any of the previous two `(ctx, shape)=>{... return [r, g, b, a]}`.
+- **fillColor** -> Defines the color of the shape's filling. Either a color value, a Gradient instance, or a callback returning any of the previous two `(render, shape)=>{... return [r, g, b, a]}`.
 - **dynamicUpdates** -> Whether the shape's fill area checks for updates every frame
 
 
@@ -951,8 +951,8 @@ The Color class represents a color and provides multiple utility functions such 
 The Gradient class allows the creation of custom linear / radial gradients. A Gradient instance can be used in the *color* and *fillColor* fields of canvas objects. 
 
 #### **The Gradient constructor takes the following parameters:**
-###### - `new Gradient(ctx, positions, colorStops, type, rotation)`
-- **ctx** -> The canvas context.
+###### - `new Gradient(render, positions, colorStops, type, rotation)`
+- **render** -> The canvas Render instance, or context.
 - **positions** -> The positions of the gradient. Giving a Shape instance will position automatically the gradient according to the pos of its dots. For manual positions: **linear gradients**: `[ [x1, y1], [x2, y2] ]`, **radial gradients** `[ [x1, y1, r1], [x2, y2, r2] ]`, *conic gradients:* `[ x, y ]`.
 - **colorStops** -> An array containing the difference colors and their range `[0..1, color]`. Ex: `[ [0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"] ]`.
 - **type** -> The type of gradient. Either: Linear, Radial or Conic. (Defaults to Linear)
@@ -988,7 +988,7 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
 const gradientShape = new FilledShape(
         // Creating and returning a linear gradient with a callback.
         // This linear gradient will auto-position itself according to the shape's dots, start at 90deg rotation and will go from purple->red->yellow-ish
-        (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"]], null, 90), 
+        (render, shape)=>new Gradient(render, shape, [[0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"]], null, 90), 
         
         // Other parameters are used by the FilledShape, to make a square at [100, 100]
         false,
@@ -1022,11 +1022,7 @@ const gradientShape = new FilledShape(
 
 # [Render](#table-of-contents)
 
-Render is a class that centralizes most context operation. It provides functions to get *lines* and *text*, as well as functions to *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles for lines and text (RenderStyles, TextDisplay). Finally, it is automatically instanciated by, and linked to, any Canvas instance.
-
-#### **The Render constructor takes the following parameters:**
-###### - `new Render(ctx)`
-- **ctx** -> The canvas context.
+Render is a class that centralizes most context operation. It provides functions to get *lines* and *text*, as well as functions to *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles for lines and text (RenderStyles, TextDisplay). Finally, it is automatically instanciated by, and linked to, any Canvas instance and should not be instanciated manually.
 
 #### Example use 1:
 ###### - Manually drawing a custom beizer curve 
@@ -1576,9 +1572,9 @@ This function is used to run a callback for a specific amount of time.
 - if `initDots` is a string -> `createFromString(initDots)`
 - if `initDots` is a callback -> `initDots(this, cvs)`
 - if `initRadius` is a callback -> `initRadius(this)`
-- if `initColor` is a callback -> `initColor(ctx, this)`
+- if `initColor` is a callback -> `initColor(render, this)`
 - `setupCB(this)`
-- if a FilledShape and `fillColor` is a callback -> `initFillColor(ctx, this)`
+- if a FilledShape and `fillColor` is a callback -> `initFillColor(render, this)`
 - Adjusts the `pos` according to the `anchorPos`
 - Sets the `initialized` attribute to `true` for shapes
 
@@ -1588,7 +1584,7 @@ After this, every dot will be initialized, and all canvas objects will be ready 
 **Runs the following on referenced dots (*dots in shapes*):**
 - if `initPos` is a callback -> `initPos(parent, this)`
 - if `initRadius` is a callback -> `initRadius(parent, this)`
-- if `initColor` is a callback -> `initColor(ctx, this)`
+- if `initColor` is a callback -> `initColor(render, this)`
 - `setupCB(this, parent)`
 - Adjusts the `pos` according to the `anchorPos`
 

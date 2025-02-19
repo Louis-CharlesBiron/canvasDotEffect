@@ -190,7 +190,8 @@ loopTODObetter.drawEffectCB=(render, dot, ratio, mouse)=>{
 }
 CVS.add(loopTODObetter)
 
-let imageTester = new ImageDisplay(ImageDisplay.loadImage("./img/logo.png"), [-250, 75], [250], null, ()=>testMore.firstDot)
+//let imageTester = new ImageDisplay(ImageDisplay.loadImage("./img/logo.png"), [-250, 75], [250], null, ()=>testMore.firstDot)
+//CVS.add(imageTester, true)
 
 
 
@@ -202,7 +203,6 @@ CVS.add(filledShapeTester)
 CVS.add(movementsTester)
 CVS.add(test2)
 CVS.add(le)
-CVS.add(imageTester, true)
 
 let dupelicateTester = le.duplicate()
 for (let i=0;i<3;i++) {

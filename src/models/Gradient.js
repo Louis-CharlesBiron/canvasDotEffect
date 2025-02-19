@@ -5,7 +5,7 @@
 
 // Allows the creation of custom gradients
 class Gradient {
-    static PLACEHOLDER = "PLACERHOLDER" // can be used to instantiate a Gradient without positions, and apply that of the object on assignement
+    static PLACEHOLDER = "PLACEHOLDER" // can be used to instantiate a Gradient without positions, and apply that of the object on assignement
     static TYPES = {LINEAR:"Linear", RADIAL:"Radial", CONIC:"Conic"}
     static DEFAULT_TYPE = Gradient.TYPES.LINEAR
     static SERIALIZATION_SEPARATOR = "*"
@@ -17,7 +17,7 @@ class Gradient {
     #lastDotPos = null
     #lastTextPos = null
     constructor(ctx, positions, colorStops, type, rotation) {
-        this._ctx = ctx                          // canvas context
+        this._ctx = ctx.ctx??ctx                 // canvas context
         this._initPositions = positions          // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
         this._positions = positions              // usable positions from initPositions
         this._type = type||Gradient.DEFAULT_TYPE // type of gradient
