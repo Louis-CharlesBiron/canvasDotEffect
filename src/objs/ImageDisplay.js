@@ -224,15 +224,15 @@ class ImageDisplay extends _BaseObj {
         this._source.pause()
     }
 
+    static getNaturalSize(source) {
+        return [source?.displayWidth||source?.videoWidth||source?.width, source?.displayHeight||source?.videoHeight||source?.height]
+    }
 
 	get size() {return this._size}
     get width() {return this._size[0]}
     get height() {return this._size[1]}
     get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
-    get naturalSize() {
-        const data = this._source
-        return [data?.displayWidth||data?.videoWidth||data?.width, data?.displayHeight||data?.videoHeight||data?.height]
-    }
+    get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
 	get data() {return this._source}
 	get parent() {return this._parent}
 	get rotation() {return this._rotation}
@@ -240,6 +240,8 @@ class ImageDisplay extends _BaseObj {
     get centerX() {return this._pos[0]+this._size[0]/2}
     get centerY() {return this._pos[1]+this._size[1]/2}
     get centerPos() {return [this.centerX, this.centerY]}
+	get sourceCroppingPositions() {return this._sourceCroppingPositions}
+
     get video() {return this._source}
     get image() {return this._source}
     get paused() {return this._source?.paused}
@@ -249,7 +251,6 @@ class ImageDisplay extends _BaseObj {
     get currentTime() {return this._source?.currentTime}
     get loop() {return this._source?.loop}
     get isLooping() {return this.loop}
-	get sourceCroppingPositions() {return this._sourceCroppingPositions}
 
 	set size(_size) {this._size = _size}
 	set width(width) {this._size[0] = width}

@@ -39,6 +39,7 @@ class Canvas {
         this._looping = false                                         // loop state
         this._loopingCallback = loopingCallback                       // custom callback called along with the loop() function
         this.fpsLimit = fpsLimit                                      // delay between each frame to limit fps
+        this._speedModifier = 1                                       // animation/drawing speed multiplier
         this.#maxTime = this.#getMaxTime(fpsLimit)                    // max time between frames
         this._deltaTime = null                                        // useable delta time in seconds
         this._fixedTimeStamp = null                                   // fixed (offsets lag spikes) requestanimationframe timestamp in ms
@@ -164,11 +165,11 @@ class Canvas {
 
     // calls the draw function on all canvas objects
     draw() {
-        const els = this.#cachedEls, els_ll = this.#cachedEls_ll
+        const els = this.#cachedEls, els_ll = this.#cachedEls_ll, render = this._render, deltaTime = this._deltaTime, timeStamp = this.timeStamp*this._speedModifier, activeAreaPadding = Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
-            if ((!el.alwaysActive && el.initialized && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING)) || !el.draw) continue
-            el.draw(this._render, this.timeStamp, this._deltaTime)
+            if ((!el.alwaysActive && el.initialized && !this.isWithin(el.pos, activeAreaPadding)) || !el.draw) continue
+            el.draw(render, timeStamp, deltaTime)
         }
     }
 
@@ -438,6 +439,7 @@ class Canvas {
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
     get render() {return this._render}
+    get speedModifier() {return this._speedModifier}
 
 	set loopingCallback(loopingCallback) {this._loopingCallback = loopingCallback}
 	set width(w) {this.setSize(w, null)}
@@ -447,4 +449,5 @@ class Canvas {
         this._fpsLimit = CDEUtils.isDefined(fpsLimit)&&isFinite(fpsLimit) ? 1000/Math.max(fpsLimit, 0) : null
         this.#maxTime = this.#getMaxTime(fpsLimit)
     }
+    set speedModifier(speedModifier) {this._speedModifier = speedModifier}
 }
