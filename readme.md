@@ -959,8 +959,8 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
 - **rotation** -> The rotation in degrees of the gradient. (Not applicable for Radial gradients)
 
 
-### **To update a gradient,** use the updateGradient() function:
-###### - updateGradient()
+### **To update a gradient,** use the update() function:
+###### - update()
 ```js
     // Creating a gradient
     const customGradient = new Gradient(
@@ -977,7 +977,7 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
     customGradient.colorStops = [[0, "green"], [1, "pink"]]
 
     // Access the gradient assigned to the shape's filling and update it
-    dummyFilledShape.fillColorRaw.updateGradient()
+    dummyFilledShape.fillColorRaw.update()
 ```
 
 **Note:** when using a Shape or a Dot instance as the 'positions' parameter, the gradient will update every frame automatically.

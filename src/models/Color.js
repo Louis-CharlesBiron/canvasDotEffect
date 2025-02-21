@@ -30,7 +30,7 @@ class Color {
 
     // returns a new instance of the same color
     duplicate(gradientPositions) {
-        if (this._format === Color.FORMATS.GRADIENT) return new Color(this._color.duplicate(gradientPositions))
+        if (this._format === Color.FORMATS.GRADIENT) return new Color(this._color.duplicate(gradientPositions))// TODO pattern
         else return new Color(Color.#unlinkRGBA(this.#rgba))
     }
 
@@ -148,8 +148,7 @@ class Color {
 
     static getColorValue(color) {
         if (typeof color==="string" || color instanceof CanvasGradient || color instanceof CanvasPattern) return color
-        else if (color instanceof Gradient) return color.gradient
-        else if (color instanceof Pattern) return color.pattern
+        else if (color instanceof _DynamicColor) return color.value
         else return Color.formatRgba(color) ?? color.color
     }
 
@@ -200,8 +199,7 @@ class Color {
 
     // returns the usable value of the color
     get color() {
-        if (this._format === Color.FORMATS.GRADIENT) return this._color.gradient
-        else if (this._format === Color.FORMATS.PATTERN) return this._color.pattern
+        if (this._format === Color.FORMATS.GRADIENT || this._format === Color.FORMATS.PATTERN) return this._color.value
         else return Color.formatRgba(this.#rgba)
     }
     get colorRaw() {return this._color} // returns the declaration of the color
