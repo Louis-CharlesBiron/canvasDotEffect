@@ -81,8 +81,12 @@ class ImageDisplay extends _BaseObj {
             if (ImageDisplay.SUPPORTED_IMAGE_FORMATS.includes(extension)) ImageDisplay.loadImage(dataSrc).onload=e=>ImageDisplay.#initData(e.target, loadCallback)
             else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) ImageDisplay.#initVideoDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback)
         } else if (dataSrc instanceof types.IMAGE || dataSrc instanceof types.SVG) {
-            if (dataSrc.complete && dataSrc.src) ImageDisplay.#initData(dataSrc, loadCallback)
-            else dataSrc.onload=()=>ImageDisplay.#initData(dataSrc, loadCallback)
+            const fakeLoaded = dataSrc.getAttribute("fakeload")
+            if (dataSrc.complete && dataSrc.src && !fakeLoaded) ImageDisplay.#initData(dataSrc, loadCallback)
+            else dataSrc.onload=()=>{
+                if (fakeLoaded) dataSrc.removeAttribute("fakeload")
+                ImageDisplay.#initData(dataSrc, loadCallback)
+            }
         } else if (dataSrc.toString()===types.DYNAMIC) {
             if (dataSrc.type===types.CAMERA) ImageDisplay.#initCameraDataSource(dataSrc.settings, loadCallback)
             else if (dataSrc.type===types.CAPTURE) ImageDisplay.#initCaptureDataSource(dataSrc.settings, loadCallback)
@@ -102,7 +106,9 @@ class ImageDisplay extends _BaseObj {
 
     // Initializes a video data source
     static #initVideoDataSource(dataSource, loadCallback) {
-        dataSource.onloadeddata=()=>this.#initData(dataSource, loadCallback, dataSource.videoWidth, dataSource.videoHeight)
+        const fn = ()=>this.#initData(dataSource, loadCallback, dataSource.videoWidth, dataSource.videoHeight)
+        if (dataSource.readyState) fn()
+        else dataSource.onloadeddata=fn
     }
 
     // Initializes a camera capture data source
@@ -111,6 +117,7 @@ class ImageDisplay extends _BaseObj {
             const video = document.createElement("video")
             video.srcObject = src
             video.autoplay = true
+            video.setAttribute("permaLoad", "1")
             video.oncanplay=()=>this.#initData(video, loadCallback, video.videoWidth, video.videoHeight)
         })
     }
@@ -121,6 +128,7 @@ class ImageDisplay extends _BaseObj {
             const video = document.createElement("video")
             video.srcObject = src
             video.autoplay = true
+            video.setAttribute("permaLoad", "1")
             video.oncanplay=()=>this.#initData(video, loadCallback, video.videoWidth, video.videoHeight)
         })
     }

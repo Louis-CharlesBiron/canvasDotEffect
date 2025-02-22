@@ -47,7 +47,7 @@ let filledShapeTester = new FilledShape(
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
 }, null, null, null, true)
-filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
+/////////////////////////////////////////////////////////////////////////////filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
 
 let testMoreDragAnim = CanvasUtils.getDraggableDotCB()
 let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, "blue")], 15, (ctx, shape)=>new Gradient(ctx, shape, [[0, "red"], [1, "yellow"]], null, 90), null, (render, dot, ratio, m, dist, shape)=>{
@@ -89,12 +89,13 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
 })
 
 // ALPHABET
+let leColor = [255,0,0,1]
 let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (render, dot, ratio, m, dist, shape, cr, isActive)=>{
     dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS, ratio, Obj.DEFAULT_RADIUS)
 
     if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.updateStyles(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25]), 2)
     
-    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles([255,0,0,1], 2, [0]))
+    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles(leColor, 2, [0]))
 }, ()=>draggableDotTester.dots[0].pos, null)
 
 
@@ -190,8 +191,8 @@ loopTODObetter.drawEffectCB=(render, dot, ratio, mouse)=>{
 }
 CVS.add(loopTODObetter)
 
-//let imageTester = new ImageDisplay(ImageDisplay.loadImage("./img/logo.png"), [-250, 75], [250], null, ()=>testMore.firstDot)
-//CVS.add(imageTester, true)
+let imageTester = new ImageDisplay(ImageDisplay.loadImage("./img/logo.png"), [-250, 75], [250], null, ()=>testMore.firstDot)
+CVS.add(imageTester, true)
 
 
 

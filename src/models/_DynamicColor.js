@@ -10,14 +10,25 @@ class _DynamicColor {
 
     // maybe TODO, generic getAutomaticPositions() here
 
+
+    // todo check this
+    static getAutomaticPositions(obj) {
+        if (obj instanceof Shape) {
+            const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"), radius = obj.radius
+            return [[rangeX[0]-radius, rangeY[0]-radius], [rangeX[1]+radius, rangeY[1]+radius]]
+        } else if (obj instanceof Dot) return [[obj.left, obj.top], [obj.right, obj.bottom]]
+        else if (obj instanceof TextDisplay) {
+            const [width, height] = obj.trueSize, [cx, cy] = obj.pos, w2 = width/2, h2 = height/2
+            return [[cx-w2, cy-h2], [cx+w2, cy+h2]]
+        }
+    }
+
     constructor(positions, rotation) {
         this._initPositions = positions 
         this._positions = positions
         this._rotation = rotation??0
         this._lastChangeValue = null
-
         this._value = null
-
     }
     get initPositions() {return this._initPositions}
     get positions() {return this._positions}

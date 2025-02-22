@@ -140,6 +140,9 @@ class Gradient extends _DynamicColor {
         this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])
         if (!this.isDynamic) this.update()
     }
-    set type(type) {this._type = type}
+    set type(type) {
+        this._type = type
+        if (!this.isDynamic) this.update()
+    }
 
 }

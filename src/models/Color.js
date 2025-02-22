@@ -21,19 +21,20 @@ class Color {
     #rgba = null // cached rgba value
     #hsv = null  // cached hsv value
     constructor(color, isChannel=false) {
-        this._color = color instanceof Color ? color._color : color||Color.DEFAULT_COLOR // the color value declaration, in any format
-        this._format = Color.getFormat(this._color)
+        this._color = color instanceof Color ? color._color : color||Color.DEFAULT_COLOR // the color value declaration, in any supported format
+        this._format = Color.getFormat(this._color) // the format of the color
         this.#updateCache()
 
         this._isChannel = isChannel // if true, this instance will be used as a color channel and will not duplicate
     }
 
     // returns a new instance of the same color
-    duplicate(gradientPositions) {
-        if (this._format === Color.FORMATS.GRADIENT) return new Color(this._color.duplicate(gradientPositions))// TODO pattern
+    duplicate(dynamicColorPositions) {
+        if (this._format === Color.FORMATS.GRADIENT || this._format === Color.FORMATS.PATTERN) return new Color(this._color.duplicate(dynamicColorPositions))
         else return new Color(Color.#unlinkRGBA(this.#rgba))
     }
 
+    // create a separate copy of an RGBA array
     static #unlinkRGBA(rgba) {
         return [rgba[0], rgba[1], rgba[2], rgba[3]]
     }

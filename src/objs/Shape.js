@@ -148,8 +148,7 @@ class Shape extends Obj {
             if (onlyReplaceDefaults && !dot.initColor) {
                 dot.color = color
                 dot.initColor = color
-            }
-            else if (!onlyReplaceDefaults) {
+            } else if (!onlyReplaceDefaults) {
                 dot.color = color
                 if (!dot.initColor) dot.initColor = color
             }

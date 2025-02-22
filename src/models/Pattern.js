@@ -10,24 +10,21 @@ class Pattern extends _DynamicColor {
     static #MATRIX = new DOMMatrixReadOnly()
     static PLACEHOLDER_COLOR = "transparent"
     static REPETITION_MODES = {REPEAT:"repeat", REPEAT_X:"repeat-x", REPEAT_Y:"repeat-y", NO_REPEAT:"no-repeat"}
-    static DEFAULT_REPETITION_MODE = Pattern.REPETITION_MODES.NO_REPEAT// todo check
+    static DEFAULT_REPETITION_MODE = Pattern.REPETITION_MODES.NO_REPEAT
     static DEFAULT_FRAME_RATE = 1/30
     static LOADED_PATTERN_SOURCES = []
     static SERIALIZATION_SEPARATOR = "!"
 
     /* 
-        - test auto positions
         - getter / setter, with auto update
-        - see for auto dplicate on assignment
-
-        test with other sources
+        - test with other sources (canvas, video, cam/capt)
 
         readme, documentation
     */
 
     // doc todo
     #lastUpdateTime = null
-    constructor(render, source, positions, sourceCroppingPositions, rotation, keepAspectRatio, repeatMode) {
+    constructor(render, source, positions, sourceCroppingPositions, rotation, keepAspectRatio, forcedUpdates, repeatMode) {
         super(
             positions, // [ [x1, y1], [x2, y2] ] | Obj
             rotation   // rotation of the pattern
@@ -37,11 +34,11 @@ class Pattern extends _DynamicColor {
         this._source = null
         this._sourceCroppingPositions = sourceCroppingPositions??null // source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
         this._keepAspectRatio = keepAspectRatio??false
+        this._forcedUpdates = forcedUpdates??false
         this._repeatMode = repeatMode??Pattern.DEFAULT_REPETITION_MODE
         this._frameRate = Pattern.DEFAULT_FRAME_RATE
 
         Pattern.LOADED_PATTERN_SOURCES[this._id] = this
-
         ImageDisplay.initializeDataSource(source, (data)=>{
             this._source = data
             this.update(true)
@@ -51,22 +48,20 @@ class Pattern extends _DynamicColor {
     /**
      * Given a shape, returns automatic positions values for linear or radial gradients
      * @param {Shape} obj: Instance of Shape or inheriting shape TODO DOC
-     * @param {boolean} disableOptimization: if false, recalculates positions only when a dot changes pos (set to true only for manual usage of this function) 
+     * ////@param {boolean} disableOptimization: if false, recalculates positions only when a dot changes pos (set to true only for manual usage of this function) 
      * @returns the new calculated positions or the current value of this._positions if the parameter 'shape' isn't an instance of Shape
      */
-    getAutomaticPositions(obj=this._initPositions, disableOptimization=false) {
+    getAutomaticPositions(obj=this._initPositions) {
         if (obj instanceof Shape) {
-            if (this.#hasShapeChanged(obj) || disableOptimization) {
+            if (this.#hasShapeChanged(obj)) {
                 const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"), radius = obj.radius
                 return [[rangeX[0]-radius, rangeY[0]-radius], [rangeX[1]+radius, rangeY[1]+radius]]
             } else return this._positions
         } else if (obj instanceof Dot) {
-            if (this.#hasDotChanged(obj) || disableOptimization) {
-                const x = obj.x, y = obj.y
-                return [[obj.left-x, obj.top-y], [obj.right-x, obj.bottom-y]]
-            } return this._positions
+            if (this.#hasDotChanged(obj)) return [[obj.left, obj.top], [obj.right, obj.bottom]]
+            return this._positions
         } else if (obj instanceof TextDisplay) {
-            if (this.#hasTextDisplayChanged(obj) || disableOptimization) {
+            if (this.#hasTextDisplayChanged(obj)) {
                 const [width, height] = obj.trueSize, [cx, cy] = obj.pos, w2 = width/2, h2 = height/2
                 return [[cx-w2, cy-h2], [cx+w2, cy+h2]]
             } return this._positions
@@ -98,7 +93,7 @@ class Pattern extends _DynamicColor {
     }
 
     // doc todo
-    update(force) {
+    update(force=this._forcedUpdates) {
         const source = this._source
         if (source) {
             const ctx = this._render.ctx, isCanvas = source instanceof HTMLCanvasElement, time = source.currentTime??(isCanvas?performance.now()/1000:null)
@@ -162,16 +157,20 @@ class Pattern extends _DynamicColor {
     }
 
     // returns a separate copy of this Pattern instance
-    duplicate(render=this._render, source=this._source, positions=this._positions, sourceCroppingPositions=this._sourceCroppingPositions, rotation=this._rotation, keepAspectRatio=this._keepAspectRatio, repeatMode=this._repeatMode) {
-        return new Pattern(render, source, CDEUtils.unlinkArr22(positions), CDEUtils.unlinkArr22(sourceCroppingPositions), rotation, keepAspectRatio, repeatMode)
+    duplicate(render=this._render, source=this._source, positions=this._positions, sourceCroppingPositions=this._sourceCroppingPositions, rotation=this._rotation, keepAspectRatio=this._keepAspectRatio, forcedUpdates=this._forcedUpdates, repeatMode=this._repeatMode) {
+        if (source) {
+            if (!source.getAttribute("permaLoad") && (source instanceof HTMLVideoElement || source instanceof HTMLImageElement || source instanceof SVGImageElement)) {// todo better
+                source = source.cloneNode()
+                source.setAttribute("fakeload", "1")
+            }
+            return new Pattern(render, source, CDEUtils.unlinkArr22(positions), CDEUtils.unlinkArr22(sourceCroppingPositions), rotation, keepAspectRatio, forcedUpdates, repeatMode)
+        } else console.log("what do you do when the source isn't loaded yet ??")
     }
 
     // todo order that in a good way, and add missings
     get id() {return this._id}
 	get render() {return this._render}
 	get source() {return this._source}
-	get initPositions() {return this._initPositions}
-	get positions() {return this._positions}
 	get repeatMode() {return this._repeatMode}
     get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
     get frameRate() {return 1/(this._frameRate)}
@@ -182,7 +181,7 @@ class Pattern extends _DynamicColor {
         if (data instanceof HTMLVideoElement || data instanceof HTMLCanvasElement) this.update()
         return this._value??Pattern.PLACEHOLDER_COLOR
     }
-    get video() {return this._source}
+    get video() {return this._source}// these can all go in _DynamicColor
     get image() {return this._source}
     get paused() {return this._source?.paused}
     get isPaused() {return this.paused}
@@ -219,6 +218,10 @@ class Pattern extends _DynamicColor {
     set sourceCroppingEndPos(endPos) {
         if (Array.isArray(this._sourceCroppingPositions)) this._sourceCroppingPositions[1] = endPos
         else this._sourceCroppingPositions = [[0,0], endPos]
+        this.update(true)
+    }
+    set rotation(deg) {
+        this._rotation = CDEUtils.round(deg, 2)%360
         this.update(true)
     }
 }
