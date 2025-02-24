@@ -3,15 +3,12 @@
 // Please don't use or credit this code as your own.
 //
 
-// DOC TODO
+// Abstract dynamic color class
 class _DynamicColor {
     static PLACEHOLDER = "PLACEHOLDER" // can be used to instantiate a dynamic color without positions, and apply that of the object, on assignement
     static PLACEHOLDER_COLOR = "transparent"
 
-    // maybe TODO, generic getAutomaticPositions() here
-
-
-    // todo check this
+    // returns the minimal rectangular area containing all of the provided shape
     static getAutomaticPositions(obj) {
         if (obj instanceof Shape) {
             const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"), radius = obj.radius
@@ -33,7 +30,7 @@ class _DynamicColor {
     get initPositions() {return this._initPositions}
     get positions() {return this._positions}
 	get rotation() {return this._rotation}
-	get isDynamic() {return this._initPositions instanceof Shape || this._initPositions instanceof Dot || this._initPositions instanceof TextDisplay}// todo better
+	get isDynamic() {return this._initPositions?.pos != null}
     get value() {
         if (this.isDynamic) this.update(true)
         return this._value

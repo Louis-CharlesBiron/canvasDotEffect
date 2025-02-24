@@ -56,7 +56,7 @@ logoLetters.rotateAt(-25)
 
 let oktest = new Shape([110,250],[new Dot(), new Dot([10, 0],null,null,null,(dot, shape)=>shape.firstDot)], null, null, 100, (render, dot, ratio)=>{// SHAPE DRAW EFFECT CB
     
-    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
+    dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS*2*0.8)
     CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles([255,0,0,1], null, [5]))
 
 }, null, (shape)=>{// SHAPE SETUP CB

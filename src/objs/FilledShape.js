@@ -63,8 +63,7 @@ class FilledShape extends Shape {
 	get path() {return this._path}
 	get dynamicUpdates() {return this._dynamicUpdates}
 
-    set fillColor(fillColor) {
-        //if (this.fillColorObject?.colorRaw?.toString() !== fillColor.toString() || !this._fillColor) this._fillColor = Color.adjust(fillColor)//
+    set fillColor(fillColor) {// todo, kind duplicated code ↓
         if (!this._fillColor || this._fillColor?.colorRaw?.toString() !== fillColor?.toString()) {
             const specialColor = fillColor?.colorRaw||fillColor
             if (specialColor?.positions===_DynamicColor.PLACEHOLDER) {

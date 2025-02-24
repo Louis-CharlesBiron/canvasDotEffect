@@ -29,7 +29,7 @@ class ImageDisplay extends _BaseObj {
 
     constructor(source, pos, size, setupCB, anchorPos, alwaysActive) {
         super(pos, null, setupCB, anchorPos, alwaysActive)
-        this._source = source                  // the data source
+        this._source = source                // the data source
         this._size = size                    // the display size of the image (resizes)
         this._sourceCroppingPositions = null // data source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
 

@@ -24,14 +24,13 @@ class Gradient extends _DynamicColor {
     }
 
     /**
-     * Given a shape, returns automatic positions values for linear or radial gradients
-     * @param {Shape} obj: Instance of Shape or inheriting shape TODO DOC
-     * @param {boolean} disableOptimization: if false, recalculates positions only when a dot changes pos (set to true only for manual usage of this function) 
-     * @returns the new calculated positions or the current value of this._positions if the parameter 'shape' isn't an instance of Shape
+     * Given an canvas object, returns automatic positions values for linear, radial or conic gradients
+     * @param {Shape|Dot|TextDisplay} obj: Inheritor of _Obj
+     * @returns the new calculated positions or the current value of this._positions if the parameter 'obj' isn't an instance of a canvas object
      */
-    getAutomaticPositions(obj=this._initPositions, disableOptimization=false) {
+    getAutomaticPositions(obj=this._initPositions) {
         if (obj instanceof Shape) {
-            if (this.#hasFoundamentalsChanged() || this.#hasShapeChanged(obj) || disableOptimization) {
+            if (this.#hasFoundamentalsChanged() || this.#hasShapeChanged(obj)) {
                 const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"),
                     smallestX = rangeX[0], smallestY = rangeY[0], biggestX = rangeX[1], biggestY = rangeY[1],
                     cx = smallestX+(biggestX-smallestX)/2, cy = smallestY+(biggestY-smallestY)/2
@@ -40,13 +39,13 @@ class Gradient extends _DynamicColor {
                 else return obj.getCenter()
             } else return this._positions
         } else if (obj instanceof Dot) {
-            if (this.#hasFoundamentalsChanged() || this.#hasDotChanged(obj) || disableOptimization) {
+            if (this.#hasFoundamentalsChanged() || this.#hasDotChanged(obj)) {
                 if (this._type===Gradient.TYPES.LINEAR) return this.#getLinearPositions(obj.left-obj.x, obj.top-obj.y, obj.right-obj.x, obj.bottom-obj.y, obj.x, obj.y)
                 else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(obj.x, obj.y, obj.radius)
                 else return obj.pos_
             } return this._positions
         } else if (obj instanceof TextDisplay) {
-            if (this.#hasFoundamentalsChanged() || this.#hasTextDisplayChanged(obj) || disableOptimization) {
+            if (this.#hasFoundamentalsChanged() || this.#hasTextDisplayChanged(obj)) {
                 const [width, height] = obj.trueSize, [cx, cy] = obj.pos, left = cx-width/2, right = cx+width/2, top = cy-height/2, bottom = cy+height/2
                 if (this._type===Gradient.TYPES.LINEAR) return this.#getLinearPositions(left-cx, top-cy, right-cx, bottom-cy, cx, cy)
                 else if (this._type===Gradient.TYPES.RADIAL) return this.#getRadialPositions(cx, cy, Math.max(right-left, bottom-top))
@@ -112,7 +111,7 @@ class Gradient extends _DynamicColor {
     }
 
     // returns a separate copy of the Gradient
-    duplicate(positions=this._positions) {
+    duplicate(positions=this._positions, ctx=this._ctx, colorStops=this._colorStops, type=this._type, rotation=this._rotation) {
         return new Gradient(this._ctx, CDEUtils.unlinkArr22(positions), [...this._colorStops], this._type, this._rotation)
     }
 

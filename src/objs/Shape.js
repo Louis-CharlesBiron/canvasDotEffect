@@ -4,11 +4,11 @@
 //
 
 // Contains and controls a group of dots
-class Shape extends Obj {
+class Shape extends _Obj {
     static DEFAULT_LIMIT = 100
 
     constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile) {
-        super(pos, radius??Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, anchorPos, alwaysActive)
+        super(pos, radius??_Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, anchorPos, alwaysActive)
         this._cvs = null                         // CVS instance
         this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                    // initial dots declaration

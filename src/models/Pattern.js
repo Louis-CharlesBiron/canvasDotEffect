@@ -8,48 +8,47 @@ class Pattern extends _DynamicColor {
     static #ID_GIVER = 0
     static #CROPPING_CTX = new OffscreenCanvas(1,1).getContext("2d")
     static #MATRIX = new DOMMatrixReadOnly()
+    static LOADED_PATTERN_SOURCES = []
     static PLACEHOLDER_COLOR = "transparent"
     static REPETITION_MODES = {REPEAT:"repeat", REPEAT_X:"repeat-x", REPEAT_Y:"repeat-y", NO_REPEAT:"no-repeat"}
     static DEFAULT_REPETITION_MODE = Pattern.REPETITION_MODES.NO_REPEAT
     static DEFAULT_FRAME_RATE = 1/30
-    static LOADED_PATTERN_SOURCES = []
     static SERIALIZATION_SEPARATOR = "!"
+    static FORCE_UPDATE_LEVELS = {
+        DISABLED:null,
+        RESPECT_FRAME_RATE:true,
+        OVERRIDE:2
+    }
+    static DEFAULT_FORCE_UPDATE_LEVEL = Pattern.FORCE_UPDATE_LEVELS.DISABLED
 
-    /* 
-        - getter / setter, with auto update
-        - test with other sources (canvas, video, cam/capt)
-
-        readme, documentation
-    */
-
-    // doc todo
     #lastUpdateTime = null
-    constructor(render, source, positions, sourceCroppingPositions, rotation, keepAspectRatio, forcedUpdates, repeatMode) {
+    #initialized = false
+    constructor(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, frameRate, repeatMode) {
         super(
-            positions, // [ [x1, y1], [x2, y2] ] | Obj
+            positions, // [ [x1, y1], [x2, y2] ] | _Obj~
             rotation   // rotation of the pattern
         )
-        this._id = Pattern.#ID_GIVER++
-        this._render = render                      // canvas Render instance
-        this._source = null
-        this._sourceCroppingPositions = sourceCroppingPositions??null // source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
-        this._keepAspectRatio = keepAspectRatio??false
-        this._forcedUpdates = forcedUpdates??false
-        this._repeatMode = repeatMode??Pattern.DEFAULT_REPETITION_MODE
-        this._frameRate = Pattern.DEFAULT_FRAME_RATE
+        this._id = Pattern.#ID_GIVER++                                         // instance id
+        this._render = render                                                  // canvas Render instance
+        this._source = source                                                  // the data source
+        this._sourceCroppingPositions = sourceCroppingPositions??null          // source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
+        this._keepAspectRatio = keepAspectRatio??false                         // whether the source keeps the same aspect ratio when resizing
+        this._forcedUpdates = forcedUpdates??Pattern.DEFAULT_FORCE_UPDATE_LEVEL// whether/how the pattern forces updates
+        this._repeatMode = repeatMode??Pattern.DEFAULT_REPETITION_MODE         // whether the pattern repeats horizontally/vertically
+        this._frameRate = frameRate??Pattern.DEFAULT_FRAME_RATE                // update frequency of video/canvas sources
 
         Pattern.LOADED_PATTERN_SOURCES[this._id] = this
         ImageDisplay.initializeDataSource(source, (data)=>{
             this._source = data
-            this.update(true)
+            this.#initialized = true
+            this.update(Pattern.FORCE_UPDATE_LEVELS.OVERRIDE)
         })
     }
 
     /**
-     * Given a shape, returns automatic positions values for linear or radial gradients
-     * @param {Shape} obj: Instance of Shape or inheriting shape TODO DOC
-     * ////@param {boolean} disableOptimization: if false, recalculates positions only when a dot changes pos (set to true only for manual usage of this function) 
-     * @returns the new calculated positions or the current value of this._positions if the parameter 'shape' isn't an instance of Shape
+     * Given an canvas object, returns automatic positions values for the minimal area containing all of the provided object
+     * @param {Shape|Dot|TextDisplay} obj: Inheritor of _Obj
+     * @returns the new calculated positions or the current value of this._positions if the parameter 'obj' isn't an instance of a canvas object
      */
     getAutomaticPositions(obj=this._initPositions) {
         if (obj instanceof Shape) {
@@ -92,54 +91,52 @@ class Pattern extends _DynamicColor {
         } else return false
     }
 
-    // doc todo
-    update(force=this._forcedUpdates) {
-        const source = this._source
-        if (source) {
-            const ctx = this._render.ctx, isCanvas = source instanceof HTMLCanvasElement, time = source.currentTime??(isCanvas?performance.now()/1000:null)
+    // tries to update the curent pattern. Succeeds if forced, or if the last update's elapsed time corresponds to the frame rate 
+    update(forceLevel=this._forcedUpdates) {
+        if (this.#initialized) {
+            const source = this._source, ctx = this._render.ctx, isCanvas = source instanceof HTMLCanvasElement, forceLevels = Pattern.FORCE_UPDATE_LEVELS, time = (isCanvas||forceLevel===forceLevels.RESPECT_FRAME_RATE)?performance.now()/1000:source.currentTime
         
-            if (time != null && !force) {
+            if (time != null && forceLevel !== forceLevels.OVERRIDE) {
                 if (this.#lastUpdateTime > time) this.#lastUpdateTime = time
                 if (time-this.#lastUpdateTime >= this._frameRate) this.#lastUpdateTime = time
                 else return;
             }
             
             this._positions = this.getAutomaticPositions()
-            if (isCanvas) this._render._bactchedStandalones.push(()=>this._value = this.#getpattern(ctx, source))
-            else this._value = this.#getpattern(ctx, source)
+            if (isCanvas) this._render._bactchedStandalones.push(()=>this._value = this.#getPattern(ctx, source))
+            else this._value = this.#getPattern(ctx, source)
         }
     }
 
-    // doc todo
-    #getpattern(ctx, source) {
-        if (source) {
-            let sizeX, sizeY
-            const matrix = Pattern.#MATRIX, croppingPositions = this._sourceCroppingPositions
-            if (croppingPositions) {
-                const croppingCtx = Pattern.#CROPPING_CTX, canvas = croppingCtx.canvas, sx = croppingPositions[0][0], sy = croppingPositions[0][1]
-                sizeX = canvas.width = Math.abs(croppingPositions[1][0]-sx)
-                sizeY = canvas.height = Math.abs(croppingPositions[1][1]-sy)
-                croppingCtx.clearRect(0, 0, sizeX, sizeY)
-                croppingCtx.drawImage(source, sx, sy, sizeX, sizeY, 0, 0, sizeX, sizeY)
-                source = canvas
-            } else [sizeX, sizeY] = ImageDisplay.getNaturalSize(source)
+    // returns a new pattern according to the current configurations 
+    #getPattern(ctx, source) {
+        let sizeX, sizeY
+        const matrix = Pattern.#MATRIX, croppingPositions = this._sourceCroppingPositions
+        if (croppingPositions) {
+            const croppingCtx = Pattern.#CROPPING_CTX, canvas = croppingCtx.canvas, sx = croppingPositions[0][0], sy = croppingPositions[0][1]
+            sizeX = canvas.width = Math.abs(croppingPositions[1][0]-sx)
+            sizeY = canvas.height = Math.abs(croppingPositions[1][1]-sy)
+            croppingCtx.clearRect(0, 0, sizeX, sizeY)
+            croppingCtx.drawImage(source, sx, sy, sizeX, sizeY, 0, 0, sizeX, sizeY)
+            source = canvas
+        } else [sizeX, sizeY] = ImageDisplay.getNaturalSize(source)
 
-            const pattern = ctx.createPattern(source, this._repeatMode), positions = this._positions
+        const pattern = ctx.createPattern(source, this._repeatMode), positions = this._positions
 
-            if (positions) {
-                const pos1 = positions[0], pos2 = positions[1], width = pos2[0]-pos1[0], height = pos2[1]-pos1[1], fdx = width/sizeX, fdy = height/sizeY
-                if (this._keepAspectRatio) {
-                    // TODO possible optimization (if this._rotation) ...
-                    const isXbigger = fdx > fdy, fd = isXbigger ? fdx : fdy, cx = (sizeX*fd)/2, cy = (sizeY*fd)/2
-                    pattern.setTransform(matrix.translate((pos1[0]-(isXbigger?0:cx-(width/2)))+cx, (pos1[1]-(isXbigger?(cy-(height/2)):0))+cy).rotate(this._rotation).translate(-cx, -cy).scale(fd, fd))
-                } else {
-                    const cx = (sizeX*fdx)/2, cy = (sizeY*fdy)/2
-                    pattern.setTransform(matrix.translate(pos1[0]+cx, pos1[1]+cy).rotate(this._rotation).translate(-cx, -cy).scale(fdx, fdy))
-                }
+        if (positions) {
+            const pos1 = positions[0], pos2 = positions[1], width = pos2[0]-pos1[0], height = pos2[1]-pos1[1], fdx = width/sizeX, fdy = height/sizeY, rotation = this._rotation
+            if (this._keepAspectRatio) {
+                const isXbigger = fdx > fdy, fd = isXbigger ? fdx : fdy, cx = (sizeX*fd)/2, cy = (sizeY*fd)/2
+                if (rotation) pattern.setTransform(matrix.translate((pos1[0]-(isXbigger?0:cx-(width/2)))+cx, (pos1[1]-(isXbigger?(cy-(height/2)):0))+cy).rotate(rotation).translate(-cx, -cy).scale(fd, fd))
+                else pattern.setTransform(matrix.translate((pos1[0]-(isXbigger?0:cx-(width/2))), (pos1[1]-(isXbigger?(cy-(height/2)):0))).scale(fd, fd))
+            } else {
+                const cx = (sizeX*fdx)/2, cy = (sizeY*fdy)/2
+                if (rotation) pattern.setTransform(matrix.translate(pos1[0]+cx, pos1[1]+cy).rotate(rotation).translate(-cx, -cy).scale(fdx, fdy))
+                else pattern.setTransform(matrix.translate(pos1[0], pos1[1]).scale(fdx, fdy))
             }
-
-            return pattern
         }
+
+        return pattern
     }
 
     toString() {
@@ -157,31 +154,31 @@ class Pattern extends _DynamicColor {
     }
 
     // returns a separate copy of this Pattern instance
-    duplicate(render=this._render, source=this._source, positions=this._positions, sourceCroppingPositions=this._sourceCroppingPositions, rotation=this._rotation, keepAspectRatio=this._keepAspectRatio, forcedUpdates=this._forcedUpdates, repeatMode=this._repeatMode) {
-        if (source) {
-            if (!source.getAttribute("permaLoad") && (source instanceof HTMLVideoElement || source instanceof HTMLImageElement || source instanceof SVGImageElement)) {// todo better
-                source = source.cloneNode()
-                source.setAttribute("fakeload", "1")
-            }
-            return new Pattern(render, source, CDEUtils.unlinkArr22(positions), CDEUtils.unlinkArr22(sourceCroppingPositions), rotation, keepAspectRatio, forcedUpdates, repeatMode)
-        } else console.log("what do you do when the source isn't loaded yet ??")
+    duplicate(positions=this._positions, render=this._render, source=this._source, sourceCroppingPositions=this._sourceCroppingPositions, keepAspectRatio=this._keepAspectRatio, forcedUpdates=this._forcedUpdates, rotation=this._rotation, frameRate=this._frameRate, repeatMode=this._repeatMode) {
+        if (source instanceof HTMLElement && !source.getAttribute("permaLoad") && !(source instanceof HTMLCanvasElement)) {
+            source = source.cloneNode()
+            source.setAttribute("fakeload", "1")
+        }
+        return new Pattern(render, source, CDEUtils.unlinkArr22(positions), CDEUtils.unlinkArr22(sourceCroppingPositions), keepAspectRatio, forcedUpdates, rotation, frameRate, repeatMode)
     }
 
-    // todo order that in a good way, and add missings
+
     get id() {return this._id}
 	get render() {return this._render}
 	get source() {return this._source}
-	get repeatMode() {return this._repeatMode}
-    get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
-    get frameRate() {return 1/(this._frameRate)}
 	get sourceCroppingPositions() {return this._sourceCroppingPositions}
+    get keepAspectRatio() {return this._keepAspectRatio}
+    get forcedUpdates() {return this._forcedUpdates}
+	get repeatMode() {return this._repeatMode}
+    get frameRate() {return 1/(this._frameRate)}
     get value() {
         const data = this._source
         if (data instanceof HTMLVideoElement && (!data.src && !data.srcObject?.active)) return Pattern.PLACEHOLDER_COLOR
-        if (data instanceof HTMLVideoElement || data instanceof HTMLCanvasElement) this.update()
+        if (this._forcedUpdates || data instanceof HTMLVideoElement || data instanceof HTMLCanvasElement) this.update() // TODO, for images/paused vids/static idk with forcedUpdates, only update when the positions have changed
         return this._value??Pattern.PLACEHOLDER_COLOR
     }
-    get video() {return this._source}// these can all go in _DynamicColor
+    get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
+    get video() {return this._source}
     get image() {return this._source}
     get paused() {return this._source?.paused}
     get isPaused() {return this.paused}
@@ -191,20 +188,11 @@ class Pattern extends _DynamicColor {
     get loop() {return this._source?.loop}
     get isLooping() {return this.loop}
 
-
-    set id(_id) {this._id = _id}
 	set source(source) {
         ImageDisplay.initializeDataSource(source, (data)=>{
             this._source = data
             this.update(true)
         })
-    }
-	set repeatMode(_repeatMode) {
-        this._repeatMode = _repeatMode
-        this.update(true)
-    }
-    set frameRate(frameRate) {
-        this._frameRate = 1/Math.max(frameRate, 0)
     }
     set sourceCroppingPositions(_sourceCroppingPositions) {
         this._sourceCroppingPositions = _sourceCroppingPositions
@@ -220,8 +208,48 @@ class Pattern extends _DynamicColor {
         else this._sourceCroppingPositions = [[0,0], endPos]
         this.update(true)
     }
+	set keepAspectRatio(_keepAspectRatio) {
+        this._keepAspectRatio = _keepAspectRatio
+        this.update(true)
+    }
+	set forcedUpdates(_forcedUpdates) {
+        this._forcedUpdates = _forcedUpdates
+        this.update(true)
+    }
+	set repeatMode(_repeatMode) {
+        this._repeatMode = _repeatMode
+        this.update(true)
+    }
+    set frameRate(frameRate) {
+        this._frameRate = 1/Math.max(frameRate, 0)
+    }
     set rotation(deg) {
         this._rotation = CDEUtils.round(deg, 2)%360
         this.update(true)
     }
 }
+
+
+
+
+// TODO
+
+/*
+// duplicate source
+let idk = new Shape([0, 0], [new Dot([300, 150]), new Dot([500, 250])], 40, (render, shape)=>
+    new Pattern(render, ImageDisplay.loadCamera(), "PLACEHOLDER", null, null, true)
+)
+CVS.add(idk)
+
+
+// share source
+let idk = new Shape([0, 0], [new Dot([300, 150]), new Dot([500, 250])], 40, (render, shape)=>
+    new Pattern(render, ImageDisplay.loadCamera(), shape, null, null, true)
+)
+CVS.add(idk)
+
+
+leColor = new Pattern(CVS.render, ImageDisplay.loadCamera(), _DynamicColor.getAutomaticPositions(le), null, null, true)
+
+
+*/

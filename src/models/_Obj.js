@@ -4,7 +4,7 @@
 //
 
 // Abstract canvas obj class, with radius
-class Obj extends _BaseObj {
+class _Obj extends _BaseObj {
     static DEFAULT_RADIUS = 5
 
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
@@ -15,7 +15,7 @@ class Obj extends _BaseObj {
 
     // Runs when the object gets added to a canvas instance
     initialize() {
-        this._radius = this.getInitRadius()??Obj.DEFAULT_RADIUS
+        this._radius = this.getInitRadius()??_Obj.DEFAULT_RADIUS
         super.initialize()
     }
 

@@ -173,4 +173,9 @@ class CDEUtils {
         }
     }
 
+    // console.log with the stack trace
+    static stackTraceLog(...logs) {
+        console.log(...logs)
+        throw new Error("stackTraceLog")
+    }
 }

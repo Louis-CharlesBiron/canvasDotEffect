@@ -50,7 +50,7 @@ class CanvasUtils {
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
-            const res = dot.getLinearIntersectPoints(target, (target.radius??Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
+            const res = dot.getLinearIntersectPoints(target, (target.radius??_Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
             dot.render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
         } else dot.render.batchStroke(lineType(dot.pos, target.pos??target, spread), renderStyles)
     }
