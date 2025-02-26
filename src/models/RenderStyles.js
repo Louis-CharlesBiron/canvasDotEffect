@@ -53,7 +53,7 @@ class RenderStyles extends _HasColor {
     }
 
     // updates a profile's attributes and returns the updated version
-    updateStyles(color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
+    update(color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         if (color) this.color = color
         if (lineWidth) this._lineWidth = lineWidth
         if (lineDash) this._lineDash = lineDash
@@ -64,7 +64,7 @@ class RenderStyles extends _HasColor {
     }
 
     // directly applies the styles of the profile
-    applyStyles(color=this._color, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
+    apply(color=this._color, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
         const ctx = this.#ctx, colorValue = Color.getColorValue(color), currentStyles = this._render.currentCtxStyles
         if (color && this._render.currentCtxColor !== colorValue) this._render.currentCtxColor = ctx.strokeStyle = ctx.fillStyle = colorValue
         if (lineWidth && currentStyles[0] !== lineWidth) currentStyles[0] = ctx.lineWidth = lineWidth
@@ -81,7 +81,7 @@ class RenderStyles extends _HasColor {
     }
 
     // directly applies the provided styles
-    static applyStyles(render, color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
+    static apply(render, color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         const ctx = render.ctx, colorValue = Color.getColorValue(color), currentStyles = render.currentCtxStyles
         if (color && render.currentCtxColor !== colorValue) render.currentCtxColor = ctx.strokeStyle = ctx.fillStyle = colorValue
         if (lineWidth && currentStyles[0] !== lineWidth) currentStyles[0] = ctx.lineWidth = lineWidth

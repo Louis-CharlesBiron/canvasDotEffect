@@ -107,7 +107,7 @@ class CanvasUtils {
     }
 
     // Provides quick generic shape declarations
-    static SHAPES = class {// DOC TODO
+    static SHAPES = class {// TODO ?
         static DEBUG_SHAPE(pos, dots) {
             return new Shape(pos||[100,100], dots||[new Dot(), new Dot([100]), new Dot([,100]), new Dot([100,100])])
         }

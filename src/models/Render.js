@@ -141,7 +141,7 @@ class Render {
             let [profileKey, path] = strokes[i], [colorValue, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
             else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].value
-            RenderStyles.applyStyles(this, colorValue, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
+            RenderStyles.apply(this, colorValue, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
             this._ctx.stroke(path)
         }
 
@@ -149,7 +149,7 @@ class Render {
             let [colorValue, path] = fills[i]
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
             else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].value
-            RenderStyles.applyStyles(this, colorValue)
+            RenderStyles.apply(this, colorValue)
             this._ctx.fill(path)
         }
 
@@ -165,8 +165,8 @@ class Render {
     // directly strokes a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
     stroke(path, renderStyles=Color.DEFAULT_RGBA) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
-            else this._defaultProfile.applyStyles(renderStyles)
+            if (renderStyles instanceof RenderStyles) renderStyles.apply()
+            else this._defaultProfile.apply(renderStyles)
 
             this._ctx.stroke(path)
         }
@@ -175,8 +175,8 @@ class Render {
     // directly fills a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
     fill(path, renderStyles=Color.DEFAULT_RGBA) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
-            else this._defaultProfile.applyStyles(renderStyles)
+            if (renderStyles instanceof RenderStyles) renderStyles.apply()
+            else this._defaultProfile.apply(renderStyles)
 
             this._ctx.fill(path)
         }
@@ -186,8 +186,8 @@ class Render {
     strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight) {
         if (text) {
             const colorValue = Color.getColorValue(color)
-            if (textStyles instanceof TextStyles) textStyles.applyStyles()
-            else this._defaultTextProfile.applyStyles(textStyles)
+            if (textStyles instanceof TextStyles) textStyles.apply()
+            else this._defaultTextProfile.apply(textStyles)
             if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
             if (text.includes("\n")) {
                 const lines = text.split("\n"), lines_ll = lines.length
@@ -200,8 +200,8 @@ class Render {
     fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight) {
         if (text) {
             const colorValue = Color.getColorValue(color)
-            if (textStyles instanceof TextStyles) textStyles.applyStyles()
-            else this._defaultTextProfile.applyStyles(textStyles)
+            if (textStyles instanceof TextStyles) textStyles.apply()
+            else this._defaultTextProfile.apply(textStyles)
             if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
             if (text.includes("\n")) {
                 const lines = text.split("\n"), lines_ll = lines.length

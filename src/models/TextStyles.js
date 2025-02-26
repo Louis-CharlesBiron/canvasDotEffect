@@ -51,7 +51,7 @@ class TextStyles {
     }
 
     // updates a profile's attributes and returns the updated version
-    updateStyles(font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
+    update(font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         if (font) this._font = font
         if (letterSpacing) this._letterSpacing = typeof letterSpacing==="number"?letterSpacing+"px":letterSpacing
         if (wordSpacing) this._wordSpacing = typeof wordSpacing==="number"?wordSpacing+"px":wordSpacing
@@ -66,7 +66,7 @@ class TextStyles {
     }
 
     // directly applies the styles of the profile
-    applyStyles(font=this._font, letterSpacing=this._letterSpacing, wordSpacing=this._wordSpacing, fontVariantCaps=this._fontVariantCaps, direction=this._direction, fontStretch=this._fontStretch, fontKerning=this._fontKerning, textAlign=this._textAlign, textBaseline=this._textBaseline, textRendering=this._textRendering) {
+    apply(font=this._font, letterSpacing=this._letterSpacing, wordSpacing=this._wordSpacing, fontVariantCaps=this._fontVariantCaps, direction=this._direction, fontStretch=this._fontStretch, fontKerning=this._fontKerning, textAlign=this._textAlign, textBaseline=this._textBaseline, textRendering=this._textRendering) {
         const ctx = this.#ctx, currentTextStyles = this._render.currentCtxTextStyles
         if (font && currentTextStyles[0] !== font) currentTextStyles[0] = ctx.font = font
         if (letterSpacing && currentTextStyles[1] !== letterSpacing) currentTextStyles[1] = ctx.letterSpacing = letterSpacing
@@ -81,7 +81,7 @@ class TextStyles {
     }
 
     // directly applies the styles of the profile
-    static applyStyles(ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
+    static apply(ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         const currentTextStyles = [ctx.font, ctx.letterSpacing, ctx.wordSpacing, ctx.fontVariantCaps, ctx.direction, ctx.fontStretch, ctx.fontKerning, ctx.textAlign, ctx.textBaseline, ctx.textRendering]
         if (font && currentTextStyles[0] !== font) currentTextStyles[0] = ctx.font = font
         if (letterSpacing && currentTextStyles[1] !== letterSpacing) currentTextStyles[1] = ctx.letterSpacing = letterSpacing

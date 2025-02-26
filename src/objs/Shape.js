@@ -14,7 +14,7 @@ class Shape extends _Obj {
         this._initDots = dots                    // initial dots declaration
         this._dots = []                          // array containing current dots in the shape
         this._ratioPos = [Infinity,Infinity]     // position of ratio target object 
-        this._drawEffectCB = drawEffectCB        // (ctx, Dot, ratio, mouse, distance, parent, rawRatio)=>
+        this._drawEffectCB = drawEffectCB        // (ctx, Dot, ratio, mouse, distance, parent, setupResults, isActive, rawRatio)=>
         this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>
         this._fragile = fragile||false           // whether the shape resets on document visibility change
 

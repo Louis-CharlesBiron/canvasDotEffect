@@ -795,7 +795,7 @@ const helloWorldText = new TextDisplay(
     "Hello World!", // Displayed text
     [200, 100],     // positionned at [200, 100]
     "lightblue",    // colored lightblue
-    (render)=>render.textProfile1.updateStyles("italic 24px monospace"), // using the textProfile1 styles, only over writting the font
+    (render)=>render.textProfile1.update("italic 24px monospace"), // using the textProfile1 styles, only over writting the font
     null, // leaving drawMethod to the default value ("FILL")
     null, // leaving maxWidth to the default value (undefined)
     (textDisplay)=>{
@@ -1163,18 +1163,18 @@ The RenderStyles class allows the customization of renders via style profiles wh
     // the style profile is now accessible via render.profiles[indexOfTheProfile]
 ```
 
-### **To reuse a style profile for multiple styles,** use the updateStyles() function:
-###### -  updateStyles(color?, lineWidth?, lineDash?, lineDashOffset?, lineJoin?, lineCap?)
+### **To reuse a style profile for multiple styles,** use the update() function:
+###### -  update(color?, lineWidth?, lineDash?, lineDashOffset?, lineJoin?, lineCap?)
 ```js
     {// Running in the drawEffectCB function of some shape...
         
         // ...
         
         // Drawing a line between a dot and its ratioPos, using the profile1 styles and updating the color, lineWidth, lineDash, lineDashOffset
-        CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.updateStyles(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25], 10))
+        CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25], 10))
     
         // Drawing a dot's connections, using again the profile1 styles and updating only the color, lineWidth
-        CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles([255,0,0,1], 2))
+        CanvasUtils.drawDotConnections(dot, render.profile1.update([255,0,0,1], 2))
     }
 
 ```
@@ -1201,7 +1201,7 @@ The RenderStyles class allows the customization of renders via style profiles wh
         ...
     
     // Drawing the connections between dots, and styling them with an updated version of render's profile1 and a custom lineType
-    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles(
+    CanvasUtils.drawDotConnections(dot, render.profile1.update(
             Color.rgba(255, 0, 0, CDEUtils.mod(1, ratio, 0.8)), // updating the color to a dynamically shaded red
             4,   // updating the lineWidth to 4px
             [10] // updating the lineDash to 10px
@@ -1489,7 +1489,7 @@ This function is used to draw a connection between a Dot and another pos/object.
             CanvasUtils.drawLine(
                 dot,        // start Dot
                 [200, 200], // end position (can also be a Dot)
-                RenderStyles.PROFILE1.updateStyles(
+                RenderStyles.PROFILE1.update(
                     Color.rgba(dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)) // updates only the color, but uses every previously set styles
                 )
             )
@@ -1564,7 +1564,7 @@ const manualSineWaveDrawer = new Shape([100, 100], [
 ], null, null, 100, (render, dot, ratio)=>{// shape's drawEffectCB
 
     // drawing a dotted red line between the two dots
-    CanvasUtils.drawDotConnections(dot, RenderStyles.PROFILE1.updateStyles([255,0,0,1], null, null, null, [5]))
+    CanvasUtils.drawDotConnections(dot, RenderStyles.PROFILE1.update([255,0,0,1], null, null, null, [5]))
 
     // simple radius hover effect
     dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS*2*0.8)

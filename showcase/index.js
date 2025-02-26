@@ -93,9 +93,9 @@ let leColor = [255,0,0,1]
 let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (render, dot, ratio, m, dist, shape, cr, isActive)=>{
     dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS, ratio, _Obj.DEFAULT_RADIUS)
 
-    if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.updateStyles(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25]), 2)
+    if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25]), 2)
     
-    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles(leColor, 2, [0]))
+    CanvasUtils.drawDotConnections(dot, render.profile1.update(leColor, 2, [0]))
 }, ()=>draggableDotTester.dots[0].pos, null)
 
 
@@ -169,7 +169,7 @@ let generationTester = new Shape([100,600],
 
 let textValue = "BONJOUR, LOL?? :D", textGradient = new Color(new Gradient(CVS.ctx, Gradient.PLACEHOLDER, [[0, "gold"], [0.5, "red"], [1, "gold"]], null, 90), true)
 for (let i = 0;i<20;i++) {
-    let t = new TextDisplay(()=>textValue, [100, 100+1*i], textGradient, render=>render.textProfile1.updateStyles("18px arial", 25, null), "FILL", null, null, ()=>testMore.firstDot)
+    let t = new TextDisplay(()=>textValue, [100, 100+1*i], textGradient, render=>render.textProfile1.update("18px arial", 25, null), "FILL", null, null, ()=>testMore.firstDot)
     
     t.playAnim(new Anim(prog=>{
         textGradient.colorRaw.rotation = -360*prog

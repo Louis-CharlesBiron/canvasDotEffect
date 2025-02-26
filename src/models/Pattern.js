@@ -228,28 +228,3 @@ class Pattern extends _DynamicColor {
         this.update(true)
     }
 }
-
-
-
-
-// TODO
-
-/*
-// duplicate source
-let idk = new Shape([0, 0], [new Dot([300, 150]), new Dot([500, 250])], 40, (render, shape)=>
-    new Pattern(render, ImageDisplay.loadCamera(), "PLACEHOLDER", null, null, true)
-)
-CVS.add(idk)
-
-
-// share source
-let idk = new Shape([0, 0], [new Dot([300, 150]), new Dot([500, 250])], 40, (render, shape)=>
-    new Pattern(render, ImageDisplay.loadCamera(), shape, null, null, true)
-)
-CVS.add(idk)
-
-
-leColor = new Pattern(CVS.render, ImageDisplay.loadCamera(), _DynamicColor.getAutomaticPositions(le), null, null, true)
-
-
-*/

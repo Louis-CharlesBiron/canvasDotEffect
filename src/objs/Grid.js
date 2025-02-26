@@ -17,8 +17,16 @@ class Grid extends Shape {
     }
 
     initialize() {
-        super.initialize()
+        this._pos = this.getInitPos()
+        this.setAnchoredPos()
+
         if (this._keys) this.add(this.createGrid())
+
+        this.setRadius(this.getInitRadius(), true)
+        this.setColor(this.getInitColor(), true)
+
+        this.initialized = true
+        if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this?.parent)
     }
 
     // returns a separate copy of this Grid (only initialized for objects)

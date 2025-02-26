@@ -11,7 +11,7 @@ const dummyShape = new FilledShape((ctx, vshape) => new Gradient(ctx, vshape, [[
         dot.x+=CDEUtils.random(-2,2)
         dot.y+=CDEUtils.random(-2,2)
 
-        CanvasUtils.drawDotConnections(dot,render.profile1.updateStyles(null,4,[5,15], CDEUtils.mod(1000, ratio)), null,Render.getBeizerCurve)
+        CanvasUtils.drawDotConnections(dot,render.profile1.update(null,4,[5,15], CDEUtils.mod(1000, ratio)), null,Render.getBeizerCurve)
 
 
 
