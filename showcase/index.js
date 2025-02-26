@@ -182,7 +182,8 @@ for (let i = 0;i<20;i++) {
     CVS.add(t, true)
 }
 
-const testText2 = new TextDisplay("Test § ->", [100, 550], "lightblue")
+
+const testText2 = new TextDisplay("Test § ->", [100, 550], (render, text)=>new Pattern(render, ImageDisplay.loadVideo("./img/vidTest.mp4",true,true), text))
 CVS.add(testText2, true)
 
 const loopTODObetter = CanvasUtils.SHAPES.DEBUG_SHAPE([0,0], new Dot())

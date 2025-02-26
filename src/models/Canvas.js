@@ -18,6 +18,8 @@ class Canvas {
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)"}
+    static #ON_LOAD_CALLBACKS = []
+    static #ON_FIRST_INTERACT_CALLBACKS = []
 
     #lastFrame = 0           // default last frame time
     #lastLimitedFrame = 0    // last frame time for limited fps
@@ -73,16 +75,33 @@ class Canvas {
                 this.#mouseMovements()
                 this.#lastScrollValues[0] = scrollX
                 this.#lastScrollValues[1] = scrollY
-            }
+              },
+              onLoad=e=>{
+                const callbacks = Canvas.#ON_LOAD_CALLBACKS, cb_ll = callbacks?.length
+                if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
+                Canvas.#ON_LOAD_CALLBACKS = null
+              }
 
         window.addEventListener("resize", onresize)
         window.addEventListener("visibilitychange", onvisibilitychange)
         window.addEventListener("scroll", onscroll)
+        window.addEventListener("load", onLoad)
         return {
             onrezise:()=>window.removeEventListner("resize", onresize),
             onvisibilitychange:()=>window.removeEventListener("visibilitychange", onvisibilitychange),
-            onscroll:()=>window.removeEventListener("scroll", onscroll)
+            onscroll:()=>window.removeEventListener("scroll", onscroll),
+            onDOMContentLoaded:()=>window.removeEventListener("load", onLoad)
         }
+    }
+
+    // adds a callback to be called once the document is loaded
+    static addOnLoadCallback(callback) {
+        if (CDEUtils.isFunction(callback) && Canvas.#ON_LOAD_CALLBACKS) Canvas.#ON_LOAD_CALLBACKS.push(callback)
+    }
+
+    // adds a callback to be called once the document has been interacted with for the first time
+    static addOnFirstInteractCallback(callback) {
+        if (CDEUtils.isFunction(callback) && Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#ON_FIRST_INTERACT_CALLBACKS.push(callback)
     }
 
     // updates the calculated canvas offset in the page
@@ -271,6 +290,13 @@ class Canvas {
         this._ctx.restore()
     }
 
+    // ran on first user interaction
+    static #onFirstInteraction(e) {
+        const callbacks = Canvas.#ON_FIRST_INTERACT_CALLBACKS, cb_ll = callbacks?.length
+        if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
+        Canvas.#ON_FIRST_INTERACT_CALLBACKS = null
+    }
+
     // called on mouse move
     #mouseMovements(cb, e) {
         // update ratioPos to mouse pos if not overwritten
@@ -279,10 +305,8 @@ class Canvas {
             const ref = this.refs[i]
             if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos = this._mouse.pos
         }
-        // custom move callback
         if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
 
-        // check mouse pos validity
         this._mouse.checkValid()
     }
 
@@ -315,7 +339,6 @@ class Canvas {
     // defines the onmouseleave listener
     setmouseleave(cb) {
         const onmouseleave=e=>{
-            // invalidate mouse
             this._mouse.invalidate()
             this.#mouseMovements(cb, e)
         }
@@ -327,6 +350,7 @@ class Canvas {
     #mouseClicks(cb, e) {
         this._mouse.setMouseClicks(e)
         if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
+        if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
     }
 
     // defines the onmousedown listener
@@ -384,10 +408,11 @@ class Canvas {
         const onkeydown=e=>{
             this._typingDevice.setDown(e)
             if (CDEUtils.isFunction(cb)) cb(e, this._typingDevice)
-        }
+            }, globalFirstInteractOnKeyDown=e=>{if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)}
         
         const element = global ? document : this._frame
         element.addEventListener("keydown", onkeydown)
+        document.addEventListener("keydown", globalFirstInteractOnKeyDown)
         return ()=>element.removeEventListener("keydown", onkeydown)
     }
 

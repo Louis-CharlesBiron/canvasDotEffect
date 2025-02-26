@@ -146,8 +146,11 @@ class ImageDisplay extends _BaseObj {
         video.src = path
         video.preload = "auto"
         video.loop = looping
-        video.autoplay = autoPlay
-        video.mute = true
+        if (autoPlay) {
+            video.mute = true
+            video.autoplay = autoPlay
+            video.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>video.play()))
+        }
         return video
     }
 
