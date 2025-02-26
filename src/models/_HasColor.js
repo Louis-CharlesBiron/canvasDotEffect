@@ -15,6 +15,8 @@ class _HasColor {
         return CDEUtils.isFunction(this._initColor) ? this._initColor(this) : this._initColor||null
     }
 
+    
+
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}
     get color() {return this._color?.color}
@@ -31,10 +33,10 @@ class _HasColor {
 
     set color(color) {
         if (!this._color || this._color?.colorRaw?.toString() !== color?.toString()) {
-            const potentialGradient = color?.colorRaw||color
-            if (potentialGradient?.positions===Gradient.PLACEHOLDER) {
-                if (!color.isChannel) color = potentialGradient.duplicate()
-                else color = potentialGradient 
+            const specialColor = color?.colorRaw||color
+            if (specialColor?.positions===_DynamicColor.PLACEHOLDER) {
+                if (!color.isChannel) color = specialColor.duplicate()
+                else color = specialColor 
                 color.initPositions = this
             }
 

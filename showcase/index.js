@@ -25,7 +25,7 @@ let movementsTester = new Shape([300,300],[
     //let idk = CDEUtils.mod(5, ratio, 5)
     //dot.x += CDEUtils.random(-idk, idk)
     //dot.y += CDEUtils.random(-idk, idk)
-    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
+    dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS*2*0.8)
     CanvasUtils.drawOuterRing(dot, [255,255,255,0.2], 5)
 
     let kb = CVS.keyboard, speed = 100
@@ -47,7 +47,7 @@ let filledShapeTester = new FilledShape(
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
 }, null, null, null, true)
-filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
+//filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
 
 let testMoreDragAnim = CanvasUtils.getDraggableDotCB()
 let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, "blue")], 15, (ctx, shape)=>new Gradient(ctx, shape, [[0, "red"], [1, "yellow"]], null, 90), null, (render, dot, ratio, m, dist, shape)=>{
@@ -66,7 +66,7 @@ testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog
 
 let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
 (shape)=>{return shape.dots.length*2}, normalColorTester, 100, (render, dot, ratio, m, dist, parent, res)=>{
-    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
+    dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS*2*0.8)
 
     CanvasUtils.drawDotConnections(dot, [255,0,0,CDEUtils.mod(1, ratio, 0.8)], false, Render.LINE_TYPES.QUADRATIC, CDEUtils.mod(2, ratio))
 }, undefined, (shape)=>{
@@ -89,12 +89,13 @@ let test2 = new Shape((shape, dots)=>{return [50+50,100]},[new Dot((dot, shape)=
 })
 
 // ALPHABET
+let leColor = [255,0,0,1]
 let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (render, dot, ratio, m, dist, shape, cr, isActive)=>{
-    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS, ratio, Obj.DEFAULT_RADIUS)
+    dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS, ratio, _Obj.DEFAULT_RADIUS)
 
-    if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.updateStyles(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25]), 2)
+    if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25]), 2)
     
-    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles([255,0,0,1], 2, [0]))
+    CanvasUtils.drawDotConnections(dot, render.profile1.update(leColor, 2, [0]))
 }, ()=>draggableDotTester.dots[0].pos, null)
 
 
@@ -168,7 +169,7 @@ let generationTester = new Shape([100,600],
 
 let textValue = "BONJOUR, LOL?? :D", textGradient = new Color(new Gradient(CVS.ctx, Gradient.PLACEHOLDER, [[0, "gold"], [0.5, "red"], [1, "gold"]], null, 90), true)
 for (let i = 0;i<20;i++) {
-    let t = new TextDisplay(()=>textValue, [100, 100+1*i], textGradient, render=>render.textProfile1.updateStyles("18px arial", 25, null), "FILL", null, null, ()=>testMore.firstDot)
+    let t = new TextDisplay(()=>textValue, [100, 100+1*i], textGradient, render=>render.textProfile1.update("18px arial", 25, null), "FILL", null, null, ()=>testMore.firstDot)
     
     t.playAnim(new Anim(prog=>{
         textGradient.colorRaw.rotation = -360*prog
@@ -191,6 +192,7 @@ loopTODObetter.drawEffectCB=(render, dot, ratio, mouse)=>{
 CVS.add(loopTODObetter)
 
 let imageTester = new ImageDisplay(ImageDisplay.loadImage("./img/logo.png"), [-250, 75], [250], null, ()=>testMore.firstDot)
+CVS.add(imageTester, true)
 
 
 
@@ -202,7 +204,6 @@ CVS.add(filledShapeTester)
 CVS.add(movementsTester)
 CVS.add(test2)
 CVS.add(le)
-CVS.add(imageTester, true)
 
 let dupelicateTester = le.duplicate()
 for (let i=0;i<3;i++) {

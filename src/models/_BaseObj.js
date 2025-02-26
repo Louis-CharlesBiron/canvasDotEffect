@@ -34,7 +34,7 @@ class _BaseObj extends _HasColor {
 
     // returns the value of the inital color declaration
     getInitColor() {
-        return CDEUtils.isFunction(this._initColor) ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor||null
+        return CDEUtils.isFunction(this._initColor) ? this._initColor(this.render??this.parent.render, this) : this._initColor||null
     }
 
     // returns the value of the inital pos declaration

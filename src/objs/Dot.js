@@ -4,7 +4,7 @@
 //
 
 // The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
-class Dot extends Obj {
+class Dot extends _Obj {
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
         super(pos, radius, color, setupCB, anchorPos, alwaysActive)
         this._parent = null     // the object containing the dot

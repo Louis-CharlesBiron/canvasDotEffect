@@ -15,9 +15,10 @@ class Render {
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
     #currentCtxTextStyles = TextStyles.DEFAULT_PROFILE.getStyles()
     constructor(ctx) {
-        this._ctx = ctx           // Canvas context
-        this._batchedStrokes = {} // current batch of strokes
-        this._batchedFills = {}   // current batch of fills
+        this._ctx = ctx               // Canvas context
+        this._batchedStrokes = {}     // current batch of strokes
+        this._batchedFills = {}       // current batch of fills
+        this._bactchedStandalones = []// current array of drawings callbacks to be called once everything else has been drawn
 
         this._defaultProfile = RenderStyles.DEFAULT_PROFILE.duplicate(this)// default style profile template
         this._profile1 = this._defaultProfile.duplicate()                  // default style profile 1
@@ -133,20 +134,28 @@ class Render {
     drawBatched() {
         const strokes = Object.entries(this._batchedStrokes), s_ll = strokes.length,
               fills = Object.entries(this._batchedFills), f_ll = fills.length,
-              gradientSep = Gradient.SERIALIZATION_SEPARATOR
+              standalones = this._bactchedStandalones, o_ll = standalones.length,
+              gradientSep = Gradient.SERIALIZATION_SEPARATOR, patternSep = Pattern.SERIALIZATION_SEPARATOR
               
         for (let i=0;i<s_ll;i++) {
             let [profileKey, path] = strokes[i], [colorValue, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
-            RenderStyles.applyStyles(this, colorValue, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
+            else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].value
+            RenderStyles.apply(this, colorValue, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
             this._ctx.stroke(path)
         }
 
         for (let i=0;i<f_ll;i++) {
             let [colorValue, path] = fills[i]
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
-            RenderStyles.applyStyles(this, colorValue)
+            else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].value
+            RenderStyles.apply(this, colorValue)
             this._ctx.fill(path)
+        }
+
+        if (o_ll){
+            for (let i=0;i<o_ll;i++) standalones[i]()
+            this._bactchedStandalones = []
         }
 
         this._batchedStrokes = {}
@@ -156,8 +165,8 @@ class Render {
     // directly strokes a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
     stroke(path, renderStyles=Color.DEFAULT_RGBA) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
-            else this._defaultProfile.applyStyles(renderStyles)
+            if (renderStyles instanceof RenderStyles) renderStyles.apply()
+            else this._defaultProfile.apply(renderStyles)
 
             this._ctx.stroke(path)
         }
@@ -166,42 +175,63 @@ class Render {
     // directly fills a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
     fill(path, renderStyles=Color.DEFAULT_RGBA) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            if (renderStyles instanceof RenderStyles) renderStyles.applyStyles()
-            else this._defaultProfile.applyStyles(renderStyles)
+            if (renderStyles instanceof RenderStyles) renderStyles.apply()
+            else this._defaultProfile.apply(renderStyles)
 
             this._ctx.fill(path)
         }
     }
 
     // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    strokeText(text, pos, color, textStyles, maxWidth=undefined) {
-        const colorValue = Color.getColorValue(color)
-        if (textStyles instanceof TextStyles) textStyles.applyStyles()
-        else this._defaultTextProfile.applyStyles(textStyles)
-        if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
-        this._ctx.strokeText(text, pos[0], pos[1], maxWidth)
+    strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight) {
+        if (text) {
+            const colorValue = Color.getColorValue(color)
+            if (textStyles instanceof TextStyles) textStyles.apply()
+            else this._defaultTextProfile.apply(textStyles)
+            if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
+            if (text.includes("\n")) {
+                const lines = text.split("\n"), lines_ll = lines.length
+                for (let i=0;i<lines_ll;i++) this._ctx.strokeText(lines[i], pos[0], pos[1]+i*lineHeight, maxWidth)
+            } else this._ctx.strokeText(text, pos[0], pos[1], maxWidth)
+        }
     }
 
     // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    fillText(text, pos, color, textStyles, maxWidth=undefined) {
-        const colorValue = Color.getColorValue(color)
-        if (textStyles instanceof TextStyles) textStyles.applyStyles()
-        else this._defaultTextProfile.applyStyles(textStyles)
-        if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
-        this._ctx.fillText(text, pos[0], pos[1], maxWidth)
+    fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight) {
+        if (text) {
+            const colorValue = Color.getColorValue(color)
+            if (textStyles instanceof TextStyles) textStyles.apply()
+            else this._defaultTextProfile.apply(textStyles)
+            if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
+            if (text.includes("\n")) {
+                const lines = text.split("\n"), lines_ll = lines.length
+                for (let i=0;i<lines_ll;i++) this._ctx.fillText(lines[i], pos[0], pos[1]+i*lineHeight, maxWidth)
+            } else this._ctx.fillText(text, pos[0], pos[1], maxWidth)
+        }
     }
 
+    // directly draws an image on the canvas
     drawImage(img, pos, size, croppingPositions) {
         if (croppingPositions) {
             const [[cropStartX, cropStartY], [cropEndX, cropEndY]] = croppingPositions
             this._ctx.drawImage(img, cropStartX, cropStartY, cropEndX-cropStartX, cropEndY-cropStartX, pos[0], pos[1], size[0], size[1])
-        }
-        else this._ctx.drawImage(img, pos[0], pos[1], size[0], size[1])
+        } else this._ctx.drawImage(img, pos[0], pos[1], size[0], size[1])
+    }
+
+    // directly draws an image on the canvas once everything else has been drawn
+    drawLateImage(img, pos, size, croppingPositions) {
+        this._bactchedStandalones.push(()=>{
+            if (croppingPositions) {
+                const [[cropStartX, cropStartY], [cropEndX, cropEndY]] = croppingPositions
+                this._ctx.drawImage(img, cropStartX, cropStartY, cropEndX-cropStartX, cropEndY-cropStartX, pos[0], pos[1], size[0], size[1])
+            } else this._ctx.drawImage(img, pos[0], pos[1], size[0], size[1])
+        })
     }
 
 	get ctx() {return this._ctx}
 	get batchedStrokes() {return this._batchedStrokes}
-	get batchedFills() {return this._batchedFills}
+	get batchedFills() {return this._bactchedStandalones}
+	get batchedStandalones() {return this._batchedImages}
 	get defaultProfile() {return this._defaultProfile}
 	get profile1() {return this._profile1}
 	get profile2() {return this._profile2}

@@ -14,8 +14,8 @@ let logo = new Shape([0,0], [
     new Dot([350, 290], 16.5, (ctx, dot)=>new Gradient(ctx, dot, [[0, "#B9ACE3"], [1, "#9ADBE4"]], null, 90)),
     new Dot([470, 350], 18, (ctx, dot)=>new Gradient(ctx, dot, [[0, "#B9ACE3"], [1, "#9ADBE4"]], null, 180)),
 ], 18, (ctx, shape)=>new Gradient(ctx, shape, [[0, "#AFB0E3"], [1, "#9ADBE4"]], null, 270), null,  (render, dot, ratio, m, dist, shape)=>{
-    CanvasUtils.drawOuterRing(dot, render.profile1.updateStyles(dot.colorObject, 2, [0]), 1.8)
-    CanvasUtils.drawDotConnections(dot, render.profile2.updateStyles(shape.colorObject, 5, [0]), 2.5)
+    CanvasUtils.drawOuterRing(dot, render.profile1.update(dot.colorObject, 2, [0]), 1.8)
+    CanvasUtils.drawDotConnections(dot, render.profile2.update(shape.colorObject, 5, [0]), 2.5)
 }, null, (shape)=>{
     shape.dots[0].addConnection(shape.dots[1])
     shape.dots[0].addConnection(shape.dots[2])
@@ -56,8 +56,8 @@ logoLetters.rotateAt(-25)
 
 let oktest = new Shape([110,250],[new Dot(), new Dot([10, 0],null,null,null,(dot, shape)=>shape.firstDot)], null, null, 100, (render, dot, ratio)=>{// SHAPE DRAW EFFECT CB
     
-    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
-    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles([255,0,0,1], null, [5]))
+    dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS*2*0.8)
+    CanvasUtils.drawDotConnections(dot, render.profile1.update([255,0,0,1], null, [5]))
 
 }, null, (shape)=>{// SHAPE SETUP CB
     

@@ -7,12 +7,14 @@
 class TextDisplay extends _BaseObj {
     static MEASUREMENT_CTX = new OffscreenCanvas(1,1).getContext("2d") 
 
+    #lineCount = 1
     constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, anchorPos, alwaysActive)
         this._text = text??""                // displayed text
         this._textStyles = textStyles        // current object's textStyles
         this._drawMethod = drawMethod?.toUpperCase()??Render.DRAW_METHODS.FILL // text draw method, either "fill" or "stroke"
         this._maxWidth = maxWidth??undefined // maximal width of the displayed text in px
+        this._lineHeigth = null              // lineHeight in px of the text for multi-line display
 
         this._parent = null  // the parent object of the text (Canvas)
         this._rotation = 0   // the text's rotation in degrees 
@@ -23,13 +25,14 @@ class TextDisplay extends _BaseObj {
     initialize() {
         this._textStyles = CDEUtils.isFunction(this._textStyles) ? this._textStyles(this.render, this) : this._textStyles??this.render.defaultTextProfile
         this._size = this.getSize()
+        this._lineHeigth ??= this.trueSize[1]/this.#lineCount
         super.initialize()
     }
 
     draw(render, time, deltaTime) {
         if (this.initialized) {
             if (this.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-                const ctx = render.ctx, x = this._pos[0], y = this._pos[1], hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation || hasScaling
+                const ctx = render.ctx, x = this._pos[0], y = this._pos[1], hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation || hasScaling, textValue = this.getTextValue()
 
                 if (hasTransforms) {
                     ctx.translate(x, y)
@@ -38,8 +41,8 @@ class TextDisplay extends _BaseObj {
                     ctx.translate(-x, -y)
                 }
 
-                if (this._drawMethod==="FILL") render.fillText(this.getTextValue(), this._pos, this._color, this._textStyles, this._maxWidth)
-                else render.strokeText(this.getTextValue(), this._pos, this._color, this._textStyles, this._maxWidth)
+                if (this._drawMethod==="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth)
+                else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth)
                 
                 if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
             }
@@ -50,9 +53,10 @@ class TextDisplay extends _BaseObj {
 
     // Returns the width and height of the text, according to the textStyles, excluding the scale or rotation
     getSize(textStyles=this._textStyles, text=this.getTextValue()) {
-        TextStyles.applyStyles(TextDisplay.MEASUREMENT_CTX, ...textStyles.getStyles())
-        const {width, actualBoundingBoxAscent, actualBoundingBoxDescent} = TextDisplay.MEASUREMENT_CTX.measureText(text)
-        return [CDEUtils.round(this._maxWidth||width, 2), actualBoundingBoxAscent+actualBoundingBoxDescent]
+        TextStyles.apply(TextDisplay.MEASUREMENT_CTX, ...textStyles.getStyles())
+        const lines = text.split("\n"), l_ll = this.#lineCount = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
+              {width, actualBoundingBoxAscent, actualBoundingBoxDescent} = TextDisplay.MEASUREMENT_CTX.measureText(longestText)
+        return [CDEUtils.round(this._maxWidth||width, 2), (actualBoundingBoxAscent+actualBoundingBoxDescent)*l_ll]
     }
 
     // Returns the current text value
@@ -110,8 +114,10 @@ class TextDisplay extends _BaseObj {
     get rotation() {return this._rotation}
     get scale() {return this._scale}
     get size() {return this._size}
+    get lineHeigth() {return this._lineHeigth}
     get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
     get render() {return this._parent.render}
+    get lineCount() {return this.#lineCount}
 
 	set text(_text) {
         this._text = _text
@@ -134,4 +140,5 @@ class TextDisplay extends _BaseObj {
         this._scale[0] = scaleX
         this._scale[1] = scaleY
     }
+    set lineHeigth(lineHeigth) {this._lineHeigth = lineHeigth}
 }
