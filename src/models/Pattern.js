@@ -34,8 +34,8 @@ class Pattern extends _DynamicColor {
         this._sourceCroppingPositions = sourceCroppingPositions??null          // source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
         this._keepAspectRatio = keepAspectRatio??false                         // whether the source keeps the same aspect ratio when resizing
         this._forcedUpdates = forcedUpdates??Pattern.DEFAULT_FORCE_UPDATE_LEVEL// whether/how the pattern forces updates
-        this._repeatMode = repeatMode??Pattern.DEFAULT_REPETITION_MODE         // whether the pattern repeats horizontally/vertically
         this._frameRate = frameRate??Pattern.DEFAULT_FRAME_RATE                // update frequency of video/canvas sources
+        this._repeatMode = repeatMode??Pattern.DEFAULT_REPETITION_MODE         // whether the pattern repeats horizontally/vertically
 
         Pattern.LOADED_PATTERN_SOURCES[this._id] = this
         ImageDisplay.initializeDataSource(source, (data)=>{
@@ -61,8 +61,8 @@ class Pattern extends _DynamicColor {
             return this._positions
         } else if (obj instanceof TextDisplay) {
             if (this.#hasTextDisplayChanged(obj)) {
-                const [width, height] = obj.trueSize, [cx, cy] = obj.pos, w2 = width/2, h2 = height/2
-                return [[cx-w2, cy-h2], [cx+w2, cy+h2]]
+                const [width, height] = obj.trueSize, lh = obj.lineHeigth, w2 = width/2, h2 = height/2, cx = obj.x, topY = obj.y-lh/1.8
+                return [[cx-w2, topY], [cx+w2, topY+lh*obj.lineCount]]
             } return this._positions
         } else return this._positions
     }

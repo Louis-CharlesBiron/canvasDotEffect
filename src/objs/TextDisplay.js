@@ -7,6 +7,7 @@
 class TextDisplay extends _BaseObj {
     static MEASUREMENT_CTX = new OffscreenCanvas(1,1).getContext("2d") 
 
+    #lineCount = 1
     constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, anchorPos, alwaysActive)
         this._text = text??""                // displayed text
@@ -24,7 +25,7 @@ class TextDisplay extends _BaseObj {
     initialize() {
         this._textStyles = CDEUtils.isFunction(this._textStyles) ? this._textStyles(this.render, this) : this._textStyles??this.render.defaultTextProfile
         this._size = this.getSize()
-        this._lineHeigth ??= this.trueSize[1]
+        this._lineHeigth ??= this.trueSize[1]/this.#lineCount
         super.initialize()
     }
 
@@ -53,8 +54,9 @@ class TextDisplay extends _BaseObj {
     // Returns the width and height of the text, according to the textStyles, excluding the scale or rotation
     getSize(textStyles=this._textStyles, text=this.getTextValue()) {
         TextStyles.applyStyles(TextDisplay.MEASUREMENT_CTX, ...textStyles.getStyles())
-        const {width, actualBoundingBoxAscent, actualBoundingBoxDescent} = TextDisplay.MEASUREMENT_CTX.measureText(text)
-        return [CDEUtils.round(this._maxWidth||width, 2), actualBoundingBoxAscent+actualBoundingBoxDescent]
+        const lines = text.split("\n"), l_ll = this.#lineCount = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
+              {width, actualBoundingBoxAscent, actualBoundingBoxDescent} = TextDisplay.MEASUREMENT_CTX.measureText(longestText)
+        return [CDEUtils.round(this._maxWidth||width, 2), (actualBoundingBoxAscent+actualBoundingBoxDescent)*l_ll]
     }
 
     // Returns the current text value
@@ -115,6 +117,7 @@ class TextDisplay extends _BaseObj {
     get lineHeigth() {return this._lineHeigth}
     get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
     get render() {return this._parent.render}
+    get lineCount() {return this.#lineCount}
 
 	set text(_text) {
         this._text = _text

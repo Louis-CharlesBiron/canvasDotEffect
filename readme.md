@@ -821,12 +821,12 @@ The ImageDisplay class allows the drawing of images, videos and live camera/scre
 #### **The TextDisplay constructor takes the following parameters:**
 ###### - `new TextDisplay(source, pos, size, setupCB, anchorPos, alwaysActive)`
 - *pos, setupCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
-- **source** -> The initial source declaration of the image. Either a `String` or one of `ImageDisplay.SOURCE_TYPES`.
+- **source** -> The source declaration of the image. One of `ImageDisplay.SOURCE_TYPES`.
 - **size** -> The display size of the image `[width, height]`. (Resizes the image)
 
 **Its other attributes are:**
 - **data** -> The usable data source for drawing the image.
-- **sourceCroppingPositions** -> The data source cropping positions. Delimits a rectangle which indicates the area to be drawn: `[ [startX, startY], [endX, endY] ]`. (Defaults to no cropping)
+- **sourceCroppingPositions** -> The source cropping positions. Delimits a rectangle which indicates the source drawing area to draw from: `[ [startX, startY], [endX, endY] ]`. (Defaults to no cropping)
 - **parent** -> The parent of the ImageDisplay object. (Most likely a Canvas instance) 
 - **rotation** -> The image's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
 - **scale** -> The image's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
@@ -954,7 +954,7 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
 #### **The Gradient constructor takes the following parameters:**
 ###### - `new Gradient(render, positions, colorStops, type, rotation)`
 - **render** -> The canvas Render instance, or context.
-- **positions** -> The positions of the gradient. Giving a Shape instance will position automatically the gradient according to the pos of its dots. For manual positions: **linear gradients**: `[ [x1, y1], [x2, y2] ]`, **radial gradients** `[ [x1, y1, r1], [x2, y2, r2] ]`, *conic gradients:* `[ x, y ]`.
+- **positions** -> The positions of the gradient. Providing a canvas object will automaticlly position it to cover the minimal area containing all of the provided object. For manual positions: **linear gradients**: `[ [x1, y1], [x2, y2] ]`, **radial gradients** `[ [x1, y1, r1], [x2, y2, r2] ]`, *conic gradients:* `[ x, y ]`.
 - **colorStops** -> An array containing the difference colors and their range `[0..1, color]`. Ex: `[ [0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"] ]`.
 - **type** -> The type of gradient. Either: Linear, Radial or Conic. (Defaults to Linear)
 - **rotation** -> The rotation in degrees of the gradient. (Not applicable for Radial gradients)
@@ -1028,47 +1028,74 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 #### **The Pattern constructor takes the following parameters:**
 ###### - `new Pattern(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, frameRate, repeatMode)`
 - **render** -> The canvas Render instance, or context.
-- *source* -> 
-- **positions** -> The positions of the gradient. Giving a Shape instance will position automatically the gradient according to the pos of its dots. For manual positions: **linear gradients**: `[ [x1, y1], [x2, y2] ]`, **radial gradients** `[ [x1, y1, r1], [x2, y2, r2] ]`, *conic gradients:* `[ x, y ]`.
-- *sourceCroppingPositions* ->
-- *keepAspectRatio* -> 
-- *forcedUpdates* -> 
-- *rotation* -> 
-- *frameRate* ->
-- *repeatMode* -> 
+- *source* -> The source declaration of the pattern. One of `ImageDisplay.SOURCE_TYPES`.
+- **positions** -> The positions of the pattern. (`[ [x1, y1], [x2, y2] ]`) Providing a canvas object will automaticlly position it to cover the minimal area containing all of the provided object.
+- **sourceCroppingPositions** -> The source cropping positions. Delimits a rectangle which indicates the source drawing area to draw from: `[ [startX, startY], [endX, endY] ]`. (Defaults to no cropping)
+- **keepAspectRatio** -> Whether the displayed pattern keeps the same aspect ratio when resizing.
+- **forcedUpdates** -> Whether/How the pattern updates are forced. One of `Pattern.FORCE_UPDATE_LEVELS` .
+- **rotation** -> The pattern's current rotation in degrees.
+- **frameRate** -> The update frequency of the current source. (Controls the frequency of video/canvas sources updates, as well as the frequency of any other sources when a visible property gets updated: e.g *when the rotation gets changed*)
+- **repeatMode** -> Whether the pattern repeats horizontally/vertically. One of `Pattern.REPETITION_MODES`.
 
 
-
-### **To manually update a Pattern,** use the update() function:
-###### - update(forceLevel)
+### **To manually get the rectangular area containing all of a specific object,** use the _DynamicColor.getAutomaticPositions() function:
+###### - getAutomaticPositions(obj)
 ```js
+    // Creating a dummy shape
+    const dummyShape = new Shape([0, 0], [new Dot([50,50]), new Dot([100, 0])])
 
+
+    // Adding the shape to the canvas first, because it needs to be initialized before looking at its pos
+    CVS.add(dummyShape)
+
+    // Getting the area (see example use 4 for real use of this function)
+    const area = _DynamicColor.getAutomaticPositions(dummyShape)
+    console.log("My Dummy Shape fits perfectly into this area! -> ", area)
 ```
 
-### **To manuellay get the minimal rectangular area containing all of the provided object,** use the update() function:
-###### - update(forceLevel)
-```js
 
-```
-
-**Note:** when using a Shape or a Dot instance as the 'positions' parameter, the gradient will update every frame automatically.
 
 #### Example use 1:
 ###### - Coloring some dots with a custom image 
 ```js
-
+    // Creating a dummy shape with two big dots, here parts of the image are going to be visible through the dots
+    const dummyShape = new Shape([100, 100], [new Dot([250,250]), new Dot([0,0])], 50, (render, shape)=>
+        new Pattern(
+            render, // the render instance
+            "./img/img2.jpg", // the source of the image, here it's the path to a local file
+            shape, // making the pattern fit the shape size
+            null,  // no source cropping
+            true   // preserving the default aspect ratio
+        )
+    )
+    
+    // Adding the shape to the canvas
+    CVS.add(dummyShape)
 ```
 
+#### Example use 2:
 ###### - Coloring some text with a camera feed
 ```js
-
+    // Creating a dummy text display
+    const dummyText = new TextDisplay("Hey, this is just\n some random text in\n order to fill up space,\n have a nice day! :D", [250, 250], (render, text)=>
+            new Pattern(
+                render, // the render instance
+                ImageDisplay.loadCamera(), // the source of the pattern, here it's we are requesting access to the live camera feed
+                text, // making the pattern fit the size of the text
+                null, // no source cropping
+                false // resizing will most likely change the aspect ratio
+            ))
+    
+    CVS.add(dummyText, true)
 ```
 
+#### Example use 3:
 ###### - Sharing VS duplicating a pattern
 ```js
 
 ```
 
+#### Example use 4:
 ###### - Using a pattern to color non objects (In this case, lines)
 ```js
 
