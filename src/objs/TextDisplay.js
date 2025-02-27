@@ -16,10 +16,7 @@ class TextDisplay extends _BaseObj {
         this._maxWidth = maxWidth??undefined // maximal width of the displayed text in px
         this._lineHeigth = null              // lineHeight in px of the text for multi-line display
 
-        this._parent = null  // the parent object of the text (Canvas)
-        this._rotation = 0   // the text's rotation in degrees 
-        this._scale = [1,1]  // the text's scale factors: [scaleX, scaleY]
-        this._size = null    // the text's default size [width, height]
+        this._size = null                    // the text's default size [width, height]
     }
     
     initialize() {
@@ -64,43 +61,6 @@ class TextDisplay extends _BaseObj {
         return CDEUtils.isFunction(this._text) ? this._text(this._parent, this) : this._text
     }
 
-    // Rotates the text by a specified degree increment around its pos
-    rotateBy(deg) {// clock-wise
-        this._rotation = (this._rotation+deg)%360
-    }
-
-    // Rotates the text to a specified degree around its pos
-    rotateAt(deg) {
-        this._rotation = deg%360
-    }
-
-    // Smoothly rotates the text to a specified degree around its pos
-    rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, isUnique=false, force=false) {
-        const ir = this._rotation, dr = deg-this._rotation
-        return this.playAnim(new Anim((prog)=>this.rotateAt(ir+dr*prog), time, easing), isUnique, force)
-    }
-
-    // Scales the text by a specified amount [scaleX, scaleY] from its pos
-    scaleBy(scale) {
-        let [scaleX, scaleY] = scale
-        if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
-        if (!CDEUtils.isDefined(scaleY)) scaleY = this._scale[1]
-        this._scale[0] *= scaleX
-        this._scale[1] *= scaleY
-    }
-
-    // Scales the text to a specified amount [scaleX, scaleY] from its pos
-    scaleAt(scale) {
-        this.scale = scale
-    }
-
-    // Smoothly scales the text to a specified amount [scaleX, scaleY] from its pos
-    scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=false, force=false) {
-        const is = CDEUtils.unlinkArr2(this._scale), dsX = scale[0]-is[0], dsY = scale[1]-is[1]
-
-        return this.playAnim(new Anim(prog=>this.scaleAt([is[0]+dsX*prog, is[1]+dsY*prog], centerPos), time, easing), isUnique, force)
-    }
-
     // returns a separate copy of this textDisplay instance
     duplicate(text=this._text, pos=this.pos_, color=this._color.duplicate(), textStyles=this._textStyles, drawMethod=this._drawMethod, maxWidth=this._maxWidth, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
         return this.initialized ? new TextDisplay(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, anchorPos, alwaysActive) : null
@@ -110,9 +70,6 @@ class TextDisplay extends _BaseObj {
 	get textStyles() {return this._textStyles}
 	get drawMethod() {return this._drawMethod}
 	get maxWidth() {return this._maxWidth}
-	get parent() {return this._parent}
-    get rotation() {return this._rotation}
-    get scale() {return this._scale}
     get size() {return this._size}
     get lineHeigth() {return this._lineHeigth}
     get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
@@ -131,14 +88,6 @@ class TextDisplay extends _BaseObj {
 	set maxWidth(_maxWidth) {
         this._maxWidth = _maxWidth??undefined
         this._size = this.getSize()
-    }
-    set rotation(_rotation) {this._rotation = _rotation%360}
-    set scale(_scale) {
-        let [scaleX, scaleY] = _scale
-        if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
-        if (!CDEUtils.isDefined(scaleY)) scaleY = this._scale[1]
-        this._scale[0] = scaleX
-        this._scale[1] = scaleY
     }
     set lineHeigth(lineHeigth) {this._lineHeigth = lineHeigth}
 }

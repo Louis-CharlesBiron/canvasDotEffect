@@ -64,8 +64,8 @@ testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog
 
 
 
-let test2 = new Shape((shape, dots)=>{return [50+50,100+dots.length]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
-(shape)=>{return shape.dots.length*2}, normalColorTester, 100, (render, dot, ratio, m, res, dist, parent)=>{
+let test2 = new Shape((shape, idk)=>{return [50+50,100+shape.dots.length]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
+(shape, dot)=>{return shape.dots.length*2}, normalColorTester, 100, (render, dot, ratio, m, res, dist, parent)=>{
     dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS*2*0.8)
 
     CanvasUtils.drawDotConnections(dot, [255,0,0,CDEUtils.mod(1, ratio, 0.8)], false, Render.LINE_TYPES.QUADRATIC, CDEUtils.mod(2, ratio))

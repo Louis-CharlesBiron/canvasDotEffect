@@ -21,19 +21,13 @@ class _Obj extends _BaseObj {
 
     // returns the value of the inital radius declaration
     getInitRadius() {
-        return CDEUtils.isFunction(this._initRadius) ? this._initRadius(this.parent||this, this) : this._initRadius??null
+        return CDEUtils.isFunction(this._initRadius) ? this._initRadius(this._parent instanceof Canvas?this:this._parent, this) : this._initRadius??null
     }
 
     // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the radius)
     isWithin(pos, circularDetection) {
         const [x,y]=pos
         return  (CDEUtils.isDefined(x)&&CDEUtils.isDefined(y)) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection===1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
-    }
-
-    // Returns the [top, right, bottom, left] distances between the canvas borders, according to the object's size
-    posDistances(pos=this._pos) {
-        const [x,y]=pos, cw=this._cvs.width, ch=this._cvs.height
-        return [y-this.height/2, cw-(x+this.width/2), ch-(y+this.height/2), x-this.width/2]
     }
 
     get radius() {return this._radius}

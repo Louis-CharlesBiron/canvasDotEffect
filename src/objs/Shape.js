@@ -9,7 +9,6 @@ class Shape extends _Obj {
 
     constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
         super(pos, radius??_Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, loopCB, anchorPos, alwaysActive)
-        this._cvs = null                         // CVS instance
         this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                    // initial dots declaration
         this._dots = []                          // array containing current dots in the shape
@@ -17,9 +16,6 @@ class Shape extends _Obj {
         this._drawEffectCB = drawEffectCB        // (render, Dot, ratio, mouse, setupResults, distance, parent, isActive, rawRatio)=>
         this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>
         this._fragile = fragile||false           // whether the shape resets on document visibility change
-
-        this._rotation = 0                       // the shape's rotation in degrees 
-        this._scale = [1,1]                      // the shape's scale factors: [scaleX, scaleY] 
     }
 
     // initializes the shape, adds its dots and initializes them
@@ -28,7 +24,7 @@ class Shape extends _Obj {
         this.setAnchoredPos()
 
         if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
-        else if (CDEUtils.isFunction(this._initDots)) this.add(this._initDots(this, this._cvs))
+        else if (CDEUtils.isFunction(this._initDots)) this.add(this._initDots(this, this._parent))
         else if (typeof this._initDots === "string") this.add(this.createFromString(this._initDots))
 
         this.setRadius(this.getInitRadius(), true)
@@ -70,19 +66,19 @@ class Shape extends _Obj {
             dot.initialize()
             return dot
         }))
-        this._cvs.updateCachedAllEls()
+        this._parent.updateCachedAllEls()
     }
 
     // remove a dot from the shape by its id or by its instance
     removeDot(idOrDot) {
         this._dots = this._dots.filter(dot=>dot.id!==(idOrDot?.id??idOrDot))
-        this._cvs.updateCachedAllEls()
+        this._parent.updateCachedAllEls()
     }
 
     // remove the shape and all its dots
     remove() {
-        this._cvs.remove(this._id)
-        this._cvs.updateCachedAllEls()
+        this._parent.remove(this._id)
+        this._parent.updateCachedAllEls()
     }
 
     /**
@@ -254,7 +250,7 @@ class Shape extends _Obj {
     // Empties the shapes of all its dots
     clear() {
         this._dots = []
-        this._cvs.updateCachedAllEls()
+        this._parent.updateCachedAllEls()
     }
 
     // Rerenders the shape to its original form
@@ -265,9 +261,9 @@ class Shape extends _Obj {
         }
     }
 
-    get cvs() {return this._cvs}
-    get ctx() {return this._cvs.ctx}
-    get render() {return this._cvs.render}
+    get cvs() {return this._parent}
+    get ctx() {return this.cvs.ctx}
+    get render() {return this.cvs.render}
     get dots() {return this._dots}
     get dotsPos() {return this._dots.map(dot=>dot.pos)}
     get limit() {return this._limit}
@@ -275,8 +271,6 @@ class Shape extends _Obj {
     get drawEffectCB() {return this._drawEffectCB}
     get ratioPos() {return this._ratioPos}
     get ratioPosCB() {return this._ratioPosCB}
-    get rotation() {return this._rotation}
-    get scale() {return this._scale}
     get lastDotsPos() {return this._lastDotsPos}
     get dotsPositions() {// returns a string containing all the dot's position
         let currentDotPos="", d_ll = this.dots.length
@@ -287,11 +281,12 @@ class Shape extends _Obj {
     get secondDot() {return this._dots[1]}
     get thirdDot() {return this._dots[2]}
     get asSource() {return this._dots}
+    get setupResults() {return this._setupResults}
 
-    set cvs(cvs) {this._cvs = cvs}
     set ratioPos(ratioPos) {this._ratioPos = ratioPos}
     set drawEffectCB(cb) {this._drawEffectCB = cb}
     set ratioPosCB(cb) {this._ratioPosCB = cb}
     set lastDotsPos(ldp) {this._lastDotsPos = ldp}
     set limit(limit) {this._limit = limit}
+    set setupResults(_setupResults) {this._setupResults = _setupResults}
 }

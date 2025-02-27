@@ -7,20 +7,19 @@
 class Dot extends _Obj {
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
         super(pos, radius, color, setupCB, null, anchorPos, alwaysActive)
-        this._parent = null     // the object containing the dot
         this._connections = []  // array of Dot to draw a connecting line to
     }
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
     draw(render, time, deltaTime) {
         if (this.initialized) {
-            // runs parent drawEffect callback if defined
-            if (CDEUtils.isFunction(this.drawEffectCB)) {
-                const dist = this.getDistance(), rawRatio = this.getRatio(dist), isActive = rawRatio<1
-                this.drawEffectCB(render, this, isActive?rawRatio:1, this.mouse, this.parentSetupResults, dist, this._parent, isActive, rawRatio)
+            const drawEffectCB = this.drawEffectCB
+            if (drawEffectCB) {
+                const dist = this.getDistance(), rawRatio = this.getRatio(dist), isActive = rawRatio<1, parent = this._parent
+                drawEffectCB(render, this, isActive?rawRatio:1, parent.parent.mouse, parent.setupResults, dist, parent, isActive, rawRatio)
             }
 
-            // draw dot
+            // todo scale
             if (this._radius) render.batchFill(Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
         } else this.initialized = true
         super.draw(time, deltaTime)
@@ -82,14 +81,12 @@ class Dot extends _Obj {
         else this._parent.remove(this._id)
     }
 
-    get cvs() {return this._parent?.cvs}
-    get ctx() {return this._parent?.cvs.ctx}
-    get render() {return this._parent?.cvs.render}
-    get limit() {return this._parent?.limit}
+    get ctx() {return this._parent.parent.ctx}
+    get render() {return this._parent.parent.render}
+    get limit() {return this._parent.limit}
     get drawEffectCB() {return this._parent?.drawEffectCB}
-    get parent() {return this._parent}
-    get mouse() {return this.cvs.mouse}
-    get ratioPos() {return this._parent?.ratioPos}
+    get mouse() {return this._parent.parent.mouse}
+    get ratioPos() {return this._parent.ratioPos}
     get connections() {return this._connections}
     get parentSetupResults() {return this._parent?.setupResults}
 
