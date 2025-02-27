@@ -7,8 +7,8 @@
 class Grid extends Shape {
     static DEFAULT_GAPS = [25, 25]
 
-    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile) {
-        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)
+    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
+        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)
 
         this._keys = keys                                 // keys to convert to source's values as a string
         this._gaps = gaps ?? Grid.DEFAULT_GAPS            // [x, y] gap length within the dots
@@ -31,7 +31,21 @@ class Grid extends Shape {
 
     // returns a separate copy of this Grid (only initialized for objects)
     duplicate() {
-        return this.initialized ? new Grid(this._keys, CDEUtils.unlinkArr2(this._gaps), this._spacing, this._source, this.pos_, this.radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
+        return this.initialized ? new Grid(
+            this._keys,
+            CDEUtils.unlinkArr2(this._gaps),
+            this._spacing,
+            this._source,
+            this.pos_,
+            this._radius,
+            this.colorObject.duplicate(),
+            this._limit,
+            this._drawEffectCB,
+            this._ratioPosCB,
+            this._setupCB,
+            this._loopCB,
+            this._fragile
+        ) : null
     }
 
     // Creates a formation of symbols

@@ -114,7 +114,7 @@ class CanvasUtils {
 
         static THROWABLE_DOT(pos, radius, color) {
             const dragAnim = CanvasUtils.getDraggableDotCB()
-            return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, m, dist, shape)=>{
+            return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, m, res, dist, shape)=>{
                 dragAnim(shape.firstDot, m, dist, ratio)
             })
         }

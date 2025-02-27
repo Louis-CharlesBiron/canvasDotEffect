@@ -8,8 +8,8 @@ class TextDisplay extends _BaseObj {
     static MEASUREMENT_CTX = new OffscreenCanvas(1,1).getContext("2d") 
 
     #lineCount = 1
-    constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, anchorPos, alwaysActive) {
-        super(pos, color, setupCB, anchorPos, alwaysActive)
+    constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, alwaysActive) {
+        super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
         this._text = text??""                // displayed text
         this._textStyles = textStyles        // current object's textStyles
         this._drawMethod = drawMethod?.toUpperCase()??Render.DRAW_METHODS.FILL // text draw method, either "fill" or "stroke"

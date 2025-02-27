@@ -45,7 +45,7 @@ CVS.add(logoBG)
 logoBG.scaleAt([1.15, 1.15], [350, 375])
 
 let textGradient = new Color(new Gradient(CVS.ctx, [[410, 325],[310,400]], [[0, "#AFB0E3"], [1, "#9ADBE4"]], null, 90))
-let logoLetters = new Grid("CDE", [5, 5], 38, null, [308,372], 0, null, 100, (ctx, dot, ratio, m, dist, shape)=>{
+let logoLetters = new Grid("CDE", [5, 5], 38, null, [308,372], 0, null, 100, (ctx, dot, ratio, m, res, dist, shape)=>{
     CanvasUtils.drawDotConnections(dot, textGradient, 0, true)
 })
 
@@ -71,7 +71,7 @@ let oktest = new Shape([110,250],[new Dot(), new Dot([10, 0],null,null,null,(dot
     }, CanvasUtils.FOLLOW_PATHS.RELATIVE(CanvasUtils.FOLLOW_PATHS.LINEAR(800, 0)))
 
     shape.firstDot.addConnection(shape.dots[1])
-}, null, true)
+}, null, null, true)
 
 CVS.add(oktest)
 

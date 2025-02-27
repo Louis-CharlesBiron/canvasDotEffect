@@ -6,7 +6,7 @@
 // The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
 class Dot extends _Obj {
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
-        super(pos, radius, color, setupCB, anchorPos, alwaysActive)
+        super(pos, radius, color, setupCB, null, anchorPos, alwaysActive)
         this._parent = null     // the object containing the dot
         this._connections = []  // array of Dot to draw a connecting line to
     }
@@ -17,7 +17,7 @@ class Dot extends _Obj {
             // runs parent drawEffect callback if defined
             if (CDEUtils.isFunction(this.drawEffectCB)) {
                 const dist = this.getDistance(), rawRatio = this.getRatio(dist), isActive = rawRatio<1
-                this.drawEffectCB(render, this, isActive?rawRatio:1, this.mouse, dist, this._parent, this.parentSetupResults, isActive, rawRatio)
+                this.drawEffectCB(render, this, isActive?rawRatio:1, this.mouse, this.parentSetupResults, dist, this._parent, isActive, rawRatio)
             }
 
             // draw dot

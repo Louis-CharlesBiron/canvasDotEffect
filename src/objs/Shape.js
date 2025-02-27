@@ -7,14 +7,14 @@
 class Shape extends _Obj {
     static DEFAULT_LIMIT = 100
 
-    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile) {
-        super(pos, radius??_Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, anchorPos, alwaysActive)
+    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
+        super(pos, radius??_Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, loopCB, anchorPos, alwaysActive)
         this._cvs = null                         // CVS instance
         this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                    // initial dots declaration
         this._dots = []                          // array containing current dots in the shape
         this._ratioPos = [Infinity,Infinity]     // position of ratio target object 
-        this._drawEffectCB = drawEffectCB        // (ctx, Dot, ratio, mouse, distance, parent, setupResults, isActive, rawRatio)=>
+        this._drawEffectCB = drawEffectCB        // (render, Dot, ratio, mouse, setupResults, distance, parent, isActive, rawRatio)=>
         this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>
         this._fragile = fragile||false           // whether the shape resets on document visibility change
 
@@ -46,7 +46,18 @@ class Shape extends _Obj {
 
     // returns a separate copy of this Shape (only initialized for objects)
     duplicate() {
-        return this.initialized ? new Shape(this.pos_, this._dots.map(d=>d.duplicate()), this._radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
+        return this.initialized ? new Shape(
+            this.pos_,
+            this._dots.map(d=>d.duplicate()),
+            this._radius,
+            this.colorObject.duplicate(),
+            this._limit,
+            this._drawEffectCB,
+            this._ratioPosCB,
+            this._setupCB,
+            this._loopCB,
+            this._fragile
+        ) : null
     }
 
     // adds one or many dots to the shape

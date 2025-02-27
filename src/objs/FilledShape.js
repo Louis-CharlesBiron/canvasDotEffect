@@ -6,8 +6,8 @@
 // Regular shape with a filled area defined by its dots
 class FilledShape extends Shape {
     #lastDotsPos = null
-    constructor(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile) {
-        super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)
+    constructor(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
+        super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)
         this._initFillColor = fillColor       // declaration color fill value
         this._fillColor = this._initFillColor // the current color or gradient of the filled shape
         this._path = null                     // path perimeter delimiting the surface to fill
@@ -34,7 +34,21 @@ class FilledShape extends Shape {
 
     // returns a separate copy of this FilledShape (only initialized for objects)
     duplicate() {
-        return this.initialized ? new FilledShape((_,shape)=>this.fillColorRaw instanceof Gradient?this.fillColorRaw.duplicate(Array.isArray(this.fillColorRaw.initPositions)?null:shape):this._fillColor.duplicate(), this._dynamicUpdates, this.pos_, this._dots.map(d=>d.duplicate()), this.radius, (_,shape)=>this.colorRaw instanceof Gradient?this.colorRaw.duplicate(Array.isArray(this.colorRaw.initPositions)?null:shape):this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
+        // todo pattern probably?? or wtf is this actually
+        return this.initialized ? new FilledShape(
+            (_,shape)=>this.fillColorRaw instanceof Gradient?this.fillColorRaw.duplicate(Array.isArray(this.fillColorRaw.initPositions)?null:shape):this._fillColor.duplicate(),
+            this._dynamicUpdates,
+            this.pos_,
+            this._dots.map(d=>d.duplicate()),
+            this._radius,
+            (_,shape)=>this.colorRaw instanceof Gradient?this.colorRaw.duplicate(Array.isArray(this.colorRaw.initPositions)?null:shape):this.colorObject.duplicate(),
+            this._limit,
+            this._drawEffectCB,
+            this._ratioPosCB,
+            this._setupCB,
+            this._loopCB,
+            this._fragile
+        ) : null
     }
 
     // updates the path perimeter if the dots pos have changed

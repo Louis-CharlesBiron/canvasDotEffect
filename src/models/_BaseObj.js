@@ -10,12 +10,13 @@ class _BaseObj extends _HasColor {
     static POSITION_PRECISION = 4
 
     #lastAnchorPos = [0,0]
-    constructor(pos, color, setupCB, anchorPos, alwaysActive) {
+    constructor(pos, color, setupCB, loopCB, anchorPos, alwaysActive) {
         super(color)
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
         this._initPos = pos||[0,0]               // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = [0,0]                        // current position from the center of the object : [x,y]
         this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
+        this._loopCB = loopCB                    // called each frame for this object (this)=>
         this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
         
@@ -54,10 +55,10 @@ class _BaseObj extends _HasColor {
 
     // Runs every frame
     draw(time, deltaTime) {
-        // update pos according to anchor pos
         this.setAnchoredPos()
+        const loopCB = this._loopCB
+        if (loopCB) loopCB(this)
 
-        // run anims
         let anims = this._anims.currents
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         const a_ll = anims.length

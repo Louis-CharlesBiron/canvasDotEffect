@@ -24,7 +24,7 @@ const dummyShape = new FilledShape((ctx, vshape) => new Gradient(ctx, vshape, [[
         shape.dots[2].addConnection(shape.dots[3])
         shape.dots[3].addConnection(shape.dots[0])
 
-    }, null, true)
+    }, null, null, true)
 CVS.add(dummyShape)
 
 let sfsf = dummyShape.duplicate()

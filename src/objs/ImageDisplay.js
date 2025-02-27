@@ -27,8 +27,8 @@ class ImageDisplay extends _BaseObj {
     static DEFAULT_CAPTURE_SETTINGS = ImageDisplay.loadCapture()
     static DEFAULT_CAPTURES = {CAPTURE_SD:ImageDisplay.loadCapture(ImageDisplay.RESOLUTIONS.SD), CAPTURE_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.HD), CAPTURE_FULL_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FULL_HD), CAPTURE_4k:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FOURK), CAPTURE:ImageDisplay.DEFAULT_CAPTURE_SETTINGS}
 
-    constructor(source, pos, size, setupCB, anchorPos, alwaysActive) {
-        super(pos, null, setupCB, anchorPos, alwaysActive)
+    constructor(source, pos, size, setupCB, loopCB, anchorPos, alwaysActive) {
+        super(pos, null, setupCB, loopCB, anchorPos, alwaysActive)
         this._source = source                // the data source
         this._size = size                    // the display size of the image (resizes)
         this._sourceCroppingPositions = null // data source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
@@ -222,17 +222,26 @@ class ImageDisplay extends _BaseObj {
 
     // returns a separate copy of this ImageDisplay instance
     duplicate(source=this._source, pos=this.pos_, size=this._size, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
-        return this.initialized ? new ImageDisplay(source, pos, size, setupCB, anchorPos, alwaysActive) : null
+        return this.initialized ? new ImageDisplay(
+            source, 
+            pos,
+            size,
+            setupCB,
+            anchorPos,
+            alwaysActive
+        ) : null
     }
 
     // Plays the source (use only if the source is a video)
     playVideo() {
-        this._source.play()
+        const source = this._source
+        if (source instanceof HTMLVideoElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>video.play()))
     }
 
     // Pauses the source (use only if the source is a video)
     pauseVideo() {
-        this._source.pause()
+        const source = this._source
+        if (source instanceof HTMLVideoElement) source.pause()
     }
 
     static getNaturalSize(source) {

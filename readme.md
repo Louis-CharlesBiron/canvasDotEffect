@@ -293,12 +293,12 @@ One of the main features is the ***drawEffectCB***. This callback allows the cre
 Effects are often ratio-based, meaning the *intensity* of the effect is based on the distance between the dot and the *ratioPos*. You can control the affected distance with the *limit* parameter, and the the object to which the distance\ratio is calculated with the *ratioPosCB* parameter.
 
 #### **The Shape constructor takes the following parameters:**
-###### - `new Shape(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)`
-- *pos, radius, color, setupCB, anchorPos, alwaysActive* -> See the _Obj class.
+###### - `new Shape(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)`
+- *pos, radius, color, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj class.
 - **initDots** -> Initial dots declaration. Can either be: an array of dots `[new Dot(...), existingDot, ...]`, a **String** (this will automatically call the shape's createFromString() function), or a callback `(Shape, Canvas)=>{... return anArrayOfDots}` 
 - ***dots*** -> Array of all the current dots contained by the shape. 
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
-- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, mouse, distance, parent, parentSetupResults, isActive, rawRatio)=>{...}`.
+- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, mouse, parentSetupResults, distance, parent, isActive, rawRatio)=>{...}`.
 - **ratioPosCB**? -> References the mouse position by default. Can be used to set a custom *ratioPos* target `(Shape, dots)=>{... return [x, y]}`. Can be disabled if set to `null`.
 - **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused) 
 
@@ -434,7 +434,7 @@ CVS.add(a)
          new Dot([50, -50]),
          new Dot([50, 0]),
          new Dot([50, 50]),
-     ], null, normalColorTester, 100, (render, dot, ratio, mouse, dist)=>{
+     ], null, normalColorTester, 100, (render, dot, ratio, mouse)=>{
      
          // Changes the opacity and color according to mouse distance
          dot.a = CDEUtils.mod(1, ratio, 0.8)
@@ -456,7 +456,7 @@ CVS.add(a)
 #### Example use 2:
 ###### - Single throwable dot, with color and radius effects
 ```js
-    const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (render, dot, ratio, mouse, dist, shape, setupResults)=>{
+    const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (render, dot, ratio, mouse, setupResults, dist, shape)=>{
         
         // Checking if the mouse is over the dot and clicked, and changing the color according to the state
         const mouseOn = dot.isWithin(mouse.pos, true)
@@ -498,8 +498,7 @@ CVS.add(a)
     // Assuming we have simpleShape from example use 1 available...
 
     // Creating a shape with a dot moving back and forth every second
-    const backAndForthDotShape = new Shape([200,200],
-        new Dot([0,0], null, null, (dot, shape)=>{
+    const backAndForthDotShape = new Shape([200,200], new Dot([0,0], null, null, (dot, shape)=>{
             let distance = 150, ix = dot.x
             dot.playAnim(new Anim((progress, playCount, deltaTime)=>{
                 dot.x = ix + ((playCount % 2) === 0 ? 1 : -1) * distance * progress
@@ -526,8 +525,8 @@ The FilledShape class is a derivative of the Shape class. It allows to fill the 
 
 
 #### **The FilledShape constructor takes the following parameters:**
-###### - `new FilledShape(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)`
-- *pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
+###### - `new FilledShape(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)`
+- *pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
 - **fillColor** -> Defines the color of the shape's filling. Either a color value, a Gradient instance, or a callback returning any of the previous two `(render, shape)=>{... return [r, g, b, a]}`.
 - **dynamicUpdates** -> Whether the shape's fill area checks for updates every frame
 
@@ -572,8 +571,8 @@ The FilledShape class is a derivative of the Shape class. It allows to fill the 
 The Grid class is a derivative of the Shape class. It allows the creation of dot-based symbols / text. To create your own set of symbols (source), see the *Grid Assets* section.
 
 #### **The Grid constructor takes the following parameters:**
-###### - `new Grid(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)`
-- *pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
+###### - `new Grid(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)`
+- *pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
 - **keys** -> A string containing the characters to create.
 - **gaps** -> The `[x, y]` distances within the dots.
 - **source** -> The source containing the symbol's definitions. See the *Grid Assets* section.
@@ -775,8 +774,8 @@ A symbol has this structure: `[...[index, directions]]`. It is composed of a mai
 The TextDisplay class allows the drawing of text as an canvas object.
 
 #### **The TextDisplay constructor takes the following parameters:**
-###### - `new TextDisplay(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, anchorPos, alwaysActive)`
-- *pos, color, setupCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
+###### - `new TextDisplay(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, alwaysActive)`
+- *pos, color, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
 - **text** -> The text to be displayed. Either a `String` or a callback `(parent, this)=>{... return "textToDisplay"}`.
 - **textStyles** -> The style profile to be used for styling the text. Either a `TextStyles` or  a callback `(render)=>{... return TextStyles}`.
 - **drawMethod** -> The draw method used when drawing the text, Either `"FILL"` or `"STROKE"`.
@@ -798,7 +797,7 @@ const helloWorldText = new TextDisplay(
     (render)=>render.textProfile1.update("italic 24px monospace"), // using the textProfile1 styles, only over writting the font
     null, // leaving drawMethod to the default value ("FILL")
     null, // leaving maxWidth to the default value (undefined)
-    (textDisplay)=>{
+    (textDisplay)=>{// setupCB
     
         // adding a spin animation, repeating every 3 seconds
         textDisplay.playAnim(new Anim(prog=>{
@@ -819,8 +818,8 @@ CVS.add(helloWorldText, true)
 The ImageDisplay class allows the drawing of images, videos and live camera/screen feed.
 
 #### **The TextDisplay constructor takes the following parameters:**
-###### - `new TextDisplay(source, pos, size, setupCB, anchorPos, alwaysActive)`
-- *pos, setupCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
+###### - `new ImageDisplay(source, pos, size, setupCB, loopCB, anchorPos, alwaysActive)`
+- *pos, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
 - **source** -> The source declaration of the image. One of `ImageDisplay.SOURCE_TYPES`.
 - **size** -> The display size of the image `[width, height]`. (Resizes the image)
 
@@ -1390,7 +1389,7 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
     
     // Creating a mostly default shape, with a single dot
     const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null, 
-        (render, dot, ratio, m, dist, shape)=>{// drawEffectCB callback
+        (render, dot, ratio, m, setupResults, dist, shape)=>{// drawEffectCB callback
     
             // Changing the dot's size based on mouse distance for an additional small effect
             dot.radius = CDEUtils.mod(shape.radius*2, ratio, shape.radius*2*0.5)
@@ -1585,7 +1584,7 @@ const manualSineWaveDrawer = new Shape([100, 100], [
     // adding a connection between the first and second dot
     shape.firstDot.addConnection(shape.dots[1])
 
-}, null, true)
+}, null, null, true)
 
 // adding the shape to the canvas
 CVS.add(manualSineWaveDrawer)
