@@ -26,9 +26,18 @@ class Dot extends _Obj {
     }
 
     
-    // returns a separate copy of this Dot (only initialized for objects)
+    // returns a separate copy of this Dot
     duplicate() {
-        return new Dot(this.getInitPos(), this._radius, this._color.duplicate(), this._setupCB)
+        const dot = new Dot(
+            this.getInitPos(),
+            this._radius,
+            this._color.duplicate(),
+            this._setupCB
+        )
+
+        dot._scale = CDEUtils.unlinkArr2(this._scale)
+        dot._rotation = this._rotation
+        return dot
     }
 
     // returns pythagorian distance between the ratio defining position and the dot

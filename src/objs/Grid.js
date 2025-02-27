@@ -31,21 +31,25 @@ class Grid extends Shape {
 
     // returns a separate copy of this Grid (only initialized for objects)
     duplicate() {
-        return this.initialized ? new Grid(
+        const colorObject = this._color, colorRaw = colorObject.colorRaw, grid = new Grid(
             this._keys,
             CDEUtils.unlinkArr2(this._gaps),
             this._spacing,
             this._source,
             this.pos_,
             this._radius,
-            this.colorObject.duplicate(),
+            (_,shape)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:shape):colorObject.duplicate(),
             this._limit,
             this._drawEffectCB,
             this._ratioPosCB,
             this._setupCB,
             this._loopCB,
             this._fragile
-        ) : null
+        )
+        grid._scale = CDEUtils.unlinkArr2(this._scale)
+        grid._rotation = this._rotation
+
+        return this.initialized ? grid : null
     }
 
     // Creates a formation of symbols

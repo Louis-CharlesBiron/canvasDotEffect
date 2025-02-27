@@ -62,8 +62,22 @@ class TextDisplay extends _BaseObj {
     }
 
     // returns a separate copy of this textDisplay instance
-    duplicate(text=this._text, pos=this.pos_, color=this._color.duplicate(), textStyles=this._textStyles, drawMethod=this._drawMethod, maxWidth=this._maxWidth, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
-        return this.initialized ? new TextDisplay(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, anchorPos, alwaysActive) : null
+    duplicate(text=this._text, pos=this.pos_, color=this._color, textStyles=this._textStyles, drawMethod=this._drawMethod, maxWidth=this._maxWidth, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
+        const colorObject = color, colorRaw = colorObject.colorRaw, textDisplay = new TextDisplay(
+            text,
+            pos,
+            (_,textDisplay)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:textDisplay):colorObject.duplicate(),
+            textStyles,
+            drawMethod,
+            maxWidth,
+            setupCB,
+            anchorPos,
+            alwaysActive
+        )
+        textDisplay._scale = CDEUtils.unlinkArr2(this._scale)
+        textDisplay._rotation = this._rotation
+        
+        return this.initialized ? textDisplay : null
     }
 
 	get text() {return this._text}

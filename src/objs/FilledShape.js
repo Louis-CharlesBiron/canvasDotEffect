@@ -35,20 +35,24 @@ class FilledShape extends Shape {
     // returns a separate copy of this FilledShape (only initialized for objects)
     duplicate() {
         // todo pattern probably?? or wtf is this actually
-        return this.initialized ? new FilledShape(
-            (_,shape)=>this.fillColorRaw instanceof Gradient?this.fillColorRaw.duplicate(Array.isArray(this.fillColorRaw.initPositions)?null:shape):this._fillColor.duplicate(),
+        const fillColorObject = this._fillColor, fillColorRaw = fillColorObject.colorRaw, colorObject = this._color, colorRaw = colorObject.colorRaw, filledShape = new FilledShape(
+            (_,shape)=>(fillColorRaw instanceof Gradient||fillColorRaw instanceof Pattern)?fillColorRaw.duplicate(Array.isArray(fillColorRaw.initPositions)?null:shape):fillColorObject.duplicate(),
             this._dynamicUpdates,
             this.pos_,
             this._dots.map(d=>d.duplicate()),
             this._radius,
-            (_,shape)=>this.colorRaw instanceof Gradient?this.colorRaw.duplicate(Array.isArray(this.colorRaw.initPositions)?null:shape):this.colorObject.duplicate(),
+            (_,shape)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:shape):colorObject.duplicate(),
             this._limit,
             this._drawEffectCB,
             this._ratioPosCB,
             this._setupCB,
             this._loopCB,
             this._fragile
-        ) : null
+        )
+        filledShape._scale = CDEUtils.unlinkArr2(this._scale)
+        filledShape._rotation = this._rotation
+        
+        return this.initialized ? filledShape : null
     }
 
     // updates the path perimeter if the dots pos have changed

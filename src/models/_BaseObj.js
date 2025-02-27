@@ -19,11 +19,11 @@ class _BaseObj extends _HasColor {
         this._loopCB = loopCB                    // called each frame for this object (this)=>
         this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
+        this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
         
         this._parent = null                      // the object's parent
         this._rotation = 0                       // the object's rotation in degrees 
         this._scale = [1,1]                      // the object's scale factors: [scaleX, scaleY]
-        this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
         this._anims = {backlog:[], currents:[]}  // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
         this._initialized = false                // whether the object has been initialized yet
     }

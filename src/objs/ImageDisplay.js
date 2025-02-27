@@ -181,14 +181,18 @@ class ImageDisplay extends _BaseObj {
 
     // returns a separate copy of this ImageDisplay instance
     duplicate(source=this._source, pos=this.pos_, size=this._size, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
-        return this.initialized ? new ImageDisplay(
+        const imageDisplay = new ImageDisplay(
             source, 
             pos,
             size,
             setupCB,
             anchorPos,
             alwaysActive
-        ) : null
+        )
+        imageDisplay._scale = CDEUtils.unlinkArr2(this._scale)
+        imageDisplay._rotation = this._rotation
+        
+        return this.initialized ? imageDisplay : null
     }
 
     // Plays the source (use only if the source is a video)
