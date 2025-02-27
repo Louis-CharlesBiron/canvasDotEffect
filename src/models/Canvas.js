@@ -249,8 +249,7 @@ class Canvas {
         const l = objs&&(objs.length??1)
         for (let i=0;i<l;i++) {
             const obj = objs[i]??objs
-            if (!isDef) obj.cvs = this
-            else obj._parent = this
+            obj._parent = this
             
             if (CDEUtils.isFunction(obj.initialize)) obj.initialize()
             if (active) this._els[isDef?"defs":"refs"].push(obj)

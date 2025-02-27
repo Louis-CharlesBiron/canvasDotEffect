@@ -32,10 +32,6 @@ class ImageDisplay extends _BaseObj {
         this._source = source                // the data source
         this._size = size                    // the display size of the image (resizes)
         this._sourceCroppingPositions = null // data source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
-
-        this._parent = null  // the parent object (Canvas)
-        this._rotation = 0   // the displayed image's rotation in degrees 
-        this._scale = [1,1]  // the displayed image's scale factors: [scaleX, scaleY]
     }
 
     initialize() {
@@ -183,43 +179,6 @@ class ImageDisplay extends _BaseObj {
         }
     }
 
-    // Rotates the image clock-wise by a specified degree increment around its center pos
-    rotateBy(deg) {
-        this._rotation = (this._rotation+deg)%360
-    }
-
-    // Rotates the image to a specified degree around its center pos
-    rotateAt(deg) {
-        this._rotation = deg%360
-    }
-
-    // Smoothly rotates the image to a specified degree around its center pos
-    rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, isUnique=false, force=false) {
-        const ir = this._rotation, dr = deg-this._rotation
-        return this.playAnim(new Anim((prog)=>this.rotateAt(ir+dr*prog), time, easing), isUnique, force)
-    }
-
-    // Scales the image by a specified amount [scaleX, scaleY] from its center pos
-    scaleBy(scale) {
-        let [scaleX, scaleY] = scale
-        if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
-        if (!CDEUtils.isDefined(scaleY)) scaleY = this._scale[1]
-        this._scale[0] *= scaleX
-        this._scale[1] *= scaleY
-    }
-
-    // Scales the image to a specified amount [scaleX, scaleY] from its pos
-    scaleAt(scale) {
-        this.scale = scale
-    }
-
-    // Smoothly scales the image to a specified amount [scaleX, scaleY] from its center pos
-    scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=false, force=false) {
-        const is = CDEUtils.unlinkArr2(this._scale), dsX = scale[0]-is[0], dsY = scale[1]-is[1]
-
-        return this.playAnim(new Anim(prog=>this.scaleAt([is[0]+dsX*prog, is[1]+dsY*prog], centerPos), time, easing), isUnique, force)
-    }
-
     // returns a separate copy of this ImageDisplay instance
     duplicate(source=this._source, pos=this.pos_, size=this._size, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
         return this.initialized ? new ImageDisplay(
@@ -254,9 +213,6 @@ class ImageDisplay extends _BaseObj {
     get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
     get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
 	get data() {return this._source}
-	get parent() {return this._parent}
-	get rotation() {return this._rotation}
-	get scale() {return this._scale}
     get centerX() {return this._pos[0]+this._size[0]/2}
     get centerY() {return this._pos[1]+this._size[1]/2}
     get centerPos() {return [this.centerX, this.centerY]}
@@ -276,14 +232,6 @@ class ImageDisplay extends _BaseObj {
 	set width(width) {this._size[0] = width}
 	set height(height) {this._size[1] = height}
 	set data(_data) {this._source = _data}
-    set rotation(_rotation) {this._rotation = _rotation%360}
-    set scale(_scale) {
-        let [scaleX, scaleY] = _scale
-        if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
-        if (!CDEUtils.isDefined(scaleY)) scaleY = this._scale[1]
-        this._scale[0] = scaleX
-        this._scale[1] = scaleY
-    }
     set paused(paused) {
         if (paused) this._source.pause()
         else this._source.play()

@@ -190,13 +190,17 @@ The _Obj class is the template class of any canvas object. **It should not be di
 - **color** -> Either a Color instance `new Color("red")`, a string `"red"`, a hex value `#FF0000` or a RGBA array `[255, 0, 0, 1]`
 - **setupCB** -> Custom callback called on the object's initialization `(this, this?.parent)=>{}`s
 - ***setupResults*** -> The value returned by the `setupCB` call.
+- - **loopCB** -> Custom callback called each frame for the object (this)=>
 - **anchorPos** -> The reference point from which the object's pos will be set. Can either be a pos `[x,y]`, another canvas object instance, or a callback `(this, Canvas or parent)=>{... return [x,y]}` (Defaults to the parent's pos, or `[0, 0]` if the object has no parent). If your *anchorPos* references another object, make sure it is defined and initialized when used as the *anchorPos* value.
 - **alwaysActive** -> Whether the object stays active when outside the canvas bounds.
 - ***initialized*** -> Whether the object has been initialized.
+- ***parent*** -> The parent of the object. (Shape, Canvas, ...)
+- ***rotation*** -> The object's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
+- ***scale*** -> The shape's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
 
 **This class also defines other useful base functions**, such as:
 - Movements functions (`moveBy`, `addForce`, `follow`, ...)
-- Informative functions (`isWithin`, `posDistances`, `getInitPos`, ...)
+- Informative functions (`isWithin`, `getInitPos`, ...)
 - Access to the object's animation play (`playAnim`)
 
  
@@ -229,8 +233,7 @@ The dot class is **meant** to be the *core* of all effects. It appears as a circ
 ###### - `new Dot(pos, radius, color, setupCB, anchorPos, alwaysActive)`
 - *pos, radius, color, setupCB, anchorPos, alwaysActive* -> See the _Obj class.
 
-Its other attributes are:
-- **parent**? -> The shape in which the dot is contained, if any. 
+Its other attribute is:
 - **connections** -> a list referencing other dots, primarily to draw a connection between them. 
 
 
@@ -300,12 +303,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
 - **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, mouse, parentSetupResults, distance, parent, isActive, rawRatio)=>{...}`.
 - **ratioPosCB**? -> References the mouse position by default. Can be used to set a custom *ratioPos* target `(Shape, dots)=>{... return [x, y]}`. Can be disabled if set to `null`.
-- **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused) 
-
-**Its other attributes are:**
-- **rotation** -> The shape's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
-- **scale** -> The shape's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
-
+- **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused)
 
 ### **To add one or many dots,** use the add() function:
 ###### - add(dots)
@@ -330,7 +328,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 
 
 ### **To modify dots' properties all at once,** use the following functions:
-###### - setRadius(radius),  setColor(color), setLimit(limit)
+###### - setRadius(radius, onlyReplaceDefaults),  setColor(color, onlyReplaceDefaults), setLimit(limit, onlyReplaceDefaults)
 ```js
     // Sets the radius of all dummyShape's dots to 10
     dummyShape.setRadius(10)
@@ -781,10 +779,7 @@ The TextDisplay class allows the drawing of text as an canvas object.
 - **drawMethod** -> The draw method used when drawing the text, Either `"FILL"` or `"STROKE"`.
 - **maxWidth**? -> The max width in pixels of the drawn text.
 
-**Its other attributes are:**
-- **parent** -> The parent of the TextDisplay object. (Most likely a Canvas instance) 
-- **rotation** -> The text's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
-- **scale** -> The text's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
+**Its other attribute is:**
 - **size** -> The text's *width* and *height* in pixels `[width, height]`. Does not take into account scaling, use the `trueSize` getter for adjusted size.
 
 #### Example use 1:
@@ -826,9 +821,6 @@ The ImageDisplay class allows the drawing of images, videos and live camera/scre
 **Its other attributes are:**
 - **data** -> The usable data source for drawing the image.
 - **sourceCroppingPositions** -> The source cropping positions. Delimits a rectangle which indicates the source drawing area to draw from: `[ [startX, startY], [endX, endY] ]`. (Defaults to no cropping)
-- **parent** -> The parent of the ImageDisplay object. (Most likely a Canvas instance) 
-- **rotation** -> The image's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
-- **scale** -> The image's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
 
 #### Example use 1:
 ###### - Drawing an image from the web
@@ -1640,7 +1632,7 @@ This function is used to run a callback for a specific amount of time.
 
 ### Level 2: Adding canvas objects to the canvas
 **Once everything is declared, objects will start getting added to the canvas.**
-- Sets the *cvs* or *parent* attribute on *references* and *definitions* respectively
+- Sets the *parent* attribute on *references* and *definitions*
 - Runs the `initialize()` function on both *references* and *definitions* (On every added object)
 - Adds objects as *references* or *definitions* in the canvas
 
@@ -1650,9 +1642,9 @@ This function is used to run a callback for a specific amount of time.
 - Runs the `initialize()` function for each dot contained in the shape. (After getting its `initialize()` function called, the shape calls the `initialize()` of all its dots, while also setting some of their attributes.)
 
 **Runs the following on applicable objects:**
-- if `initPos` is a callback -> `initPos(cvs, this)`
+- if `initPos` is a callback -> `initPos(Canvas, this)`
 - if `initDots` is a string -> `createFromString(initDots)`
-- if `initDots` is a callback -> `initDots(this, cvs)`
+- if `initDots` is a callback -> `initDots(this, Canvas)`
 - if `initRadius` is a callback -> `initRadius(this)`
 - if `initColor` is a callback -> `initColor(render, this)`
 - `setupCB(this)`
@@ -1677,6 +1669,7 @@ After this, every dot will be initialized, and all canvas objects will be ready 
 - Plays the object's animations, if any
 - Sets the `initialized` attribute to `true` for dots after 1 frame
 - Runs the `drawEffectCB` for dots
+- Runs the `loopCB` for all objects
 - Visually draws the dots
 - Updates the `ratioPos` for shapes if `ratioPos` is a function
 - Draws the fill area of filled shapes
@@ -1685,7 +1678,7 @@ After this, every dot will be initialized, and all canvas objects will be ready 
 
 **Note:**
 - *Reference:* an object containing other objects. (ex: Shape)
-- *Definition:* a standalone object. (ex: Dot without a parent Shape)
+- *Definition:* a standalone object. (ex: Dot without a parent Shape, TextDisplay, ImageDisplay)
 
 
 
