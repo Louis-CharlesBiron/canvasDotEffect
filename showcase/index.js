@@ -193,6 +193,13 @@ CVS.add(imageTester, true)
 
 
 
+let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], null, (render, dot, ratio, m, res, dist, shape, isActive)=>{
+    CanvasUtils.drawDotConnections(dot, render.profile1.update(leColor, 3, [0]))
+})
+CVS.add(moreGridTester)
+
+
+
 CVS.add(generationTester)
 CVS.add(animTester)
 CVS.add(draggableDotTester)

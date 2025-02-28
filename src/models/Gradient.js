@@ -112,7 +112,7 @@ class Gradient extends _DynamicColor {
 
     // returns a separate copy of the Gradient
     duplicate(positions=this._positions, ctx=this._ctx, colorStops=this._colorStops, type=this._type, rotation=this._rotation) {
-        return new Gradient(this._ctx, CDEUtils.unlinkArr22(positions), [...this._colorStops], this._type, this._rotation)
+        return new Gradient(ctx, CDEUtils.unlinkArr22(positions), [...colorStops], type, rotation)
     }
 
     toString() {

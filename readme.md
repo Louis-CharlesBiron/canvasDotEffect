@@ -697,7 +697,7 @@ A symbol has this structure: `[...[index, directions]]`. It is composed of a mai
    Though, to make the letter "A", we need to only connect to the dots at (0, 2) and (4, 2).
    We achieve these two connections by updating our previous sub-arrays like this -> [1, D.bl] and [3, D.br]
 
-    **Note:** A new vertical layer is created when the sub-array horizontal index is smaller than the previous sub-array's.
+    **Note:** A new vertical layer is created when the sub-array horizontal index is smaller than the previous sub-array's. (When the horizontal index is negative, it forces the creation of a new vertical layer and starts it at the absolute value of the negative horizontal index) (You can also use `Infinity` to "skip" a layer without putting any dot)
     ```js
     // The main array
     [
