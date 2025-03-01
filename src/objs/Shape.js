@@ -4,22 +4,18 @@
 //
 
 // Contains and controls a group of dots
-class Shape extends Obj {
+class Shape extends _Obj {
     static DEFAULT_LIMIT = 100
 
-    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile) {
-        super(pos, radius??Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, anchorPos, alwaysActive)
-        this._cvs = null                         // CVS instance
+    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
+        super(pos, radius??_Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, loopCB, anchorPos, alwaysActive)
         this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                    // initial dots declaration
         this._dots = []                          // array containing current dots in the shape
         this._ratioPos = [Infinity,Infinity]     // position of ratio target object 
-        this._drawEffectCB = drawEffectCB        // (ctx, Dot, ratio, mouse, distance, parent, rawRatio)=>
+        this._drawEffectCB = drawEffectCB        // (render, Dot, ratio, mouse, setupResults, distance, parent, isActive, rawRatio)=>
         this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>
         this._fragile = fragile||false           // whether the shape resets on document visibility change
-
-        this._rotation = 0                       // the shape's rotation in degrees 
-        this._scale = [1,1]                      // the shape's scale factors: [scaleX, scaleY] 
     }
 
     // initializes the shape, adds its dots and initializes them
@@ -28,7 +24,7 @@ class Shape extends Obj {
         this.setAnchoredPos()
 
         if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
-        else if (CDEUtils.isFunction(this._initDots)) this.add(this._initDots(this, this._cvs))
+        else if (CDEUtils.isFunction(this._initDots)) this.add(this._initDots(this, this._parent))
         else if (typeof this._initDots === "string") this.add(this.createFromString(this._initDots))
 
         this.setRadius(this.getInitRadius(), true)
@@ -46,7 +42,22 @@ class Shape extends Obj {
 
     // returns a separate copy of this Shape (only initialized for objects)
     duplicate() {
-        return this.initialized ? new Shape(this.pos_, this._dots.map(d=>d.duplicate()), this._radius, this.colorObject.duplicate(), this.limit, this._drawEffectCB, this._ratioPosCB, this.setupCB, this._fragile) : null
+        const colorObject = this._color, colorRaw = colorObject.colorRaw, shape = new Shape(
+            this.pos_,
+            this._dots.map(d=>d.duplicate()),
+            this._radius,
+            (_,shape)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:shape):colorObject.duplicate(),
+            this._limit,
+            this._drawEffectCB,
+            this._ratioPosCB,
+            this._setupCB,
+            this._loopCB,
+            this._fragile
+        )
+        shape._scale = CDEUtils.unlinkArr2(this._scale)
+        shape._rotation = this._rotation
+
+        return this.initialized ? shape : null
     }
 
     // adds one or many dots to the shape
@@ -59,19 +70,19 @@ class Shape extends Obj {
             dot.initialize()
             return dot
         }))
-        this._cvs.updateCachedAllEls()
+        this._parent.updateCachedAllEls()
     }
 
     // remove a dot from the shape by its id or by its instance
     removeDot(idOrDot) {
         this._dots = this._dots.filter(dot=>dot.id!==(idOrDot?.id??idOrDot))
-        this._cvs.updateCachedAllEls()
+        this._parent.updateCachedAllEls()
     }
 
     // remove the shape and all its dots
     remove() {
-        this._cvs.remove(this._id)
-        this._cvs.updateCachedAllEls()
+        this._parent.remove(this._id)
+        this._parent.updateCachedAllEls()
     }
 
     /**
@@ -148,8 +159,7 @@ class Shape extends Obj {
             if (onlyReplaceDefaults && !dot.initColor) {
                 dot.color = color
                 dot.initColor = color
-            }
-            else if (!onlyReplaceDefaults) {
+            } else if (!onlyReplaceDefaults) {
                 dot.color = color
                 if (!dot.initColor) dot.initColor = color
             }
@@ -168,7 +178,7 @@ class Shape extends Obj {
     }
 
     // Rotates the dots by a specified degree increment around a specified center point
-    rotateBy(deg, centerPos=this.pos) {// clock-wise, from the top
+    rotateBy(deg, centerPos=this.getCenter()) {// clock-wise, from the top
         const [cx, cy] = centerPos
         this._dots.forEach(dot=>{
             const x = dot.x-cx, y = dot.y-cy,
@@ -182,12 +192,12 @@ class Shape extends Obj {
     }
 
     // Rotates the dots to a specified degree around a specified center point
-    rotateAt(deg, centerPos=this.pos) {
+    rotateAt(deg, centerPos=this.getCenter()) {
         this.rotateBy(360-(this._rotation-deg), centerPos)
     }
 
     // Smoothly rotates the dots to a specified degree around a specified center point
-    rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=true, force=true) {
+    rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, centerPos=this.getCenter(), isUnique=true, force=true) {
         const ir = this._rotation, dr = deg-this._rotation
 
         return this.playAnim(new Anim((prog)=>{
@@ -196,7 +206,7 @@ class Shape extends Obj {
     }
 
     // Scales the dots by a specified amount [scaleX, scaleY] from a specified center point
-    scaleBy(scale, centerPos=this.pos) {
+    scaleBy(scale, centerPos=this.getCenter()) {
         const [scaleX, scaleY] = scale, [cx, cy] = centerPos
         this._dots.forEach(dot=>{
             dot.x = (dot.x-cx)*scaleX+cx
@@ -206,13 +216,13 @@ class Shape extends Obj {
     }
 
     // Scales the dots to a specified amount [scaleX, scaleY] from a specified center point
-    scaleAt(scale, centerPos=this.pos) {
+    scaleAt(scale, centerPos=this.getCenter()) {
         const dsX = scale[0]/this._scale[0], dsY = scale[1]/this._scale[1]
         this.scaleBy([dsX, dsY], centerPos)
     }
 
     // Smoothly scales the dots by a specified amount [scaleX, scaleY] from a specified center point
-    scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=true, force=true) {
+    scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.getCenter(), isUnique=true, force=true) {
         const is = this._scale, dsX = scale[0]-this._scale[0], dsY = scale[1]-this._scale[1]
 
         return this.playAnim(new Anim(prog=>{
@@ -244,7 +254,7 @@ class Shape extends Obj {
     // Empties the shapes of all its dots
     clear() {
         this._dots = []
-        this._cvs.updateCachedAllEls()
+        this._parent.updateCachedAllEls()
     }
 
     // Rerenders the shape to its original form
@@ -255,9 +265,9 @@ class Shape extends Obj {
         }
     }
 
-    get cvs() {return this._cvs}
-    get ctx() {return this._cvs.ctx}
-    get render() {return this._cvs.render}
+    get cvs() {return this._parent}
+    get ctx() {return this.cvs.ctx}
+    get render() {return this.cvs.render}
     get dots() {return this._dots}
     get dotsPos() {return this._dots.map(dot=>dot.pos)}
     get limit() {return this._limit}
@@ -265,8 +275,6 @@ class Shape extends Obj {
     get drawEffectCB() {return this._drawEffectCB}
     get ratioPos() {return this._ratioPos}
     get ratioPosCB() {return this._ratioPosCB}
-    get rotation() {return this._rotation}
-    get scale() {return this._scale}
     get lastDotsPos() {return this._lastDotsPos}
     get dotsPositions() {// returns a string containing all the dot's position
         let currentDotPos="", d_ll = this.dots.length
@@ -277,11 +285,12 @@ class Shape extends Obj {
     get secondDot() {return this._dots[1]}
     get thirdDot() {return this._dots[2]}
     get asSource() {return this._dots}
+    get setupResults() {return this._setupResults}
 
-    set cvs(cvs) {this._cvs = cvs}
     set ratioPos(ratioPos) {this._ratioPos = ratioPos}
     set drawEffectCB(cb) {this._drawEffectCB = cb}
     set ratioPosCB(cb) {this._ratioPosCB = cb}
     set lastDotsPos(ldp) {this._lastDotsPos = ldp}
     set limit(limit) {this._limit = limit}
+    set setupResults(_setupResults) {this._setupResults = _setupResults}
 }

@@ -11,7 +11,7 @@
 - [Getting Started / Minimal setup](#getting-started--minimal-setup)
 - [Classes](#classes)
   - [Canvas](#canvas)
-  - [Obj](#obj)
+  - [_Obj](#obj)
   - [Dot](#dot)
   - [Shape](#shape)
   - [Filled Shape](#filled-shape)
@@ -21,6 +21,7 @@
   - [ImageDisplay](#imagedisplay)
   - [Color](#color)
   - [Gradient](#gradient)
+  - [Pattern](#pattern)
   - [Render](#render)
   - [TextStyles](#textStyles)
   - [RenderStyles](#renderstyles)
@@ -175,9 +176,9 @@ The Canvas class is the core of the project. It manages the main loop, the windo
 ```
  
 
-# [Obj](#table-of-contents)
+# [_Obj](#table-of-contents)
 
-The Obj class is the template class of any canvas object. **It should not be directly instantiated.**
+The _Obj class is the template class of any canvas object. **It should not be directly instantiated.**
 
 #### **All canvas objects will have at least these attributes:**
 - ***id*** -> Id of the object.
@@ -185,17 +186,21 @@ The Obj class is the template class of any canvas object. **It should not be dir
 - ***pos*** -> Array containing the `[x, y]` position of the object.
 - ***initRadius*** -> Initial radius declaration. Can either be a number or a callback `(parent or this)=>{... return radius}`
 - **radius** -> The radius in px object the dot (Or the radius of its dots if is a Shape).
-- ***initColor*** -> Initial color declaration. Can either be a color value (see ↓) or a callback `(ctx, this)=>{... return colorValue}`
+- ***initColor*** -> Initial color declaration. Can either be a color value (see ↓) or a callback `(render, this)=>{... return colorValue}`
 - **color** -> Either a Color instance `new Color("red")`, a string `"red"`, a hex value `#FF0000` or a RGBA array `[255, 0, 0, 1]`
 - **setupCB** -> Custom callback called on the object's initialization `(this, this?.parent)=>{}`s
 - ***setupResults*** -> The value returned by the `setupCB` call.
+- - **loopCB** -> Custom callback called each frame for the object (this)=>
 - **anchorPos** -> The reference point from which the object's pos will be set. Can either be a pos `[x,y]`, another canvas object instance, or a callback `(this, Canvas or parent)=>{... return [x,y]}` (Defaults to the parent's pos, or `[0, 0]` if the object has no parent). If your *anchorPos* references another object, make sure it is defined and initialized when used as the *anchorPos* value.
 - **alwaysActive** -> Whether the object stays active when outside the canvas bounds.
 - ***initialized*** -> Whether the object has been initialized.
+- ***parent*** -> The parent of the object. (Shape, Canvas, ...)
+- ***rotation*** -> The object's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
+- ***scale*** -> The shape's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
 
 **This class also defines other useful base functions**, such as:
 - Movements functions (`moveBy`, `addForce`, `follow`, ...)
-- Informative functions (`isWithin`, `posDistances`, `getInitPos`, ...)
+- Informative functions (`isWithin`, `getInitPos`, ...)
 - Access to the object's animation play (`playAnim`)
 
  
@@ -226,10 +231,9 @@ The dot class is **meant** to be the *core* of all effects. It appears as a circ
 
 #### **The Dot constructor takes the following parameters:**
 ###### - `new Dot(pos, radius, color, setupCB, anchorPos, alwaysActive)`
-- *pos, radius, color, setupCB, anchorPos, alwaysActive* -> See the Obj class.
+- *pos, radius, color, setupCB, anchorPos, alwaysActive* -> See the _Obj class.
 
-Its other attributes are:
-- **parent**? -> The shape in which the dot is contained, if any. 
+Its other attribute is:
 - **connections** -> a list referencing other dots, primarily to draw a connection between them. 
 
 
@@ -275,7 +279,7 @@ Its other attributes are:
             new Dot([150, 100]),
             new Dot([150, 150]),
             new Dot([100, 150])
-    ], Obj.DEFAULT_RADIUS, Color.DEFAULT_COLOR, Shape.DEFAULT_LIMIT)
+    ], _Obj.DEFAULT_RADIUS, Color.DEFAULT_COLOR, Shape.DEFAULT_LIMIT)
     
     // Add the shape along with all of its dots as a single unit. (reference)
     CVS.add(squareLikeFormation)
@@ -292,19 +296,14 @@ One of the main features is the ***drawEffectCB***. This callback allows the cre
 Effects are often ratio-based, meaning the *intensity* of the effect is based on the distance between the dot and the *ratioPos*. You can control the affected distance with the *limit* parameter, and the the object to which the distance\ratio is calculated with the *ratioPosCB* parameter.
 
 #### **The Shape constructor takes the following parameters:**
-###### - `new Shape(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)`
-- *pos, radius, color, setupCB, anchorPos, alwaysActive* -> See the Obj class.
+###### - `new Shape(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)`
+- *pos, radius, color, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj class.
 - **initDots** -> Initial dots declaration. Can either be: an array of dots `[new Dot(...), existingDot, ...]`, a **String** (this will automatically call the shape's createFromString() function), or a callback `(Shape, Canvas)=>{... return anArrayOfDots}` 
 - ***dots*** -> Array of all the current dots contained by the shape. 
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
-- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, mouse, distance, parent, parentSetupResults, isActive, rawRatio)=>{...}`.
+- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, mouse, parentSetupResults, distance, parent, isActive, rawRatio)=>{...}`.
 - **ratioPosCB**? -> References the mouse position by default. Can be used to set a custom *ratioPos* target `(Shape, dots)=>{... return [x, y]}`. Can be disabled if set to `null`.
-- **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused) 
-
-**Its other attributes are:**
-- **rotation** -> The shape's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
-- **scale** -> The shape's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
-
+- **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused)
 
 ### **To add one or many dots,** use the add() function:
 ###### - add(dots)
@@ -329,7 +328,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 
 
 ### **To modify dots' properties all at once,** use the following functions:
-###### - setRadius(radius),  setColor(color), setLimit(limit)
+###### - setRadius(radius, onlyReplaceDefaults),  setColor(color, onlyReplaceDefaults), setLimit(limit, onlyReplaceDefaults)
 ```js
     // Sets the radius of all dummyShape's dots to 10
     dummyShape.setRadius(10)
@@ -433,7 +432,7 @@ CVS.add(a)
          new Dot([50, -50]),
          new Dot([50, 0]),
          new Dot([50, 50]),
-     ], null, normalColorTester, 100, (render, dot, ratio, mouse, dist)=>{
+     ], null, normalColorTester, 100, (render, dot, ratio, mouse)=>{
      
          // Changes the opacity and color according to mouse distance
          dot.a = CDEUtils.mod(1, ratio, 0.8)
@@ -442,7 +441,7 @@ CVS.add(a)
          
          
          // Changes the dot's radius, from 2 times the default radius with a range of 80% (10px..2px), according to mouse distance
-         dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
+         dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS*2*0.8)
          
          // Draws a ring around the dot, at 5 times the radius
          CanvasUtils.drawOuterRing(dot, [255,255,255,0.2], 5)
@@ -455,7 +454,7 @@ CVS.add(a)
 #### Example use 2:
 ###### - Single throwable dot, with color and radius effects
 ```js
-    const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (render, dot, ratio, mouse, dist, shape, setupResults)=>{
+    const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (render, dot, ratio, mouse, setupResults, dist, shape)=>{
         
         // Checking if the mouse is over the dot and clicked, and changing the color according to the state
         const mouseOn = dot.isWithin(mouse.pos, true)
@@ -497,8 +496,7 @@ CVS.add(a)
     // Assuming we have simpleShape from example use 1 available...
 
     // Creating a shape with a dot moving back and forth every second
-    const backAndForthDotShape = new Shape([200,200],
-        new Dot([0,0], null, null, (dot, shape)=>{
+    const backAndForthDotShape = new Shape([200,200], new Dot([0,0], null, null, (dot, shape)=>{
             let distance = 150, ix = dot.x
             dot.playAnim(new Anim((progress, playCount, deltaTime)=>{
                 dot.x = ix + ((playCount % 2) === 0 ? 1 : -1) * distance * progress
@@ -525,9 +523,9 @@ The FilledShape class is a derivative of the Shape class. It allows to fill the 
 
 
 #### **The FilledShape constructor takes the following parameters:**
-###### - `new FilledShape(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)`
-- *pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
-- **fillColor** -> Defines the color of the shape's filling. Either a color value, a Gradient instance, or a callback returning any of the previous two `(ctx, shape)=>{... return [r, g, b, a]}`.
+###### - `new FilledShape(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)`
+- *pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
+- **fillColor** -> Defines the color of the shape's filling. Either a color value, a Gradient instance, or a callback returning any of the previous two `(render, shape)=>{... return [r, g, b, a]}`.
 - **dynamicUpdates** -> Whether the shape's fill area checks for updates every frame
 
 
@@ -571,8 +569,8 @@ The FilledShape class is a derivative of the Shape class. It allows to fill the 
 The Grid class is a derivative of the Shape class. It allows the creation of dot-based symbols / text. To create your own set of symbols (source), see the *Grid Assets* section.
 
 #### **The Grid constructor takes the following parameters:**
-###### - `new Grid(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile)`
-- *pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
+###### - `new Grid(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)`
+- *pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
 - **keys** -> A string containing the characters to create.
 - **gaps** -> The `[x, y]` distances within the dots.
 - **source** -> The source containing the symbol's definitions. See the *Grid Assets* section.
@@ -614,7 +612,7 @@ The Grid class is a derivative of the Shape class. It allows the creation of dot
             // This will make a nice proximity effect when the mouse is close.
             // The mod() function and the ratio allow us to modify the dot radius with
             // a linear interpolation based on the distance between the ratioPos (the mouse) and the current dot.
-            dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS, ratio, Obj.DEFAULT_RADIUS)     // DEFAULT_RADIUS = 5
+            dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS, ratio, _Obj.DEFAULT_RADIUS)     // DEFAULT_RADIUS = 5
             
             
             // By default, no connections are drawn between the dots of a grid.
@@ -699,7 +697,7 @@ A symbol has this structure: `[...[index, directions]]`. It is composed of a mai
    Though, to make the letter "A", we need to only connect to the dots at (0, 2) and (4, 2).
    We achieve these two connections by updating our previous sub-arrays like this -> [1, D.bl] and [3, D.br]
 
-    **Note:** A new vertical layer is created when the sub-array horizontal index is smaller than the previous sub-array's.
+    **Note:** A new vertical layer is created when the sub-array horizontal index is smaller than the previous sub-array's. (When the horizontal index is negative, it forces the creation of a new vertical layer and starts it at the absolute value of the negative horizontal index) (You can also use `Infinity` to "skip" a layer without putting any dot)
     ```js
     // The main array
     [
@@ -774,17 +772,14 @@ A symbol has this structure: `[...[index, directions]]`. It is composed of a mai
 The TextDisplay class allows the drawing of text as an canvas object.
 
 #### **The TextDisplay constructor takes the following parameters:**
-###### - `new TextDisplay(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, anchorPos, alwaysActive)`
-- *pos, color, setupCB, anchorPos, alwaysActive* -> See the Obj / *_BaseObj* class.
+###### - `new TextDisplay(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, alwaysActive)`
+- *pos, color, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
 - **text** -> The text to be displayed. Either a `String` or a callback `(parent, this)=>{... return "textToDisplay"}`.
 - **textStyles** -> The style profile to be used for styling the text. Either a `TextStyles` or  a callback `(render)=>{... return TextStyles}`.
 - **drawMethod** -> The draw method used when drawing the text, Either `"FILL"` or `"STROKE"`.
 - **maxWidth**? -> The max width in pixels of the drawn text.
 
-**Its other attributes are:**
-- **parent** -> The parent of the TextDisplay object. (Most likely a Canvas instance) 
-- **rotation** -> The text's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
-- **scale** -> The text's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
+**Its other attribute is:**
 - **size** -> The text's *width* and *height* in pixels `[width, height]`. Does not take into account scaling, use the `trueSize` getter for adjusted size.
 
 #### Example use 1:
@@ -794,10 +789,10 @@ const helloWorldText = new TextDisplay(
     "Hello World!", // Displayed text
     [200, 100],     // positionned at [200, 100]
     "lightblue",    // colored lightblue
-    (render)=>render.textProfile1.updateStyles("italic 24px monospace"), // using the textProfile1 styles, only over writting the font
+    (render)=>render.textProfile1.update("italic 24px monospace"), // using the textProfile1 styles, only over writting the font
     null, // leaving drawMethod to the default value ("FILL")
     null, // leaving maxWidth to the default value (undefined)
-    (textDisplay)=>{
+    (textDisplay)=>{// setupCB
     
         // adding a spin animation, repeating every 3 seconds
         textDisplay.playAnim(new Anim(prog=>{
@@ -818,17 +813,14 @@ CVS.add(helloWorldText, true)
 The ImageDisplay class allows the drawing of images, videos and live camera/screen feed.
 
 #### **The TextDisplay constructor takes the following parameters:**
-###### - `new TextDisplay(source, pos, size, setupCB, anchorPos, alwaysActive)`
-- *pos, setupCB, anchorPos, alwaysActive* -> See the Obj / *_BaseObj* class.
-- **source** -> The initial source declaration of the image. Either a `String` or one of `ImageDisplay.SOURCE_TYPES`.
+###### - `new ImageDisplay(source, pos, size, setupCB, loopCB, anchorPos, alwaysActive)`
+- *pos, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
+- **source** -> The source declaration of the image. One of `ImageDisplay.SOURCE_TYPES`.
 - **size** -> The display size of the image `[width, height]`. (Resizes the image)
 
 **Its other attributes are:**
 - **data** -> The usable data source for drawing the image.
-- **sourceCroppingPositions** -> The data source cropping positions. Delimits a rectangle which indicates the area to be drawn: `[ [startX, startY], [endX, endY] ]`. (Defaults to no cropping)
-- **parent** -> The parent of the ImageDisplay object. (Most likely a Canvas instance) 
-- **rotation** -> The image's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
-- **scale** -> The image's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
+- **sourceCroppingPositions** -> The source cropping positions. Delimits a rectangle which indicates the source drawing area to draw from: `[ [startX, startY], [endX, endY] ]`. (Defaults to no cropping)
 
 #### Example use 1:
 ###### - Drawing an image from the web
@@ -951,16 +943,16 @@ The Color class represents a color and provides multiple utility functions such 
 The Gradient class allows the creation of custom linear / radial gradients. A Gradient instance can be used in the *color* and *fillColor* fields of canvas objects. 
 
 #### **The Gradient constructor takes the following parameters:**
-###### - `new Gradient(ctx, positions, colorStops, type, rotation)`
-- **ctx** -> The canvas context.
-- **positions** -> The positions of the gradient. Giving a Shape instance will position automatically the gradient according to the pos of its dots. For manual positions: **linear gradients**: `[ [x1, y1], [x2, y2] ]`, **radial gradients** `[ [x1, y1, r1], [x2, y2, r2] ]`, *conic gradients:* `[ x, y ]`.
+###### - `new Gradient(render, positions, colorStops, type, rotation)`
+- **render** -> The canvas Render instance, or context.
+- **positions** -> The positions of the gradient. Providing a canvas object will automaticlly position it to cover the minimal area containing all of the provided object. For manual positions: **linear gradients**: `[ [x1, y1], [x2, y2] ]`, **radial gradients** `[ [x1, y1, r1], [x2, y2, r2] ]`, *conic gradients:* `[ x, y ]`.
 - **colorStops** -> An array containing the difference colors and their range `[0..1, color]`. Ex: `[ [0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"] ]`.
 - **type** -> The type of gradient. Either: Linear, Radial or Conic. (Defaults to Linear)
 - **rotation** -> The rotation in degrees of the gradient. (Not applicable for Radial gradients)
 
 
-### **To update a gradient,** use the updateGradient() function:
-###### - updateGradient()
+### **To manually update a Gradient,** use the update() function:
+###### - update()
 ```js
     // Creating a gradient
     const customGradient = new Gradient(
@@ -977,10 +969,10 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
     customGradient.colorStops = [[0, "green"], [1, "pink"]]
 
     // Access the gradient assigned to the shape's filling and update it
-    dummyFilledShape.fillColorRaw.updateGradient()
+    dummyFilledShape.fillColorRaw.update()
 ```
 
-**Note:** when using a Shape or a Dot instance as the 'positions' parameter, the gradient will update every frame automatically.
+**Note:** when using a Shape, a Dot or a TextDisplay instance as the 'positions' parameter, the gradient will update every frame automatically.
 
 #### Example use 1:
 ###### - Coloring a FilledShape with a gradient and making a rotating gradient effect
@@ -988,7 +980,7 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
 const gradientShape = new FilledShape(
         // Creating and returning a linear gradient with a callback.
         // This linear gradient will auto-position itself according to the shape's dots, start at 90deg rotation and will go from purple->red->yellow-ish
-        (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"]], null, 90), 
+        (render, shape)=>new Gradient(render, shape, [[0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"]], null, 90), 
         
         // Other parameters are used by the FilledShape, to make a square at [100, 100]
         false,
@@ -1020,13 +1012,91 @@ const gradientShape = new FilledShape(
 
  
 
+# [Pattern](#table-of-contents)
+
+The Pattern class allows the creation image/video based colors. A Pattern instance can be used in the *color* and *fillColor* fields of canvas objects. 
+
+#### **The Pattern constructor takes the following parameters:**
+###### - `new Pattern(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, frameRate, repeatMode)`
+- **render** -> The canvas Render instance, or context.
+- *source* -> The source declaration of the pattern. One of `ImageDisplay.SOURCE_TYPES`.
+- **positions** -> The positions of the pattern. (`[ [x1, y1], [x2, y2] ]`) Providing a canvas object will automaticlly position it to cover the minimal area containing all of the provided object.
+- **sourceCroppingPositions** -> The source cropping positions. Delimits a rectangle which indicates the source drawing area to draw from: `[ [startX, startY], [endX, endY] ]`. (Defaults to no cropping)
+- **keepAspectRatio** -> Whether the displayed pattern keeps the same aspect ratio when resizing.
+- **forcedUpdates** -> Whether/How the pattern updates are forced. One of `Pattern.FORCE_UPDATE_LEVELS` .
+- **rotation** -> The pattern's current rotation in degrees.
+- **frameRate** -> The update frequency of the current source. (Controls the frequency of video/canvas sources updates, as well as the frequency of any other sources when a visible property gets updated: e.g *when the rotation gets changed*)
+- **repeatMode** -> Whether the pattern repeats horizontally/vertically. One of `Pattern.REPETITION_MODES`.
+
+
+### **To manually get the rectangular area containing all of a specific object,** use the _DynamicColor.getAutomaticPositions() function:
+###### - getAutomaticPositions(obj)
+```js
+    // Creating a dummy shape
+    const dummyShape = new Shape([0, 0], [new Dot([50,50]), new Dot([100, 0])])
+
+
+    // Adding the shape to the canvas first, because it needs to be initialized before looking at its pos
+    CVS.add(dummyShape)
+
+    // Getting the area (see example use 4 for real use of this function)
+    const area = _DynamicColor.getAutomaticPositions(dummyShape)
+    console.log("My Dummy Shape fits perfectly into this area! -> ", area)
+```
+
+
+
+#### Example use 1:
+###### - Coloring some dots with a custom image 
+```js
+    // Creating a dummy shape with two big dots, here parts of the image are going to be visible through the dots
+    const dummyShape = new Shape([100, 100], [new Dot([250,250]), new Dot([0,0])], 50, (render, shape)=>
+        new Pattern(
+            render, // the render instance
+            "./img/img2.jpg", // the source of the image, here it's the path to a local file
+            shape, // making the pattern fit the shape size
+            null,  // no source cropping
+            true   // preserving the default aspect ratio
+        )
+    )
+    
+    // Adding the shape to the canvas
+    CVS.add(dummyShape)
+```
+
+#### Example use 2:
+###### - Coloring some text with a camera feed
+```js
+    // Creating a dummy text display
+    const dummyText = new TextDisplay("Hey, this is just\n some random text in\n order to fill up space,\n have a nice day! :D", [250, 250], (render, text)=>
+            new Pattern(
+                render, // the render instance
+                ImageDisplay.loadCamera(), // the source of the pattern, here it's we are requesting access to the live camera feed
+                text, // making the pattern fit the size of the text
+                null, // no source cropping
+                false // resizing will most likely change the aspect ratio
+            ))
+    
+    CVS.add(dummyText, true)
+```
+
+#### Example use 3:
+###### - Sharing VS duplicating a pattern
+```js
+
+```
+
+#### Example use 4:
+###### - Using a pattern to color non objects (In this case, lines)
+```js
+
+```
+
+ 
+
 # [Render](#table-of-contents)
 
-Render is a class that centralizes most context operation. It provides functions to get *lines* and *text*, as well as functions to *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles for lines and text (RenderStyles, TextDisplay). Finally, it is automatically instanciated by, and linked to, any Canvas instance.
-
-#### **The Render constructor takes the following parameters:**
-###### - `new Render(ctx)`
-- **ctx** -> The canvas context.
+Render is a class that centralizes most context operation. It provides functions to get *lines* and *text*, as well as functions to *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles for lines and text (RenderStyles, TextDisplay). Finally, it is automatically instanciated by, and linked to, any Canvas instance and should not be instanciated manually.
 
 #### Example use 1:
 ###### - Manually drawing a custom beizer curve 
@@ -1084,18 +1154,18 @@ The RenderStyles class allows the customization of renders via style profiles wh
     // the style profile is now accessible via render.profiles[indexOfTheProfile]
 ```
 
-### **To reuse a style profile for multiple styles,** use the updateStyles() function:
-###### -  updateStyles(color?, lineWidth?, lineDash?, lineDashOffset?, lineJoin?, lineCap?)
+### **To reuse a style profile for multiple styles,** use the update() function:
+###### -  update(color?, lineWidth?, lineDash?, lineDashOffset?, lineJoin?, lineCap?)
 ```js
     {// Running in the drawEffectCB function of some shape...
         
         // ...
         
         // Drawing a line between a dot and its ratioPos, using the profile1 styles and updating the color, lineWidth, lineDash, lineDashOffset
-        CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.updateStyles(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25], 10))
+        CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25], 10))
     
         // Drawing a dot's connections, using again the profile1 styles and updating only the color, lineWidth
-        CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles([255,0,0,1], 2))
+        CanvasUtils.drawDotConnections(dot, render.profile1.update([255,0,0,1], 2))
     }
 
 ```
@@ -1122,7 +1192,7 @@ The RenderStyles class allows the customization of renders via style profiles wh
         ...
     
     // Drawing the connections between dots, and styling them with an updated version of render's profile1 and a custom lineType
-    CanvasUtils.drawDotConnections(dot, render.profile1.updateStyles(
+    CanvasUtils.drawDotConnections(dot, render.profile1.update(
             Color.rgba(255, 0, 0, CDEUtils.mod(1, ratio, 0.8)), // updating the color to a dynamically shaded red
             4,   // updating the lineWidth to 4px
             [10] // updating the lineDash to 10px
@@ -1311,7 +1381,7 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
     
     // Creating a mostly default shape, with a single dot
     const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null, 
-        (render, dot, ratio, m, dist, shape)=>{// drawEffectCB callback
+        (render, dot, ratio, m, setupResults, dist, shape)=>{// drawEffectCB callback
     
             // Changing the dot's size based on mouse distance for an additional small effect
             dot.radius = CDEUtils.mod(shape.radius*2, ratio, shape.radius*2*0.5)
@@ -1410,7 +1480,7 @@ This function is used to draw a connection between a Dot and another pos/object.
             CanvasUtils.drawLine(
                 dot,        // start Dot
                 [200, 200], // end position (can also be a Dot)
-                RenderStyles.PROFILE1.updateStyles(
+                RenderStyles.PROFILE1.update(
                     Color.rgba(dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)) // updates only the color, but uses every previously set styles
                 )
             )
@@ -1485,10 +1555,10 @@ const manualSineWaveDrawer = new Shape([100, 100], [
 ], null, null, 100, (render, dot, ratio)=>{// shape's drawEffectCB
 
     // drawing a dotted red line between the two dots
-    CanvasUtils.drawDotConnections(dot, RenderStyles.PROFILE1.updateStyles([255,0,0,1], null, null, null, [5]))
+    CanvasUtils.drawDotConnections(dot, RenderStyles.PROFILE1.update([255,0,0,1], null, null, null, [5]))
 
     // simple radius hover effect
-    dot.radius = CDEUtils.mod(Obj.DEFAULT_RADIUS*2, ratio, Obj.DEFAULT_RADIUS*2*0.8)
+    dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS*2*0.8)
 
 }, null, (shape)=>{// Shape's setupCB
     
@@ -1506,7 +1576,7 @@ const manualSineWaveDrawer = new Shape([100, 100], [
     // adding a connection between the first and second dot
     shape.firstDot.addConnection(shape.dots[1])
 
-}, null, true)
+}, null, null, true)
 
 // adding the shape to the canvas
 CVS.add(manualSineWaveDrawer)
@@ -1562,7 +1632,7 @@ This function is used to run a callback for a specific amount of time.
 
 ### Level 2: Adding canvas objects to the canvas
 **Once everything is declared, objects will start getting added to the canvas.**
-- Sets the *cvs* or *parent* attribute on *references* and *definitions* respectively
+- Sets the *parent* attribute on *references* and *definitions*
 - Runs the `initialize()` function on both *references* and *definitions* (On every added object)
 - Adds objects as *references* or *definitions* in the canvas
 
@@ -1572,13 +1642,13 @@ This function is used to run a callback for a specific amount of time.
 - Runs the `initialize()` function for each dot contained in the shape. (After getting its `initialize()` function called, the shape calls the `initialize()` of all its dots, while also setting some of their attributes.)
 
 **Runs the following on applicable objects:**
-- if `initPos` is a callback -> `initPos(cvs, this)`
+- if `initPos` is a callback -> `initPos(Canvas, this)`
 - if `initDots` is a string -> `createFromString(initDots)`
-- if `initDots` is a callback -> `initDots(this, cvs)`
+- if `initDots` is a callback -> `initDots(this, Canvas)`
 - if `initRadius` is a callback -> `initRadius(this)`
-- if `initColor` is a callback -> `initColor(ctx, this)`
+- if `initColor` is a callback -> `initColor(render, this)`
 - `setupCB(this)`
-- if a FilledShape and `fillColor` is a callback -> `initFillColor(ctx, this)`
+- if a FilledShape and `fillColor` is a callback -> `initFillColor(render, this)`
 - Adjusts the `pos` according to the `anchorPos`
 - Sets the `initialized` attribute to `true` for shapes
 
@@ -1588,7 +1658,7 @@ After this, every dot will be initialized, and all canvas objects will be ready 
 **Runs the following on referenced dots (*dots in shapes*):**
 - if `initPos` is a callback -> `initPos(parent, this)`
 - if `initRadius` is a callback -> `initRadius(parent, this)`
-- if `initColor` is a callback -> `initColor(ctx, this)`
+- if `initColor` is a callback -> `initColor(render, this)`
 - `setupCB(this, parent)`
 - Adjusts the `pos` according to the `anchorPos`
 
@@ -1599,6 +1669,7 @@ After this, every dot will be initialized, and all canvas objects will be ready 
 - Plays the object's animations, if any
 - Sets the `initialized` attribute to `true` for dots after 1 frame
 - Runs the `drawEffectCB` for dots
+- Runs the `loopCB` for all objects
 - Visually draws the dots
 - Updates the `ratioPos` for shapes if `ratioPos` is a function
 - Draws the fill area of filled shapes
@@ -1607,7 +1678,7 @@ After this, every dot will be initialized, and all canvas objects will be ready 
 
 **Note:**
 - *Reference:* an object containing other objects. (ex: Shape)
-- *Definition:* a standalone object. (ex: Dot without a parent Shape)
+- *Definition:* a standalone object. (ex: Dot without a parent Shape, TextDisplay, ImageDisplay)
 
 
 

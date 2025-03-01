@@ -4,32 +4,40 @@
 //
 
 // The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
-class Dot extends Obj {
+class Dot extends _Obj {
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
-        super(pos, radius, color, setupCB, anchorPos, alwaysActive)
-        this._parent = null     // the object containing the dot
+        super(pos, radius, color, setupCB, null, anchorPos, alwaysActive)
         this._connections = []  // array of Dot to draw a connecting line to
     }
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
     draw(render, time, deltaTime) {
         if (this.initialized) {
-            // runs parent drawEffect callback if defined
-            if (CDEUtils.isFunction(this.drawEffectCB)) {
-                const dist = this.getDistance(), rawRatio = this.getRatio(dist), isActive = rawRatio<1
-                this.drawEffectCB(render, this, isActive?rawRatio:1, this.mouse, dist, this._parent, this.parentSetupResults, isActive, rawRatio)
+            const drawEffectCB = this.drawEffectCB
+            if (drawEffectCB) {
+                const dist = this.getDistance(), rawRatio = this.getRatio(dist), isActive = rawRatio<1, parent = this._parent
+                drawEffectCB(render, this, isActive?rawRatio:1, parent.parent.mouse, parent.setupResults, dist, parent, isActive, rawRatio)
             }
 
-            // draw dot
+            // todo scale
             if (this._radius) render.batchFill(Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
         } else this.initialized = true
         super.draw(time, deltaTime)
     }
 
     
-    // returns a separate copy of this Dot (only initialized for objects)
+    // returns a separate copy of this Dot
     duplicate() {
-        return new Dot(this.getInitPos(), this._radius, this._color.duplicate(), this._setupCB)
+        const dot = new Dot(
+            this.getInitPos(),
+            this._radius,
+            this._color.duplicate(),
+            this._setupCB
+        )
+
+        dot._scale = CDEUtils.unlinkArr2(this._scale)
+        dot._rotation = this._rotation
+        return dot
     }
 
     // returns pythagorian distance between the ratio defining position and the dot
@@ -82,14 +90,12 @@ class Dot extends Obj {
         else this._parent.remove(this._id)
     }
 
-    get cvs() {return this._parent?.cvs}
-    get ctx() {return this._parent?.cvs.ctx}
-    get render() {return this._parent?.cvs.render}
-    get limit() {return this._parent?.limit}
+    get ctx() {return this._parent.parent.ctx}
+    get render() {return this._parent.parent.render}
+    get limit() {return this._parent.limit}
     get drawEffectCB() {return this._parent?.drawEffectCB}
-    get parent() {return this._parent}
-    get mouse() {return this.cvs.mouse}
-    get ratioPos() {return this._parent?.ratioPos}
+    get mouse() {return this._parent.parent.mouse}
+    get ratioPos() {return this._parent.ratioPos}
     get connections() {return this._connections}
     get parentSetupResults() {return this._parent?.setupResults}
 

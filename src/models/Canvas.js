@@ -17,7 +17,9 @@ class Canvas {
     static DEFAULT_CTX_SETTINGS = {"imageSmoothingEnabled":false, "willReadFrequently":false, "font":TextStyles.DEFAULT_FONT, "letterSpacing":TextStyles.DEFAULT_LETTER_SPACING, "wordSpacing":TextStyles.DEFAULT_WORD_SPACING, "fontVariantCaps":TextStyles.DEFAULT_FONT_VARIANT_CAPS, "direction":TextStyles.DEFAULT_DIRECTION, "fontSretch":TextStyles.DEFAULT_FONT_STRETCH, "fontKerning":TextStyles.DEFAULT_FONT_KERNING, "textAlign":TextStyles.DEFAULT_TEXT_ALIGN, "textBaseline":TextStyles.DEFAULT_TEXT_BASELINE, "textRendering":TextStyles.DEFAULT_TEXT_RENDERING, "lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
-    static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0"}
+    static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)"}
+    static #ON_LOAD_CALLBACKS = []
+    static #ON_FIRST_INTERACT_CALLBACKS = []
 
     #lastFrame = 0           // default last frame time
     #lastLimitedFrame = 0    // last frame time for limited fps
@@ -35,10 +37,11 @@ class Canvas {
         this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true)// set styles selector for parent
         this._ctx = this._cvs.getContext("2d", {willReadFrequently})  // canvas context
         this._settings = this.updateSettings(settings)                // set context settings
-        this._els={refs:[], defs:[]}                                  // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
+        this._els = {refs:[], defs:[]}                                // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
         this._looping = false                                         // loop state
         this._loopingCallback = loopingCallback                       // custom callback called along with the loop() function
         this.fpsLimit = fpsLimit                                      // delay between each frame to limit fps
+        this._speedModifier = 1                                       // animation/drawing speed multiplier
         this.#maxTime = this.#getMaxTime(fpsLimit)                    // max time between frames
         this._deltaTime = null                                        // useable delta time in seconds
         this._fixedTimeStamp = null                                   // fixed (offsets lag spikes) requestanimationframe timestamp in ms
@@ -72,16 +75,33 @@ class Canvas {
                 this.#mouseMovements()
                 this.#lastScrollValues[0] = scrollX
                 this.#lastScrollValues[1] = scrollY
-            }
+              },
+              onLoad=e=>{
+                const callbacks = Canvas.#ON_LOAD_CALLBACKS, cb_ll = callbacks?.length
+                if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
+                Canvas.#ON_LOAD_CALLBACKS = null
+              }
 
         window.addEventListener("resize", onresize)
         window.addEventListener("visibilitychange", onvisibilitychange)
         window.addEventListener("scroll", onscroll)
+        window.addEventListener("load", onLoad)
         return {
             onrezise:()=>window.removeEventListner("resize", onresize),
             onvisibilitychange:()=>window.removeEventListener("visibilitychange", onvisibilitychange),
-            onscroll:()=>window.removeEventListener("scroll", onscroll)
+            onscroll:()=>window.removeEventListener("scroll", onscroll),
+            onDOMContentLoaded:()=>window.removeEventListener("load", onLoad)
         }
+    }
+
+    // adds a callback to be called once the document is loaded
+    static addOnLoadCallback(callback) {
+        if (CDEUtils.isFunction(callback) && Canvas.#ON_LOAD_CALLBACKS) Canvas.#ON_LOAD_CALLBACKS.push(callback)
+    }
+
+    // adds a callback to be called once the document has been interacted with for the first time
+    static addOnFirstInteractCallback(callback) {
+        if (CDEUtils.isFunction(callback) && Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#ON_FIRST_INTERACT_CALLBACKS.push(callback)
     }
 
     // updates the calculated canvas offset in the page
@@ -164,11 +184,11 @@ class Canvas {
 
     // calls the draw function on all canvas objects
     draw() {
-        const els = this.#cachedEls, els_ll = this.#cachedEls_ll
+        const els = this.#cachedEls, els_ll = this.#cachedEls_ll, render = this._render, deltaTime = this._deltaTime, timeStamp = this.timeStamp*this._speedModifier, activeAreaPadding = Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING
         for (let i=0;i<els_ll;i++) {
             const el = els[i]
-            if ((!el.alwaysActive && el.initialized && !this.isWithin(el.pos, Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING)) || !el.draw) continue
-            el.draw(this._render, this.timeStamp, this._deltaTime)
+            if ((!el.alwaysActive && el.initialized && !this.isWithin(el.pos, activeAreaPadding)) || !el.draw) continue
+            el.draw(render, timeStamp, deltaTime)
         }
     }
 
@@ -229,8 +249,7 @@ class Canvas {
         const l = objs&&(objs.length??1)
         for (let i=0;i<l;i++) {
             const obj = objs[i]??objs
-            if (!isDef) obj.cvs = this
-            else obj._parent = this
+            obj._parent = this
             
             if (CDEUtils.isFunction(obj.initialize)) obj.initialize()
             if (active) this._els[isDef?"defs":"refs"].push(obj)
@@ -241,8 +260,12 @@ class Canvas {
 
     // removes any element from the canvas by id
     remove(id) {
-        this._els.defs = this._els.defs.filter(el=>el.id!==id)
-        this._els.refs = this._els.refs.filter(source=>source.id!==id)
+        if (id==="*") {
+            this._els = {refs:[], defs:[]}
+        } else {
+            this._els.defs = this._els.defs.filter(el=>el.id!==id)
+            this._els.refs = this._els.refs.filter(source=>source.id!==id)
+        }
         this.updateCachedAllEls()
     }
 
@@ -266,6 +289,13 @@ class Canvas {
         this._ctx.restore()
     }
 
+    // ran on first user interaction
+    static #onFirstInteraction(e) {
+        const callbacks = Canvas.#ON_FIRST_INTERACT_CALLBACKS, cb_ll = callbacks?.length
+        if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
+        Canvas.#ON_FIRST_INTERACT_CALLBACKS = null
+    }
+
     // called on mouse move
     #mouseMovements(cb, e) {
         // update ratioPos to mouse pos if not overwritten
@@ -274,10 +304,8 @@ class Canvas {
             const ref = this.refs[i]
             if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos = this._mouse.pos
         }
-        // custom move callback
         if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
 
-        // check mouse pos validity
         this._mouse.checkValid()
     }
 
@@ -310,7 +338,6 @@ class Canvas {
     // defines the onmouseleave listener
     setmouseleave(cb) {
         const onmouseleave=e=>{
-            // invalidate mouse
             this._mouse.invalidate()
             this.#mouseMovements(cb, e)
         }
@@ -322,6 +349,7 @@ class Canvas {
     #mouseClicks(cb, e) {
         this._mouse.setMouseClicks(e)
         if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
+        if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
     }
 
     // defines the onmousedown listener
@@ -379,10 +407,11 @@ class Canvas {
         const onkeydown=e=>{
             this._typingDevice.setDown(e)
             if (CDEUtils.isFunction(cb)) cb(e, this._typingDevice)
-        }
+            }, globalFirstInteractOnKeyDown=e=>{if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)}
         
         const element = global ? document : this._frame
         element.addEventListener("keydown", onkeydown)
+        document.addEventListener("keydown", globalFirstInteractOnKeyDown)
         return ()=>element.removeEventListener("keydown", onkeydown)
     }
 
@@ -434,6 +463,7 @@ class Canvas {
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
     get render() {return this._render}
+    get speedModifier() {return this._speedModifier}
 
 	set loopingCallback(loopingCallback) {this._loopingCallback = loopingCallback}
 	set width(w) {this.setSize(w, null)}
@@ -443,4 +473,5 @@ class Canvas {
         this._fpsLimit = CDEUtils.isDefined(fpsLimit)&&isFinite(fpsLimit) ? 1000/Math.max(fpsLimit, 0) : null
         this.#maxTime = this.#getMaxTime(fpsLimit)
     }
+    set speedModifier(speedModifier) {this._speedModifier = speedModifier}
 }

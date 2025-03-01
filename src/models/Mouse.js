@@ -26,8 +26,9 @@ class Mouse {
 
     // calculates and sets the current mouse speed (loop every frame)
     calcSpeed(deltaTime) {
+        const DECELERATION = Mouse.DEFAULT_MOUSE_DECELERATION
         if (isFinite(this._lastX) && isFinite(this._lastY) && deltaTime) {
-            this._speed = this._speed*Mouse.DEFAULT_MOUSE_DECELERATION+(CDEUtils.getDist(this._x, this._y, this._lastX, this._lastY)/deltaTime)*(1-Mouse.DEFAULT_MOUSE_DECELERATION)
+            this._speed = this._speed*DECELERATION+(CDEUtils.getDist(this._x, this._y, this._lastX, this._lastY)/deltaTime)*(1-DECELERATION)
             if (this._speed < Mouse.DEFAULT_MOUSE_MOVE_TRESHOLD) this._speed = 0
         } else this._speed = 0
 
@@ -99,7 +100,4 @@ class Mouse {
 	set rightClicked(_rightClicked) {return this._rightClicked = _rightClicked}
 	set extraBackClicked(_extraBackClicked) {return this._extraBackClicked = _extraBackClicked}
 	set extraForwardClicked(_extraForwardClicked) {return this._extraForwardClicked = _extraForwardClicked}
-
-
-
 }

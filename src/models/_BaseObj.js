@@ -10,16 +10,20 @@ class _BaseObj extends _HasColor {
     static POSITION_PRECISION = 4
 
     #lastAnchorPos = [0,0]
-    constructor(pos, color, setupCB, anchorPos, alwaysActive) {
+    constructor(pos, color, setupCB, loopCB, anchorPos, alwaysActive) {
         super(color)
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
         this._initPos = pos||[0,0]               // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = [0,0]                        // current position from the center of the object : [x,y]
         this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
+        this._loopCB = loopCB                    // called each frame for this object (this)=>
         this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
-        
         this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
+        
+        this._parent = null                      // the object's parent
+        this._rotation = 0                       // the object's rotation in degrees 
+        this._scale = [1,1]                      // the object's scale factors: [scaleX, scaleY]
         this._anims = {backlog:[], currents:[]}  // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
         this._initialized = false                // whether the object has been initialized yet
     }
@@ -34,12 +38,12 @@ class _BaseObj extends _HasColor {
 
     // returns the value of the inital color declaration
     getInitColor() {
-        return CDEUtils.isFunction(this._initColor) ? this._initColor(this.ctx??this.parent.ctx, this) : this._initColor||null
+        return CDEUtils.isFunction(this._initColor) ? this._initColor(this.render??this.parent.render, this) : this._initColor||null
     }
 
     // returns the value of the inital pos declaration
     getInitPos() {
-        return CDEUtils.isFunction(this._initPos) ? CDEUtils.unlinkArr2(this._initPos(this._cvs??this.parent, this)) : CDEUtils.unlinkArr2(this.adjustPos(this._initPos))
+        return CDEUtils.isFunction(this._initPos) ? CDEUtils.unlinkArr2(this._initPos(this._parent instanceof Canvas?this:this._parent, this)) : CDEUtils.unlinkArr2(this.adjustPos(this._initPos))
     }
 
     setAnchoredPos() {
@@ -54,10 +58,10 @@ class _BaseObj extends _HasColor {
 
     // Runs every frame
     draw(time, deltaTime) {
-        // update pos according to anchor pos
         this.setAnchoredPos()
+        const loopCB = this._loopCB
+        if (loopCB) loopCB(this)
 
-        // run anims
         let anims = this._anims.currents
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         const a_ll = anims.length
@@ -89,6 +93,42 @@ class _BaseObj extends _HasColor {
             this.x = ix+dx*prog
             this.y = iy+dy*prog
         }, time, easing), isUnique, force)
+    }
+
+    // Rotates the object clock-wise by a specified degree increment around its pos
+    rotateBy(deg) {
+        this._rotation = (this._rotation+deg)%360
+    }
+
+    // Rotates the object to a specified degree around its pos
+    rotateAt(deg) {
+        this._rotation = deg%360
+    }
+
+    // Smoothly rotates the object to a specified degree around its pos
+    rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, isUnique=false, force=false) {
+        const ir = this._rotation, dr = deg-this._rotation
+        return this.playAnim(new Anim((prog)=>this.rotateAt(ir+dr*prog), time, easing), isUnique, force)
+    }
+
+    // Scales the object by a specified amount [scaleX, scaleY] from its pos
+    scaleBy(scale) {
+        let [scaleX, scaleY] = scale
+        if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
+        if (!CDEUtils.isDefined(scaleY)) scaleY = this._scale[1]
+        this._scale[0] *= scaleX
+        this._scale[1] *= scaleY
+    }
+
+    // Scales the object to a specified amount [scaleX, scaleY] from its pos
+    scaleAt(scale) {
+        this.scale = scale
+    }
+
+    // Smoothly scales the text to a specified amount [scaleX, scaleY] from its pos
+    scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=false, force=false) {
+        const is = CDEUtils.unlinkArr2(this._scale), dsX = scale[0]-is[0], dsY = scale[1]-is[1]
+        return this.playAnim(new Anim(prog=>this.scaleAt([is[0]+dsX*prog, is[1]+dsY*prog], centerPos), time, easing), isUnique, force)
     }
 
     /**
@@ -173,10 +213,10 @@ class _BaseObj extends _HasColor {
     get anchorPosRaw() {return this._anchorPos}
     get anchorPos() {// returns the anchorPos value
         if (Array.isArray(this._anchorPos)) return this._anchorPos
-        else if (!this._anchorPos) return (this._cvs||this.parent instanceof Canvas) ? [0,0] : this.parent?.pos_
+        else if (!this._anchorPos) return (this.parent instanceof Canvas) ? [0,0] : this.parent?.pos_
         else if (this._anchorPos instanceof _BaseObj) return this._anchorPos.pos_
         else if (CDEUtils.isFunction(this._anchorPos)) {
-            const res = this._anchorPos(this, this._cvs??this.parent)
+            const res = this._anchorPos(this, this.parent)
             return CDEUtils.unlinkArr2((res?.pos_||res||[0,0]))
         }
     }
@@ -185,6 +225,9 @@ class _BaseObj extends _HasColor {
         const anchorPos = this.anchorPos
         return !CDEUtils.arr2Equals(this.#lastAnchorPos, anchorPos)&&anchorPos
     }
+    get parent() {return this._parent}
+    get rotation() {return this._rotation}
+    get scale() {return this._scale}
 
     set x(x) {this._pos[0] = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)}
     set y(y) {this._pos[1] = CDEUtils.round(y, _BaseObj.POSITION_PRECISION)}
@@ -206,5 +249,12 @@ class _BaseObj extends _HasColor {
     set anchorPos(anchorPos) {this.anchorPosRaw = anchorPos}
     set anchorPosRaw(anchorPos) {this._anchorPos = anchorPos}
     set lastAnchorPos(lastAnchorPos) {this.#lastAnchorPos = lastAnchorPos}
-    
+    set rotation(_rotation) {this._rotation = _rotation%360}
+    set scale(_scale) {
+        let [scaleX, scaleY] = _scale
+        if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
+        if (!CDEUtils.isDefined(scaleY)) scaleY = this._scale[1]
+        this._scale[0] = scaleX
+        this._scale[1] = scaleY
+    }
 }

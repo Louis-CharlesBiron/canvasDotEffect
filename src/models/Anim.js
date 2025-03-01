@@ -5,11 +5,11 @@
 
 // Allows the creation of smooth progress based animations 
 class Anim {
-    static ANIM_ID_GIVER = 0
+    static #ANIM_ID_GIVER = 0
     static DEFAULT_DURATION = 1000
 
     constructor(animation, duration, easing, endCallback) {
-        this._id = Anim.ANIM_ID_GIVER++                  // animation id
+        this._id = Anim.#ANIM_ID_GIVER++                  // animation id
         this._animation = animation                      // the main animation (clampedProgress, playCount, progress)=>
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
         this._easing = easing||Anim.linear               // easing function (x)=>

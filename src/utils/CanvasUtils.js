@@ -50,7 +50,7 @@ class CanvasUtils {
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
-            const res = dot.getLinearIntersectPoints(target, (target.radius??Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
+            const res = dot.getLinearIntersectPoints(target, (target.radius??_Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
             dot.render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
         } else dot.render.batchStroke(lineType(dot.pos, target.pos??target, spread), renderStyles)
     }
@@ -107,14 +107,14 @@ class CanvasUtils {
     }
 
     // Provides quick generic shape declarations
-    static SHAPES = class {// DOC TODO
+    static SHAPES = class {// TODO ?
         static DEBUG_SHAPE(pos, dots) {
             return new Shape(pos||[100,100], dots||[new Dot(), new Dot([100]), new Dot([,100]), new Dot([100,100])])
         }
 
         static THROWABLE_DOT(pos, radius, color) {
             const dragAnim = CanvasUtils.getDraggableDotCB()
-            return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, m, dist, shape)=>{
+            return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, m, res, dist, shape)=>{
                 dragAnim(shape.firstDot, m, dist, ratio)
             })
         }
