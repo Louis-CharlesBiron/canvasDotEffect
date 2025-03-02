@@ -7,28 +7,29 @@
 class AudioDisplay extends _BaseObj {
     static SUPPORTED_FORMATS = ["mp4","webm","ogv","mov","avi","mkv","flv","wmv","3gp","m4v", "mp3", "wav", "ogg", "aac", "m4a", "opus", "flac"]
     static SOURCE_TYPES = {FILE_PATH:"string", DYNAMIC:"[object Object]", MICROPHONE:"MICROPHONE", SCREEN_AUDIO:"SCREEN_AUDIO", VIDEO:HTMLVideoElement, AUDIO:HTMLAudioElement}
+    static MINIMAL_FFT = 1
+    static MAXIMAL_FFT = 32768
 
     /**
      TODO
 
     - initialize, draw
-    - get waveForm bins
     - different types of display (waveForm sineWave, etc?)
-    - rotation/scale
-    - custom sample count
     - auto spacing given a max width
-    - make offset work
+    - optimization!
 
     - good camera/capture default audio settings
 
     - some utility functions: play, stop, volume, etc & maybe some audio modifiers
 
+    - width -> barWidth, spacing, sampleCount
+
+    
      documentation
 
      */
 
     #buffer_ll = null
-    #dataStep = null
     #data = null
     #fft = null
     constructor(source, pos, color, sampleCount, spacing, maxHeight, barWidth, offsetPourcent, type, setupCB, loopCB, anchorPos, alwaysActive) {
@@ -43,14 +44,12 @@ class AudioDisplay extends _BaseObj {
 
         this._audioCtx = new AudioContext()
         this._audioAnalyser = this._audioCtx.createAnalyser()
-        this.#fft = this._audioAnalyser.fftSize = sampleCount<32?32:2**Math.round(Math.log2(sampleCount))
+        this.#fft = this._audioAnalyser.fftSize = Math.max(32, 2**Math.round(Math.log2(sampleCount*2)))
         this.#buffer_ll = this._audioAnalyser.frequencyBinCount
         this.#data = new Uint8Array(this.#buffer_ll)
-        this.#dataStep = Math.round(this.#buffer_ll/sampleCount)
     }
 
     initialize() {
-        // load if file
         // load if url
         // load if video/audio html el
         // load if desktop audio
@@ -60,9 +59,6 @@ class AudioDisplay extends _BaseObj {
 
             this._audioCtx.createMediaElementSource(audio).connect(this._audioAnalyser)
             this._audioAnalyser.connect(this._audioCtx.destination)
-
-
-
 
 
             this._initialized = true
@@ -86,14 +82,14 @@ class AudioDisplay extends _BaseObj {
 
             let atX = x
             this._audioAnalyser.getByteFrequencyData(this.#data)
-            const spacing = this._spacing, barHeight = this._maxHeight, offset = this._offsetPourcent*this.#fft, adjusted_ll = this._sampleCount-offset
-            for (let ii=-offset,i=offset>>0;ii<adjusted_ll;ii++,i=(i+1)%this.#fft) {
-                const v = this.#data[i*this.#dataStep]/128, y2 = (v*barHeight)/2
-                //if (!v) break;
+            const spacing = this._spacing, barHeight = this._maxHeight, offset = (this._offsetPourcent%1)*(this.#fft/2), adjusted_ll = Math.round(0.49+this._sampleCount)-offset, arr = new Uint8Array(this._sampleCount/2)
+            for (let ii=-offset,i=offset>>0;ii<adjusted_ll;ii++,i=(i+1)%(this._sampleCount)) {
+                const v = 0.05+this.#data[i]/128, y2 = (v*barHeight)/2
                 render.fill(Render.getRect([atX, y], this._barWidth, y2), this._color)
-                atX += spacing
+                atX = (atX+spacing)
+                arr[i] = this.#data[i]
             }
-            console.log(atX, adjusted_ll)
+            console.log(atX, adjusted_ll, this.#fft, this._sampleCount)
             
 
 
