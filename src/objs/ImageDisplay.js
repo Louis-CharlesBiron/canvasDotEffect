@@ -34,6 +34,9 @@ class ImageDisplay extends _BaseObj {
         this._sourceCroppingPositions = null // data source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
     }
 
+    // TODO, check if camera autoplays (like when put in index.js)
+    // TODO proper video disposal (delete this._source when the imageDisplay is deleted)
+
     initialize() {
         ImageDisplay.initializeDataSource(this._source, (data, size)=>{
             this._source = data
@@ -137,7 +140,7 @@ class ImageDisplay extends _BaseObj {
     }
 
     // Returns a usable video source
-    static loadVideo(path, looping=false, autoPlay=false) {
+    static loadVideo(path, looping=true, autoPlay=true) {
         const video = document.createElement("video")
         video.src = path
         video.preload = "auto"
