@@ -1,5 +1,6 @@
 class GridAssets {
     static D = [["t","-ar"],["r",1],["b","ar"],["l",-1],["tr","1-ar"],["br","ar+1"],["bl","ar-1"],["tl","-ar-1"],["i",0]].reduce((a,[b,d],i)=>(a.places.push([a[b]=1<<i,(ar)=>new Function("ar",`return ${d}`)(ar)]),a),{places:[]})
+    static DEFAULT_SOURCE = GridAssets.fontSource5x5
 
     static get fontSource5x5() {
         const D = GridAssets.D
@@ -252,11 +253,73 @@ class GridAssets {
                 [0,D.b],[3,D.b],
                 [0,D.br],[3,D.bl],
                 [1,D.r],[],
-            ],
-            
-            
-            
-            "!": [
+            ],p: [
+                [1,D.r+D.bl],[,D.br],
+                [0,D.b],[3,D.bl],
+                [0,D.b+D.r],[,D.r],[],
+                [0,D.b],
+                [0]
+            ],q: [
+                [1,D.r+D.bl],[,D.br],
+                [0,D.br],[3,D.b],
+                [1,D.r],[,D.r],[,D.b],
+                [3,D.b],
+                [3]
+            ],r: [
+                [Infinity],
+                [0,D.b],[,D.bl+D.r],[],
+                [0,D.b],
+                [0,D.b],
+                [0],
+            ],s: [
+                [Infinity],
+                [2,D.bl+D.br],
+                [1,D.br],[3],
+                [1,D.br],[2,D.r],[,D.b],
+                [2,D.r],[]
+            ],t: [
+                [2,D.b],
+                [1,D.r],[,D.b+D.r],[],
+                [2,D.b],
+                [2,D.b],
+                [2]
+            ],u: [
+                [Infinity],
+                [0,D.b],[2,D.b],
+                [0,D.b],[2,D.b],
+                [0,D.br],[2,D.bl+D.br],
+                [1,D.r],[3,]
+            ],v: [
+                [Infinity],
+                [1,D.b],[3,D.b],
+                [1,D.b],[3,D.b],
+                [1,D.br],[3,D.bl],
+                [2,D.r],
+            ],w: [
+                [Infinity],
+                [0,D.b],[2,D.b],[4,D.b],
+                [0,D.b],[2,D.b],[4,D.b],
+                [0,D.br],[2,D.bl+D.br],[4,D.bl],
+                [1],[3],
+            ],x: [
+                [1,D.b],[3,D.b],
+                [1,D.br],[3,D.bl],
+                [2,D.br+D.bl],
+                [1,D.b],[3,D.b],
+                [1],[3],
+            ],y: [
+                [Infinity],
+                [1,D.b],[3,D.b],
+                [1,D.br],[3,D.bl],
+                [2,D.b],
+                [2]
+            ],z: [
+                [Infinity],
+                [0,D.r],[,D.r],[,D.r],[,D.bl],
+                [2,D.bl],
+                [1,D.bl],
+                [0,D.r],[,D.r],[,D.r],[]
+            ],"!": [
                 [3,D.b],
                 [3,D.b],
                 [3,D.b],

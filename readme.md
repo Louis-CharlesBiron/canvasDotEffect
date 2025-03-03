@@ -590,7 +590,7 @@ The Grid class is a derivative of the Shape class. It allows the creation of dot
     // This will make all letters overlap each others
     dummyGrid.setSpacing(0)
     
-    // This will change the current source to the default fontSource5x5, which contains only A-Z letters.   (Some key definitions may not be supported depending of which source or keys you're using)
+    // This will change the current source to the default fontSource5x5, which defines A-Z a-z 0-9 and some special characters.   (Some key definitions may not be supported depending of which source or keys you're using)
     dummyGrid.setSource(GridAssets.fontSource5x5)
 ```
 
@@ -602,7 +602,7 @@ The Grid class is a derivative of the Shape class. It allows the creation of dot
         "abcdefg\nhijklm\nnopqrs\ntuvwxyz", // the keys corresponding to the alphabet letters, with some line breaks
         [5, 5],                             // equal gaps, this will make the alphabet look a bit square-ish
         50,                                 // 50px letter spacing
-        GridAssets.fontSource5x5,                      // default source
+        GridAssets.DEFAULT_SOURCE,          // default source
         [10,10],                            // the shape position (The text will start from this point, as its top-left corner)
         2,                                  // 2px dot radius
         null,                               // color is left undefined, the shape will assign it the default value

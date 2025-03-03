@@ -90,7 +90,7 @@ let test2 = new Shape((shape, idk)=>{return [50+50,100+shape.dots.length]},[new 
 
 // ALPHABET
 let leColor = [255,0,0,1]
-let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (render, dot, ratio, m, res, dist, shape, isActive)=>{
+let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyzX", [5, 5], 50, null, [10,200], 2, null, null, (render, dot, ratio, m, res, dist, shape, isActive)=>{
     dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS, ratio, _Obj.DEFAULT_RADIUS)
 
     if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25]), 2)
