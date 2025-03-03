@@ -5,7 +5,7 @@
 
 // todo doc
 class AudioDisplay extends _BaseObj {
-    static SUPPORTED_FORMATS = ["mp4","webm","ogv","mov","avi","mkv","flv","wmv","3gp","m4v", "mp3", "wav", "ogg", "aac", "m4a", "opus", "flac"]
+    static SUPPORTED_AUDIO_FORMATS = ["mp3", "wav", "ogg", "aac", "m4a", "opus", "flac"]
     static SOURCE_TYPES = {FILE_PATH:"string", DYNAMIC:"[object Object]", MICROPHONE:"MICROPHONE", SCREEN_AUDIO:"SCREEN_AUDIO", VIDEO:HTMLVideoElement, AUDIO:HTMLAudioElement}
     static MINIMAL_FFT = 1
     static MAXIMAL_FFT = 32768
@@ -89,7 +89,7 @@ class AudioDisplay extends _BaseObj {
                 atX = (atX+spacing)
                 arr[i] = this.#data[i]
             }
-            console.log(atX, adjusted_ll, this.#fft, this._sampleCount)
+            //console.log(atX, adjusted_ll, this.#fft, this._sampleCount)
             
 
 
@@ -100,15 +100,18 @@ class AudioDisplay extends _BaseObj {
 
     static initializeDataSource(dataSrc, loadCallback) {
         const types = AudioDisplay.SOURCE_TYPES
-        if (typeof dataSrc===types.FILE_PATH && AudioDisplay.SUPPORTED_FORMATS.includes(dataSrc.split(".")[dataSrc.split(".").length-1])) AudioDisplay.#initVideoAudioDataSource(AudioDisplay.loadAudio(dataSrc), loadCallback)
-        else if (dataSrc.toString()===types.DYNAMIC) {
+        if (typeof dataSrc===types.FILE_PATH) {
+            const extension = dataSrc.split(".")[dataSrc.split(".").length-1]
+            if (AudioDisplay.SUPPORTED_AUDIO_FORMATS.includes(extension)) AudioDisplay.#initAudioDataSource(AudioDisplay.loadAudio(dataSrc), loadCallback)
+            else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) AudioDisplay.#initAudioDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback)
+        } else if (dataSrc.toString()===types.DYNAMIC) {
             if (dataSrc.type===types.MICROPHONE) AudioDisplay.#initMicrophoneDataSource(dataSrc.settings, loadCallback)
             else if (dataSrc.type===types.SCREEN_AUDIO) AudioDisplay.#initScreenAudioDataSource(dataSrc.settings, loadCallback)
-        } else if (dataSrc instanceof types.VIDEO) AudioDisplay.#initVideoAudioDataSource(dataSrc, loadCallback)
+        } else if (dataSrc instanceof types.VIDEO) AudioDisplay.#initAudioDataSource(dataSrc, loadCallback)
     }
 
     // Initializes a video data source
-    static #initVideoAudioDataSource(dataSource, loadCallback) {
+    static #initAudioDataSource(dataSource, loadCallback) {
         const initLoad=()=>{if (CDEUtils.isFunction(loadCallback)) loadCallback(dataSource)}
         if (dataSource.readyState) initLoad()
         else dataSource.onloadeddata=initLoad
