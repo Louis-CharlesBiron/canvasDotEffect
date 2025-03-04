@@ -15,6 +15,21 @@ class RenderStyles extends _HasColor {
     static SERIALIZATION_SEPARATOR = "%"
     static DEFAULT_PROFILE = new RenderStyles(null, Color.DEFAULT_RGBA, RenderStyles.DEFAULT_WIDTH, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH_OFFSET, RenderStyles.DEFAULT_JOIN, RenderStyles.DEFAULT_CAP)
 
+    /*
+        TODO
+
+        - add "filter", "compositeOperation", "opacity" attributes
+        - update all functions to include these
+        - update Render to include these
+        - do the same for TextStyles
+    
+        - add custum url svg filters
+
+        - documentation
+    
+    */
+
+
     #ctx = null
     constructor(render, color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         super(color)

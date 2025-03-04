@@ -153,7 +153,7 @@ class Render {
             this._ctx.fill(path)
         }
 
-        if (o_ll){
+        if (o_ll) {
             for (let i=0;i<o_ll;i++) standalones[i]()
             this._bactchedStandalones = []
         }
