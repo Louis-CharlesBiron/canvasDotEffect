@@ -7,6 +7,7 @@ const CDE_CANVAS_DEFAULT_TIMEOUT_FN = window.requestAnimationFrame||window.mozRe
 
 // Represents a html canvas element
 class Canvas {
+    static DOMParser = new DOMParser()
     static ELEMENT_ID_GIVER = 0
     static DEFAULT_MAX_DELTATIME_MS = 130
     static DEFAULT_MAX_DELTATIME = Canvas.DEFAULT_MAX_DELTATIME_MS/1000
@@ -16,6 +17,7 @@ class Canvas {
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
     static DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX = "CDE_FE_"
     static DEFAULT_CUSTOM_SVG_FILTER_CONTAINER_ID = Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+"CONTAINER"
+    static LOADED_SVG_FILTERS = {}
     static DEFAULT_CTX_SETTINGS = {"imageSmoothingEnabled":false, "willReadFrequently":false, "font":TextStyles.DEFAULT_FONT, "letterSpacing":TextStyles.DEFAULT_LETTER_SPACING, "wordSpacing":TextStyles.DEFAULT_WORD_SPACING, "fontVariantCaps":TextStyles.DEFAULT_FONT_VARIANT_CAPS, "direction":TextStyles.DEFAULT_DIRECTION, "fontSretch":TextStyles.DEFAULT_FONT_STRETCH, "fontKerning":TextStyles.DEFAULT_FONT_KERNING, "textAlign":TextStyles.DEFAULT_TEXT_ALIGN, "textBaseline":TextStyles.DEFAULT_TEXT_BASELINE, "textRendering":TextStyles.DEFAULT_TEXT_RENDERING, "lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
@@ -105,30 +107,40 @@ class Canvas {
     static addOnFirstInteractCallback(callback) {
         if (CDEUtils.isFunction(callback) && Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#ON_FIRST_INTERACT_CALLBACKS.push(callback)
     }
-    /*
-      DOC TODO  
-    */
-    static loadSVGFilter(id, filterContent) {
-        let svg = document.createElement("svg"), filter = document.createElement("filter"), container = document.getElementById(Canvas.DEFAULT_CUSTOM_SVG_FILTER_CONTAINER_ID)
-        svg.id = "CVS_FE_"+id
-        filter.id = id
-        svg.appendChild(filter)
-        filter.innerHTML = filterContent.trim()
+
+    /**
+     * Loads a custom svg filter to use
+     * @param {String} svgContent: string containing the svg filter, e.g: `<svg><filter id="someId"> ... the filter contents </svg>`
+     * @param {String?} id: the id of the svg filter. (Takes the one of the svgContent <filter> element if not defined) 
+     * @returns the usable id
+     */
+    static loadSVGFilter(svgContent, id) {
+        let container = document.getElementById(Canvas.DEFAULT_CUSTOM_SVG_FILTER_CONTAINER_ID), svg = new DOMParser().parseFromString(svgContent, "text/html").body.firstChild, filter = svg.querySelector("filter"), parent = document.createElement("div")
+        if (!id) id = filter.id
+        else filter.id = id
+        parent.id = Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+id
+        parent.appendChild(svg)
 
         if (!container) {
             container = document.createElement("div")
             container.id = Canvas.DEFAULT_CUSTOM_SVG_FILTER_CONTAINER_ID
             document.head.appendChild(container)
         }
-
-        // SEE new DOMParser() 
-
-        container.appendChild(svg)
-        return svg
+        container.appendChild(parent)
+        Canvas.LOADED_SVG_FILTERS[id] = [...filter.children]
+        return id
     }
 
+    // returns the filter elements of a loaded svg filter
+    static getSVGFilter(id) {
+        return Canvas.LOADED_SVG_FILTERS[id]
+    }
+
+    // deletes a loaded svg filter
     static removeSVGFilter(id) {
-        document.getElementById(Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+id).remove()
+        id = Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+id
+        document.getElementById(id).remove()
+        delete Canvas.LOADED_SVG_FILTERS[id]
     }
 
     // updates the calculated canvas offset in the page

@@ -93,7 +93,7 @@ let leColor = [255,0,0,1]
 let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (render, dot, ratio, m, res, dist, shape, isActive)=>{
     dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS, ratio, _Obj.DEFAULT_RADIUS)
 
-    if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), null, null, null, 4, [5, 25]), 2)
+    if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), null, Render.DEFAULT_COMPOSITE_OPERATION, null, 4, [5, 25]), 2)
     
     CanvasUtils.drawDotConnections(dot, render.profile1.update(leColor, null, null, null, 2, [0]))
 }, ()=>draggableDotTester.dots[0].pos)
@@ -192,9 +192,20 @@ let imageTester = new ImageDisplay(ImageDisplay.loadImage("./img/logo.png"), [-2
 CVS.add(imageTester, true)
 
 
-
+let compOp = ""
 let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], null, (render, dot, ratio, m, res, dist, shape, isActive)=>{
-    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, "url(#test)", null, null, 3, [0]))
+    const variation = CDEUtils.mod(0.05, ratio)
+    Canvas.getSVGFilter("test")[0].setAttribute("baseFrequency", variation+" "+variation)
+    if (CanvasUtils.firstDotOnly(dot)) console.log(Canvas.getSVGFilter("test")[0].getAttribute("baseFrequency"), variation)
+    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, "url(#test)", compOp, 0, 3, [0]))
+}, null, ()=>{
+    Canvas.loadSVGFilter(`<svg>
+        <filter id="turbulence">
+          <feTurbulence type="turbulence" baseFrequency="0.01 0.02" numOctaves="1" result="NOISE"></feTurbulence>
+          <feDisplacementMap in="SourceGraphic" in2="NOISE" scale="50">
+          </feDisplacementMap>
+        </filter>
+       </svg>`, "test")
 })
 CVS.add(moreGridTester)
 

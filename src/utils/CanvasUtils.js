@@ -31,12 +31,16 @@ class CanvasUtils {
         CVS.add(t_d1, true)
         CVS.add(t_d2, true)
     }
+
+    // returns true if the provided dot is the first one of the shape
+    static firstDotOnly(dot) {
+        return dot.id==dot.parent.firstDot.id
+    }
     
     // Generic function to draw an outer ring around a dot
     static drawOuterRing(dot, renderStyles, radiusMultiplier) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
 
-        // skip if not visible
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
         dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
@@ -46,7 +50,6 @@ class CanvasUtils {
     static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
         
-        // skip if not visible
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
@@ -61,10 +64,10 @@ class CanvasUtils {
               dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
 
         if (dc_ll) {
-            // skip if not visible
             if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
-            if (isDestinationOver) ctx.globalCompositeOperation = "destination-over"
+            // TODO ? check
+            //if (isDestinationOver) ctx.globalCompositeOperation = "destination-over"
 
             if (radiusPaddingMultiplier) {
                 const dotRadiusPadding = dot.radius*radiusPaddingMultiplier
@@ -75,7 +78,7 @@ class CanvasUtils {
             } else for (let i=0;i<dc_ll;i++) render.batchStroke(lineType(dotPos, dotConnections[i].pos, spread), renderStyles)
 
             
-            if (isDestinationOver) ctx.globalCompositeOperation = "source-over"
+            //if (isDestinationOver) ctx.globalCompositeOperation = "source-over"
         }
     }
 

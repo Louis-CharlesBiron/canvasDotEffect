@@ -19,7 +19,10 @@ class RenderStyles extends _HasColor {
         TODO
 
         - update Render to include these
-        - make it work on all objects
+        - support for all objects
+        - support for fill
+
+        - fix invasiveness (compositeOperation, maybe others)
     
         - add custum url svg filters
 
