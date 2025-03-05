@@ -14,6 +14,8 @@ class Canvas {
     static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
     static DEFAULT_CVSDE_ATTR = "_CVSDE"
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
+    static DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX = "CDE_FE_"
+    static DEFAULT_CUSTOM_SVG_FILTER_CONTAINER_ID = Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+"CONTAINER"
     static DEFAULT_CTX_SETTINGS = {"imageSmoothingEnabled":false, "willReadFrequently":false, "font":TextStyles.DEFAULT_FONT, "letterSpacing":TextStyles.DEFAULT_LETTER_SPACING, "wordSpacing":TextStyles.DEFAULT_WORD_SPACING, "fontVariantCaps":TextStyles.DEFAULT_FONT_VARIANT_CAPS, "direction":TextStyles.DEFAULT_DIRECTION, "fontSretch":TextStyles.DEFAULT_FONT_STRETCH, "fontKerning":TextStyles.DEFAULT_FONT_KERNING, "textAlign":TextStyles.DEFAULT_TEXT_ALIGN, "textBaseline":TextStyles.DEFAULT_TEXT_BASELINE, "textRendering":TextStyles.DEFAULT_TEXT_RENDERING, "lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
@@ -102,6 +104,31 @@ class Canvas {
     // adds a callback to be called once the document has been interacted with for the first time
     static addOnFirstInteractCallback(callback) {
         if (CDEUtils.isFunction(callback) && Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#ON_FIRST_INTERACT_CALLBACKS.push(callback)
+    }
+    /*
+      DOC TODO  
+    */
+    static loadSVGFilter(id, filterContent) {
+        let svg = document.createElement("svg"), filter = document.createElement("filter"), container = document.getElementById(Canvas.DEFAULT_CUSTOM_SVG_FILTER_CONTAINER_ID)
+        svg.id = "CVS_FE_"+id
+        filter.id = id
+        svg.appendChild(filter)
+        filter.innerHTML = filterContent.trim()
+
+        if (!container) {
+            container = document.createElement("div")
+            container.id = Canvas.DEFAULT_CUSTOM_SVG_FILTER_CONTAINER_ID
+            document.head.appendChild(container)
+        }
+
+        // SEE new DOMParser() 
+
+        container.appendChild(svg)
+        return svg
+    }
+
+    static removeSVGFilter(id) {
+        document.getElementById(Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+id).remove()
     }
 
     // updates the calculated canvas offset in the page

@@ -7,11 +7,13 @@
 class Render {
     static COMPOSITE_OPERATIONS = {SOURCE_OVER: "source-over", SOURCE_IN: "source-in", SOURCE_OUT: "source-out", SOURCE_ATOP: "source-atop", DESTINATION_OVER: "destination-over", DESTINATION_IN: "destination-in", DESTINATION_OUT: "destination-out", DESTINATION_ATOP: "destination-atop", LIGHTER: "lighter", COPY: "copy", XOR: "xor", MULTIPLY: "multiply", SCREEN: "screen", OVERLAY: "overlay", DARKEN: "darken", LIGHTEN: "lighten", COLOR_DODGE: "color-dodge", COLOR_BURN: "color-burn", HARD_LIGHT: "hard-light", SOFT_LIGHT: "soft-light", DIFFERENCE: "difference", EXCLUSION: "exclusion", HUE: "hue", SATURATION: "saturation", COLOR: "color", LUMINOSITY: "luminosity",}
     static DEFAULT_COMPOSITE_OPERATION = Render.COMPOSITE_OPERATIONS.SOURCE_OVER
+    static DEFAULT_FILTER = "none"
+    static DEFAULT_GLOBAL_ALPHA = 1
     static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
     static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve}
     static DRAW_METHODS = {FILL:"FILL", STROKE:"STROKE"}
 
-    #currentCtxColor = Color.DEFAULT_COLOR_VALUE
+    #currentCtxVisuals = [Color.DEFAULT_COLOR_VALUE, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_GLOBAL_ALPHA]
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
     #currentCtxTextStyles = TextStyles.DEFAULT_PROFILE.getStyles()
     constructor(ctx) {
@@ -138,10 +140,10 @@ class Render {
               gradientSep = Gradient.SERIALIZATION_SEPARATOR, patternSep = Pattern.SERIALIZATION_SEPARATOR
               
         for (let i=0;i<s_ll;i++) {
-            let [profileKey, path] = strokes[i], [colorValue, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
+            let [profileKey, path] = strokes[i], [colorValue, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
             else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].value
-            RenderStyles.apply(this, colorValue, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
+            RenderStyles.apply(this, colorValue, filter, compositeOperation, opacity, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
             this._ctx.stroke(path)
         }
 
@@ -183,12 +185,12 @@ class Render {
     }
 
     // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight) {
+    strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=12) {
         if (text) {
-            const colorValue = Color.getColorValue(color)
+            const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals
             if (textStyles instanceof TextStyles) textStyles.apply()
             else this._defaultTextProfile.apply(textStyles)
-            if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
+            if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
             if (text.includes("\n")) {
                 const lines = text.split("\n"), lines_ll = lines.length
                 for (let i=0;i<lines_ll;i++) this._ctx.strokeText(lines[i], pos[0], pos[1]+i*lineHeight, maxWidth)
@@ -199,10 +201,10 @@ class Render {
     // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
     fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight) {
         if (text) {
-            const colorValue = Color.getColorValue(color)
+            const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals
             if (textStyles instanceof TextStyles) textStyles.apply()
             else this._defaultTextProfile.apply(textStyles)
-            if (color && this.#currentCtxColor !== colorValue) this.#currentCtxColor = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
+            if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
             if (text.includes("\n")) {
                 const lines = text.split("\n"), lines_ll = lines.length
                 for (let i=0;i<lines_ll;i++) this._ctx.fillText(lines[i], pos[0], pos[1]+i*lineHeight, maxWidth)
@@ -242,7 +244,7 @@ class Render {
 	get textProfile2() {return this._textProfile2}
 	get textProfile3() {return this._textProfile3}
 	get textProfiles() {return this._textProfiles}
-	get currentCtxColor() {return this.#currentCtxColor}
+	get currentCtxVisuals() {return this.#currentCtxVisuals}
 	get currentCtxStyles() {return this.#currentCtxStyles}
 	get currentCtxTextStyles() {return this.#currentCtxTextStyles}
 
@@ -257,7 +259,7 @@ class Render {
 	set textProfile2(_textProfile2) {this._textProfile2 = _textProfile2}
 	set textProfile3(_textProfile3) {this._textProfile3 = _textProfile3}
 	set textProfiles(_textProfiles) {this._textProfiles = _textProfiles}
-	set currentCtxColor(currentCtxColor) {this.#currentCtxColor = currentCtxColor}
+	set currentCtxVisuals(currentCtxVisuals) {this.#currentCtxVisuals = currentCtxVisuals}
 	set currentCtxStyles(currentCtxStyles) {this.#currentCtxStyles = currentCtxStyles}
 	set currentCtxTextStyles(currentCtxTextStyles) {this.#currentCtxTextStyles = currentCtxTextStyles}
 
