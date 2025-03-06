@@ -145,7 +145,11 @@ class Render {
             else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].value
             RenderStyles.apply(this, colorValue, filter, compositeOperation, opacity, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
             this._ctx.stroke(path)
+            //console.log(this.ctx.globalAlpha, this.#currentCtxVisuals[3], opacity, filter, compositeOperation)
         }
+        RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_GLOBAL_ALPHA)
+        //console.log("------------------")
+
 
         for (let i=0;i<f_ll;i++) {
             let [colorValue, path] = fills[i]
@@ -154,6 +158,7 @@ class Render {
             RenderStyles.apply(this, colorValue)
             this._ctx.fill(path)
         }
+        RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_GLOBAL_ALPHA)
 
         if (o_ll) {
             for (let i=0;i<o_ll;i++) standalones[i]()

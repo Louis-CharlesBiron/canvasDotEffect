@@ -192,12 +192,12 @@ let imageTester = new ImageDisplay(ImageDisplay.loadImage("./img/logo.png"), [-2
 CVS.add(imageTester, true)
 
 
-let compOp = ""
+let compOp = Render.DEFAULT_COMPOSITE_OPERATION
 let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], null, (render, dot, ratio, m, res, dist, shape, isActive)=>{
     const variation = CDEUtils.mod(0.05, ratio)
-    Canvas.getSVGFilter("test")[0].setAttribute("baseFrequency", variation+" "+variation)
-    if (CanvasUtils.firstDotOnly(dot)) console.log(Canvas.getSVGFilter("test")[0].getAttribute("baseFrequency"), variation)
-    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, "url(#test)", compOp, 0, 3, [0]))
+    //Canvas.getSVGFilter("test")[0].setAttribute("baseFrequency", variation+" "+variation)
+    //if (CanvasUtils.firstDotOnly(dot)) console.log(Canvas.getSVGFilter("test")[0].getAttribute("baseFrequency"), variation)
+    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, "url(#test)", compOp, 1, 3, [0]))
 }, null, ()=>{
     Canvas.loadSVGFilter(`<svg>
         <filter id="turbulence">

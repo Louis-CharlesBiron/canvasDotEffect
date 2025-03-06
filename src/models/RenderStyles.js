@@ -76,7 +76,7 @@ class RenderStyles extends _HasColor {
         if (color) this.color = color
         if (filter) this._filter = filter
         if (compositeOperation) this._compositeOperation = compositeOperation
-        if (opacity) this._opacity = opacity
+        if (opacity!=null) this._opacity = opacity
         if (lineWidth) this._lineWidth = lineWidth
         if (lineDash) this._lineDash = lineDash
         if (lineDashOffset) this._lineDashOffset = lineDashOffset
@@ -91,8 +91,8 @@ class RenderStyles extends _HasColor {
         if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
         if (filter && currentCtxVisuals[1] !== filter) currentCtxVisuals[1] = ctx.filter = filter
         if (compositeOperation && currentCtxVisuals[2] !== compositeOperation) currentCtxVisuals[2] = ctx.globalCompositeOperation = compositeOperation
-        if (opacity && currentCtxVisuals[3] !== opacity) currentCtxVisuals[3] = ctx.globalAlpha = opacity
-        if (lineWidth && currentStyles[0] !== lineWidth) currentStyles[0] = ctx.lineWidth = lineWidth
+        if (opacity!=null && currentCtxVisuals[3] !== opacity) currentCtxVisuals[3] = ctx.globalAlpha = opacity
+        if (lineWidth!=null && currentStyles[0] !== lineWidth) currentStyles[0] = ctx.lineWidth = lineWidth
         if (lineDash) {
             const lineDashString = lineDash.toString()
             if (currentStyles[1] !== lineDashString) {
@@ -100,19 +100,19 @@ class RenderStyles extends _HasColor {
                 ctx.setLineDash(lineDash)
             }
         }
-        if (lineDashOffset && currentStyles[2] !== lineDashOffset) currentStyles[2] = ctx.lineDashOffset = lineDashOffset
+        if (lineDashOffset!==null && currentStyles[2] !== lineDashOffset) currentStyles[2] = ctx.lineDashOffset = lineDashOffset
         if (lineJoin && currentStyles[3] !== lineJoin) currentStyles[3] = ctx.lineJoin = lineJoin
         if (lineCap && currentStyles[4] !== lineCap) currentStyles[4] = ctx.lineCap = lineCap
     }
 
     // directly applies the provided styles
     static apply(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
-        const ctx = render.ctx, colorValue = Color.getColorValue(color), currentStyles = render.currentCtxStyles, currentCtxVisuals = render.currentCtxVisuals
+        const ctx = render.ctx, colorValue = color&&Color.getColorValue(color), currentStyles = render.currentCtxStyles, currentCtxVisuals = render.currentCtxVisuals
         if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
         if (filter && currentCtxVisuals[1] !== filter) currentCtxVisuals[1] = ctx.filter = filter
         if (compositeOperation && currentCtxVisuals[2] !== compositeOperation) currentCtxVisuals[2] = ctx.globalCompositeOperation = compositeOperation
-        if (opacity && currentCtxVisuals[3] !== opacity) currentCtxVisuals[3] = ctx.globalAlpha = opacity
-        if (lineWidth && currentStyles[0] !== lineWidth) currentStyles[0] = ctx.lineWidth = lineWidth
+        if (opacity!=null && currentCtxVisuals[3] !== opacity) currentCtxVisuals[3] = ctx.globalAlpha = opacity
+        if (lineWidth!=null && currentStyles[0] !== lineWidth) currentStyles[0] = ctx.lineWidth = lineWidth
         if (lineDash) {
             const lineDashString = lineDash.toString()
             if (currentStyles[1] !== lineDashString) {
@@ -120,7 +120,7 @@ class RenderStyles extends _HasColor {
                 ctx.setLineDash(lineDash)
             }
         }
-        if (lineDashOffset && currentStyles[2] !== lineDashOffset) currentStyles[2] = ctx.lineDashOffset = lineDashOffset
+        if (lineDashOffset!==null && currentStyles[2] !== lineDashOffset) currentStyles[2] = ctx.lineDashOffset = lineDashOffset
         if (lineJoin && currentStyles[3] !== lineJoin) currentStyles[3] = ctx.lineJoin = lineJoin
         if (lineCap && currentStyles[4] !== lineCap) currentStyles[4] = ctx.lineCap = lineCap
     }

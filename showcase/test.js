@@ -14,25 +14,26 @@ const fpsCounter2 = new CDEUtils.FPSCounter(), CVS2 = new Canvas(canvas2, ()=>{/
 
 // DECLARE OBJS
 
+let comp3 = Render.DEFAULT_COMPOSITE_OPERATION
+let alpha3 = 1
 let aasdasd = new Shape([300,100],[
     new Dot([-50, -50]),new Dot([-50, 0]),new Dot([-50, 50]),new Dot([0, -50]),new Dot([0, 0]),new Dot([0, 50]),new Dot([50, -50]),new Dot([50, 0]),
 ], 20, (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]], null, 90), 100, (render, dot, ratio, m)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.8)
     dot.radius = CDEUtils.mod(20, ratio, 20*0.7)
-    if (dot.id % 5 == 0) CanvasUtils.drawOuterRing(dot, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 15], CDEUtils.mod(50, ratio)), 5)
-    else CanvasUtils.drawOuterRing(dot, render.profile1.update(Color.rgba(255,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [CDEUtils.mod(100, ratio)], 0), 5)
+    if (dot.id % 5 == 0) CanvasUtils.drawOuterRing(dot, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), null, null, null, 4, [5, 15], CDEUtils.mod(50, ratio)), 5)
+    else CanvasUtils.drawOuterRing(dot, render.profile2.update(Color.rgba(255,255,255,CDEUtils.mod(1, ratio, 0.8)), null, comp3, alpha3, 4, [CDEUtils.mod(100, ratio)], 0), 5)
 })
 CVS.add(aasdasd)
 
 
 
 let textInputTest = new Grid("a", [5, 5], 50, null, [10,200], 0, null, null, (render, dot, ratio, m, res, dist, shape, isActive)=>{
-    CanvasUtils.drawDotConnections(dot, render.profile1.update([255,0,0,1], 2, [0], null, RenderStyles.JOIN_TYPES.BEVEL, RenderStyles.CAP_TYPES.SQUARE))
+    CanvasUtils.drawDotConnections(dot, render.profile1.update([255,0,0,1],  null, null, null, 2, [0], null, RenderStyles.JOIN_TYPES.BEVEL, RenderStyles.CAP_TYPES.SQUARE))
 })
 
 function updateInput(e) {
     let k = e.key.toLowerCase(), v = textInputTest.keys
-    e.preventDefault()
     if (k=="backspace") textInputTest.setKeys(v.slice(0, v.length-1))
     else if (k=="enter") textInputTest.setKeys(v+"\n")
     else textInputTest.setKeys(v+k)
@@ -64,8 +65,8 @@ let filledShapeTester = new FilledShape(
 
 CVS2.add(filledShapeTester)
 
-let asd1 = filledShapeTester.duplicate()
-CVS.add(asd1)
+//let asd1 = filledShapeTester.duplicate()
+//CVS.add(asd1)
 
 
 // USER ACTIONS
