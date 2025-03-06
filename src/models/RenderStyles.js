@@ -13,20 +13,16 @@ class RenderStyles extends _HasColor {
     static DEFAULT_DASH = []
     static DEFAULT_DASH_OFFSET = 0
     static SERIALIZATION_SEPARATOR = "%"
-    static DEFAULT_PROFILE = new RenderStyles(null, Color.DEFAULT_RGBA, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_GLOBAL_ALPHA, RenderStyles.DEFAULT_WIDTH, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH_OFFSET, RenderStyles.DEFAULT_JOIN, RenderStyles.DEFAULT_CAP)
+    static DEFAULT_PROFILE = new RenderStyles(null, Color.DEFAULT_RGBA, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA, RenderStyles.DEFAULT_WIDTH, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH_OFFSET, RenderStyles.DEFAULT_JOIN, RenderStyles.DEFAULT_CAP)
 
     /*
         TODO
 
-        - update Render to include these
-        - support for all objects
-        - support for fill
+        see for shape > dot visualEffects distribution
 
-        - fix invasiveness (compositeOperation, maybe others)
-    
-        - add custum url svg filters
+        make filter works for like a certain radius around the mouse, like with ratio
 
-        - documentation
+        - documentation (do Shape → example 4 show how to use custom svg filter)
     
     */
 
@@ -35,16 +31,16 @@ class RenderStyles extends _HasColor {
     constructor(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         super(color)
         if (render) this.color = this.getInitColor()
-        this._render = render                                                   // Canvas render instance
-        this.#ctx = render?.ctx                                                 // Canvas context
-        this._filter = filter??Render.DEFAULT_FILTER           
-        this._compositeOperation = compositeOperation??Render.DEFAULT_COMPOSITE_OPERATION            
-        this._opacity = opacity??Render.DEFAULT_GLOBAL_ALPHA       
-        this._lineWidth = lineWidth??RenderStyles.DEFAULT_WIDTH                 // width of drawn line
-        this._lineDash = lineDash??RenderStyles.DEFAULT_DASH                    // gaps length within the line
-        this._lineDashOffset = lineDashOffset??RenderStyles.DEFAULT_DASH_OFFSET // line gaps offset
-        this._lineJoin = lineJoin??RenderStyles.DEFAULT_JOIN                    // determines the shape of line joins
-        this._lineCap = lineCap??RenderStyles.DEFAULT_CAP                       // determines the shape of line ends
+        this._render = render                                                            // Canvas render instance
+        this.#ctx = render?.ctx                                                          // Canvas context
+        this._filter = filter??Render.DEFAULT_FILTER                                     // filter value 
+        this._compositeOperation = compositeOperation??Render.DEFAULT_COMPOSITE_OPERATION// composite operation used        
+        this._opacity = opacity??Render.DEFAULT_ALPHA                                    // opacity value
+        this._lineWidth = lineWidth??RenderStyles.DEFAULT_WIDTH                          // width of drawn line
+        this._lineDash = lineDash??RenderStyles.DEFAULT_DASH                             // gaps length within the line
+        this._lineDashOffset = lineDashOffset??RenderStyles.DEFAULT_DASH_OFFSET          // line gaps offset
+        this._lineJoin = lineJoin??RenderStyles.DEFAULT_JOIN                             // determines the shape of line joins
+        this._lineCap = lineCap??RenderStyles.DEFAULT_CAP                                // determines the shape of line ends
     }
 
     // returns a separate copy of the profile
@@ -65,10 +61,10 @@ class RenderStyles extends _HasColor {
     }
 
     // serializes the styles profile, but only the color value
-    colorOnlyToString(color=this._color) {
-        let colorValue = Color.getColorValue(color)
+    fillOptimizedToString(color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity) {
+        let sep = RenderStyles.SERIALIZATION_SEPARATOR, colorValue = Color.getColorValue(color)
         if (colorValue instanceof CanvasGradient || colorValue instanceof CanvasPattern) colorValue = color.toString()
-        return colorValue
+        return colorValue+sep+filter+sep+compositeOperation+sep+opacity
     }
 
     // updates a profile's attributes and returns the updated version

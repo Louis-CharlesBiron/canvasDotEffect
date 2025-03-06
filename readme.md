@@ -197,6 +197,7 @@ The _Obj class is the template class of any canvas object. **It should not be di
 - ***parent*** -> The parent of the object. (Shape, Canvas, ...)
 - ***rotation*** -> The object's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
 - ***scale*** -> The shape's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
+- ***visualEffects*** -> The visual effects of the object in an array: `[filter, compositeOperation, opacity]`. `filter` is a string containing a regular css filter (`"blur(5px)"`, `url(#svgFilterId)`, etc). `compositeOperation` is one of `Render.COMPOSITE_OPERATIONS` (see [global composite operations](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation) for more information). `opacity` is the alpha value of the object (in addition to the object's color alpha).
 
 **This class also defines other useful base functions**, such as:
 - Movements functions (`moveBy`, `addForce`, `follow`, ...)
@@ -221,6 +222,8 @@ The _Obj class is the template class of any canvas object. **It should not be di
     // Example use, for 3 seconds, easeOutQuad, no custom callback, will travel in a sideways 'L' shape 
     let dx=400, dy=200
     dot.follow(3000, Anim.easeOutQuad, null, [[0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]]])
+```
+
 ```
 
  

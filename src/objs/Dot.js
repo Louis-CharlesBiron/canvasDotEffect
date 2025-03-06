@@ -20,7 +20,7 @@ class Dot extends _Obj {
             }
 
             // todo scale
-            if (this._radius) render.batchFill(Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color)
+            if (this._radius) render.batchFill(Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color, this._visualEffects)
         } else this.initialized = true
         super.draw(time, deltaTime)
     }
@@ -37,6 +37,7 @@ class Dot extends _Obj {
 
         dot._scale = CDEUtils.unlinkArr2(this._scale)
         dot._rotation = this._rotation
+        dot._visualEffects = CDEUtils.unlinkArr3(this._visualEffects)
         return dot
     }
 

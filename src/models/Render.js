@@ -8,12 +8,12 @@ class Render {
     static COMPOSITE_OPERATIONS = {SOURCE_OVER: "source-over", SOURCE_IN: "source-in", SOURCE_OUT: "source-out", SOURCE_ATOP: "source-atop", DESTINATION_OVER: "destination-over", DESTINATION_IN: "destination-in", DESTINATION_OUT: "destination-out", DESTINATION_ATOP: "destination-atop", LIGHTER: "lighter", COPY: "copy", XOR: "xor", MULTIPLY: "multiply", SCREEN: "screen", OVERLAY: "overlay", DARKEN: "darken", LIGHTEN: "lighten", COLOR_DODGE: "color-dodge", COLOR_BURN: "color-burn", HARD_LIGHT: "hard-light", SOFT_LIGHT: "soft-light", DIFFERENCE: "difference", EXCLUSION: "exclusion", HUE: "hue", SATURATION: "saturation", COLOR: "color", LUMINOSITY: "luminosity",}
     static DEFAULT_COMPOSITE_OPERATION = Render.COMPOSITE_OPERATIONS.SOURCE_OVER
     static DEFAULT_FILTER = "none"
-    static DEFAULT_GLOBAL_ALPHA = 1
+    static DEFAULT_ALPHA = 1
     static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
     static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve}
     static DRAW_METHODS = {FILL:"FILL", STROKE:"STROKE"}
 
-    #currentCtxVisuals = [Color.DEFAULT_COLOR_VALUE, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_GLOBAL_ALPHA]
+    #currentCtxVisuals = [Color.DEFAULT_COLOR_VALUE, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA]
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
     #currentCtxTextStyles = TextStyles.DEFAULT_PROFILE.getStyles()
     constructor(ctx) {
@@ -115,18 +115,18 @@ class Render {
     }
 
     // Queues a path to be stroked in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
-    batchStroke(path, renderStyles=Color.DEFAULT_RGBA) {
+    batchStroke(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            const profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString() : this._defaultProfile.toString(renderStyles)
+            const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.toString(renderStyles, filter, compositeOperation, opacity)
             if (!this._batchedStrokes[profileKey]) this._batchedStrokes[profileKey] = new Path2D()
             this._batchedStrokes[profileKey].addPath(path)
         }
     }
 
     // Queues a path to be filled in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
-    batchFill(path, renderStyles=Color.DEFAULT_RGBA) {
+    batchFill(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            const profileKey = renderStyles instanceof RenderStyles ? renderStyles.colorOnlyToString() : this._defaultProfile.colorOnlyToString(renderStyles)
+            const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.fillOptimizedToString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.fillOptimizedToString(renderStyles, filter, compositeOperation, opacity)
             if (!this._batchedFills[profileKey]) this._batchedFills[profileKey] = new Path2D()
             this._batchedFills[profileKey].addPath(path)
         } 
@@ -147,18 +147,18 @@ class Render {
             this._ctx.stroke(path)
             //console.log(this.ctx.globalAlpha, this.#currentCtxVisuals[3], opacity, filter, compositeOperation)
         }
-        RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_GLOBAL_ALPHA)
+        RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
         //console.log("------------------")
 
 
         for (let i=0;i<f_ll;i++) {
-            let [colorValue, path] = fills[i]
+            let [profileKey, path] = fills[i], [colorValue, filter, compositeOperation, opacity] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
             else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].value
-            RenderStyles.apply(this, colorValue)
+            RenderStyles.apply(this, colorValue, filter, compositeOperation, opacity)
             this._ctx.fill(path)
         }
-        RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_GLOBAL_ALPHA)
+        RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
 
         if (o_ll) {
             for (let i=0;i<o_ll;i++) standalones[i]()
@@ -170,68 +170,92 @@ class Render {
     }
 
     // directly strokes a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
-    stroke(path, renderStyles=Color.DEFAULT_RGBA) {
+    stroke(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            if (renderStyles instanceof RenderStyles) renderStyles.apply()
-            else this._defaultProfile.apply(renderStyles)
+            const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2]
+            if (renderStyles instanceof RenderStyles) renderStyles.apply(undefined, filter, compositeOperation, opacity)
+            else this._defaultProfile.apply(renderStyles, filter, compositeOperation, opacity)
 
             this._ctx.stroke(path)
+            if (forceVisualEffects.length) RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
         }
     }
 
     // directly fills a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
-    fill(path, renderStyles=Color.DEFAULT_RGBA) {
+    fill(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            if (renderStyles instanceof RenderStyles) renderStyles.apply()
-            else this._defaultProfile.apply(renderStyles)
+            const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2]
+            if (renderStyles instanceof RenderStyles) renderStyles.apply(undefined, filter, compositeOperation, opacity)
+            else this._defaultProfile.apply(renderStyles, filter, compositeOperation, opacity)
 
             this._ctx.fill(path)
+            if (forceVisualEffects.length) RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
         }
     }
 
     // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=12) {
+    strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=12, visualEffects=[]) {
         if (text) {
-            const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals
+            const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, hasVisualEffects = visualEffects.length
             if (textStyles instanceof TextStyles) textStyles.apply()
             else this._defaultTextProfile.apply(textStyles)
+        
             if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
+            if (hasVisualEffects) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
+            
             if (text.includes("\n")) {
                 const lines = text.split("\n"), lines_ll = lines.length
                 for (let i=0;i<lines_ll;i++) this._ctx.strokeText(lines[i], pos[0], pos[1]+i*lineHeight, maxWidth)
             } else this._ctx.strokeText(text, pos[0], pos[1], maxWidth)
+
+            if (hasVisualEffects) RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
         }
     }
 
     // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight) {
+    fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=12, visualEffects=[]) {
         if (text) {
-            const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals
+            const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, hasVisualEffects = visualEffects.length
             if (textStyles instanceof TextStyles) textStyles.apply()
             else this._defaultTextProfile.apply(textStyles)
+
             if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
+            if (hasVisualEffects) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
+
             if (text.includes("\n")) {
                 const lines = text.split("\n"), lines_ll = lines.length
                 for (let i=0;i<lines_ll;i++) this._ctx.fillText(lines[i], pos[0], pos[1]+i*lineHeight, maxWidth)
             } else this._ctx.fillText(text, pos[0], pos[1], maxWidth)
+
+            if (hasVisualEffects) RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
         }
     }
 
     // directly draws an image on the canvas
-    drawImage(img, pos, size, croppingPositions) {
+    drawImage(img, pos, size, croppingPositions, visualEffects=[]) {
+        const hasVisualEffects = visualEffects.length
+        if (hasVisualEffects) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
+
         if (croppingPositions) {
             const [[cropStartX, cropStartY], [cropEndX, cropEndY]] = croppingPositions
             this._ctx.drawImage(img, cropStartX, cropStartY, cropEndX-cropStartX, cropEndY-cropStartX, pos[0], pos[1], size[0], size[1])
         } else this._ctx.drawImage(img, pos[0], pos[1], size[0], size[1])
+
+        if (hasVisualEffects) RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
     }
 
     // directly draws an image on the canvas once everything else has been drawn
-    drawLateImage(img, pos, size, croppingPositions) {
+    drawLateImage(img, pos, size, croppingPositions, visualEffects=[]) {
         this._bactchedStandalones.push(()=>{
+            const hasVisualEffects = visualEffects.length
+            if (hasVisualEffects) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
+
             if (croppingPositions) {
                 const [[cropStartX, cropStartY], [cropEndX, cropEndY]] = croppingPositions
                 this._ctx.drawImage(img, cropStartX, cropStartY, cropEndX-cropStartX, cropEndY-cropStartX, pos[0], pos[1], size[0], size[1])
             } else this._ctx.drawImage(img, pos[0], pos[1], size[0], size[1])
+
+            if (hasVisualEffects) RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
         })
     }
 

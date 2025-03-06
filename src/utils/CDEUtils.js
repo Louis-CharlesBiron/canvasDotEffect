@@ -43,6 +43,11 @@ class CDEUtils {
         return [arr[0], arr[1]]
     }
 
+    // creates a copy of the provided array. (only for length 2)
+    static unlinkArr3(arr) {
+        return [arr[0], arr[1], arr[2]]
+    }
+
     // creates a copy of the provided array. (input format: [ [x, y], [x, y] ], or [x, y])
     static unlinkArr22(arr) {
         const isArray = Array.isArray, unlinkArr2 = CDEUtils.unlinkArr2,  o1 = arr?.[0], o2 = arr?.[1]

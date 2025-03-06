@@ -28,13 +28,12 @@ class FilledShape extends Shape {
         
         if (this.dots.length > 2) {
             if (this._dynamicUpdates) this.updatePath()
-            render.fill(this._path, this._fillColor)
+            render.fill(this._path, this._fillColor, this._visualEffects)
         }
     }
 
     // returns a separate copy of this FilledShape (only initialized for objects)
     duplicate() {
-        // todo pattern probably?? or wtf is this actually
         const fillColorObject = this._fillColor, fillColorRaw = fillColorObject.colorRaw, colorObject = this._color, colorRaw = colorObject.colorRaw, filledShape = new FilledShape(
             (_,shape)=>(fillColorRaw instanceof Gradient||fillColorRaw instanceof Pattern)?fillColorRaw.duplicate(Array.isArray(fillColorRaw.initPositions)?null:shape):fillColorObject.duplicate(),
             this._dynamicUpdates,
@@ -51,6 +50,7 @@ class FilledShape extends Shape {
         )
         filledShape._scale = CDEUtils.unlinkArr2(this._scale)
         filledShape._rotation = this._rotation
+        filledShape._visualEffects = CDEUtils.unlinkArr3(this._visualEffects)
         
         return this.initialized ? filledShape : null
     }

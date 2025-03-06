@@ -59,15 +59,12 @@ class CanvasUtils {
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
-    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, isDestinationOver=true) {
+    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread) {
         const ctx = dot.ctx, render = dot.render, dotPos = dot.pos, dotConnections = dot.connections,
               dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
 
         if (dc_ll) {
             if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
-
-            // TODO ? check
-            //if (isDestinationOver) ctx.globalCompositeOperation = "destination-over"
 
             if (radiusPaddingMultiplier) {
                 const dotRadiusPadding = dot.radius*radiusPaddingMultiplier
@@ -76,9 +73,6 @@ class CanvasUtils {
                     render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
                 }
             } else for (let i=0;i<dc_ll;i++) render.batchStroke(lineType(dotPos, dotConnections[i].pos, spread), renderStyles)
-
-            
-            //if (isDestinationOver) ctx.globalCompositeOperation = "source-over"
         }
     }
 

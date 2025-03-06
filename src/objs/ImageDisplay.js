@@ -62,8 +62,8 @@ class ImageDisplay extends _BaseObj {
                 ctx.translate(-x, -y)
             }
 
-            if (this._source instanceof HTMLCanvasElement) render.drawLateImage(this._source, this._pos, this._size, this._sourceCroppingPositions)
-            else render.drawImage(this._source, this._pos, this._size, this._sourceCroppingPositions)
+            if (this._source instanceof HTMLCanvasElement) render.drawLateImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this._visualEffects)
+            else render.drawImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this._visualEffects)
 
             if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
         }
@@ -191,6 +191,7 @@ class ImageDisplay extends _BaseObj {
         )
         imageDisplay._scale = CDEUtils.unlinkArr2(this._scale)
         imageDisplay._rotation = this._rotation
+        imageDisplay._visualEffects = CDEUtils.unlinkArr3(this._visualEffects)
         
         return this.initialized ? imageDisplay : null
     }
