@@ -17,20 +17,14 @@ class RenderStyles extends _HasColor {
 
     /*
         TODO
-
-        see for shape > dot visualEffects distribution
-
-        make filter works for like a certain radius around the mouse, like with ratio
-
-        - documentation (do Shape → example 4 show how to use custom svg filter)
-    
+        make batch filter work for lines (just like Dot)
     */
-
 
     #ctx = null
     constructor(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         super(color)
         if (render) this.color = this.getInitColor()
+        this._id = Render.PROFILE_ID_GIVER++                                             // profile id
         this._render = render                                                            // Canvas render instance
         this.#ctx = render?.ctx                                                          // Canvas context
         this._filter = filter??Render.DEFAULT_FILTER                                     // filter value 

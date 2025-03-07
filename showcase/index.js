@@ -188,16 +188,16 @@ const testText2 = new TextDisplay("Test § ->", [100, 550], (render, text)=>new 
 })
 CVS.add(testText2, true)
 
-let imageTester = new ImageDisplay(ImageDisplay.loadImage("./img/logo.png"), [-250, 75], [250], null, null, ()=>testMore.firstDot)
-CVS.add(imageTester, true)
+let imageTester = new ImageDisplay("./img/logo.png", [-250, 75], [250], null, null, ()=>testMore.firstDot)
 
 
 let compOp = Render.DEFAULT_COMPOSITE_OPERATION
-let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], null, (render, dot, ratio, m, res, dist, shape, isActive)=>{
-    const variation = CDEUtils.mod(0.05, ratio)
-    //Canvas.getSVGFilter("test")[0].setAttribute("baseFrequency", variation+" "+variation)
+let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], 50, (render, dot, ratio, m, res, dist, shape, isActive)=>{
+    const variation = CDEUtils.mod(0.05, ratio), v2 = CDEUtils.mod(100, ratio)
+    dot.filter = "invert("+v2+")"
+    //Canvas.getSVGFilter("test")[1].setAttribute("baseFrequency", variation+" "+variation)
     //if (CanvasUtils.firstDotOnly(dot)) console.log(Canvas.getSVGFilter("test")[0].getAttribute("baseFrequency"), variation)
-    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, "url(#test)", compOp, 1, 3, [0]))
+    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, ratio >= 0.75 ? "url(#test)" : "none", compOp, 1, 3, [0]))
 }, null, ()=>{
     Canvas.loadSVGFilter(`<svg>
         <filter id="turbulence">
@@ -209,6 +209,25 @@ let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", 
 })
 CVS.add(moreGridTester)
 
+let visualEffectsTester = new Shape([700,600],[
+    new Dot([0, -50]),
+    new Dot([0, 0]),
+    new Dot([0, 50]),
+    new Dot([50, -50]),
+    new Dot([50, 0]),
+], null, normalColorTester, 100, (render, dot, ratio, m, dist)=>{
+    dot.a = CDEUtils.mod(1, ratio, 0.2)
+    dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS*2*0.8)
+    CanvasUtils.drawOuterRing(dot, render.profile4.update([255,255,255,0.2], ...dot.visualEffects), 5)
+
+
+}, null, (shape)=>{
+    shape.rotateAt(45)
+    shape.setVisualEffects(["blur(3px)"])
+    shape.firstDot.filter = "none"
+
+}, null, [50,0])
+CVS.add(visualEffectsTester)
 
 
 CVS.add(generationTester)
@@ -219,6 +238,7 @@ CVS.add(filledShapeTester)
 CVS.add(movementsTester)
 CVS.add(test2)
 CVS.add(le)
+CVS.add(imageTester, true)
 
 let dupelicateTester = le.duplicate()
 for (let i=0;i<3;i++) {
@@ -241,3 +261,40 @@ CVS.setkeyup()
 // START
 CVS.startLoop()
 
+
+// Creating a grid with distorted symbols, but clearing the distortion on mouse hover
+const distortedGrid = new Grid(
+    "abc\n123\n%?&", // symbols used
+    [7, 7],     // gaps of 7px between each dot
+    50,         // spacing of 50px between symbols
+    null,       // using the default source
+    [100, 100], // pos
+    2,          // dot's radius
+    "aliceblue",// dot's color 
+    50,         // limit of 50px
+    (render, dot, ratio)=>{ // grid's drawEffectCB
+
+        // simple opacity effect
+        dot.a = CDEUtils.mod(1, ratio)
+
+        // drawing the symbols and applying some simple style changes as well as the distortion filter ↓ (disabling it when the ratio is low enough)
+        CanvasUtils.drawDotConnections(dot, render.profile5.update([255,0,0,1], ratio>=0.75?"url(#myFilter)":"none", null, 1, 3))
+
+}, null, ()=>{ // grid's setupCB
+
+    // filter id to be used for the filter url
+    const filterId = "myFilter"
+
+    // loading a simple custom distortion SVG filter
+    Canvas.loadSVGFilter(`<svg>
+        <filter id="turbulence">
+          <feTurbulence type="turbulence" baseFrequency="0.01 0.02" numOctaves="1" result="NOISE"></feTurbulence>
+          <feDisplacementMap in="SourceGraphic" in2="NOISE" scale="50">
+          </feDisplacementMap>
+        </filter>
+       </svg>`, filterId)
+
+})
+
+// adding the grid to the canvas
+CVS.add(distortedGrid)

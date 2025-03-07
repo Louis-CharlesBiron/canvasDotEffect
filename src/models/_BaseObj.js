@@ -25,7 +25,7 @@ class _BaseObj extends _HasColor {
         this._rotation = 0                       // the object's rotation in degrees 
         this._scale = [1,1]                      // the object's scale factors: [scaleX, scaleY]
         this._anims = {backlog:[], currents:[]}  // all "currents" animations playing are playing simultaneously, the backlog animations run in a queue, one at a time
-        this._visualEffects = []                 // the visual effects modifers of the objects: [filter, compositeOperation, opacity]
+        this._visualEffects = null               // the visual effects modifers of the objects: [filter, compositeOperation, opacity]
         this._initialized = false                // whether the object has been initialized yet
     }
 
@@ -229,10 +229,14 @@ class _BaseObj extends _HasColor {
     get parent() {return this._parent}
     get rotation() {return this._rotation}
     get scale() {return this._scale}
-    get visualEffects() {return this._visualEffects}
-    get filter() {return this._visualEffects[0]??Render.DEFAULT_FILTER}
-    get compositeOperation() {return this._visualEffects[1]??Render.DEFAULT_COMPOSITE_OPERATION}
-    get opacity() {return this._visualEffects[2]??Render.DEFAULT_ALPHA}
+    get visualEffects() {return this._visualEffects??[]}
+    get visualEffects_() {
+        const visualEffects = this._visualEffects
+        return visualEffects?CDEUtils.unlinkArr3(visualEffects):[]
+    }
+    get filter() {return this._visualEffects?.[0]??Render.DEFAULT_FILTER}
+    get compositeOperation() {return this._visualEffects?.[1]??Render.DEFAULT_COMPOSITE_OPERATION}
+    get opacity() {return this._visualEffects?.[2]??Render.DEFAULT_ALPHA}
 
     set x(x) {this._pos[0] = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)}
     set y(y) {this._pos[1] = CDEUtils.round(y, _BaseObj.POSITION_PRECISION)}
@@ -262,8 +266,20 @@ class _BaseObj extends _HasColor {
         this._scale[0] = scaleX
         this._scale[1] = scaleY
     }
-    set visualEffects(visualEffect) {this._visualEffects = CDEUtils.unlinkArr3(visualEffects)}
-    set filter(filter) {this._visualEffects[0] = filter}
-    set compositeOperation(compositeOperation) {this._visualEffects[1] = compositeOperation}
-    set opacity(opacity) {this._visualEffects[2] = opacity}
+    set visualEffects(visualEffects) {this._visualEffects = !visualEffects?.length ? null : CDEUtils.unlinkArr3(visualEffects)}
+    set filter(filter) {
+        const visualEffects = this._visualEffects
+        if (!visualEffects) this._visualEffects = [filter]
+        else visualEffects[0] = filter
+    }
+    set compositeOperation(compositeOperation) {
+        const visualEffects = this._visualEffects
+        if (!visualEffects) this._visualEffects = [,compositeOperation]
+        else visualEffects[1] = compositeOperation
+    }
+    set opacity(opacity) {
+        const visualEffects = this._visualEffects
+        if (!visualEffects) this._visualEffects = [,,opacity]
+        else visualEffects[2] = opacity
+    }
 }

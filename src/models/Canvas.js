@@ -330,9 +330,11 @@ class Canvas {
 
     // ran on first user interaction
     static #onFirstInteraction(e) {
-        const callbacks = Canvas.#ON_FIRST_INTERACT_CALLBACKS, cb_ll = callbacks?.length
-        if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
-        Canvas.#ON_FIRST_INTERACT_CALLBACKS = null
+        if (e.type!=="keydown" || (e.type==="keydown"&&e.key.length===1)) {
+            const callbacks = Canvas.#ON_FIRST_INTERACT_CALLBACKS, cb_ll = callbacks?.length
+            if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
+            Canvas.#ON_FIRST_INTERACT_CALLBACKS = null
+        }
     }
 
     // called on mouse move

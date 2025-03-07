@@ -28,7 +28,7 @@ class FilledShape extends Shape {
         
         if (this.dots.length > 2) {
             if (this._dynamicUpdates) this.updatePath()
-            render.fill(this._path, this._fillColor, this._visualEffects)
+            render.fill(this._path, this._fillColor, this.visualEffects)
         }
     }
 
@@ -50,7 +50,7 @@ class FilledShape extends Shape {
         )
         filledShape._scale = CDEUtils.unlinkArr2(this._scale)
         filledShape._rotation = this._rotation
-        filledShape._visualEffects = CDEUtils.unlinkArr3(this._visualEffects)
+        filledShape._visualEffects = this.visualEffects_
         
         return this.initialized ? filledShape : null
     }

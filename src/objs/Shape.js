@@ -29,6 +29,7 @@ class Shape extends _Obj {
 
         this.setRadius(this.getInitRadius(), true)
         this.setColor(this.getInitColor(), true)
+        if (this._visualEffects) this.setVisualEffects(this._visualEffects, true)
 
         this.initialized = true
         if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this?.parent)
@@ -66,6 +67,7 @@ class Shape extends _Obj {
             if (dot.initColor==null) dot.initColor = this.colorRaw
             if (dot.initRadius==null) dot.initRadius = this._radius
             if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
+            if (dot.visualEffect==null) dot.visualEffect = this.visualEffects_
             dot._parent = this
             dot.initialize()
             return dot
@@ -163,6 +165,17 @@ class Shape extends _Obj {
                 dot.color = color
                 if (!dot.initColor) dot.initColor = color
             }
+        }
+    }
+
+    // updates the visualEffects of all the shape's dots. If "onlyReplaceDefaults" is true, it only sets the dot's visualEffects if it was not initialy set
+    setVisualEffects(visualEffects=this._visualEffects, onlyReplaceDefaults) {
+        this._visualEffects = visualEffects
+        const d_ll = this._dots.length
+        for (let i=0;i<d_ll;i++) {
+            const dot = this._dots[i]
+            if (onlyReplaceDefaults && !dot.visualEffect) dot.visualEffects = visualEffects
+            else if (!onlyReplaceDefaults) dot.visualEffects = visualEffects
         }
     }
 

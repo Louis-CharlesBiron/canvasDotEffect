@@ -19,8 +19,21 @@ class Dot extends _Obj {
                 drawEffectCB(render, this, isActive?rawRatio:1, parent.parent.mouse, parent.setupResults, dist, parent, isActive, rawRatio)
             }
 
-            // todo scale
-            if (this._radius) render.batchFill(Render.getArc(this.pos, this._radius, 0, CDEUtils.CIRC), this._color, this._visualEffects)
+            if (this._radius) {
+                const ctx = render.ctx, x = this._pos[0], y = this._pos[1], scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0].indexOf("#")!==-1)||this._rotation
+
+                if (hasTransforms) {
+                    if (hasScaling) {
+                        ctx.translate(x, y)
+                        ctx.scale(scaleX, scaleY)
+                        if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
+                        ctx.translate(-x, -y)
+                    }
+
+                    render.fill(Render.getArc(this._pos, this._radius, 0, CDEUtils.CIRC), this._color, this.visualEffects)
+                    if (hasScaling) ctx.setTransform(1,0,0,1,0,0)
+                } else render.batchFill(Render.getArc(this._pos, this._radius, 0, CDEUtils.CIRC), this._color, this.visualEffects)
+            }
         } else this.initialized = true
         super.draw(time, deltaTime)
     }
@@ -37,7 +50,7 @@ class Dot extends _Obj {
 
         dot._scale = CDEUtils.unlinkArr2(this._scale)
         dot._rotation = this._rotation
-        dot._visualEffects = CDEUtils.unlinkArr3(this._visualEffects)
+        dot._visualEffects = this.visualEffects_
         return dot
     }
 

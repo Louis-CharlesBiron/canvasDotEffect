@@ -62,8 +62,8 @@ class ImageDisplay extends _BaseObj {
                 ctx.translate(-x, -y)
             }
 
-            if (this._source instanceof HTMLCanvasElement) render.drawLateImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this._visualEffects)
-            else render.drawImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this._visualEffects)
+            if (this._source instanceof HTMLCanvasElement) render.drawLateImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
+            else render.drawImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
 
             if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
         }
@@ -191,7 +191,7 @@ class ImageDisplay extends _BaseObj {
         )
         imageDisplay._scale = CDEUtils.unlinkArr2(this._scale)
         imageDisplay._rotation = this._rotation
-        imageDisplay._visualEffects = CDEUtils.unlinkArr3(this._visualEffects)
+        imageDisplay._visualEffects = this.visualEffects_
         
         return this.initialized ? imageDisplay : null
     }
@@ -221,6 +221,7 @@ class ImageDisplay extends _BaseObj {
     get centerX() {return this._pos[0]+this._size[0]/2}
     get centerY() {return this._pos[1]+this._size[1]/2}
     get centerPos() {return [this.centerX, this.centerY]}
+    get source() {return this._source}
 	get sourceCroppingPositions() {return this._sourceCroppingPositions}
 
     get video() {return this._source}
