@@ -20,7 +20,7 @@ let logo = new Shape([0,0], [
     new Dot([250, 440], 15, (ctx, dot)=>new Gradient(ctx, dot, [[0, "#B9ACE3"], [1, "#9ADBE4"]], null, 270)),
     new Dot([350, 290], 16.5, (ctx, dot)=>new Gradient(ctx, dot, [[0, "#B9ACE3"], [1, "#9ADBE4"]], null, 90)),
     new Dot([470, 350], 18, (ctx, dot)=>new Gradient(ctx, dot, [[0, "#B9ACE3"], [1, "#9ADBE4"]], null, 180)),
-], 18, (ctx, shape)=>new Gradient(ctx, shape, [[0, "#AFB0E3"], [1, "#9ADBE4"]], null, 270), null,  (render, dot, ratio, m, res, dist, shape)=>{
+], 18, (ctx, shape)=>new Gradient(ctx, shape, [[0, "#AFB0E3"], [1, "#9ADBE4"]], null, 270), null,  (render, dot, ratio, res, m, dist, shape)=>{
     CanvasUtils.drawOuterRing(dot, render.profile1.update(dot.colorObject, fitler1, comp1, alpha1, 2, [0]), 1.8)
     CanvasUtils.drawDotConnections(dot, render.profile2.update(shape.colorObject, fitler2, comp2, alpha2, 5, [0]), 2.5)
 }, null, (shape)=>{
@@ -52,7 +52,7 @@ CVS.add(logoBG)
 logoBG.scaleAt([1.15, 1.15], [350, 375])
 
 let textGradient = new Color(new Gradient(CVS.ctx, [[410, 325],[310,400]], [[0, "#AFB0E3"], [1, "#9ADBE4"]], null, 90))
-let logoLetters = new Grid("CDE", [5, 5], 38, null, [308,372], 0, null, 100, (ctx, dot, ratio, m, res, dist, shape)=>{
+let logoLetters = new Grid("CDE", [5, 5], 38, null, [308,372], 0, null, 100, (render, dot, ratio)=>{
     CanvasUtils.drawDotConnections(dot, textGradient, 0, true)
 })
 
@@ -84,7 +84,7 @@ CVS.add(oktest)
 
 let filledShapeTester = new FilledShape(
     (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]], null, 90),
-    true, [400,500], [new Dot([100, 100]), new Dot([100, 150]), new Dot([150, 150]),new Dot([150, 100]),new Dot([125,25])], null, null, null, (render, dot, ratio, m, setupResults, dist, shape)=>{
+    true, [400,500], [new Dot([100, 100]), new Dot([100, 150]), new Dot([150, 150]),new Dot([150, 100]),new Dot([125,25])], null, null, null, (render, dot, ratio, setupResults, m, dist, shape)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) setupResults(shape.dots[0], m, dist, ratio, 200)
 }, null, (shape)=>{
@@ -102,7 +102,7 @@ let filter3 = "none"
 let alpha3 = 1
 let aasdasd = new Shape([600,100],[
     new Dot([-50, -50]),new Dot([-50, 0]),new Dot([-50, 50]),new Dot([0, -50]),new Dot([0, 0]),new Dot([0, 50]),new Dot([50, -50]),new Dot([50, 0]),
-], 20, (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]], null, 90), 100, (render, dot, ratio, m)=>{
+], 20, (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]], null, 90), 100, (render, dot, ratio)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.8)
     dot.radius = CDEUtils.mod(20, ratio, 20*0.7)
     if (dot.id % 5 == 0) CanvasUtils.drawOuterRing(dot, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), null, null, null, 4, [5, 15], CDEUtils.mod(50, ratio)), 5)

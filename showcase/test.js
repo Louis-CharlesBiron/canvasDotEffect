@@ -18,7 +18,7 @@ let comp3 = Render.DEFAULT_COMPOSITE_OPERATION
 let alpha3 = 1
 let aasdasd = new Shape([300,100],[
     new Dot([-50, -50]),new Dot([-50, 0]),new Dot([-50, 50]),new Dot([0, -50]),new Dot([0, 0]),new Dot([0, 50]),new Dot([50, -50]),new Dot([50, 0]),
-], 20, (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]], null, 90), 100, (render, dot, ratio, m)=>{
+], 20, (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]], null, 90), 100, (render, dot, ratio)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.8)
     dot.radius = CDEUtils.mod(20, ratio, 20*0.7)
     if (dot.id % 5 == 0) CanvasUtils.drawOuterRing(dot, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), null, null, null, 4, [5, 15], CDEUtils.mod(50, ratio)), 5)
@@ -28,7 +28,7 @@ CVS.add(aasdasd)
 
 
 
-let textInputTest = new Grid("a", [5, 5], 50, null, [10,200], 0, null, null, (render, dot, ratio, m, res, dist, shape, isActive)=>{
+let textInputTest = new Grid("a", [5, 5], 50, null, [10,200], 0, null, null, (render, dot, ratio)=>{
     CanvasUtils.drawDotConnections(dot, render.profile1.update([255,0,0,1],  null, null, null, 2, [0], null, RenderStyles.JOIN_TYPES.BEVEL, RenderStyles.CAP_TYPES.SQUARE))
 })
 
@@ -52,7 +52,7 @@ CVS2.add(asd)
 
 let filledShapeTester = new FilledShape(
     (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]], null, 90),
-    true, [0,0], [new Dot([100, 100]), new Dot([100, 150]), new Dot([150, 150]),new Dot([150, 100]),new Dot([125,25])], null, null, null, (render, dot, ratio, m, setupResults, dist, shape)=>{
+    true, [0,0], [new Dot([100, 100]), new Dot([100, 150]), new Dot([150, 150]),new Dot([150, 100]),new Dot([125,25])], null, null, null, (render, dot, ratio, setupResults, m, dist, shape)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) setupResults(shape.dots[0], m, dist, ratio, 200)
 }, null, (shape)=>{

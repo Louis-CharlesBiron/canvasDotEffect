@@ -304,7 +304,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 - **initDots** -> Initial dots declaration. Can either be: an array of dots `[new Dot(...), existingDot, ...]`, a **String** (this will automatically call the shape's createFromString() function), or a callback `(Shape, Canvas)=>{... return anArrayOfDots}` 
 - ***dots*** -> Array of all the current dots contained by the shape. 
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
-- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, mouse, parentSetupResults, distance, parent, isActive, rawRatio)=>{...}`.
+- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, parentSetupResults, mouse, distance, parent, isActive, rawRatio)=>{...}`.
 - **ratioPosCB**? -> References the mouse position by default. Can be used to set a custom *ratioPos* target `(Shape, dots)=>{... return [x, y]}`. Can be disabled if set to `null`.
 - **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused)
 
@@ -435,7 +435,7 @@ CVS.add(a)
          new Dot([50, -50]),
          new Dot([50, 0]),
          new Dot([50, 50]),
-     ], null, normalColorTester, 100, (render, dot, ratio, mouse)=>{
+     ], null, normalColorTester, 100, (render, dot, ratio, setupResults, mouse)=>{
      
          // Changes the opacity and color according to mouse distance
          dot.a = CDEUtils.mod(1, ratio, 0.8)
@@ -457,7 +457,7 @@ CVS.add(a)
 #### Example use 2:
 ###### - Single throwable dot, with color and radius effects
 ```js
-    const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (render, dot, ratio, mouse, setupResults, dist, shape)=>{
+    const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (render, dot, ratio, setupResults, mouse, dist, shape)=>{
         
         // Checking if the mouse is over the dot and clicked, and changing the color according to the state
         const mouseOn = dot.isWithin(mouse.pos, true)
@@ -632,7 +632,7 @@ The Grid class is a derivative of the Shape class. It allows the creation of dot
 #### Example use 2:
 ###### - Creating a distorted grid, that clears up an area around the mouse on hover
 ```js
-// Creating a grid with distorted symbols, but clearing the distortion on mouse hover
+// Creating a grid with symbols that distorts themselve on mouse hover
 const distortedGrid = new Grid(
     "abc\n123\n%?&", // symbols used
     [7, 7],     // gaps of 7px between each dot
@@ -642,13 +642,20 @@ const distortedGrid = new Grid(
     2,          // dot's radius
     "aliceblue",// dot's color 
     50,         // limit of 50px
-    (render, dot, ratio)=>{ // grid's drawEffectCB
+    (render, dot, ratio, filterId)=>{ // grid's drawEffectCB
 
-        // simple opacity effect
+        const scaleValue = CDEUtils.mod(50, ratio), // the scale value adjusted by the distance of the mouse
+              hasFilter = scaleValue>>0, // whether the current dot is affected by the filter (IMPORTANT FOR PERFORMANCES)
+              filterValue = hasFilter ? "url(#"+filterId+")" : "none" // adjusting the filter value
+
+        // accessing the <feDisplacementMap> element of the filter and updating its scale attribute
+        Canvas.getSVGFilter(filterId)[1].setAttribute("scale", scaleValue)
+
+        // drawing the symbols and applying some simple style changes, as well as the (↓) distortion filter. /!\ Also setting the (↓) "forceBatching" parameter to whether the filter is active or not
+        CanvasUtils.drawDotConnections(dot, render.profile5.update([255,0,0,1], filterValue, null, 1, 3), null, null, null, !hasFilter)
+
+        // finishing with a simple opacity effect for the dots
         dot.a = CDEUtils.mod(1, ratio)
-
-        // drawing the symbols and applying some simple style changes as well as the distortion filter ↓ (disabling it when the ratio is low enough)
-        CanvasUtils.drawDotConnections(dot, render.profile5.update([255,0,0,1], ratio>=0.75?"url(#myFilter)":"none", null, 1, 3))
 
 }, null, ()=>{ // grid's setupCB
 
@@ -663,7 +670,8 @@ const distortedGrid = new Grid(
           </feDisplacementMap>
         </filter>
        </svg>`, filterId)
-
+    
+    return filterId
 })
 
 // adding the grid to the canvas
@@ -1429,7 +1437,7 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
     
     // Creating a mostly default shape, with a single dot
     const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null, 
-        (render, dot, ratio, m, setupResults, dist, shape)=>{// drawEffectCB callback
+        (render, dot, ratio, setupResults, mouse, dist, shape)=>{// drawEffectCB callback
     
             // Changing the dot's size based on mouse distance for an additional small effect
             dot.radius = CDEUtils.mod(shape.radius*2, ratio, shape.radius*2*0.5)

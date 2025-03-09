@@ -7,7 +7,7 @@
 class Dot extends _Obj {
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
         super(pos, radius, color, setupCB, null, anchorPos, alwaysActive)
-        this._connections = []  // array of Dot to draw a connecting line to
+        this._connections = []  // array of Dot to eventually draw a connecting line to
     }
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
@@ -16,7 +16,7 @@ class Dot extends _Obj {
             const drawEffectCB = this.drawEffectCB
             if (drawEffectCB) {
                 const dist = this.getDistance(), rawRatio = this.getRatio(dist), isActive = rawRatio<1, parent = this._parent
-                drawEffectCB(render, this, isActive?rawRatio:1, parent.parent.mouse, parent.setupResults, dist, parent, isActive, rawRatio)
+                drawEffectCB(render, this, isActive?rawRatio:1, parent.setupResults, parent.parent.mouse, dist, parent, isActive, rawRatio)
             }
 
             if (this._radius) {

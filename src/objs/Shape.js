@@ -13,7 +13,7 @@ class Shape extends _Obj {
         this._initDots = dots                    // initial dots declaration
         this._dots = []                          // array containing current dots in the shape
         this._ratioPos = [Infinity,Infinity]     // position of ratio target object 
-        this._drawEffectCB = drawEffectCB        // (render, Dot, ratio, mouse, setupResults, distance, parent, isActive, rawRatio)=>
+        this._drawEffectCB = drawEffectCB        // (render, Dot, ratio, setupResults, mouse, distance, parent, isActive, rawRatio)=>
         this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>
         this._fragile = fragile||false           // whether the shape resets on document visibility change
     }
@@ -297,6 +297,7 @@ class Shape extends _Obj {
     get firstDot() {return this._dots[0]}
     get secondDot() {return this._dots[1]}
     get thirdDot() {return this._dots[2]}
+    get lastDot() {return this._dots.last()}
     get asSource() {return this._dots}
     get setupResults() {return this._setupResults}
 
