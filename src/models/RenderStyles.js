@@ -15,11 +15,6 @@ class RenderStyles extends _HasColor {
     static SERIALIZATION_SEPARATOR = "%"
     static DEFAULT_PROFILE = new RenderStyles(null, Color.DEFAULT_RGBA, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA, RenderStyles.DEFAULT_WIDTH, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH_OFFSET, RenderStyles.DEFAULT_JOIN, RenderStyles.DEFAULT_CAP)
 
-    /*
-        TODO
-        make batch filter work for lines (just like Dot)
-    */
-
     #ctx = null
     constructor(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         super(color)
