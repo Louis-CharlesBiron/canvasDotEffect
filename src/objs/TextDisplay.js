@@ -38,8 +38,8 @@ class TextDisplay extends _BaseObj {
                     ctx.translate(-x, -y)
                 }
 
-                if (this._drawMethod==="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth)
-                else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth)
+                if (this._drawMethod==="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
+                else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
                 
                 if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
             }
@@ -76,6 +76,7 @@ class TextDisplay extends _BaseObj {
         )
         textDisplay._scale = CDEUtils.unlinkArr2(this._scale)
         textDisplay._rotation = this._rotation
+        textDisplay._visualEffects = this.visualEffects_
         
         return this.initialized ? textDisplay : null
     }

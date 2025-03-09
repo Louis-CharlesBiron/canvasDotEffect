@@ -248,7 +248,7 @@ class GridAssets {
                 [0,D.b],[3,D.b],
                 [0],[3],
             ],o: [
-                [Infinity], //todo optimize (remove inifinity dots)
+                [Infinity],
                 [1,D.bl+D.r],[,D.br],
                 [0,D.b],[3,D.b],
                 [0,D.br],[3,D.bl],

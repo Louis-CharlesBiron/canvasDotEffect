@@ -15,6 +15,7 @@ html {
     width: 98%;
     height: 88%;
     border: 2px solid aliceblue;
+    user-select: none;
 }
 
 .canvasas {

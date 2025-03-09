@@ -13,7 +13,7 @@ class Shape extends _Obj {
         this._initDots = dots                    // initial dots declaration
         this._dots = []                          // array containing current dots in the shape
         this._ratioPos = [Infinity,Infinity]     // position of ratio target object 
-        this._drawEffectCB = drawEffectCB        // (render, Dot, ratio, mouse, setupResults, distance, parent, isActive, rawRatio)=>
+        this._drawEffectCB = drawEffectCB        // (render, Dot, ratio, setupResults, mouse, distance, parent, isActive, rawRatio)=>
         this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>
         this._fragile = fragile||false           // whether the shape resets on document visibility change
     }
@@ -29,6 +29,7 @@ class Shape extends _Obj {
 
         this.setRadius(this.getInitRadius(), true)
         this.setColor(this.getInitColor(), true)
+        if (this._visualEffects) this.setVisualEffects(this._visualEffects, true)
 
         this.initialized = true
         if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this?.parent)
@@ -66,6 +67,7 @@ class Shape extends _Obj {
             if (dot.initColor==null) dot.initColor = this.colorRaw
             if (dot.initRadius==null) dot.initRadius = this._radius
             if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
+            if (dot.visualEffect==null) dot.visualEffect = this.visualEffects_
             dot._parent = this
             dot.initialize()
             return dot
@@ -163,6 +165,17 @@ class Shape extends _Obj {
                 dot.color = color
                 if (!dot.initColor) dot.initColor = color
             }
+        }
+    }
+
+    // updates the visualEffects of all the shape's dots. If "onlyReplaceDefaults" is true, it only sets the dot's visualEffects if it was not initialy set
+    setVisualEffects(visualEffects=this._visualEffects, onlyReplaceDefaults) {
+        this._visualEffects = visualEffects
+        const d_ll = this._dots.length
+        for (let i=0;i<d_ll;i++) {
+            const dot = this._dots[i]
+            if (onlyReplaceDefaults && !dot.visualEffect) dot.visualEffects = visualEffects
+            else if (!onlyReplaceDefaults) dot.visualEffects = visualEffects
         }
     }
 
@@ -284,6 +297,7 @@ class Shape extends _Obj {
     get firstDot() {return this._dots[0]}
     get secondDot() {return this._dots[1]}
     get thirdDot() {return this._dots[2]}
+    get lastDot() {return this._dots.last()}
     get asSource() {return this._dots}
     get setupResults() {return this._setupResults}
 

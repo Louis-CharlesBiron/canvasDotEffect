@@ -26,6 +26,7 @@ class TextStyles {
 
     #ctx = null
     constructor(render, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
+        this._id = Render.TEXT_PROFILE_ID_GIVER++                                    // profile id
         this._render = render                                                        // Canvas render instance
         this.#ctx = render?.ctx                                                      // Canvas context
         this._font = font??TextStyles.DEFAULT_FONT                                   // text font-style, font-variant, font-weight, font-size, line-height, font-family

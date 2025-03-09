@@ -18,7 +18,7 @@ let movementsTester = new Shape([300,300],[
     new Dot([0, 50]),
     new Dot([50, -50]),
     new Dot([50, 0]),
- ], null, normalColorTester, 100, (render, dot, ratio, m, dist)=>{
+ ], null, normalColorTester, 100, (render, dot, ratio,)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.8)
     //dot.r = CDEUtils.mod(255, ratio, -255)
     //dot.g = CDEUtils.mod(255, ratio, -255)
@@ -43,14 +43,14 @@ CanvasUtils.toggleCenter(movementsTester)
 let dragAnim2 = CanvasUtils.getDraggableDotCB()
 let filledShapeTester = new FilledShape(
     (ctx, shape)=>new Gradient(ctx, shape, [[0, "purple"], [0.267, new Color([250,0,0,1])], [1, "#ABC123"]], null, 90),
-    true, [0,0], [new Dot([100, 400]), new Dot([100, 450]), new Dot([150, 450]),new Dot([150, 400]),new Dot([125,325])], null, null, null, (render, dot, ratio, m, res, dist, shape)=>{
+    true, [0,0], [new Dot([100, 400]), new Dot([100, 450]), new Dot([150, 450]),new Dot([150, 400]),new Dot([125,325])], null, null, null, (render, dot, ratio, res, m, dist, shape)=>{
     dot.a = CDEUtils.mod(1, ratio, 0.6)
     if (shape.dots[0].id == dot.id) dragAnim2(shape.dots[0], m, dist, ratio)
 }, null, null, null, null, true)
 filledShapeTester.playAnim(new Anim((prog)=>filledShapeTester.fillColorRaw.rotation=360*prog, -750))
 
 let testMoreDragAnim = CanvasUtils.getDraggableDotCB()
-let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, "blue")], 15, (ctx, shape)=>new Gradient(ctx, shape, [[0, "red"], [1, "yellow"]], null, 90), null, (render, dot, ratio, m, res, dist, shape)=>{
+let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, "blue")], 15, (ctx, shape)=>new Gradient(ctx, shape, [[0, "red"], [1, "yellow"]], null, 90), null, (render, dot, ratio, res, m, dist, shape)=>{
     if (shape.dots[0].id == dot.id) {
         testMoreDragAnim(shape.dots[0], m, dist, ratio)
 
@@ -65,7 +65,7 @@ testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog
 
 
 let test2 = new Shape((shape, idk)=>{return [50+50,100+shape.dots.length]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
-(shape, dot)=>{return shape.dots.length*2}, normalColorTester, 100, (render, dot, ratio, m, res, dist, parent)=>{
+(shape, dot)=>{return shape.dots.length*2}, normalColorTester, 100, (render, dot, ratio, res, m, dist, parent)=>{
     dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS*2*0.8)
 
     CanvasUtils.drawDotConnections(dot, [255,0,0,CDEUtils.mod(1, ratio, 0.8)], false, Render.LINE_TYPES.QUADRATIC, CDEUtils.mod(2, ratio))
@@ -90,12 +90,12 @@ let test2 = new Shape((shape, idk)=>{return [50+50,100+shape.dots.length]},[new 
 
 // ALPHABET
 let leColor = [255,0,0,1]
-let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyzX", [5, 5], 50, null, [10,200], 2, null, null, (render, dot, ratio, m, res, dist, shape, isActive)=>{
+let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200], 2, null, null, (render, dot, ratio, res, m, dist, shape, isActive)=>{
     dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS, ratio, _Obj.DEFAULT_RADIUS)
 
-    if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), 4, [5, 25]), 2)
+    if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8)), null, Render.DEFAULT_COMPOSITE_OPERATION, null, 4, [5, 25]), 2)
     
-    CanvasUtils.drawDotConnections(dot, render.profile1.update(leColor, 2, [0]))
+    CanvasUtils.drawDotConnections(dot, render.profile1.update(leColor, null, null, null, 2, [0]))
 }, ()=>draggableDotTester.dots[0].pos)
 
 
@@ -103,7 +103,7 @@ let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyzX", [5, 5], 50, null, [10,200
 
 // SINGLE DRAGGABLE DOT
 let dragAnim1 = CanvasUtils.getDraggableDotCB()
-let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null, (render, dot, ratio, m, res, dist, shape, isActive)=>{
+let draggableDotTester = new Shape([10,10],[new Dot([10,10])], null, null, null, (render, dot, ratio, res, m, dist, shape, isActive)=>{
 
     if (isActive) {
         let mouseOn = dot.isWithin(m.pos, true)
@@ -150,7 +150,7 @@ let animTester = new Shape([400,200],[
         
 
     })
-], null, null, 25, (render, dot, ratio, m)=>{
+], null, null, 25, (render, dot, ratio)=>{
     CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)
 }, null, null, null, ()=>draggableDotTester.firstDot?.pos, true)
 
@@ -160,7 +160,7 @@ let generationTester = new Shape([100,600],
         //dot.addConnection(nextDot)
 
     }),
-    3, "red", 100, (render, dot, ratio, m)=>{
+    3, "red", 100, (render, dot, ratio)=>{
         CanvasUtils.drawDotConnections(dot, [255,0,0,1])
         dot.radius = CDEUtils.mod(dot.getInitRadius()*2, ratio, dot.getInitRadius()*2*0.8)
         dot.a = CDEUtils.mod(1, ratio, 0.8)
@@ -188,17 +188,67 @@ const testText2 = new TextDisplay("Test § ->", [100, 550], (render, text)=>new 
 })
 CVS.add(testText2, true)
 
-let imageTester = new ImageDisplay(ImageDisplay.loadImage("./img/logo.png"), [-250, 75], [250], null, null, ()=>testMore.firstDot)
-CVS.add(imageTester, true)
+let imageTester = new ImageDisplay("./img/logo.png", [-250, 75], [250], null, null, ()=>testMore.firstDot)
 
 
-
-let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], null, (render, dot, ratio, m, res, dist, shape, isActive)=>{
-    CanvasUtils.drawDotConnections(dot, render.profile1.update(leColor, 3, [0]))
+let compOp = Render.DEFAULT_COMPOSITE_OPERATION
+let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], 50, (render, dot, ratio, res, m, dist, shape, isActive)=>{
+    const v = CDEUtils.mod(50, ratio), hasFilter = !(v>>0)
+    Canvas.getSVGFilter("test")[1].setAttribute("scale", v)
+    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, hasFilter?"none":"url(#test)", compOp, 1, 3, [0]), null, null, null, hasFilter)
+}, null, ()=>{ 
+    Canvas.loadSVGFilter(`<svg>
+        <filter id="turbulence">
+          <feTurbulence type="turbulence" baseFrequency="0.01 0.02" numOctaves="1" result="NOISE"></feTurbulence>
+          <feDisplacementMap in="SourceGraphic" in2="NOISE" scale="50">
+          </feDisplacementMap>
+        </filter>
+       </svg>`, "test")
 })
 CVS.add(moreGridTester)
 
+let visualEffectsTester = new Shape([700,600],[
+    new Dot([0, -50]),
+    new Dot([0, 0]),
+    new Dot([0, 50]),
+    new Dot([50, -50]),
+    new Dot([50, 0]),
+], null, normalColorTester, 100, (render, dot, ratio)=>{
+    dot.a = CDEUtils.mod(1, ratio, 0.2)
+    dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS*2*0.8)
+    CanvasUtils.drawOuterRing(dot, render.profile4.update([255,255,255,0.2], ...dot.visualEffects), 5)
 
+
+}, null, (shape)=>{
+    shape.rotateAt(45)
+    shape.setVisualEffects(["blur(3px)"])
+    shape.firstDot.filter = "none"
+
+}, null, [50,0])
+CVS.add(visualEffectsTester)
+
+let aa = new Shape([100,100], [new Dot([-50, -50]),
+    new Dot([-50, 0]),
+    new Dot([-50, 50]),
+    new Dot([0, -50]),
+    new Dot([0, 0]),
+    new Dot([0, 50]),
+    new Dot([50, -50]),
+    new Dot([50, 0]),new Dot([50, 50])], 5, [255,255,255,0.5], 50, (render, dot, ratio, res)=>{
+    const v = CDEUtils.mod(50, ratio)
+    Canvas.getSVGFilter("yo")[1].setAttribute("scale", v)
+    dot.filter = "url(#yo) blur("+Math.round(v)/10+"px)"
+    CanvasUtils.drawOuterRing(dot, render.profile3.update([255,250,255,1], "url(#yo)"), 3)
+}, null, ()=>{ 
+    Canvas.loadSVGFilter(`<svg>
+        <filter id="turbulence">
+          <feTurbulence type="turbulence" baseFrequency="0.01 0.02" numOctaves="1" result="NOISE"></feTurbulence>
+          <feDisplacementMap in="SourceGraphic" in2="NOISE" scale="50">
+          </feDisplacementMap>
+        </filter>
+       </svg>`, "yo")
+})
+CVS.add(aa)
 
 CVS.add(generationTester)
 CVS.add(animTester)
@@ -208,6 +258,7 @@ CVS.add(filledShapeTester)
 CVS.add(movementsTester)
 CVS.add(test2)
 CVS.add(le)
+CVS.add(imageTester, true)
 
 let dupelicateTester = le.duplicate()
 for (let i=0;i<3;i++) {
@@ -229,4 +280,3 @@ CVS.setkeyup()
 
 // START
 CVS.startLoop()
-
