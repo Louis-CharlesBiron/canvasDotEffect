@@ -197,6 +197,7 @@ The _Obj class is the template class of any canvas object. **It should not be di
 - ***parent*** -> The parent of the object. (Shape, Canvas, ...)
 - ***rotation*** -> The object's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
 - ***scale*** -> The shape's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
+- ***visualEffects*** -> The visual effects of the object in an array: `[filter, compositeOperation, opacity]`. `filter` is a string containing a regular css filter (`"blur(5px)"`, `url(#svgFilterId)`, etc). `compositeOperation` is one of `Render.COMPOSITE_OPERATIONS` (see [global composite operations](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation) for more information). `opacity` is the alpha value of the object (in addition to the object's color alpha).
 
 **This class also defines other useful base functions**, such as:
 - Movements functions (`moveBy`, `addForce`, `follow`, ...)
@@ -221,6 +222,8 @@ The _Obj class is the template class of any canvas object. **It should not be di
     // Example use, for 3 seconds, easeOutQuad, no custom callback, will travel in a sideways 'L' shape 
     let dx=400, dy=200
     dot.follow(3000, Anim.easeOutQuad, null, [[0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]]])
+```
+
 ```
 
  
@@ -301,7 +304,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 - **initDots** -> Initial dots declaration. Can either be: an array of dots `[new Dot(...), existingDot, ...]`, a **String** (this will automatically call the shape's createFromString() function), or a callback `(Shape, Canvas)=>{... return anArrayOfDots}` 
 - ***dots*** -> Array of all the current dots contained by the shape. 
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
-- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, mouse, parentSetupResults, distance, parent, isActive, rawRatio)=>{...}`.
+- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, parentSetupResults, mouse, distance, parent, isActive, rawRatio)=>{...}`.
 - **ratioPosCB**? -> References the mouse position by default. Can be used to set a custom *ratioPos* target `(Shape, dots)=>{... return [x, y]}`. Can be disabled if set to `null`.
 - **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused)
 
@@ -432,7 +435,7 @@ CVS.add(a)
          new Dot([50, -50]),
          new Dot([50, 0]),
          new Dot([50, 50]),
-     ], null, normalColorTester, 100, (render, dot, ratio, mouse)=>{
+     ], null, normalColorTester, 100, (render, dot, ratio, setupResults, mouse)=>{
      
          // Changes the opacity and color according to mouse distance
          dot.a = CDEUtils.mod(1, ratio, 0.8)
@@ -454,7 +457,7 @@ CVS.add(a)
 #### Example use 2:
 ###### - Single throwable dot, with color and radius effects
 ```js
-    const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (render, dot, ratio, mouse, setupResults, dist, shape)=>{
+    const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (render, dot, ratio, setupResults, mouse, dist, shape)=>{
         
         // Checking if the mouse is over the dot and clicked, and changing the color according to the state
         const mouseOn = dot.isWithin(mouse.pos, true)
@@ -626,6 +629,54 @@ The Grid class is a derivative of the Shape class. It allows the creation of dot
     CVS.add(coolAlphabet)
 ```
 
+#### Example use 2:
+###### - Creating a distorted grid, that clears up an area around the mouse on hover
+```js
+// Creating a grid with symbols that distorts themselve on mouse hover
+const distortedGrid = new Grid(
+    "abc\n123\n%?&", // symbols used
+    [7, 7],     // gaps of 7px between each dot
+    50,         // spacing of 50px between symbols
+    null,       // using the default source
+    [100, 100], // pos
+    2,          // dot's radius
+    "aliceblue",// dot's color 
+    50,         // limit of 50px
+    (render, dot, ratio, filterId)=>{ // grid's drawEffectCB
+
+        const scaleValue = CDEUtils.mod(50, ratio), // the scale value adjusted by the distance of the mouse
+              hasFilter = scaleValue>>0, // whether the current dot is affected by the filter (IMPORTANT FOR PERFORMANCES)
+              filterValue = hasFilter ? "url(#"+filterId+")" : "none" // adjusting the filter value
+
+        // accessing the <feDisplacementMap> element of the filter and updating its scale attribute
+        Canvas.getSVGFilter(filterId)[1].setAttribute("scale", scaleValue)
+
+        // drawing the symbols and applying some simple style changes, as well as the (↓) distortion filter. /!\ Also setting the (↓) "forceBatching" parameter to whether the filter is active or not
+        CanvasUtils.drawDotConnections(dot, render.profile5.update([255,0,0,1], filterValue, null, 1, 3), null, null, null, !hasFilter)
+
+        // finishing with a simple opacity effect for the dots
+        dot.a = CDEUtils.mod(1, ratio)
+
+}, null, ()=>{ // grid's setupCB
+
+    // filter id to be used for the filter url
+    const filterId = "myFilter"
+
+    // loading a simple custom distortion SVG filter
+    Canvas.loadSVGFilter(`<svg>
+        <filter id="turbulence">
+          <feTurbulence type="turbulence" baseFrequency="0.01 0.02" numOctaves="1" result="NOISE"></feTurbulence>
+          <feDisplacementMap in="SourceGraphic" in2="NOISE" scale="25">
+          </feDisplacementMap>
+        </filter>
+       </svg>`, filterId)
+    
+    return filterId
+})
+
+// adding the grid to the canvas
+CVS.add(distortedGrid)
+```
  
 
 # [Grid Assets](#table-of-contents)
@@ -1126,12 +1177,15 @@ Render is a class that centralizes most context operation. It provides functions
 
 # [RenderStyles](#table-of-contents)
 
-The RenderStyles class allows the customization of renders via style profiles when drawing with the *Render* class. By default, the following profiles are created and accessible via any Render instance: `defaultProfile`, `profile1`, `profile2` and `profile3`. There is also a `profiles` array to add more custom profiles.
+The RenderStyles class allows the customization of renders via style profiles when drawing with the *Render* class. By default, the following profiles are created and accessible via any Render instance: `defaultProfile` and `profile1`, to `profile5`. There is also a `profiles` array to add more custom profiles.
 
 #### **The RenderStyles constructor takes the following parameters:**
-###### - `new RenderStyles(render, color, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)`
+###### - `new RenderStyles(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)`
 - **render** -> The canvas Render instance.
 - **color** -> Either an RGBA array `[r, g, b, a]` or a `Color` instance.
+- **filter** -> A string containing a filter in CSS formating: `"blur(5px)"`, `url(#svgFilterId)`, etc. (Usage of filters may cause some perfomance issues, and some SVG filter can be invasive)
+- **compositeOperation** -> The composite operation used. One of `Render.COMPOSITE_OPERATIONS` (see [global composite operations](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation) for more information) (some composite operations can be invasive)
+- **opacity** -> The alpha value of the object ranging from 0 to 1. (This alpha is additive to the object's color alpha).
 - **lineWidth** -> The width in px of the drawn line.
 - **lineDash** -> Gaps length within the line
 - **lineDashOffset** -> Offset in px of the start of the gaps (dashes).
@@ -1149,9 +1203,11 @@ The RenderStyles class allows the customization of renders via style profiles wh
     const myNewStyleProfile = RenderStyles.DEFAULT_PROFILE.duplicate(CVS.render)
 
     // Adding a new style profile to the render's custom profile list
-    CVS.render.profiles.push(myNewStyleProfile)
-    
-    // the style profile is now accessible via render.profiles[indexOfTheProfile]
+    CVS.render.profiles.push(myNewStyleProfile) // the style profile is now accessible via render.profiles
+
+    // OR
+
+    // use the render instance function: addCustomStylesProfile()
 ```
 
 ### **To reuse a style profile for multiple styles,** use the update() function:
@@ -1206,7 +1262,7 @@ The RenderStyles class allows the customization of renders via style profiles wh
 
 # [TextStyles](#table-of-contents)
 
-The TextStyles class (similar to TextStyles) allows the customization of text via style profiles when drawing text with the *TextDisplay* class. By default, the following profiles are created and accessible via any Render instance: `defaultTextProfile`, `textProfile1`, `textProfile2` and `textProfile3`. There is also a `textProfiles` array to add more custom profiles. *(Most functions from TextStyles apply very similarly to TextStyles)*
+The TextStyles class (similar to TextStyles) allows the customization of text via style profiles when drawing text with the *TextDisplay* class. By default, the following profiles are created and accessible via any Render instance: `defaultTextProfile` and `textProfile1` to `textProfile5`. There is also a `textProfiles` array to add more custom profiles. *(Most functions from TextStyles apply very similarly to TextStyles)*
 
 #### **The TextStyles constructor takes the following parameters:**
 ###### - `new TextStyles(render, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)`
@@ -1381,7 +1437,7 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
     
     // Creating a mostly default shape, with a single dot
     const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null, 
-        (render, dot, ratio, m, setupResults, dist, shape)=>{// drawEffectCB callback
+        (render, dot, ratio, setupResults, mouse, dist, shape)=>{// drawEffectCB callback
     
             // Changing the dot's size based on mouse distance for an additional small effect
             dot.radius = CDEUtils.mod(shape.radius*2, ratio, shape.radius*2*0.5)
@@ -1480,7 +1536,7 @@ This function is used to draw a connection between a Dot and another pos/object.
             CanvasUtils.drawLine(
                 dot,        // start Dot
                 [200, 200], // end position (can also be a Dot)
-                RenderStyles.PROFILE1.update(
+                render.profile.update(
                     Color.rgba(dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)) // updates only the color, but uses every previously set styles
                 )
             )
@@ -1555,7 +1611,7 @@ const manualSineWaveDrawer = new Shape([100, 100], [
 ], null, null, 100, (render, dot, ratio)=>{// shape's drawEffectCB
 
     // drawing a dotted red line between the two dots
-    CanvasUtils.drawDotConnections(dot, RenderStyles.PROFILE1.update([255,0,0,1], null, null, null, [5]))
+    CanvasUtils.drawDotConnections(dot, render.profile1.update([255,0,0,1], null, null, null, [5]))
 
     // simple radius hover effect
     dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS*2*0.8)

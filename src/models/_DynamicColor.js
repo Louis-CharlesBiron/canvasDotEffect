@@ -8,6 +8,14 @@ class _DynamicColor {
     static PLACEHOLDER = "PLACEHOLDER" // can be used to instantiate a dynamic color without positions, and apply that of the object, on assignement
     static PLACEHOLDER_COLOR = "transparent"
 
+    constructor(positions, rotation) {
+        this._initPositions = positions // initial positions declaration
+        this._positions = positions     // current positions value
+        this._rotation = rotation??0    // current rotation
+        this._lastChangeValue = null    // used for optimization purposes
+        this._value = null              // usable value as a fill/stroke style
+    }
+
     // returns the minimal rectangular area containing all of the provided shape. can be adjusted with the padding parameter
     static getAutomaticPositions(obj, padding=[0,0,0,0]) {
         let positions = null, [pT, pR, pB, pL] = padding
@@ -31,13 +39,6 @@ class _DynamicColor {
         return positions
     }
 
-    constructor(positions, rotation) {
-        this._initPositions = positions 
-        this._positions = positions
-        this._rotation = rotation??0
-        this._lastChangeValue = null
-        this._value = null
-    }
     get initPositions() {return this._initPositions}
     get positions() {return this._positions}
 	get rotation() {return this._rotation}
@@ -53,7 +54,7 @@ class _DynamicColor {
         if (!this.isDynamic) this.update(true)
     }
 	set rotation(deg) {
-        this._rotation = CDEUtils.round(deg, 2)%360
+        this._rotation = CDEUtils.round(deg,2)%360
         if (!this.isDynamic) this.update(true)
     }
 }

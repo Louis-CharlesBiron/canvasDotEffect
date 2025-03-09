@@ -31,51 +31,58 @@ class CanvasUtils {
         CVS.add(t_d1, true)
         CVS.add(t_d2, true)
     }
+
+    // returns true if the provided dot is the first one of the shape
+    static firstDotOnly(dot) {
+        return dot.id==dot.parent.firstDot.id
+    }
     
     // Generic function to draw an outer ring around a dot
     static drawOuterRing(dot, renderStyles, radiusMultiplier) {
-        const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
+        const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
 
-        // skip if not visible
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
-        dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
+        if (filter&&filter.indexOf("#")!==-1) dot.render.stroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
+        else dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
     static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread) {
-        const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
+        const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
         
-        // skip if not visible
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
             const res = dot.getLinearIntersectPoints(target, (target.radius??_Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-            dot.render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
-        } else dot.render.batchStroke(lineType(dot.pos, target.pos??target, spread), renderStyles)
+            if (filter&&filter.indexOf("#")!==-1) dot.render.stroke(lineType(res[0][0], res[1][0], spread), renderStyles)
+            else dot.render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
+        } else {
+            if (filter&&filter.indexOf("#")!==-1) dot.render.stroke(lineType(dot.pos, target.pos??target, spread), renderStyles)
+            else dot.render.batchStroke(lineType(dot.pos, target.pos??target, spread), renderStyles)
+        }
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
-    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, isDestinationOver=true) {
-        const ctx = dot.ctx, render = dot.render, dotPos = dot.pos, dotConnections = dot.connections,
-              dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD
+    static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
+        const render = dot.render, dotPos = dot.pos, dotConnections = dot.connections, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter, hasURLFilter = filter&&filter.indexOf("#")!==-1, forceBatchingDisabled = !forceBatching
+
+        if (!lineType) lineType=Render.getLine
 
         if (dc_ll) {
-            // skip if not visible
             if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
-
-            if (isDestinationOver) ctx.globalCompositeOperation = "destination-over"
 
             if (radiusPaddingMultiplier) {
                 const dotRadiusPadding = dot.radius*radiusPaddingMultiplier
                 for (let i=0;i<dc_ll;i++) {
                     const c = dotConnections[i], res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dotRadiusPadding)
-                    render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
+                    if (hasURLFilter && forceBatchingDisabled) render.stroke(lineType(res[0][0], res[1][0], spread), renderStyles)
+                    else render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
                 }
-            } else for (let i=0;i<dc_ll;i++) render.batchStroke(lineType(dotPos, dotConnections[i].pos, spread), renderStyles)
-
-            
-            if (isDestinationOver) ctx.globalCompositeOperation = "source-over"
+            } else for (let i=0;i<dc_ll;i++) {
+                if (hasURLFilter && forceBatchingDisabled) render.stroke(lineType(dotPos, dotConnections[i].pos, spread), renderStyles)
+                else render.batchStroke(lineType(dotPos, dotConnections[i].pos, spread), renderStyles)
+            }
         }
     }
 
@@ -114,7 +121,7 @@ class CanvasUtils {
 
         static THROWABLE_DOT(pos, radius, color) {
             const dragAnim = CanvasUtils.getDraggableDotCB()
-            return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, m, res, dist, shape)=>{
+            return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, res, m, dist, shape)=>{
                 dragAnim(shape.firstDot, m, dist, ratio)
             })
         }

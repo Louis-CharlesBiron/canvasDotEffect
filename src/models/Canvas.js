@@ -7,6 +7,7 @@ const CDE_CANVAS_DEFAULT_TIMEOUT_FN = window.requestAnimationFrame||window.mozRe
 
 // Represents a html canvas element
 class Canvas {
+    static DOMParser = new DOMParser()
     static ELEMENT_ID_GIVER = 0
     static DEFAULT_MAX_DELTATIME_MS = 130
     static DEFAULT_MAX_DELTATIME = Canvas.DEFAULT_MAX_DELTATIME_MS/1000
@@ -14,6 +15,9 @@ class Canvas {
     static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
     static DEFAULT_CVSDE_ATTR = "_CVSDE"
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
+    static DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX = "CDE_FE_"
+    static DEFAULT_CUSTOM_SVG_FILTER_CONTAINER_ID = Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+"CONTAINER"
+    static LOADED_SVG_FILTERS = {}
     static DEFAULT_CTX_SETTINGS = {"imageSmoothingEnabled":false, "willReadFrequently":false, "font":TextStyles.DEFAULT_FONT, "letterSpacing":TextStyles.DEFAULT_LETTER_SPACING, "wordSpacing":TextStyles.DEFAULT_WORD_SPACING, "fontVariantCaps":TextStyles.DEFAULT_FONT_VARIANT_CAPS, "direction":TextStyles.DEFAULT_DIRECTION, "fontSretch":TextStyles.DEFAULT_FONT_STRETCH, "fontKerning":TextStyles.DEFAULT_FONT_KERNING, "textAlign":TextStyles.DEFAULT_TEXT_ALIGN, "textBaseline":TextStyles.DEFAULT_TEXT_BASELINE, "textRendering":TextStyles.DEFAULT_TEXT_RENDERING, "lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
@@ -102,6 +106,41 @@ class Canvas {
     // adds a callback to be called once the document has been interacted with for the first time
     static addOnFirstInteractCallback(callback) {
         if (CDEUtils.isFunction(callback) && Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#ON_FIRST_INTERACT_CALLBACKS.push(callback)
+    }
+
+    /**
+     * Loads a custom svg filter to use
+     * @param {String} svgContent: string containing the svg filter, e.g: `<svg><filter id="someId"> ... the filter contents </svg>`
+     * @param {String?} id: the id of the svg filter. (Takes the one of the svgContent <filter> element if not defined) 
+     * @returns the usable id
+     */
+    static loadSVGFilter(svgContent, id) {
+        let container = document.getElementById(Canvas.DEFAULT_CUSTOM_SVG_FILTER_CONTAINER_ID), svg = new DOMParser().parseFromString(svgContent, "text/html").body.firstChild, filter = svg.querySelector("filter"), parent = document.createElement("div")
+        if (!id) id = filter.id
+        else filter.id = id
+        parent.id = Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+id
+        parent.appendChild(svg)
+
+        if (!container) {
+            container = document.createElement("div")
+            container.id = Canvas.DEFAULT_CUSTOM_SVG_FILTER_CONTAINER_ID
+            document.head.appendChild(container)
+        }
+        container.appendChild(parent)
+        Canvas.LOADED_SVG_FILTERS[id] = [...filter.children]
+        return id
+    }
+
+    // returns the filter elements of a loaded svg filter
+    static getSVGFilter(id) {
+        return Canvas.LOADED_SVG_FILTERS[id]
+    }
+
+    // deletes a loaded svg filter
+    static removeSVGFilter(id) {
+        id = Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+id
+        document.getElementById(id).remove()
+        delete Canvas.LOADED_SVG_FILTERS[id]
     }
 
     // updates the calculated canvas offset in the page
@@ -291,9 +330,11 @@ class Canvas {
 
     // ran on first user interaction
     static #onFirstInteraction(e) {
-        const callbacks = Canvas.#ON_FIRST_INTERACT_CALLBACKS, cb_ll = callbacks?.length
-        if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
-        Canvas.#ON_FIRST_INTERACT_CALLBACKS = null
+        if (e.type!=="keydown" || (e.type==="keydown"&&e.key.length===1)) {
+            const callbacks = Canvas.#ON_FIRST_INTERACT_CALLBACKS, cb_ll = callbacks?.length
+            if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
+            Canvas.#ON_FIRST_INTERACT_CALLBACKS = null
+        }
     }
 
     // called on mouse move
