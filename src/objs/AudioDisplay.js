@@ -9,11 +9,19 @@ class AudioDisplay extends _BaseObj {
     static SOURCE_TYPES = {FILE_PATH:"string", DYNAMIC:"[object Object]", MICROPHONE:"MICROPHONE", SCREEN_AUDIO:"SCREEN_AUDIO", VIDEO:HTMLVideoElement, AUDIO:HTMLAudioElement}
     static MINIMAL_FFT = 1
     static MAXIMAL_FFT = 32768
+    static DEFAULT_SAMPLE_COUNT = 64
+    static DEFAULT_BINCB = (render, bin, pos, audioDisplay)=>{
+        const barWidth = 2, barHeight = 100*bin, spacing = 5
+        render.fill(Render.getRect(pos, barWidth, barHeight), audioDisplay._color, audioDisplay.visualEffects)
+        pos[0] += spacing
+        return pos
+    }
 
     /**
      TODO
 
     - initialize, draw
+    - fix in index.js initialisation
     - different types of display (waveForm sineWave, etc?)
     - auto spacing given a max width
     - optimization!
@@ -27,24 +35,42 @@ class AudioDisplay extends _BaseObj {
     
      documentation
 
+
+
+
+let aud = new AudioDisplay("./img/song.mp3", [200,50], "lime", (render, bin, pos, audioDisplay, i)=>{
+    const barWidth = 2, barHeight = 100*bin+5, spacing = 5
+
+    render.fill(Render.getRect(pos, barWidth, barHeight), audioDisplay._color)
+
+    pos[0] += spacing
+    return pos
+}, 64)
+
+CVS.add(aud, true)
+
+
+
+
+
+
      */
 
     #buffer_ll = null
     #data = null
     #fft = null
-    constructor(source, pos, color, sampleCount, spacing, maxHeight, barWidth, offsetPourcent, type, setupCB, loopCB, anchorPos, alwaysActive) {
+    // DOC TODO
+    constructor(source, pos, color, binCB, sampleCount, offsetPourcent, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
         this._source = source??""            // the initial source of the displayed audio
-        this._sampleCount = sampleCount
-        this._spacing = spacing
-        this._maxHeight = maxHeight
-        this._barWidth = barWidth??2
+        this._binCB = binCB??AudioDisplay.DEFAULT_BINCB // (render, bin, atPos, audioDisplay, i, rawBin)=>{... return? [newX, newY]}
+        this._sampleCount = sampleCount??AudioDisplay.DEFAULT_SAMPLE_COUNT
         this._offsetPourcent = offsetPourcent??0
 
 
         this._audioCtx = new AudioContext()
         this._audioAnalyser = this._audioCtx.createAnalyser()
-        this.#fft = this._audioAnalyser.fftSize = Math.max(32, 2**Math.round(Math.log2(sampleCount*2)))
+        this.#fft = this._audioAnalyser.fftSize = Math.max(32, 2**Math.round(Math.log2(this._sampleCount*2)))
         this.#buffer_ll = this._audioAnalyser.frequencyBinCount
         this.#data = new Uint8Array(this.#buffer_ll)
     }
@@ -71,7 +97,7 @@ class AudioDisplay extends _BaseObj {
 
     draw(render, time, deltaTime) {
         if (this.initialized) {
-            const ctx = render.ctx, x = this.x, y = this.y, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
+            const ctx = render.ctx, x = this.x, y = this.y, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling, data = this.#data
             if (hasTransforms) {
                 ctx.translate(x, y)
                 if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
@@ -79,19 +105,13 @@ class AudioDisplay extends _BaseObj {
                 ctx.translate(-x, -y)
             }
 
-
-            let atX = x
-            this._audioAnalyser.getByteFrequencyData(this.#data)
-            const spacing = this._spacing, barHeight = this._maxHeight, offset = (this._offsetPourcent%1)*(this.#fft/2), adjusted_ll = Math.round(0.49+this._sampleCount)-offset, arr = new Uint8Array(this._sampleCount/2)
-            for (let ii=-offset,i=offset>>0;ii<adjusted_ll;ii++,i=(i+1)%(this._sampleCount)) {
-                const v = 0.05+this.#data[i]/128, y2 = (v*barHeight)/2
-                render.fill(Render.getRect([atX, y], this._barWidth, y2), this._color)
-                atX = (atX+spacing)
-                arr[i] = this.#data[i]
-            }
-            //console.log(atX, adjusted_ll, this.#fft, this._sampleCount)
+            this._audioAnalyser.getByteFrequencyData(data)
             
-
+            let atPos = this.pos_, offset = (this._offsetPourcent%1)*(this.#fft/2), adjusted_ll = Math.round(0.49+this._sampleCount)-offset
+            for (let ii=-offset,i=offset>>0;ii<adjusted_ll;ii++,i=(i+1)%(this._sampleCount)) {
+                const bin = data[i], newPos = this._binCB(render, bin/128, atPos, this, i, bin)
+                if (newPos) atPos = newPos
+            }
 
             if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
         }

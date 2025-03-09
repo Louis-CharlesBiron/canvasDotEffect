@@ -267,8 +267,6 @@ for (let i=0;i<3;i++) {
     dupelicateTester = dupelicateTester.duplicate()
 }
 
-
-
 // USER ACTIONS
 let mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"
 CVS.setmousemove(mMove)
