@@ -38,34 +38,34 @@ class CanvasUtils {
     }
     
     // Generic function to draw an outer ring around a dot
-    static drawOuterRing(dot, renderStyles, radiusMultiplier) {
+    static drawOuterRing(dot, renderStyles, radiusMultiplier, forceBatching) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
 
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
-        if (filter&&filter.indexOf("#")!==-1) dot.render.stroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
+        if (filter&&filter.indexOf("#")!==-1 && !forceBatching) dot.render.stroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
         else dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
-    static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread) {
+    static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
         
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
             const res = dot.getLinearIntersectPoints(target, (target.radius??_Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-            if (filter&&filter.indexOf("#")!==-1) dot.render.stroke(lineType(res[0][0], res[1][0], spread), renderStyles)
+            if (filter&&filter.indexOf("#")!==-1 && !forceBatching) dot.render.stroke(lineType(res[0][0], res[1][0], spread), renderStyles)
             else dot.render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
         } else {
-            if (filter&&filter.indexOf("#")!==-1) dot.render.stroke(lineType(dot.pos, target.pos??target, spread), renderStyles)
+            if (filter&&filter.indexOf("#")!==-1 && !forceBatching) dot.render.stroke(lineType(dot.pos, target.pos??target, spread), renderStyles)
             else dot.render.batchStroke(lineType(dot.pos, target.pos??target, spread), renderStyles)
         }
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
     static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
-        const render = dot.render, dotPos = dot.pos, dotConnections = dot.connections, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter, hasURLFilter = filter&&filter.indexOf("#")!==-1, forceBatchingDisabled = !forceBatching
+        const render = dot.render, dotPos = dot.pos, dotConnections = dot.connections, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter, hasURLFilter = filter&&filter.indexOf("#")!==-1
 
         if (!lineType) lineType=Render.getLine
 
@@ -76,11 +76,11 @@ class CanvasUtils {
                 const dotRadiusPadding = dot.radius*radiusPaddingMultiplier
                 for (let i=0;i<dc_ll;i++) {
                     const c = dotConnections[i], res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dotRadiusPadding)
-                    if (hasURLFilter && forceBatchingDisabled) render.stroke(lineType(res[0][0], res[1][0], spread), renderStyles)
+                    if (hasURLFilter && !forceBatching) render.stroke(lineType(res[0][0], res[1][0], spread), renderStyles)
                     else render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
                 }
             } else for (let i=0;i<dc_ll;i++) {
-                if (hasURLFilter && forceBatchingDisabled) render.stroke(lineType(dotPos, dotConnections[i].pos, spread), renderStyles)
+                if (hasURLFilter && !forceBatching) render.stroke(lineType(dotPos, dotConnections[i].pos, spread), renderStyles)
                 else render.batchStroke(lineType(dotPos, dotConnections[i].pos, spread), renderStyles)
             }
         }
