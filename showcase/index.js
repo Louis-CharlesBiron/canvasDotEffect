@@ -194,12 +194,10 @@ let imageTester = new ImageDisplay("./img/logo.png", [-250, 75], [250], null, nu
 let compOp = Render.DEFAULT_COMPOSITE_OPERATION
 let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], 50, (render, dot, ratio, res, m, dist, shape, isActive)=>{
     const v = CDEUtils.mod(50, ratio)>>0, hasFilter = (v>>0), feDisplacementMap = res[0]
-    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, hasFilter?"url(#test)":"none", compOp, 1, 3, [0]), null, null, null, hasFilter)
 
-    if (v && res[1] != v) {
-        res[1] = v
-        feDisplacementMap.setAttribute("scale", v)
-    }
+    if (feDisplacementMap.getAttribute("scale") != v) feDisplacementMap.setAttribute("scale", v)
+
+    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, hasFilter?"url(#test)":"none", compOp, 1, 3, [0]), null, null, null, !hasFilter)
 }, null, ()=>{ 
     Canvas.loadSVGFilter(`<svg>
         <filter id="turbulence">
