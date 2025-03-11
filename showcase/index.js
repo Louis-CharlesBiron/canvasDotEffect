@@ -193,9 +193,13 @@ let imageTester = new ImageDisplay("./img/logo.png", [-250, 75], [250], null, nu
 
 let compOp = Render.DEFAULT_COMPOSITE_OPERATION
 let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], 50, (render, dot, ratio, res, m, dist, shape, isActive)=>{
-    const v = CDEUtils.mod(50, ratio), hasFilter = !(v>>0)
-    Canvas.getSVGFilter("test")[1].setAttribute("scale", v)
-    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, hasFilter?"none":"url(#test)", compOp, 1, 3, [0]), null, null, null, hasFilter)
+    const v = CDEUtils.mod(50, ratio)>>0, hasFilter = (v>>0), feDisplacementMap = res[0]
+    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, hasFilter?"url(#test)":"none", compOp, 1, 3, [0]), null, null, null, hasFilter)
+
+    if (v && res[1] != v) {
+        res[1] = v
+        feDisplacementMap.setAttribute("scale", v)
+    }
 }, null, ()=>{ 
     Canvas.loadSVGFilter(`<svg>
         <filter id="turbulence">
@@ -204,6 +208,8 @@ let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", 
           </feDisplacementMap>
         </filter>
        </svg>`, "test")
+
+    return [Canvas.getSVGFilter("test")[1], 50]
 })
 CVS.add(moreGridTester)
 
@@ -234,11 +240,11 @@ let aa = new Shape([100,100], [new Dot([-50, -50]),
     new Dot([0, 0]),
     new Dot([0, 50]),
     new Dot([50, -50]),
-    new Dot([50, 0]),new Dot([50, 50])], 5, [255,255,255,0.5], 50, (render, dot, ratio, res)=>{
-    const v = CDEUtils.mod(50, ratio)
-    Canvas.getSVGFilter("yo")[1].setAttribute("scale", v)
-    dot.filter = "url(#yo) blur("+Math.round(v)/10+"px)"
-    CanvasUtils.drawOuterRing(dot, render.profile3.update([255,250,255,1], "url(#yo)"), 3)
+    new Dot([50, 0]),new Dot([50, 50])], 5, [255,255,255,0.5], 50, (render, dot, ratio, feDisplacementMap)=>{
+    const v = CDEUtils.mod(50, ratio), hasFilter = v>>0,  filterValue = hasFilter ? "url(#yo)" : "none", dotFilterValue = "url(#yo) blur("+Math.round(v)/10+"px)"
+    if (feDisplacementMap.getAttribute("scale") != v) feDisplacementMap.setAttribute("scale", v)
+    if (dot.filter !== dotFilterValue) dot.filter = dotFilterValue
+    CanvasUtils.drawOuterRing(dot, render.profile3.update([255,250,255,1], filterValue), 3, null, null, null, !hasFilter)
 }, null, ()=>{ 
     Canvas.loadSVGFilter(`<svg>
         <filter id="turbulence">
@@ -247,6 +253,8 @@ let aa = new Shape([100,100], [new Dot([-50, -50]),
           </feDisplacementMap>
         </filter>
        </svg>`, "yo")
+
+       return Canvas.getSVGFilter("yo")[1]
 })
 CVS.add(aa)
 
