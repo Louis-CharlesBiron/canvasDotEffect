@@ -49,12 +49,12 @@ class Mouse {
 
     // given an mouse event, sets the current mouse active buttons
     setMouseClicks(e) {
-        const v = e.type==="mousedown"||e.type==="touchstart"
-        if (e.button===0) this._clicked = v
-        else if (e.button===1) this._scrollClicked = v
-        else if (e.button===2) this._rightClicked = v
-        else if (e.button===3) this._extraBackClicked = v
-        else if (e.button===4) this._extraForwardClicked = v
+        const v = e.type=="mousedown"||e.type=="touchstart"
+        if (e.button==0) this._clicked = v
+        else if (e.button==1) this._scrollClicked = v
+        else if (e.button==2) this._rightClicked = v
+        else if (e.button==3) this._extraBackClicked = v
+        else if (e.button==4) this._extraForwardClicked = v
     }
 
     // invalidates mouse position
@@ -72,7 +72,7 @@ class Mouse {
 
     // sets and returns whether the current mouse position is valid
     checkValid() {
-        if (this._x === Infinity || this._x == null || this._y === Infinity || this._y == null) return this._valid = false
+        if (this._x == Infinity || this._x == null || this._y == Infinity || this._y == null) return this._valid = false
         else if (!this._valid) return this._valid = true
     }
 

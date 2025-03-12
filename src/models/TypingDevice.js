@@ -21,7 +21,7 @@ class TypingDevice {
     }
 
     isDown(key) {
-        return Boolean(this._keysPressed.find(v=>v.key===key.toUpperCase()))
+        return Boolean(this._keysPressed.find(v=>v.key==key.toUpperCase()))
     }
 
     hasKeysDown() {

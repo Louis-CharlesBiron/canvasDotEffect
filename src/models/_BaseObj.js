@@ -208,6 +208,8 @@ class _BaseObj extends _HasColor {
     get currentBacklogAnim() {return this._anims.backlog[0]}
     get anims() {return this._anims}
     get setupCB() {return this._setupCB}
+    get loopCB() {return this._loopCB}
+    get loopingCB() {return this._loopCB}
     get setupResults() {return this._setupResults}
     get initialized() {return this._initialized}
     get alwaysActive() {return this._alwaysActive}
@@ -252,6 +254,8 @@ class _BaseObj extends _HasColor {
     }
     set initPos(initPos) {this._initPos = initPos}
     set setupCB(cb) {this._setupCB = cb}
+    set loopCB(cb) {this._loopCB = cb}
+    set loopingCB(cb) {this._loopCB = cb}
     set setupResults(value) {this._setupResults = value}
     set initialized(init) {this._initialized = init}
     set alwaysActive(alwaysActive) {this._alwaysActive = alwaysActive}

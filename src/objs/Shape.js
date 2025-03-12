@@ -25,7 +25,7 @@ class Shape extends _Obj {
 
         if (Array.isArray(this._initDots) || this._initDots instanceof Dot) this.add(this._initDots)
         else if (CDEUtils.isFunction(this._initDots)) this.add(this._initDots(this, this._parent))
-        else if (typeof this._initDots === "string") this.add(this.createFromString(this._initDots))
+        else if (typeof this._initDots == "string") this.add(this.createFromString(this._initDots))
 
         this.setRadius(this.getInitRadius(), true)
         this.setColor(this.getInitColor(), true)
@@ -128,7 +128,7 @@ class Shape extends _Obj {
             let [atX, atY] = topLeftPos
             atY+=i*gaps[1]
             ;[...x].forEach(c=>{
-                if (c===dotChar) dots.push(new Dot([atX+gaps[0]/2, atY+gaps[1]/2]))
+                if (c==dotChar) dots.push(new Dot([atX+gaps[0]/2, atY+gaps[1]/2]))
                 atX+=gaps[0]
             })
         })

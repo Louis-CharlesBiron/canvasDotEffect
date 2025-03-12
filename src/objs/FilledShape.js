@@ -84,7 +84,7 @@ class FilledShape extends Shape {
     set fillColor(fillColor) {// todo, kind duplicated code ↓
         if (!this._fillColor || this._fillColor?.colorRaw?.toString() !== fillColor?.toString()) {
             const specialColor = fillColor?.colorRaw||fillColor
-            if (specialColor?.positions===_DynamicColor.PLACEHOLDER) {
+            if (specialColor?.positions==_DynamicColor.PLACEHOLDER) {
                 if (!fillColor.isChannel) fillColor = specialColor.duplicate()
                 else fillColor = specialColor 
                 fillColor.initPositions = this

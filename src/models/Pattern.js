@@ -94,7 +94,7 @@ class Pattern extends _DynamicColor {
     // tries to update the curent pattern. Succeeds if forced, or if the last update's elapsed time corresponds to the frame rate 
     update(forceLevel=this._forcedUpdates) {
         if (this.#initialized) {
-            const source = this._source, ctx = this._render.ctx, isCanvas = source instanceof HTMLCanvasElement, forceLevels = Pattern.FORCE_UPDATE_LEVELS, time = (isCanvas||forceLevel===forceLevels.RESPECT_FRAME_RATE)?performance.now()/1000:source.currentTime
+            const source = this._source, ctx = this._render.ctx, isCanvas = source instanceof HTMLCanvasElement, forceLevels = Pattern.FORCE_UPDATE_LEVELS, time = (isCanvas||forceLevel==forceLevels.RESPECT_FRAME_RATE)?performance.now()/1000:source.currentTime
         
             if (time != null && forceLevel !== forceLevels.OVERRIDE) {
                 if (this.#lastUpdateTime > time) this.#lastUpdateTime = time

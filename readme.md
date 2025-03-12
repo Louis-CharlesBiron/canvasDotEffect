@@ -502,7 +502,7 @@ CVS.add(a)
     const backAndForthDotShape = new Shape([200,200], new Dot([0,0], null, null, (dot, shape)=>{
             let distance = 150, ix = dot.x
             dot.playAnim(new Anim((progress, playCount, deltaTime)=>{
-                dot.x = ix + ((playCount % 2) === 0 ? 1 : -1) * distance * progress
+                dot.x = ix + ((playCount % 2) == 0 ? 1 : -1) * distance * progress
                 if (progress == 1) ix = dot.x
             }, -1000, Anim.easeOutBack))
         })

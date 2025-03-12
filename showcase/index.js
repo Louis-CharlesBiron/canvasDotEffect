@@ -142,7 +142,7 @@ let animTester = new Shape([400,200],[
             dot.x += dx
             ax += dx
         
-            if (prog === 1) {
+            if (prog == 1) {
                 ix = dot.x
                 ax = 0
             }
@@ -191,7 +191,7 @@ CVS.add(testText2, true)
 let imageTester = new ImageDisplay("./img/logo.png", [-250, 75], [250], null, null, ()=>testMore.firstDot)
 
 
-let compOp = Render.DEFAULT_COMPOSITE_OPERATION
+/*let compOp = Render.DEFAULT_COMPOSITE_OPERATION
 let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], 50, (render, dot, ratio, res, m, dist, shape, isActive)=>{
     const v = CDEUtils.mod(50, ratio)>>0, hasFilter = (v>>0), feDisplacementMap = res[0]
 
@@ -254,7 +254,15 @@ let aa = new Shape([100,100], [new Dot([-50, -50]),
 
        return Canvas.getSVGFilter("yo")[1]
 })
-CVS.add(aa)
+CVS.add(aa)*/
+
+Canvas.loadSVGFilter(`<svg>
+    <filter id="turbulence">
+      <feTurbulence type="turbulence" baseFrequency="0.01 0.02" numOctaves="1" result="NOISE"></feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="NOISE" scale="50">
+      </feDisplacementMap>
+    </filter>
+   </svg>`, "f")
 
 CVS.add(generationTester)
 CVS.add(animTester)

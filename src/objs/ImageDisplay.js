@@ -75,7 +75,7 @@ class ImageDisplay extends _BaseObj {
 
     static initializeDataSource(dataSrc, loadCallback) {
         const types = ImageDisplay.SOURCE_TYPES
-        if (typeof dataSrc===types.FILE_PATH) {
+        if (typeof dataSrc==types.FILE_PATH) {
             const extension = dataSrc.split(".")[dataSrc.split(".").length-1]
             if (ImageDisplay.SUPPORTED_IMAGE_FORMATS.includes(extension)) ImageDisplay.loadImage(dataSrc).onload=e=>ImageDisplay.#initData(e.target, loadCallback)
             else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) ImageDisplay.#initVideoDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback)
@@ -86,9 +86,9 @@ class ImageDisplay extends _BaseObj {
                 if (fakeLoaded) dataSrc.removeAttribute("fakeload")
                 ImageDisplay.#initData(dataSrc, loadCallback)
             }
-        } else if (dataSrc.toString()===types.DYNAMIC) {
-            if (dataSrc.type===types.CAMERA) ImageDisplay.#initCameraDataSource(dataSrc.settings, loadCallback)
-            else if (dataSrc.type===types.CAPTURE) ImageDisplay.#initCaptureDataSource(dataSrc.settings, loadCallback)
+        } else if (dataSrc.toString()==types.DYNAMIC) {
+            if (dataSrc.type==types.CAMERA) ImageDisplay.#initCameraDataSource(dataSrc.settings, loadCallback)
+            else if (dataSrc.type==types.CAPTURE) ImageDisplay.#initCaptureDataSource(dataSrc.settings, loadCallback)
         } else if (dataSrc instanceof types.VIDEO) ImageDisplay.#initVideoDataSource(dataSrc, loadCallback)
         else if (dataSrc instanceof types.CANVAS || dataSrc instanceof types.BITMAP || dataSrc instanceof types.OFFSCREEN_CANVAS) ImageDisplay.#initData(dataSrc, loadCallback)
         else if (dataSrc instanceof types.BITMAP_PROMISE) dataSrc.then(bitmap=>ImageDisplay.#initData(bitmap, loadCallback))

@@ -71,7 +71,7 @@ class Dot extends _Obj {
 
     // removes a Dot from the connection array
     removeConnection(dotOrId) {
-        this._connections = this._connections.filter(d=>typeof dotOrId==="number"?d.id!==dotOrId:d.id!==dotOrId.id)
+        this._connections = this._connections.filter(d=>typeof dotOrId=="number"?d.id!==dotOrId:d.id!==dotOrId.id)
     }
 
     /**

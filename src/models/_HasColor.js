@@ -34,7 +34,7 @@ class _HasColor {
     set color(color) {
         if (!this._color || this._color?.colorRaw?.toString() !== color?.toString()) {
             const specialColor = color?.colorRaw||color
-            if (specialColor?.positions===_DynamicColor.PLACEHOLDER) {
+            if (specialColor?.positions==_DynamicColor.PLACEHOLDER) {
                 if (!color.isChannel) color = specialColor.duplicate()
                 else color = specialColor 
                 color.initPositions = this

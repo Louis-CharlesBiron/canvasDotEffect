@@ -7,7 +7,8 @@
 class Render {
     static PROFILE_ID_GIVER = -1
     static TEXT_PROFILE_ID_GIVER = -1
-    static COMPOSITE_OPERATIONS = {SOURCE_OVER: "source-over", SOURCE_IN: "source-in", SOURCE_OUT: "source-out", SOURCE_ATOP: "source-atop", DESTINATION_OVER: "destination-over", DESTINATION_IN: "destination-in", DESTINATION_OUT: "destination-out", DESTINATION_ATOP: "destination-atop", LIGHTER: "lighter", COPY: "copy", XOR: "xor", MULTIPLY: "multiply", SCREEN: "screen", OVERLAY: "overlay", DARKEN: "darken", LIGHTEN: "lighten", COLOR_DODGE: "color-dodge", COLOR_BURN: "color-burn", HARD_LIGHT: "hard-light", SOFT_LIGHT: "soft-light", DIFFERENCE: "difference", EXCLUSION: "exclusion", HUE: "hue", SATURATION: "saturation", COLOR: "color", LUMINOSITY: "luminosity",}
+    static COMPOSITE_OPERATIONS = {SOURCE_OVER: "source-over", SOURCE_IN: "source-in", SOURCE_OUT: "source-out", SOURCE_ATOP: "source-atop", DESTINATION_OVER: "destination-over", DESTINATION_IN: "destination-in", DESTINATION_OUT: "destination-out", DESTINATION_ATOP: "destination-atop", LIGHTER: "lighter", COPY: "copy", XOR: "xor", MULTIPLY: "multiply", SCREEN: "screen", OVERLAY: "overlay", DARKEN: "darken", LIGHTEN: "lighten", COLOR_DODGE: "color-dodge", COLOR_BURN: "color-burn", HARD_LIGHT: "hard-light", SOFT_LIGHT: "soft-light", DIFFERENCE: "difference", EXCLUSION: "exclusion", HUE: "hue", SATURATION: "saturation", COLOR: "color", LUMINOSITY: "luminosity"}
+    static FILTERS = {BLUR:v=>`blur(${v}px)`,BRIGHTNESS:v=>`brightness(${v})`,CONTRAST:v=>`contrast(${v})`,DROPSHADOW:(value)=>`drop-shadow(${value})`,GRAYSCALE:v=>`grayscale(${v})`,HUE_ROTATE:v=>`hue-rotate(${v}deg)`,INVERT:v=>`invert(${v})`,OPACITY:v=>`opacity(${v})`,SATURATE:v=>`saturate(${v})`,SEPIA:v=>`sepia(${v})`,URL:v=>`url(${v})`}
     static DEFAULT_COMPOSITE_OPERATION = Render.COMPOSITE_OPERATIONS.SOURCE_OVER
     static DEFAULT_FILTER = "none"
     static DEFAULT_ALPHA = 1
