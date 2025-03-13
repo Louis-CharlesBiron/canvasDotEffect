@@ -36,6 +36,8 @@ class ImageDisplay extends _BaseObj {
 
     // TODO, check if camera autoplays (like when put in index.js)
     // TODO proper video disposal (delete this._source when the imageDisplay is deleted)
+    // TODO - errorCB
+    // see MediaStream.clone() for duplicate
 
     initialize() {
         ImageDisplay.initializeDataSource(this._source, (data, size)=>{
@@ -220,7 +222,6 @@ class ImageDisplay extends _BaseObj {
     get height() {return this._size[1]}
     get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
     get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
-	get data() {return this._source}
     get centerX() {return this._pos[0]+this._size[0]/2}
     get centerY() {return this._pos[1]+this._size[1]/2}
     get centerPos() {return [this.centerX, this.centerY]}
@@ -240,10 +241,11 @@ class ImageDisplay extends _BaseObj {
 	set size(_size) {this._size = _size}
 	set width(width) {this._size[0] = width}
 	set height(height) {this._size[1] = height}
-	set data(_data) {this._source = _data}
     set paused(paused) {
-        if (paused) this._source.pause()
-        else this._source.play()
+        try {
+            if (paused) this._source.pause()
+            else this._source.play()
+        }catch(e){}
     }
     set isPaused(isPaused) {this.paused = isPaused}
     set playbackRate(playbackRate) {this._source.playbackRate = playbackRate}
