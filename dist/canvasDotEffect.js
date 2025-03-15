@@ -3,14 +3,19 @@
 // Please don't use or credit this code as your own.
 //
 
-// Returns the element at the specified index, starting from the end of the array
-Array.prototype.last=function(index=0){return this[this.length-1-index]}
-// Adds an element to the specified index of the array
-Array.prototype.addAt=function(el, index=0){return this.slice(0,index).concat(...[el, this.slice(index, this.length)])}
-
 class CDEUtils {
     static DEFAULT_ACCEPTABLE_DIFFERENCE = 0.0000001
     static CIRC = 2*Math.PI
+
+    // Returns the element at the specified index, starting from the end of the array
+    static getLast(arr, index=0) {
+        return arr[arr.length-1-index]
+    }
+
+    // Adds an element to the specified index of the array
+    static addAt(arr, el, index=0) {
+        return arr.slice(0, index).concat(el, arr.slice(index))
+    }
 
     // returns a random number within the min and max range. Can generate decimals
     static random(min, max, decimals=0) {
@@ -224,34 +229,34 @@ class CanvasUtils {
     }
     
     // Generic function to draw an outer ring around a dot
-    static drawOuterRing(dot, renderStyles, radiusMultiplier) {
+    static drawOuterRing(dot, renderStyles, radiusMultiplier, forceBatching) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
 
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
-        if (filter&&filter.indexOf("#")!==-1) dot.render.stroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
+        if (filter&&filter.indexOf("#")!==-1 && !forceBatching) dot.render.stroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
         else dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos
-    static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread) {
+    static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
         
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
             const res = dot.getLinearIntersectPoints(target, (target.radius??_Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
-            if (filter&&filter.indexOf("#")!==-1) dot.render.stroke(lineType(res[0][0], res[1][0], spread), renderStyles)
+            if (filter&&filter.indexOf("#")!==-1 && !forceBatching) dot.render.stroke(lineType(res[0][0], res[1][0], spread), renderStyles)
             else dot.render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
         } else {
-            if (filter&&filter.indexOf("#")!==-1) dot.render.stroke(lineType(dot.pos, target.pos??target, spread), renderStyles)
+            if (filter&&filter.indexOf("#")!==-1 && !forceBatching) dot.render.stroke(lineType(dot.pos, target.pos??target, spread), renderStyles)
             else dot.render.batchStroke(lineType(dot.pos, target.pos??target, spread), renderStyles)
         }
     }
 
     // Generic function to draw connections between the specified dot and all the dots in its connections property
     static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
-        const render = dot.render, dotPos = dot.pos, dotConnections = dot.connections, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter, hasURLFilter = filter&&filter.indexOf("#")!==-1, forceBatchingDisabled = !forceBatching
+        const render = dot.render, dotPos = dot.pos, dotConnections = dot.connections, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter, hasURLFilter = filter&&filter.indexOf("#")!==-1
 
         if (!lineType) lineType=Render.getLine
 
@@ -262,11 +267,11 @@ class CanvasUtils {
                 const dotRadiusPadding = dot.radius*radiusPaddingMultiplier
                 for (let i=0;i<dc_ll;i++) {
                     const c = dotConnections[i], res = dot.getLinearIntersectPoints(c, c.radius*radiusPaddingMultiplier, dot, dotRadiusPadding)
-                    if (hasURLFilter && forceBatchingDisabled) render.stroke(lineType(res[0][0], res[1][0], spread), renderStyles)
+                    if (hasURLFilter && !forceBatching) render.stroke(lineType(res[0][0], res[1][0], spread), renderStyles)
                     else render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
                 }
             } else for (let i=0;i<dc_ll;i++) {
-                if (hasURLFilter && forceBatchingDisabled) render.stroke(lineType(dotPos, dotConnections[i].pos, spread), renderStyles)
+                if (hasURLFilter && !forceBatching) render.stroke(lineType(dotPos, dotConnections[i].pos, spread), renderStyles)
                 else render.batchStroke(lineType(dotPos, dotConnections[i].pos, spread), renderStyles)
             }
         }
@@ -1886,7 +1891,7 @@ class RenderStyles extends _HasColor {
         return colorValue+sep+filter+sep+compositeOperation+sep+opacity+sep+lineWidth+sep+lineDash+sep+lineDashOffset+sep+lineJoin+sep+lineCap
     }
 
-    // serializes the styles profile, but only the color value
+    // serializes the styles profile, but only the color value and visual effects
     fillOptimizedToString(color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity) {
         let sep = RenderStyles.SERIALIZATION_SEPARATOR, colorValue = Color.getColorValue(color)
         if (colorValue instanceof CanvasGradient || colorValue instanceof CanvasPattern) colorValue = color.toString()
@@ -2771,7 +2776,7 @@ class _BaseObj extends _HasColor {
     playAnim(anim, isUnique, force) {
         if (isUnique && this.currentBacklogAnim && force) {
             this.currentBacklogAnim.end()
-            this._anims.backlog.addAt(anim, 0)
+            CDEUtils.addAt(this._anims.backlog, anim, 0)
         }
         const initEndCB = anim.endCallback
         anim.endCallback=()=>{
@@ -3880,7 +3885,7 @@ class Shape extends _Obj {
     get firstDot() {return this._dots[0]}
     get secondDot() {return this._dots[1]}
     get thirdDot() {return this._dots[2]}
-    get lastDot() {return this._dots.last()}
+    get lastDot() {return CDEUtils.getLast(this._dots, 0)}
     get asSource() {return this._dots}
     get setupResults() {return this._setupResults}
 

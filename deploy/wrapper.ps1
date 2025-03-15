@@ -33,7 +33,11 @@ if (-not (Test-Path $terser)) {
     Set-Location $at
 }
 
-Get-Item $toMinifyPath
-& $terser $toMinifyPath -o "$dist\canvasDotEffect.min.js" --compress
+$minifiedCodePath = "$dist\canvasDotEffect.min.js"
+Start-Process -FilePath $terser -ArgumentList "$toMinifyPath -o $minifiedCodePath --compress" -Wait
 
-Get-Item "$dist\canvasDotEffect.min.js"
+#ADD UMD WRAPPER
+$minifiedCode = Get-Content -Path $minifiedCodePath -Raw
+Set-Content -Path $minifiedCodePath -Value @"
+(function(factory){typeof define=="function"&&define.amd?define(factory):factory()})((function(){"use strict";$minifiedCode;const classes={CDEUtils,CanvasUtils,Color,_HasColor,GridAssets,TypingDevice,Mouse,Render,TextStyles,RenderStyles,Canvas,Anim,_BaseObj,ImageDisplay,TextDisplay,_DynamicColor,Pattern,_Obj,Shape,Gradient,FilledShape,Grid,Dot};if(typeof window!=="undefined"){window.CDE=classes,window.CDEUtils=CDEUtils,window.CanvasUtils=CanvasUtils,window.Color=Color,window._HasColor=_HasColor,window.GridAssets=GridAssets,window.TypingDevice=TypingDevice,window.Mouse=Mouse,window.Render=Render,window.TextStyles=TextStyles,window.RenderStyles=RenderStyles,window.Canvas=Canvas,window.Anim=Anim,window._BaseObj=_BaseObj,window.ImageDisplay=ImageDisplay,window.TextDisplay=TextDisplay,window._DynamicColor=_DynamicColor,window.Pattern=Pattern,window._Obj=_Obj,window.Shape=Shape,window.Gradient=Gradient,window.FilledShape=FilledShape,window.Grid=Grid,window.Dot=Dot}else if(typeof module!=="undefined"&&module.exports)module.exports=classes}))
+"@
