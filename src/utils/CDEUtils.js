@@ -3,14 +3,19 @@
 // Please don't use or credit this code as your own.
 //
 
-// Returns the element at the specified index, starting from the end of the array
-Array.prototype.last=function(index=0){return this[this.length-1-index]}
-// Adds an element to the specified index of the array
-Array.prototype.addAt=function(el, index=0){return this.slice(0,index).concat(...[el, this.slice(index, this.length)])}
-
 class CDEUtils {
     static DEFAULT_ACCEPTABLE_DIFFERENCE = 0.0000001
     static CIRC = 2*Math.PI
+
+    // Returns the element at the specified index, starting from the end of the array
+    static getLast(arr, index=0) {
+        return arr[arr.length-1-index]
+    }
+
+    // Adds an element to the specified index of the array
+    static addAt(arr, el, index=0) {
+        return arr.slice(0, index).concat(el, arr.slice(index))
+    }
 
     // returns a random number within the min and max range. Can generate decimals
     static random(min, max, decimals=0) {
