@@ -19,6 +19,7 @@
     - [Grid Assets](#grid-assets)
   - [TextDisplay](#textdisplay)
   - [ImageDisplay](#imagedisplay)
+  - [AudioDisplay](#audiodisplay)
   - [Color](#color)
   - [Gradient](#gradient)
   - [Pattern](#pattern)
@@ -863,14 +864,13 @@ CVS.add(helloWorldText, true)
 
 The ImageDisplay class allows the drawing of images, videos and live camera/screen feed.
 
-#### **The TextDisplay constructor takes the following parameters:**
+#### **The ImageDisplay constructor takes the following parameters:**
 ###### - `new ImageDisplay(source, pos, size, setupCB, loopCB, anchorPos, alwaysActive)`
 - *pos, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
-- **source** -> The source declaration of the image. One of `ImageDisplay.SOURCE_TYPES`.
+- **source** -> The source of the image. One of `ImageDisplay.SOURCE_TYPES`.
 - **size** -> The display size of the image `[width, height]`. (Resizes the image)
 
 **Its other attributes are:**
-- **data** -> The usable data source for drawing the image.
 - **sourceCroppingPositions** -> The source cropping positions. Delimits a rectangle which indicates the source drawing area to draw from: `[ [startX, startY], [endX, endY] ]`. (Defaults to no cropping)
 
 #### Example use 1:
@@ -943,6 +943,101 @@ CVS.add(screenFeed, true)
 ```
 
 **Note:** Canvas image smoothing property is disabled by default to improve performances.
+
+ 
+
+
+# [AudioDisplay](#table-of-contents)
+
+The AudioDisplay class allows the visualization of audio from song, videos, live microphone / computer audio, etc, in cutomizable forms.
+
+#### **The AudioDisplay constructor takes the following parameters:**
+###### - `new AudioDisplay(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, loadErrorCB, setupCB, loopCB, anchorPos, alwaysActive)`
+- *pos, color, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
+- **source** -> The source of the audio. One of `AudioDisplay.SOURCE_TYPES`.
+- **binCB** -> A callback called for each bin of the FFT data array. Used to draw the audio. `(render, bin, atPos, accumulator audioDisplay, i, sampleCount, rawBin)=>{... return? [ [newX, newY], newAccumulatorValue ]}`
+- **sampleCount** -> The count of bins to use / display. Ex: if sampleCount is "32" and the display style is `BARS`, 32 bars will be displayed. *Note: (fftSize is calculated by selecting the nearest valid value based on twice the provided sampleCount).*
+- **disableAudio** -> Whether this AudioDisplay actually output outputs sounds/audio. *Note: (This value does not affect the visual display, only whether you can hear what is playing or not).*
+- **offsetPourcent** -> A number between 0 and 1 representing the offset pourcent in the order of the bins when calling binCB. 
+- **errorCB** -> A callback called when the source produces an error `(errorType, e?)=>`.
+
+**Its other attributes are the following audio context / analyser / modifier nodes:**
+
+*(see [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) for more information)*
+- *audioCtx*
+- *audioAnalyser*
+- *gainNode*
+- *biquadFilterNode*
+- *convolverNode*
+- *waveShaperNode*
+- *dynamicsCompressorNode*
+- *pannerNode*
+- *delayNode*
+
+
+**Note:** ↑ *The audio chain is also defined in the above order.* 
+
+#### Example use 1:
+###### - Displaying the waveform of an .mp3 file
+```js
+// Creating an AudioDisplay playing and displaying a local file
+const audioDisplay = new AudioDisplay(
+    "./audio/song.mp3", // the filepath of the .mp3 file
+    [100,100],          // the pos of the display
+    "lime",             // color of the display
+    AudioDisplay.BARS(),// the display type (here we use the generic bars/waveform display)
+    64,    // the sample count, here 64 bars will be displayed (and the fftSize will be 128)
+    false, // not disabling the audio so we can hear the song.mp3 playing
+    (type, e)=>console.log("Dang it, error! Type:", type, " | ", e) // onerror callback
+)
+
+// Adding the object to the canvas as a definition
+CVS.add(audioDisplay, true)
+```
+
+#### Example use 2:
+###### - Displaying the microphone output as a circle
+```js
+// Creating an AudioDisplay displaying a the microphone
+const micDisplay = new AudioDisplay(
+    AudioDisplay.loadMicrophone(), // loading the microphone
+    [100,100],          // the pos of the display
+    "lime",             // color of the display
+    (render, bin, pos, audioDisplay, accumulator, i)=>{// binCB
+        const maxRadius = 500/AudioDisplay.MAX_NORMALISED_DATA_VALUE, // defining a max radius of 500px
+              precision = 100 // used to skip over some bins (the lowest this is, the more precise the display will be, but the more performance heavy it will be too!)
+        
+        // optimizing with the precision variable (only drawing every <precision> time)
+        if (i%precision==0) {
+
+            // drawing the circles, the radius is based on the current bin value, and it's style is based on this audioDisplay object's styles
+            render.batchStroke(Render.getArc(pos, maxRadius*bin), audioDisplay._color, audioDisplay.visualEffects)
+        }
+    },
+    2000,   // the sample count, here a maximum of 2000 bins would be displayed (and the fftSize will be 4096)
+    true,  // disabling the audio to prevent echo
+)
+
+// Adding the object to the canvas as a definition
+CVS.add(micDisplay, true)
+
+```
+
+#### Example use 3:
+###### - Displaying the screen's audio and applying some audio modifications
+```js
+// Creating an ImageDisplay playing a video
+
+```
+
+#### Example use 4:
+###### - Creating a reverb effet using the convolverNode
+```js
+// Creating an ImageDisplay playing a video
+
+```
+
+**Note:** Due to the high customizability of the display, the `getAutomaticPosition` function of Pattern/Gradient classes is not available, therefore the positions need to be entered manually.
 
  
 

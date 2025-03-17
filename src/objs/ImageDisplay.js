@@ -213,6 +213,7 @@ class ImageDisplay extends _BaseObj {
         if (source instanceof HTMLVideoElement) source.pause()
     }
 
+    // returns the natural size of the source
     static getNaturalSize(source) {
         return [source?.displayWidth||source?.videoWidth||source?.width, source?.displayHeight||source?.videoHeight||source?.height]
     }
