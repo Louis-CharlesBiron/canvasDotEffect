@@ -11,6 +11,7 @@ Array.prototype.addAt=function(el, index=0){return this.slice(0,index).concat(..
 class CDEUtils {
     static DEFAULT_ACCEPTABLE_DIFFERENCE = 0.0000001
     static CIRC = 2*Math.PI
+    static TO_DEGREES = Math.PI/180
 
     // returns a random number within the min and max range. Can generate decimals
     static random(min, max, decimals=0) {
@@ -132,12 +133,12 @@ class CDEUtils {
 
     // returns converted given degrees into radians 
     static toRad(deg) {
-        return deg*(Math.PI/180)
+        return deg*CDEUtils.TO_DEGREES
     }
 
     // returns converted given radians into degrees 
     static toDeg(rad) {
-        return rad/(Math.PI/180)
+        return rad/CDEUtils.TO_DEGREES
     }
 
     /**

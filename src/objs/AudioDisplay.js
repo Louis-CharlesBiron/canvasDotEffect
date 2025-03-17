@@ -5,6 +5,7 @@
 
 // todo doc
 class AudioDisplay extends _BaseObj {
+    static LOADED_IR_BUFFERS = {}
     static SUPPORTED_AUDIO_FORMATS = ["mp3", "wav", "ogg", "aac", "m4a", "opus", "flac"]
     static SOURCE_TYPES = {FILE_PATH:"string", DYNAMIC:"[object Object]", MICROPHONE:"MICROPHONE", SCREEN_AUDIO:"SCREEN_AUDIO", VIDEO:HTMLVideoElement, AUDIO:HTMLAudioElement}
     static MINIMAL_FFT = 1
@@ -28,6 +29,7 @@ class AudioDisplay extends _BaseObj {
     static DEFAULT_MICROPHONE_SETTINGS = AudioDisplay.loadMircophone()
     static DEFAULT_SCREEN_AUDIO_SETTINGS = AudioDisplay.loadScreenAudio()
     static MAX_NORMALISED_DATA_VALUE = 255/128
+    static MAX_DELAY_TIME = 179
     static ERROR_TYPES = {NO_PERMISSION:0, NO_AUDIO_TRACK:1, SOURCE_DISCONNECTED:2}
     static BIQUAD_FILTER_TYPES = {DEFAULT:"allpass", ALLPASS:"allpass", BANDPASS:"bandpass", HIGHPASS:"highpass", HIGHSHELF:"highshelf", LOWPASS:"lowpass", LOWSHELF:"lowshelf", NOTCH:"notch", PEAKING:"peaking"}
 
@@ -36,12 +38,14 @@ class AudioDisplay extends _BaseObj {
      TODO
 
     - fix in index.js initialisation
-    - some utility functions: play, stop, volume, etc
-    - maybe some audio modifiers (see https://mdn.github.io/voice-change-o-matic/)
-    - pattern/gradient auto positions
+    - some utility functions: play, stop, etc
+    - reset functions for all audio modifiers
+    - basic utility functions for all audio modifiers
+    - pattern/gradient auto positions?
+
+    - finish getter/setters
 
     SEE THIS -> if (this._audioCtx.state === 'suspended') {this._audioCtx.resume().then(() => {console.log('Audio context resumed');});
-}
     
     -optimization!
     -documentation
@@ -61,26 +65,27 @@ CVS.add(aud, true)
     #buffer_ll = null
     #data = null
     #fft = null
-    #emptyBuffer = null
+    #emptyBuffer = null//
     // DOC TODO
-    constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
+    constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, loadErrorCB, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
         this._source = source??""            // the initial source of the displayed audio
         this._binCB = binCB??AudioDisplay.DEFAULT_BINCB // (render, bin, atPos, accumulator audioDisplay, i, sampleCount, rawBin)=>{... return? [ [newX, newY], newAccumulatorValue ]}
         this._sampleCount = sampleCount??AudioDisplay.DEFAULT_SAMPLE_COUNT
         this._disableAudio = disableAudio??false
         this._offsetPourcent = offsetPourcent??0
-        this._errorCB = errorCB
+        this._loadErrorCB = loadErrorCB
 
         this._audioCtx = new AudioContext()
         this._audioAnalyser = this._audioCtx.createAnalyser()
         this._gainNode = this._audioCtx.createGain()
         this._biquadFilterNode = this._audioCtx.createBiquadFilter()
         this._biquadFilterNode.type = AudioDisplay.BIQUAD_FILTER_TYPES.DEFAULT
-        //this._convolverNode = this._audioCtx.createConvolver()
+        this._convolverNode = this._audioCtx.createConvolver()
         this._waveShaperNode = this._audioCtx.createWaveShaper()
+        this._dynamicsCompressorNode = this._audioCtx.createDynamicsCompressor()
         this._pannerNode = this._audioCtx.createPanner()
-        this._delayNode = this._audioCtx.createDelay()
+        this._delayNode = this._audioCtx.createDelay(AudioDisplay.MAX_DELAY_TIME)
         this.#fft = this._audioAnalyser.fftSize = Math.max(32, 2**Math.round(Math.log2(this._sampleCount*2)))
         this.#buffer_ll = this._audioAnalyser.frequencyBinCount
         this.#data = new Uint8Array(this.#buffer_ll)
@@ -104,8 +109,8 @@ CVS.add(aud, true)
 
             this._audioAnalyser.getByteFrequencyData(data)
             
-            let atPos = this.pos_, accumulator = null, offset = (this._offsetPourcent%1)*(this.#fft/2), adjusted_ll = Math.round(0.49+this._sampleCount)-offset
-            for (let ii=-offset,i=offset>>0;ii<adjusted_ll;ii++,i=(i+1)%(this._sampleCount)) {
+            let atPos = this.pos_, accumulator = null, offset = (this._offsetPourcent%1)*(this.#fft/2), adjusted_ll = Math.round(0.49+this._sampleCount)-offset, ii=-offset, i=offset>>0
+            for (;ii<adjusted_ll;ii++,i=(i+1)%this._sampleCount) {
                 const bin = data[i], res = this._binCB(render, bin/128, atPos, accumulator, this, i, this._sampleCount, bin), newPos = res?.[0], newAcc = res?.[1]
                 if (newPos) atPos = newPos
                 if (newAcc) accumulator = newAcc
@@ -122,34 +127,34 @@ CVS.add(aud, true)
             this._source = audio
 
             if (isStream) {
-                audio.oninactive=e=>{if (CDEUtils.isFunction(this._errorCB)) this._errorCB(AudioDisplay.ERROR_TYPES.SOURCE_DISCONNECTED, e)}
+                audio.oninactive=e=>{if (CDEUtils.isFunction(this._loadErrorCB)) this._loadErrorCB(AudioDisplay.ERROR_TYPES.SOURCE_DISCONNECTED, e)}
                 this._source = this._audioCtx.createMediaStreamSource(audio)
                 this._source.connect(this._gainNode)
             } else this._audioCtx.createMediaElementSource(audio).connect(this._gainNode)//
             
             this._gainNode.connect(this._biquadFilterNode)
             this._biquadFilterNode.connect(this._waveShaperNode)
-            //this._convolverNode.connect(this._waveShaperNode)
-            this._waveShaperNode.connect(this._pannerNode)
+            this._waveShaperNode.connect(this._dynamicsCompressorNode)
+            this._dynamicsCompressorNode.connect(this._pannerNode)
             this._pannerNode.connect(this._delayNode)
             this._delayNode.connect(this._audioAnalyser)
             if (!this._disableAudio) this._audioAnalyser.connect(this._audioCtx.destination)
 
             this._initialized = true
             if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this._parent, this._source)
-        }, this._errorCB)
+        }, this._loadErrorCB)
     }
 
     // Initializes a AudioDisplay data source
-    static initializeDataSource(dataSrc, loadCallback, errorCB) {
+    static initializeDataSource(dataSrc, loadCallback, loadErrorCB) {
         const types = AudioDisplay.SOURCE_TYPES
         if (typeof dataSrc==types.FILE_PATH) {
             const extension = dataSrc.split(".")[dataSrc.split(".").length-1]
             if (AudioDisplay.SUPPORTED_AUDIO_FORMATS.includes(extension)) AudioDisplay.#initAudioDataSource(AudioDisplay.loadAudio(dataSrc), loadCallback)
             else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) AudioDisplay.#initAudioDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback)
         } else if (dataSrc.toString()==types.DYNAMIC) {
-            if (dataSrc.type==types.MICROPHONE) AudioDisplay.#initMicrophoneDataSource(dataSrc.settings, loadCallback, errorCB)
-            else if (dataSrc.type==types.SCREEN_AUDIO) AudioDisplay.#initScreenAudioDataSource(dataSrc.settings, loadCallback, errorCB)
+            if (dataSrc.type==types.MICROPHONE) AudioDisplay.#initMicrophoneDataSource(dataSrc.settings, loadCallback, loadErrorCB)
+            else if (dataSrc.type==types.SCREEN_AUDIO) AudioDisplay.#initScreenAudioDataSource(dataSrc.settings, loadCallback, loadErrorCB)
         } else if (dataSrc instanceof types.VIDEO) AudioDisplay.#initAudioDataSource(dataSrc, loadCallback)
     }
 
@@ -161,19 +166,19 @@ CVS.add(aud, true)
     }
 
     // Initializes a camera audio capture data source
-    static #initMicrophoneDataSource(settings=true, loadCallback, errorCB) {
+    static #initMicrophoneDataSource(settings=true, loadCallback, loadErrorCB) {
         navigator.mediaDevices.getUserMedia({audio:settings}).then(src=>{
             if (src.getAudioTracks().length && CDEUtils.isFunction(loadCallback)) loadCallback(src, true)
-            else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
-        }).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+            else if (CDEUtils.isFunction(loadErrorCB)) loadErrorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
+        }).catch(e=>{if (CDEUtils.isFunction(loadErrorCB)) loadErrorCB(AudioDisplay.ERROR_TYPES.NO_PERMISSION, e)})
     }
 
     // Initializes a screen audio capture data source
-    static #initScreenAudioDataSource(settings=true, loadCallback, errorCB) {
+    static #initScreenAudioDataSource(settings=true, loadCallback, loadErrorCB) {
         navigator.mediaDevices.getDisplayMedia({audio:settings}).then(src=>{
             if (src.getAudioTracks().length && CDEUtils.isFunction(loadCallback)) loadCallback(src, true)
-            else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
-        }).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+            else if (CDEUtils.isFunction(loadErrorCB)) loadErrorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
+        }).catch(e=>{if (CDEUtils.isFunction(loadErrorCB)) loadErrorCB(AudioDisplay.ERROR_TYPES.NO_PERMISSION, e)})
     }
 
     // Returns a usable video source
@@ -234,9 +239,63 @@ CVS.add(aud, true)
         }
     }
 
+    // doc todo chatGPT
+    static getDistortionCurve(intensity) {
+        if (!intensity) return null
+        let n_samples = 44100, curve = new Float32Array(n_samples), i=0
+        for (;i<n_samples;i++) {
+            const x = i*2/n_samples-1
+            curve[i] = (3+intensity)*x*20*CDEUtils.TO_DEGREES/(Math.PI+intensity*Math.abs(x))
+        }
+        return curve
+    }
+
     // doc todo
-    getEmptyBuffer() {
-        return this.#emptyBuffer ? this.#emptyBuffer : this.#emptyBuffer = this._audioCtx.createBuffer(2, 1, this._audioCtx.sampleRate)
+    connectConvolver() {
+        this._biquadFilterNode.disconnect(0)
+        this._biquadFilterNode.connect(this._convolverNode)
+        this._convolverNode.connect(this._dynamicsCompressorNode)
+    }
+
+    // doc todo
+    disconnectConvolver() {
+        this._biquadFilterNode.disconnect(0)
+        this._biquadFilterNode.connect(this._dynamicsCompressorNode)
+    }
+
+    // doc todo
+    loadImpulseResponse(filePath, readyCallback) {
+        fetch(filePath).then(res=>res.arrayBuffer()).then(data=>this._audioCtx.decodeAudioData(data)).then(buffer=>{
+            AudioDisplay.LOADED_IR_BUFFERS.push(buffer)
+            if (CDEUtils.isFunction(readyCallback)) readyCallback(buffer)
+        })
+    }
+
+    setVolume(gain=1) {
+        this._gainNode.gain.value = gain
+    }
+
+    setBiquadFilterType(filterType=AudioDisplay.BIQUAD_FILTER_TYPES.DEFAULT) {
+        this._biquadFilterNode.type = filterType
+    }
+
+    setDistortionCurve(intensity=null) {
+        this._waveShaperNode.curve = typeof intensity=="number" ? AudioDisplay.getDistortionCurve(intensity) : intensity
+    }
+
+    setOriginPos(x=0, y=0, z=0) {
+        if (x!=null) this._pannerNode.positionX = x
+        if (y!=null) this._pannerNode.positionY = y
+        if (z!=null) this._pannerNode.positionZ = z
+    }
+
+    // in seconds
+    setDelay(seconds=0) {
+        this._delayNode.delayTime.value = seconds > AudioDisplay.MAX_DELAY_TIME ? AudioDisplay.MAX_DELAY_TIME : seconds
+    }
+
+    setReverbBuffer(buffer) {
+        this._convolverNode.buffer = buffer
     }
 
     // Returns the likeliness of an audio format/extension to work (ex: "mp3" -> "probably") 
@@ -298,7 +357,7 @@ CVS.add(aud, true)
 	get sampleCount() {return this._sampleCount}
 	get disableAudio() {return this._disableAudio}
 	get offsetPourcent() {return this._offsetPourcent}
-	get errorCB() {return this._errorCB}
+	get loadErrorCB() {return this._loadErrorCB}
 	get audioCtx() {return this._audioCtx}
 	get audioAnalyser() {return this._audioAnalyser}
     get data() {return this.#data}
@@ -341,5 +400,5 @@ CVS.add(aud, true)
         else this._audioAnalyser.connect(this._audioCtx.destination)
     }
 	set offsetPourcent(_offsetPourcent) {this._offsetPourcent = _offsetPourcent}
-	set errorCB(_errorCB) {this._errorCB = _errorCB}
+	set loadErrorCB(_errorCB) {this._loadErrorCB = _errorCB}
 }
