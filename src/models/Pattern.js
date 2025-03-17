@@ -64,7 +64,8 @@ class Pattern extends _DynamicColor {
                 const [width, height] = obj.trueSize, lh = obj.lineHeigth, w2 = width/2, h2 = height/2, cx = obj.x, topY = obj.y-lh/1.8
                 return [[cx-w2, topY], [cx+w2, topY+lh*obj.lineCount]]
             } return this._positions
-        } else return this._positions
+        } else if (obj instanceof AudioDisplay) return _DynamicColor.getAutomaticPositions(obj)
+        else return this._positions
     }
     
     #hasShapeChanged(shape) {

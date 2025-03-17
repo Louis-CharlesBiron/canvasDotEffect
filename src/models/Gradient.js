@@ -51,7 +51,8 @@ class Gradient extends _DynamicColor {
                 else if (this._type==Gradient.TYPES.RADIAL) return this.#getRadialPositions(cx, cy, Math.max(right-left, bottom-top))
                 else return obj.pos_
             } return this._positions
-        } else if (this._type==Gradient.TYPES.LINEAR) {
+        } else if (obj instanceof AudioDisplay) return _DynamicColor.getAutomaticPositions(obj) 
+        else if (this._type==Gradient.TYPES.LINEAR) {
             const [[x, y], [x2, y2]] = obj, cx = x+(x2-x)/2, cy = y+(y2-y)/2
             return this.#getLinearPositions(x-cx, y-cy, x2-cx, y2-cy, cx, cy)
         } else return this._positions
