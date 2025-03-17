@@ -70,7 +70,7 @@ let test2 = new Shape((shape, idk)=>{return [50+50,100+shape.dots.length]},[new 
 
     CanvasUtils.drawDotConnections(dot, [255,0,0,CDEUtils.mod(1, ratio, 0.8)], false, Render.LINE_TYPES.QUADRATIC, CDEUtils.mod(2, ratio))
 }, undefined, (shape)=>{
-    let dx=400, dy=200, dot = shape.dots.last()
+    let dx=400, dy=200, dot = shape.lastDot
     dot.g = 0
     dot.follow(3000, null, (prog, dot)=>{
         //let d = new Dot(null, 4, null, null, dot.pos)
@@ -82,8 +82,8 @@ let test2 = new Shape((shape, idk)=>{return [50+50,100+shape.dots.length]},[new 
     }, [[0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]]])
 
 
-    shape.dots[0].addConnection(shape.dots.last())
-    shape.dots[1].addConnection(shape.dots.last(1))
+    shape.dots[0].addConnection(shape.lastDot)
+    shape.dots[1].addConnection(CDEUtils.getLast(shape.dots, 1))
 
     return {a:"idk"}
 })

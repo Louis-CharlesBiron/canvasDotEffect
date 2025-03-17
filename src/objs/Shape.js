@@ -297,7 +297,7 @@ class Shape extends _Obj {
     get firstDot() {return this._dots[0]}
     get secondDot() {return this._dots[1]}
     get thirdDot() {return this._dots[2]}
-    get lastDot() {return this._dots.last()}
+    get lastDot() {return CDEUtils.getLast(this._dots, 0)}
     get asSource() {return this._dots}
     get setupResults() {return this._setupResults}
 
