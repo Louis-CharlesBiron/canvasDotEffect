@@ -3,9 +3,9 @@
 // Please don't use or credit this code as your own.
 //
 
-// Displays some audio as an object
+// Displays audio as an object
 class AudioDisplay extends _BaseObj {
-    static LOADED_IR_BUFFERS = {}
+    static LOADED_IR_BUFFERS = []
     static SUPPORTED_AUDIO_FORMATS = ["mp3", "wav", "ogg", "aac", "m4a", "opus", "flac"]
     static SOURCE_TYPES = {FILE_PATH:"string", DYNAMIC:"[object Object]", MICROPHONE:"MICROPHONE", SCREEN_AUDIO:"SCREEN_AUDIO", VIDEO:HTMLVideoElement, AUDIO:HTMLAudioElement}
     static MINIMAL_FFT = 1
@@ -35,20 +35,15 @@ class AudioDisplay extends _BaseObj {
 
 
     /*************
-     TODO HOUSE
-    - fix in index.js initialisation
-    - convolverNode
-    - check if play/pause / playbackrate works fine with files
-    - test readme examples
-    - convolverNode example
-
     TODO
+    - duplicate
+    - test more audio modifiers
+    - maybe more generic binCB
 
     -documentation
 
     /*************
 
-CVS.add(aud, true)
 */
 
     #buffer_ll = null
@@ -62,8 +57,9 @@ CVS.add(aud, true)
         this._sampleCount = sampleCount??AudioDisplay.DEFAULT_SAMPLE_COUNT// the max count of bins, (fftSize is calculated by the nearest valid value). Ex: if sampleCount is "32" and the display style is "BARS", 32 bars will be displayed
         this._disableAudio = disableAudio??false                          // whether the audio output is disabled or not (does not affect the visual display) 
         this._offsetPourcent = offsetPourcent??0                          // the offset pourcent (0..1) in the bins when calling binCB. 
-        this._errorCB = errorCB                                   // a callback called if there is a source loading error (errorType, e?)=>
+        this._errorCB = errorCB                                           // a callback called if there is an error with the source (errorType, e?)=>
 
+        // audio stuff
         this._audioCtx = new AudioContext()
         this._audioAnalyser = this._audioCtx.createAnalyser()
         this._gainNode = this._audioCtx.createGain()
@@ -253,7 +249,7 @@ CVS.add(aud, true)
     }
 
     // loads a impulse response file into a usable buffer
-    loadImpulseResponse(filePath, readyCallback) {
+    loadImpulseResponse(filePath, readyCallback=buffer=>{this.setReverb(buffer);this.connectConvolver()}) {
         fetch(filePath).then(res=>res.arrayBuffer()).then(data=>this._audioCtx.decodeAudioData(data)).then(buffer=>{
             AudioDisplay.LOADED_IR_BUFFERS.push(buffer)
             if (CDEUtils.isFunction(readyCallback)) readyCallback(buffer)
@@ -276,10 +272,11 @@ CVS.add(aud, true)
     }
 
     // sets the 3D position of the audio's origin
-    setOriginPos(x=0, y=0, z=0) {
-        if (x!=null) this._pannerNode.positionX = x
-        if (y!=null) this._pannerNode.positionY = y
-        if (z!=null) this._pannerNode.positionZ = z
+    setOriginPos(x=0, y=0, z=0, secondsOffset=0) {
+        const time = this._audioCtx.currentTime
+        if (x!=null) this._pannerNode.positionX.setValueAtTime(x, time+secondsOffset)
+        if (y!=null) this._pannerNode.positionY.setValueAtTime(y, time+secondsOffset)
+        if (z!=null) this._pannerNode.positionZ.setValueAtTime(z, time+secondsOffset)
     }
 
     // sets the audio feedback delay (in seconds)
@@ -288,7 +285,7 @@ CVS.add(aud, true)
     }
 
     // sets the convolverNode impulse response buffer
-    setReverbBuffer(buffer=null) {
+    setReverb(buffer=null) {
         if (buffer) this._convolverNode.buffer = buffer// TODO
         else this.disconnectConvolver()
     }
@@ -300,11 +297,11 @@ CVS.add(aud, true)
         this.setDistortionCurve()
         this.setOriginPos()
         this.setDelay()
-        this.setReverbBuffer()
+        this.setReverb()
     }
 
     // Returns the likeliness of an audio format/extension to work (ex: "mp3" -> "probably") 
-    static isAudioFormatSupported(extension) {return new Audio().canPlayType("audio/"+extension.replaceAll(".",""))||"No"}
+    static isAudioFormatSupported(extension) {return new Audio().canPlayType("audio/"+extension.replaceAll(".",""))||"Hell nah"}
 
     // GENERIC DISPLAYS
     // generic binCB for waveform display

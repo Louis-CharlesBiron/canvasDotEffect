@@ -31,7 +31,7 @@ class _DynamicColor {
             const [width, height] = obj.trueSize, [cx, cy] = obj.pos, w2 = width/2, h2 = height/2
             positions = [[cx-w2, cy-h2], [cx+w2, cy+h2]]
         } else if (obj instanceof AudioDisplay) {
-            const size = 75
+            const size = AudioDisplay.DEFAULT_MICROPHONE_SAMPLE_SIZE
             return [[obj.x-size,obj.y-size], [obj.x+size,obj.y+size]]
         }
 

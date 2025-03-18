@@ -988,6 +988,7 @@ const audioDisplay = new AudioDisplay(
     AudioDisplay.BARS(),// the display type (here we use the generic bars/waveform display)
     64,    // the sample count, here 64 bars will be displayed (and the fftSize will be 128)
     false, // not disabling the audio so we can hear the song.mp3 playing
+    0,     // no offset
     (type, e)=>console.log("Dang it, error! Type:", type, " | ", e) // onerror callback
 )
 
@@ -1033,8 +1034,19 @@ CVS.add(micDisplay, true)
 #### Example use 4:
 ###### - Creating a reverb effet using the convolverNode
 ```js
-// Creating an ImageDisplay playing a video
+// Taking back the audioDisplay from example 1.
+const audioDisplay = new AudioDisplay("./audio/song.mp3", [100,100], "lime", AudioDisplay.BARS(), 64)
 
+// For this to work, you need an impulse response file
+
+// This will load the IR and, by default, assign its buffer to the convolverNode then connect the latter. (You also can handle this yourself by specifying the second parameter: "readyCallback")
+audioDisplay.loadImpulseResponse("./audio/IR.wav")
+
+// To disable this effect, disconnect the convolverNode:
+// audioDisplay.disconnectConvolver()
+
+// Adding the object to the canvas as a definition
+CVS.add(audioDisplay, true)
 ```
 
 **Note:** Due to the high customizability of the display, the `getAutomaticPosition` function of Pattern/Gradient classes is not available, therefore the positions need to be entered manually.

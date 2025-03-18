@@ -62,6 +62,9 @@ let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, 
 })
 testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog, -750))
 
+let aud = new AudioDisplay(AudioDisplay.loadMicrophone(), [200,50], "lime", AudioDisplay.BARS(), 64, true)
+
+CVS.add(aud, true)
 
 
 let test2 = new Shape((shape, idk)=>{return [50+50,100+shape.dots.length]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
