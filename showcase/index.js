@@ -62,9 +62,8 @@ let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, 
 })
 testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog, -750))
 
-let aud = new AudioDisplay(AudioDisplay.loadMicrophone(), [200,50], "lime", AudioDisplay.BARS(), 64, true)
-
-CVS.add(aud, true)
+//let aud = new AudioDisplay(AudioDisplay.loadMicrophone(), [200,50], "lime", AudioDisplay.BARS(), 64, true)
+//CVS.add(aud, true)
 
 
 let test2 = new Shape((shape, idk)=>{return [50+50,100+shape.dots.length]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
@@ -191,7 +190,7 @@ const testText2 = new TextDisplay("Test § ->", [100, 550], (render, text)=>new 
 })
 CVS.add(testText2, true)
 
-let imageTester = new ImageDisplay("./img/logo.png", [-250, 75], [250], null, null, ()=>testMore.firstDot)
+let imageTester = new ImageDisplay("./img/logo.png", [-250, 75], [250], (e,a)=>console.log(e,a), null, null, ()=>testMore.firstDot)
 
 
 /*let compOp = Render.DEFAULT_COMPOSITE_OPERATION

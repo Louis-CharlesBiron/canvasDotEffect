@@ -865,10 +865,11 @@ CVS.add(helloWorldText, true)
 The ImageDisplay class allows the drawing of images, videos and live camera/screen feed.
 
 #### **The ImageDisplay constructor takes the following parameters:**
-###### - `new ImageDisplay(source, pos, size, setupCB, loopCB, anchorPos, alwaysActive)`
+###### - `new ImageDisplay(source, pos, size, errorCB, setupCB, loopCB, anchorPos, alwaysActive)`
 - *pos, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
 - **source** -> The source of the image. One of `ImageDisplay.SOURCE_TYPES`.
 - **size** -> The display size of the image `[width, height]`. (Resizes the image)
+- **errorCB** -> A callback called when the source produces an error `(errorType, e?)=>`.
 
 **Its other attributes are:**
 - **sourceCroppingPositions** -> The source cropping positions. Delimits a rectangle which indicates the source drawing area to draw from: `[ [startX, startY], [endX, endY] ]`. (Defaults to no cropping)
@@ -1027,8 +1028,31 @@ CVS.add(micDisplay, true)
 #### Example use 3:
 ###### - Displaying the screen's audio and applying some audio modifications
 ```js
-// Creating an ImageDisplay playing a video
+// Loading and displaying the screen audio. For this the user needs to select a valid tab/window/screen.
+const audioDisplay = new AudioDisplay(AudioDisplay.loadScreenAudio(), [100,100], "lime", AudioDisplay.BARS(), 64)
 
+// Applying some audio modifiers:
+
+// Setting the volume to 200%
+audioDisplay.setVolume(2)
+
+// Sets the audio filter to keep low frequencies and cut high ones
+audioDisplay.setBiquadFilterType(AudioDisplay.BIQUAD_FILTER_TYPES.LOWPASS)
+
+// delays the audio by 1 second
+audioDisplay.setDelay(1)
+
+// sets the distortion level to 10
+audioDisplay.setDistortionCurve(10)
+
+// sets the origin of the audio seems like it's coming from 1 meter to the left
+audioDisplay.setOriginPos(-1)
+
+// since this sounds pretty bad, you could also reset all the modifiers with this:
+//audioDisplay.resetAudioModifiers()
+
+// Adding the object to the canvas as a definition
+CVS.add(audioDisplay, true)
 ```
 
 #### Example use 4:
@@ -1173,9 +1197,8 @@ const gradientShape = new FilledShape(
 # [Pattern](#table-of-contents)
 
 The Pattern class allows the creation image/video based colors. A Pattern instance can be used in the *color* and *fillColor* fields of canvas objects. 
-
 #### **The Pattern constructor takes the following parameters:**
-###### - `new Pattern(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, frameRate, repeatMode)`
+###### - `new Pattern(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, errorCB, readyCB, frameRate, repeatMode)`
 - **render** -> The canvas Render instance, or context.
 - *source* -> The source declaration of the pattern. One of `ImageDisplay.SOURCE_TYPES`.
 - **positions** -> The positions of the pattern. (`[ [x1, y1], [x2, y2] ]`) Providing a canvas object will automaticlly position it to cover the minimal area containing all of the provided object.
@@ -1183,6 +1206,8 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 - **keepAspectRatio** -> Whether the displayed pattern keeps the same aspect ratio when resizing.
 - **forcedUpdates** -> Whether/How the pattern updates are forced. One of `Pattern.FORCE_UPDATE_LEVELS` .
 - **rotation** -> The pattern's current rotation in degrees.
+- **errorCB** -> A callback called when the source produces an error `(errorType, e?)=>`.
+- **readyCB** -> Similar to `setupCB`. A callback that gets called when the source has been initialized `(pattern)=>`. *Note: this attribute doesn't transfert when calling the duplicate() function to avoid StackOverflow errors.*
 - **frameRate** -> The update frequency of the current source. (Controls the frequency of video/canvas sources updates, as well as the frequency of any other sources when a visible property gets updated: e.g *when the rotation gets changed*)
 - **repeatMode** -> Whether the pattern repeats horizontally/vertically. One of `Pattern.REPETITION_MODES`.
 
@@ -1241,13 +1266,39 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 #### Example use 3:
 ###### - Sharing VS duplicating a pattern
 ```js
+    // DUPLICATING PATTERN
+    // Creating and adding a basic shape that contains 9 dots in a 3x3 grid disposition
+    const shape1 = new Shape([100,100],[new Dot([-50, -50]), new Dot([-50, 0]), new Dot([-50, 50]), new Dot([0, -50]), new Dot([0, 0]), new Dot([0, 50]), new Dot([50, -50]), new Dot([50, 0]), new Dot([50, 50])], 25)
+    CVS.add(shape1)
 
+    // Creating a pattern that will get duplicated for each dot of shape1 (set the "positions" (↓) parameter to the placeholder value)
+    const duplicatedPattern = new Pattern(CVS.render, ImageDisplay.loadCamera(), Pattern.PLACEHOLDER, null, null, null, null, null, 
+        (pattern)=>{// readyCB
+            // once the camera is loaded, set the shape1's color to the value of the pattern
+            shape1.setColor(pattern)
+        }
+    )
+```
+```js
+    // SHARED PATTERN
+    // Creating and adding a basic shape that contains 9 dots in a 3x3 grid disposition
+    const shape2 = new Shape([300,100],[new Dot([-50, -50]), new Dot([-50, 0]), new Dot([-50, 50]), new Dot([0, -50]), new Dot([0, 0]), new Dot([0, 50]), new Dot([50, -50]), new Dot([50, 0]), new Dot([50, 50])], 25)
+    CVS.add(shape2)
+
+    // Creating a pattern that will get duplicated for each dot of shape1 (set the "positions" (↓) parameter to the area containing all the dots)
+    const sharedPattern = new Pattern(CVS.render, ImageDisplay.loadCamera(), _DynamicColor.getAutomaticPositions(shape2), null, null, null, null, null,
+        (pattern)=>{// readyCB
+            // once the camera is loaded, set the shape2's color to the value of the pattern
+            shape2.setColor(pattern)
+        }
+    )
 ```
 
 #### Example use 4:
 ###### - Using a pattern to color non objects (In this case, lines)
 ```js
-
+    TODO
+    // do Pattern.loadCamera() instaed of ImageDisplay.loadCamera(). It will just act as a wrapper and call the loadCamera with the pattern's framerate. (same for capture)
 ```
 
  

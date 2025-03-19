@@ -42,21 +42,24 @@ class Shape extends _Obj {
     }
 
     // returns a separate copy of this Shape (only initialized for objects)
-    duplicate() {
-        const colorObject = this._color, colorRaw = colorObject.colorRaw, shape = new Shape(
-            this.pos_,
-            this._dots.map(d=>d.duplicate()),
-            this._radius,
+    duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, fragile=this._fragile) {
+        const colorObject = color, colorRaw = colorObject.colorRaw, shape = new Shape(
+            pos,
+            dots,
+            radius,
             (_,shape)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:shape):colorObject.duplicate(),
-            this._limit,
-            this._drawEffectCB,
-            this._ratioPosCB,
-            this._setupCB,
-            this._loopCB,
-            this._fragile
+            limit,
+            drawEffectCB,
+            ratioPosCB,
+            setupCB,
+            loopCB,
+            anchorPos,
+            alwaysActive,
+            fragile
         )
         shape._scale = CDEUtils.unlinkArr2(this._scale)
         shape._rotation = this._rotation
+        shape._visualEffects = this.visualEffects_
 
         return this.initialized ? shape : null
     }

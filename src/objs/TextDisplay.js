@@ -62,7 +62,7 @@ class TextDisplay extends _BaseObj {
     }
 
     // returns a separate copy of this textDisplay instance
-    duplicate(text=this._text, pos=this.pos_, color=this._color, textStyles=this._textStyles, drawMethod=this._drawMethod, maxWidth=this._maxWidth, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
+    duplicate(text=this._text, pos=this.pos_, color=this._color, textStyles=this._textStyles, drawMethod=this._drawMethod, maxWidth=this._maxWidth, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
         const colorObject = color, colorRaw = colorObject.colorRaw, textDisplay = new TextDisplay(
             text,
             pos,
@@ -71,6 +71,7 @@ class TextDisplay extends _BaseObj {
             drawMethod,
             maxWidth,
             setupCB,
+            loopCB,
             anchorPos,
             alwaysActive
         )

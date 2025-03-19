@@ -37,14 +37,8 @@ class AudioDisplay extends _BaseObj {
     /*************
     TODO
     - duplicate
-    - test more audio modifiers
-    - maybe more generic binCB
 
-    -documentation
-
-    /*************
-
-*/
+    */
 
     #buffer_ll = null
     #data = null
@@ -61,6 +55,7 @@ class AudioDisplay extends _BaseObj {
 
         // audio stuff
         this._audioCtx = new AudioContext()
+        Canvas.addOnFirstInteractCallback(()=>this._audioCtx.resume())
         this._audioAnalyser = this._audioCtx.createAnalyser()
         this._gainNode = this._audioCtx.createGain()
         this._biquadFilterNode = this._audioCtx.createBiquadFilter()
@@ -140,6 +135,10 @@ class AudioDisplay extends _BaseObj {
             if (dataSrc.type==types.MICROPHONE) AudioDisplay.#initMicrophoneDataSource(dataSrc.settings, loadCallback, errorCB)
             else if (dataSrc.type==types.SCREEN_AUDIO) AudioDisplay.#initScreenAudioDataSource(dataSrc.settings, loadCallback, errorCB)
         } else if (dataSrc instanceof types.VIDEO) AudioDisplay.#initAudioDataSource(dataSrc, loadCallback, errorCB)
+        else if (dataSrc instanceof MediaStream) {
+            if (dataSrc.getAudioTracks().length && CDEUtils.isFunction(loadCallback)) loadCallback(dataSrc, true)
+            else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
+        }
     }
 
     // Initializes a audio data source
@@ -303,6 +302,29 @@ class AudioDisplay extends _BaseObj {
     // Returns the likeliness of an audio format/extension to work (ex: "mp3" -> "probably") 
     static isAudioFormatSupported(extension) {return new Audio().canPlayType("audio/"+extension.replaceAll(".",""))||"Hell nah"}
 
+    // returns a separate copy of this AudioDisplay instance
+    duplicate(source=this._source, pos=this.pos_, color=this._color, binCB=this._binCB, sampleCount=this._sampleCount, disableAudio=this._disableAudio, offsetPourcent=this._offsetPourcent, errorCB=this._errorCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
+        const colorObject = color, colorRaw = colorObject.colorRaw, audioDisplay = new AudioDisplay(
+            source instanceof MediaStreamAudioSourceNode ? source.mediaStream.clone() : source.cloneNode(), 
+            pos,
+            (_,audioDisplay)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:audioDisplay):colorObject.duplicate(),
+            binCB,
+            sampleCount,
+            disableAudio,
+            offsetPourcent,
+            errorCB,
+            setupCB,
+            loopCB,
+            anchorPos,
+            alwaysActive
+        )
+        audioDisplay._scale = CDEUtils.unlinkArr2(this._scale)
+        audioDisplay._rotation = this._rotation
+        audioDisplay._visualEffects = this.visualEffects_
+        
+        return this.initialized ? audioDisplay : null
+    }
+
     // GENERIC DISPLAYS
     // generic binCB for waveform display
     static BARS(maxHeight, minHeight, spacing, barWidth) {
@@ -354,6 +376,25 @@ class AudioDisplay extends _BaseObj {
             pos[0] += spacing
                 
             return [pos, accumulator]
+        }
+    }
+
+    // generic binCB for spiral particle cloud display
+    static CLOUD(maxRadius, minRadius, particleRadius, precision, angleStep) {
+        maxRadius??=100
+        minRadius??=0
+        particleRadius??=2
+        precision??=2
+        angleStep??=0.1
+    
+        maxRadius = maxRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
+        minRadius = minRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
+        return (render, bin, pos, audioDisplay, accumulator, i) => {
+            const radius = minRadius+maxRadius*bin, angle = angleStep*i
+    
+            if (!(i%precision)) render.batchFill(Render.getArc([pos[0]+radius*Math.cos(angle), pos[1]+radius*Math.sin(angle)], particleRadius), audioDisplay._color, audioDisplay.visualEffects)
+    
+            return [pos]
         }
     }
 
