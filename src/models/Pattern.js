@@ -23,7 +23,7 @@ class Pattern extends _DynamicColor {
 
     #lastUpdateTime = null
     #initialized = false
-    constructor(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, frameRate, repeatMode) {
+    constructor(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, errorCB, readyCB, frameRate, repeatMode) {
         super(
             positions, // [ [x1, y1], [x2, y2] ] | _Obj~
             rotation   // rotation of the pattern
@@ -34,15 +34,19 @@ class Pattern extends _DynamicColor {
         this._sourceCroppingPositions = sourceCroppingPositions??null          // source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
         this._keepAspectRatio = keepAspectRatio??false                         // whether the source keeps the same aspect ratio when resizing
         this._forcedUpdates = forcedUpdates??Pattern.DEFAULT_FORCE_UPDATE_LEVEL// whether/how the pattern forces updates
-        this._frameRate = frameRate??Pattern.DEFAULT_FRAME_RATE                // update frequency of video/canvas sources
+        const rawFrameRate = frameRate??Pattern.DEFAULT_FRAME_RATE
+        this._frameRate = (rawFrameRate%1) ? rawFrameRate : 1/Math.max(rawFrameRate, 0) // update frequency of video/canvas sources
+        this._errorCB = errorCB                                                // a callback called if there is an error with the source (errorType, e?)=>
+        this._readyCB = readyCB                                                // custom callback ran upon source load
         this._repeatMode = repeatMode??Pattern.DEFAULT_REPETITION_MODE         // whether the pattern repeats horizontally/vertically
 
         Pattern.LOADED_PATTERN_SOURCES[this._id] = this
         ImageDisplay.initializeDataSource(source, (data)=>{
             this._source = data
             this.#initialized = true
+            if (CDEUtils.isFunction(this._readyCB)) this._readyCB(this)
             this.update(Pattern.FORCE_UPDATE_LEVELS.OVERRIDE)
-        })
+        }, this._errorCB)
     }
 
     /**
@@ -64,7 +68,8 @@ class Pattern extends _DynamicColor {
                 const [width, height] = obj.trueSize, lh = obj.lineHeigth, w2 = width/2, h2 = height/2, cx = obj.x, topY = obj.y-lh/1.8
                 return [[cx-w2, topY], [cx+w2, topY+lh*obj.lineCount]]
             } return this._positions
-        } else return this._positions
+        } else if (obj instanceof AudioDisplay) return _DynamicColor.getAutomaticPositions(obj)
+        else return this._positions
     }
     
     #hasShapeChanged(shape) {
@@ -94,7 +99,7 @@ class Pattern extends _DynamicColor {
     // tries to update the curent pattern. Succeeds if forced, or if the last update's elapsed time corresponds to the frame rate 
     update(forceLevel=this._forcedUpdates) {
         if (this.#initialized) {
-            const source = this._source, ctx = this._render.ctx, isCanvas = source instanceof HTMLCanvasElement, forceLevels = Pattern.FORCE_UPDATE_LEVELS, time = (isCanvas||forceLevel===forceLevels.RESPECT_FRAME_RATE)?performance.now()/1000:source.currentTime
+            const source = this._source, ctx = this._render.ctx, isCanvas = source instanceof HTMLCanvasElement, forceLevels = Pattern.FORCE_UPDATE_LEVELS, time = (isCanvas||forceLevel==forceLevels.RESPECT_FRAME_RATE)?performance.now()/1000:source.currentTime
         
             if (time != null && forceLevel !== forceLevels.OVERRIDE) {
                 if (this.#lastUpdateTime > time) this.#lastUpdateTime = time
@@ -154,14 +159,23 @@ class Pattern extends _DynamicColor {
     }
 
     // returns a separate copy of this Pattern instance
-    duplicate(positions=this._positions, render=this._render, source=this._source, sourceCroppingPositions=this._sourceCroppingPositions, keepAspectRatio=this._keepAspectRatio, forcedUpdates=this._forcedUpdates, rotation=this._rotation, frameRate=this._frameRate, repeatMode=this._repeatMode) {
+    duplicate(positions=this._positions, render=this._render, source=this._source, sourceCroppingPositions=this._sourceCroppingPositions, keepAspectRatio=this._keepAspectRatio, forcedUpdates=this._forcedUpdates, rotation=this._rotation, errorCB=this._errorCB, frameRate=this._frameRate, repeatMode=this._repeatMode) {
         if (source instanceof HTMLElement && !source.getAttribute("permaLoad") && !(source instanceof HTMLCanvasElement)) {
             source = source.cloneNode()
             source.setAttribute("fakeload", "1")
         }
-        return new Pattern(render, source, CDEUtils.unlinkArr22(positions), CDEUtils.unlinkArr22(sourceCroppingPositions), keepAspectRatio, forcedUpdates, rotation, frameRate, repeatMode)
+        return new Pattern(render, source, CDEUtils.unlinkArr22(positions), CDEUtils.unlinkArr22(sourceCroppingPositions), keepAspectRatio, forcedUpdates, rotation, errorCB, null, frameRate, repeatMode)
     }
 
+    // Returns a usable camera capture source
+    static loadCamera(resolution, facingMode, frameRate=this._frameRate) {
+        return ImageDisplay.loadCamera(resolution, facingMode, frameRate)
+    }
+
+    // Returns a usable screen capture source
+    static loadCapture(resolution, cursor, frameRate=this.frameRate, mediaSource) {
+        return ImageDisplay.loadCapture(resolution, cursor, frameRate, mediaSource)
+    }
 
     get id() {return this._id}
 	get render() {return this._render}

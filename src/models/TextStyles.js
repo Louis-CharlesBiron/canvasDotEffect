@@ -54,8 +54,8 @@ class TextStyles {
     // updates a profile's attributes and returns the updated version
     update(font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         if (font) this._font = font
-        if (letterSpacing) this._letterSpacing = typeof letterSpacing==="number"?letterSpacing+"px":letterSpacing
-        if (wordSpacing) this._wordSpacing = typeof wordSpacing==="number"?wordSpacing+"px":wordSpacing
+        if (letterSpacing) this._letterSpacing = typeof letterSpacing=="number"?letterSpacing+"px":letterSpacing
+        if (wordSpacing) this._wordSpacing = typeof wordSpacing=="number"?wordSpacing+"px":wordSpacing
         if (fontVariantCaps) this._fontVariantCaps = fontVariantCaps
         if (direction) this._direction = direction
         if (fontStretch) this._fontStretch = fontStretch
@@ -113,8 +113,8 @@ class TextStyles {
         this.#ctx = render.ctx
     }
 	set font(_font) {this._font = _font}
-	set letterSpacing(_letterSpacing) {this._letterSpacing = typeof _letterSpacing==="number"?_letterSpacing+"px":_letterSpacing}
-	set wordSpacing(_wordSpacing) {this._wordSpacing = typeof _wordSpacing==="number"?_wordSpacing+"px":_wordSpacing}
+	set letterSpacing(_letterSpacing) {this._letterSpacing = typeof _letterSpacing=="number"?_letterSpacing+"px":_letterSpacing}
+	set wordSpacing(_wordSpacing) {this._wordSpacing = typeof _wordSpacing=="number"?_wordSpacing+"px":_wordSpacing}
 	set fontVariantCaps(_fontVariantCaps) {this._fontVariantCaps = _fontVariantCaps}
 	set direction(_direction) {this._direction = _direction}
 	set fontStretch(_fontStretch) {this._fontStretch = _fontStretch}

@@ -179,7 +179,7 @@ class Canvas {
         this.#calcDeltaTime(time)
 
         const delay = Math.abs((time-this.#timeStamp)-this.deltaTime*1000)
-        if (this._fixedTimeStamp===0) this._fixedTimeStamp = time-this.#frameSkipsOffset
+        if (this._fixedTimeStamp==0) this._fixedTimeStamp = time-this.#frameSkipsOffset
         if (time && this._fixedTimeStamp && delay < this.#maxTime) {
             this._mouse.calcSpeed(this._deltaTime)
 
@@ -232,8 +232,8 @@ class Canvas {
     }
 
     // clears the canvas
-    clear(pos1=[0,0], pos2=[this.width, this.height]) {
-        this._ctx.clearRect(pos1[0], pos1[1], pos2[0], pos2[1])
+    clear(x1=0, y1=0, x2 = this.width, y2 = this.height) {
+        this._ctx.clearRect(x1, y1, x2, y2)
     }
 
     // resets every fragile references
@@ -299,7 +299,7 @@ class Canvas {
 
     // removes any element from the canvas by id
     remove(id) {
-        if (id==="*") {
+        if (id=="*") {
             this._els = {refs:[], defs:[]}
         } else {
             this._els.defs = this._els.defs.filter(el=>el.id!==id)
@@ -310,7 +310,7 @@ class Canvas {
 
     // get any element from the canvas by id
     get(id) {
-        return this.allEls.find(el=>el.id===id)
+        return this.allEls.find(el=>el.id==id)
     }
 
     // removes any element from the canvas by instance type
@@ -330,7 +330,7 @@ class Canvas {
 
     // ran on first user interaction
     static #onFirstInteraction(e) {
-        if (e.type!=="keydown" || (e.type==="keydown"&&e.key.length===1)) {
+        if (e.type!=="keydown" || (e.type=="keydown"&&e.key.length==1)) {
             const callbacks = Canvas.#ON_FIRST_INTERACT_CALLBACKS, cb_ll = callbacks?.length
             if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
             Canvas.#ON_FIRST_INTERACT_CALLBACKS = null
@@ -359,7 +359,7 @@ class Canvas {
             this.#mouseMovements(cb, e)
         }, ontouchmove=e=>{
             const touches = e.touches
-            if (touches.length===1) {
+            if (touches.length==1) {
                 e.preventDefault()
                 e.x = CDEUtils.round(touches[0].clientX, 1)
                 e.y = CDEUtils.round(touches[0].clientY, 1)
@@ -399,7 +399,7 @@ class Canvas {
         const ontouchstart=e=>{
             isTouch = true
             const touches = e.touches
-            if (touches.length===1) {
+            if (touches.length==1) {
                 e.preventDefault()
                 e.x = CDEUtils.round(touches[0].clientX, 1)
                 e.y = CDEUtils.round(touches[0].clientY, 1)

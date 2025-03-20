@@ -92,7 +92,7 @@ class CanvasUtils {
         return (dot, mouse, dist, ratio, pickableRadius=50)=>{
             if (mouse.clicked && dist < pickableRadius) {
                 mouseup = true
-                if (dot?.currentBacklogAnim?.id === dragAnim?.id && dragAnim) dragAnim.end()
+                if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
                 dot.x = mouse.x
                 dot.y = mouse.y
             } else if (mouseup) {

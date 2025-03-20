@@ -195,11 +195,16 @@ class _BaseObj extends _HasColor {
         return [x, y]
     }
 
+    // deletes the object from the canvas
+    remove() {
+        this._parent.remove(this._id)
+    }
+
 	get id() {return this._id}
     get x() {return this._pos[0]}
     get y() {return this._pos[1]}
     get pos() {return this._pos}
-    get pos_() {return CDEUtils.unlinkArr2(this._pos)} // unlinked position
+    get pos_() {return CDEUtils.unlinkArr2(this._pos)}// unlinked position
     get relativeX() {return this.x-this.anchorPos[0]}
     get relativeY() {return this.y-this.anchorPos[1]}
     get relativePos() {return [this.relativeX, this.relativeY]}
@@ -208,6 +213,8 @@ class _BaseObj extends _HasColor {
     get currentBacklogAnim() {return this._anims.backlog[0]}
     get anims() {return this._anims}
     get setupCB() {return this._setupCB}
+    get loopCB() {return this._loopCB}
+    get loopingCB() {return this._loopCB}
     get setupResults() {return this._setupResults}
     get initialized() {return this._initialized}
     get alwaysActive() {return this._alwaysActive}
@@ -252,6 +259,8 @@ class _BaseObj extends _HasColor {
     }
     set initPos(initPos) {this._initPos = initPos}
     set setupCB(cb) {this._setupCB = cb}
+    set loopCB(cb) {this._loopCB = cb}
+    set loopingCB(cb) {this._loopCB = cb}
     set setupResults(value) {this._setupResults = value}
     set initialized(init) {this._initialized = init}
     set alwaysActive(alwaysActive) {this._alwaysActive = alwaysActive}

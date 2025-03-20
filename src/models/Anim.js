@@ -84,9 +84,9 @@ class Anim {
     static easeOutCirc=x=>Math.sqrt(1-Math.pow(x-1,2))
     static easeInOutCirc=x=>x<.5?(1-Math.sqrt(1-Math.pow(2*x,2)))/2:(Math.sqrt(1-Math.pow(-2*x+2,2))+1)/2
 
-    static easeInElastic=x=>0===x?0:1===x?1:-Math.pow(2,10*x-10)*Math.sin((10*x-10.75)*(2*Math.PI/3))
-    static easeOutElastic=x=>0===x?0:1===x?1:Math.pow(2,-10*x)*Math.sin((10*x-.75)*(2*Math.PI/3))+1
-    static easeInOutElastic=x=>0===x?0:1===x?1:x<.5?-Math.pow(2,20*x-10)*Math.sin((20*x-11.125)*(2*Math.PI)/4.5)/2:Math.pow(2,-20*x+10)*Math.sin((20*x-11.125)*(2*Math.PI)/4.5)/2+1
+    static easeInElastic=x=>0==x?0:1==x?1:-Math.pow(2,10*x-10)*Math.sin((10*x-10.75)*(2*Math.PI/3))
+    static easeOutElastic=x=>0==x?0:1==x?1:Math.pow(2,-10*x)*Math.sin((10*x-.75)*(2*Math.PI/3))+1
+    static easeInOutElastic=x=>0==x?0:1==x?1:x<.5?-Math.pow(2,20*x-10)*Math.sin((20*x-11.125)*(2*Math.PI)/4.5)/2:Math.pow(2,-20*x+10)*Math.sin((20*x-11.125)*(2*Math.PI)/4.5)/2+1
 
     static easeInQuad=x=>x*x
     static easeOutQuad=x=>1-(1-x)*(1-x)
@@ -96,9 +96,9 @@ class Anim {
     static easeOutQuart=x=>1-Math.pow(1-x,4)
     static easeInOutQuart=x=>x<.5?8*x*x*x*x:1-Math.pow(-2*x+2,4)/2
 
-    static easeInExpo=x=>0===x?0:Math.pow(2,10*x-10)
-    static easeOutExpo=x=>1===x?1:1-Math.pow(2,-10*x)
-    static easeInOutExpo=x=>0===x?0:1===x?1:x<.5?Math.pow(2,20*x-10)/2:(2-Math.pow(2,-20*x+10))/2
+    static easeInExpo=x=>0==x?0:Math.pow(2,10*x-10)
+    static easeOutExpo=x=>1==x?1:1-Math.pow(2,-10*x)
+    static easeInOutExpo=x=>0==x?0:1==x?1:x<.5?Math.pow(2,20*x-10)/2:(2-Math.pow(2,-20*x+10))/2
 
     static easeInBack=x=>2.70158*x*x*x-1.70158*x*x
     static easeOutBack=x=>1+2.70158*Math.pow(x-1,3)+1.70158*Math.pow(x-1,2)

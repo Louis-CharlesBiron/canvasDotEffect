@@ -26,12 +26,14 @@ class ImageDisplay extends _BaseObj {
     static DEFAULT_CAPTURE_CURSOR = "always"
     static DEFAULT_CAPTURE_SETTINGS = ImageDisplay.loadCapture()
     static DEFAULT_CAPTURES = {CAPTURE_SD:ImageDisplay.loadCapture(ImageDisplay.RESOLUTIONS.SD), CAPTURE_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.HD), CAPTURE_FULL_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FULL_HD), CAPTURE_4k:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FOURK), CAPTURE:ImageDisplay.DEFAULT_CAPTURE_SETTINGS}
+    static ERROR_TYPES = {NO_PERMISSION:0, DEVICE_IN_USE:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3}
 
-    constructor(source, pos, size, setupCB, loopCB, anchorPos, alwaysActive) {
+    constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, null, setupCB, loopCB, anchorPos, alwaysActive)
-        this._source = source                // the data source
-        this._size = size                    // the display size of the image (resizes)
-        this._sourceCroppingPositions = null // data source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
+        this._source = source               // the data source
+        this._size = size                   // the display size of the image (resizes)
+        this._errorCB = errorCB             // a callback called if there is an error with the source (errorType, e?)=>
+        this._sourceCroppingPositions = null// data source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
     }
 
     initialize() {
@@ -43,7 +45,7 @@ class ImageDisplay extends _BaseObj {
             this._initialized = true
             if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this._parent, this._source)
 
-        })
+        }, this._errorCB)
 
         this._pos = this.getInitPos()||_BaseObj.DEFAULT_POS
         this.setAnchoredPos()
@@ -70,12 +72,12 @@ class ImageDisplay extends _BaseObj {
         super.draw(time, deltaTime)
     }
 
-    static initializeDataSource(dataSrc, loadCallback) {
+    static initializeDataSource(dataSrc, loadCallback, errorCB) {
         const types = ImageDisplay.SOURCE_TYPES
-        if (typeof dataSrc===types.FILE_PATH) {
+        if (typeof dataSrc==types.FILE_PATH) {
             const extension = dataSrc.split(".")[dataSrc.split(".").length-1]
             if (ImageDisplay.SUPPORTED_IMAGE_FORMATS.includes(extension)) ImageDisplay.loadImage(dataSrc).onload=e=>ImageDisplay.#initData(e.target, loadCallback)
-            else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) ImageDisplay.#initVideoDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback)
+            else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) ImageDisplay.#initVideoDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback, errorCB)
         } else if (dataSrc instanceof types.IMAGE || dataSrc instanceof types.SVG) {
             const fakeLoaded = dataSrc.getAttribute("fakeload")
             if (dataSrc.complete && dataSrc.src && !fakeLoaded) ImageDisplay.#initData(dataSrc, loadCallback)
@@ -83,11 +85,12 @@ class ImageDisplay extends _BaseObj {
                 if (fakeLoaded) dataSrc.removeAttribute("fakeload")
                 ImageDisplay.#initData(dataSrc, loadCallback)
             }
-        } else if (dataSrc.toString()===types.DYNAMIC) {
-            if (dataSrc.type===types.CAMERA) ImageDisplay.#initCameraDataSource(dataSrc.settings, loadCallback)
-            else if (dataSrc.type===types.CAPTURE) ImageDisplay.#initCaptureDataSource(dataSrc.settings, loadCallback)
-        } else if (dataSrc instanceof types.VIDEO) ImageDisplay.#initVideoDataSource(dataSrc, loadCallback)
+        } else if (dataSrc.toString()==types.DYNAMIC) {
+            if (dataSrc.type==types.CAMERA) ImageDisplay.#initCameraDataSource(dataSrc.settings, loadCallback, errorCB)
+            else if (dataSrc.type==types.CAPTURE) ImageDisplay.#initCaptureDataSource(dataSrc.settings, loadCallback, errorCB)
+        } else if (dataSrc instanceof types.VIDEO) ImageDisplay.#initVideoDataSource(dataSrc, loadCallback, errorCB)
         else if (dataSrc instanceof types.CANVAS || dataSrc instanceof types.BITMAP || dataSrc instanceof types.OFFSCREEN_CANVAS) ImageDisplay.#initData(dataSrc, loadCallback)
+        else if (dataSrc instanceof MediaStream) ImageDisplay.#initMediaStream(dataSrc, loadCallback, errorCB)
         else if (dataSrc instanceof types.BITMAP_PROMISE) dataSrc.then(bitmap=>ImageDisplay.#initData(bitmap, loadCallback))
         else if (dataSrc instanceof types.VIDEO_FRAME) {
             ImageDisplay.#initData(dataSrc, loadCallback, dataSrc.displayHeight, dataSrc.displayWidth)
@@ -101,32 +104,30 @@ class ImageDisplay extends _BaseObj {
     }
 
     // Initializes a video data source
-    static #initVideoDataSource(dataSource, loadCallback) {
-        const fn = ()=>this.#initData(dataSource, loadCallback, dataSource.videoWidth, dataSource.videoHeight)
+    static #initVideoDataSource(dataSource, loadCallback, errorCB) {
+        const fn=()=>this.#initData(dataSource, loadCallback, dataSource.videoWidth, dataSource.videoHeight)
+        dataSource.onerror=e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.FILE_NOT_FOUND, e)}
         if (dataSource.readyState) fn()
         else dataSource.onloadeddata=fn
     }
 
+    static #initMediaStream(stream, loadCallback, errorCB) {
+        const video = document.createElement("video")
+        video.srcObject = stream
+        video.autoplay = true
+        video.setAttribute("permaLoad", "1")
+        stream.oninactive=e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.SOURCE_DISCONNECTED, e)}
+        video.oncanplay=()=>this.#initData(video, loadCallback, video.videoWidth, video.videoHeight)
+    }
+
     // Initializes a camera capture data source
-    static #initCameraDataSource(settings=true, loadCallback) {
-        navigator.mediaDevices.getUserMedia({video:settings}).then(src=>{
-            const video = document.createElement("video")
-            video.srcObject = src
-            video.autoplay = true
-            video.setAttribute("permaLoad", "1")
-            video.oncanplay=()=>this.#initData(video, loadCallback, video.videoWidth, video.videoHeight)
-        })
+    static #initCameraDataSource(settings=true, loadCallback, errorCB) {
+        navigator.mediaDevices.getUserMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e.toString().includes("NotReadableError")?ImageDisplay.ERROR_TYPES.DEVICE_IN_USE:ImageDisplay.ERROR_TYPES.NO_PERMISSION, e)})
     }
 
     // Initializes a screen capture data source
-    static #initCaptureDataSource(settings=true, loadCallback) {
-        navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>{
-            const video = document.createElement("video")
-            video.srcObject = src
-            video.autoplay = true
-            video.setAttribute("permaLoad", "1")
-            video.oncanplay=()=>this.#initData(video, loadCallback, video.videoWidth, video.videoHeight)
-        })
+    static #initCaptureDataSource(settings=true, loadCallback, errorCB) {
+        navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NO_PERMISSION, e)})
     }
 
     // Returns a usable image source
@@ -137,7 +138,7 @@ class ImageDisplay extends _BaseObj {
     }
 
     // Returns a usable video source
-    static loadVideo(path, looping=false, autoPlay=false) {
+    static loadVideo(path, looping=true, autoPlay=true) {
         const video = document.createElement("video")
         video.src = path
         video.preload = "auto"
@@ -180,12 +181,13 @@ class ImageDisplay extends _BaseObj {
     }
 
     // returns a separate copy of this ImageDisplay instance
-    duplicate(source=this._source, pos=this.pos_, size=this._size, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
+    duplicate(source=this._source, pos=this.pos_, size=this._size, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
         const imageDisplay = new ImageDisplay(
-            source, 
+            source instanceof MediaStreamAudioSourceNode ? source.mediaStream.clone() : source.cloneNode(), 
             pos,
             size,
             setupCB,
+            loopCB,
             anchorPos,
             alwaysActive
         )
@@ -208,6 +210,7 @@ class ImageDisplay extends _BaseObj {
         if (source instanceof HTMLVideoElement) source.pause()
     }
 
+    // returns the natural size of the source
     static getNaturalSize(source) {
         return [source?.displayWidth||source?.videoWidth||source?.width, source?.displayHeight||source?.videoHeight||source?.height]
     }
@@ -217,7 +220,6 @@ class ImageDisplay extends _BaseObj {
     get height() {return this._size[1]}
     get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
     get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
-	get data() {return this._source}
     get centerX() {return this._pos[0]+this._size[0]/2}
     get centerY() {return this._pos[1]+this._size[1]/2}
     get centerPos() {return [this.centerX, this.centerY]}
@@ -237,10 +239,11 @@ class ImageDisplay extends _BaseObj {
 	set size(_size) {this._size = _size}
 	set width(width) {this._size[0] = width}
 	set height(height) {this._size[1] = height}
-	set data(_data) {this._source = _data}
     set paused(paused) {
-        if (paused) this._source.pause()
-        else this._source.play()
+        try {
+            if (paused) this._source.pause()
+            else this._source.play()
+        }catch(e){}
     }
     set isPaused(isPaused) {this.paused = isPaused}
     set playbackRate(playbackRate) {this._source.playbackRate = playbackRate}

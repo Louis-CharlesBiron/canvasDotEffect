@@ -6,6 +6,7 @@
 class CDEUtils {
     static DEFAULT_ACCEPTABLE_DIFFERENCE = 0.0000001
     static CIRC = 2*Math.PI
+    static TO_DEGREES = Math.PI/180
 
     // Returns the element at the specified index, starting from the end of the array
     static getLast(arr, index=0) {
@@ -34,7 +35,7 @@ class CDEUtils {
 
     // returns whether a value is a function
     static isFunction(v) {
-        return typeof v === "function"
+        return typeof v == "function"
     }
 
     // rounds a number to a specific decimal point
@@ -114,12 +115,12 @@ class CDEUtils {
     // Shallow array equals
     static arrayEquals(arr1, arr2) {
         if (arr1.length !== arr2.length) return false
-        return arr1.every((v, i)=>v===arr2[i])
+        return arr1.every((v, i)=>v==arr2[i])
     }
     
     // Pos array equals
     static arr2Equals(arr1, arr2) {
-        return arr1==arr2 && arr1[0]===arr2[0] && arr1[1]===arr2[1]
+        return arr1==arr2 && arr1[0]==arr2[0] && arr1[1]==arr2[1]
     }
 
     /**
@@ -137,12 +138,12 @@ class CDEUtils {
 
     // returns converted given degrees into radians 
     static toRad(deg) {
-        return deg*(Math.PI/180)
+        return deg*CDEUtils.TO_DEGREES
     }
 
     // returns converted given radians into degrees 
     static toDeg(rad) {
-        return rad/(Math.PI/180)
+        return rad/CDEUtils.TO_DEGREES
     }
 
     /**

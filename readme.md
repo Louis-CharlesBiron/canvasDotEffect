@@ -19,6 +19,7 @@
     - [Grid Assets](#grid-assets)
   - [TextDisplay](#textdisplay)
   - [ImageDisplay](#imagedisplay)
+  - [AudioDisplay](#audiodisplay)
   - [Color](#color)
   - [Gradient](#gradient)
   - [Pattern](#pattern)
@@ -502,7 +503,7 @@ CVS.add(a)
     const backAndForthDotShape = new Shape([200,200], new Dot([0,0], null, null, (dot, shape)=>{
             let distance = 150, ix = dot.x
             dot.playAnim(new Anim((progress, playCount, deltaTime)=>{
-                dot.x = ix + ((playCount % 2) === 0 ? 1 : -1) * distance * progress
+                dot.x = ix + ((playCount % 2) == 0 ? 1 : -1) * distance * progress
                 if (progress == 1) ix = dot.x
             }, -1000, Anim.easeOutBack))
         })
@@ -863,14 +864,14 @@ CVS.add(helloWorldText, true)
 
 The ImageDisplay class allows the drawing of images, videos and live camera/screen feed.
 
-#### **The TextDisplay constructor takes the following parameters:**
-###### - `new ImageDisplay(source, pos, size, setupCB, loopCB, anchorPos, alwaysActive)`
+#### **The ImageDisplay constructor takes the following parameters:**
+###### - `new ImageDisplay(source, pos, size, errorCB, setupCB, loopCB, anchorPos, alwaysActive)`
 - *pos, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
-- **source** -> The source declaration of the image. One of `ImageDisplay.SOURCE_TYPES`.
+- **source** -> The source of the image. One of `ImageDisplay.SOURCE_TYPES`.
 - **size** -> The display size of the image `[width, height]`. (Resizes the image)
+- **errorCB** -> A callback called when the source produces an error `(errorType, e?)=>`.
 
 **Its other attributes are:**
-- **data** -> The usable data source for drawing the image.
 - **sourceCroppingPositions** -> The source cropping positions. Delimits a rectangle which indicates the source drawing area to draw from: `[ [startX, startY], [endX, endY] ]`. (Defaults to no cropping)
 
 #### Example use 1:
@@ -943,6 +944,136 @@ CVS.add(screenFeed, true)
 ```
 
 **Note:** Canvas image smoothing property is disabled by default to improve performances.
+
+ 
+
+
+# [AudioDisplay](#table-of-contents)
+
+The AudioDisplay class allows the visualization of audio from song, videos, live microphone / computer audio, etc, in cutomizable forms.
+
+#### **The AudioDisplay constructor takes the following parameters:**
+###### - `new AudioDisplay(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, loadErrorCB, setupCB, loopCB, anchorPos, alwaysActive)`
+- *pos, color, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
+- **source** -> The source of the audio. One of `AudioDisplay.SOURCE_TYPES`.
+- **binCB** -> A callback called for each bin of the FFT data array. Used to draw the audio. `(render, bin, atPos, accumulator audioDisplay, i, sampleCount, rawBin)=>{... return? [ [newX, newY], newAccumulatorValue ]}`
+- **sampleCount** -> The count of bins to use / display. Ex: if sampleCount is "32" and the display style is `BARS`, 32 bars will be displayed. *Note: (fftSize is calculated by selecting the nearest valid value based on twice the provided sampleCount).*
+- **disableAudio** -> Whether this AudioDisplay actually output outputs sounds/audio. *Note: (This value does not affect the visual display, only whether you can hear what is playing or not).*
+- **offsetPourcent** -> A number between 0 and 1 representing the offset pourcent in the order of the bins when calling binCB. 
+- **errorCB** -> A callback called when the source produces an error `(errorType, e?)=>`.
+
+**Its other attributes are the following audio context / analyser / modifier nodes:**
+
+*(see [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) for more information)*
+- *audioCtx*
+- *audioAnalyser*
+- *gainNode*
+- *biquadFilterNode*
+- *convolverNode*
+- *waveShaperNode*
+- *dynamicsCompressorNode*
+- *pannerNode*
+- *delayNode*
+
+
+**Note:** ↑ *The audio chain is also defined in the above order.* 
+
+#### Example use 1:
+###### - Displaying the waveform of an .mp3 file
+```js
+// Creating an AudioDisplay playing and displaying a local file
+const audioDisplay = new AudioDisplay(
+    "./audio/song.mp3", // the filepath of the .mp3 file
+    [100,100],          // the pos of the display
+    "lime",             // color of the display
+    AudioDisplay.BARS(),// the display type (here we use the generic bars/waveform display)
+    64,    // the sample count, here 64 bars will be displayed (and the fftSize will be 128)
+    false, // not disabling the audio so we can hear the song.mp3 playing
+    0,     // no offset
+    (type, e)=>console.log("Dang it, error! Type:", type, " | ", e) // onerror callback
+)
+
+// Adding the object to the canvas as a definition
+CVS.add(audioDisplay, true)
+```
+
+#### Example use 2:
+###### - Displaying the microphone output as a circle
+```js
+// Creating an AudioDisplay displaying a the microphone
+const micDisplay = new AudioDisplay(
+    AudioDisplay.loadMicrophone(), // loading the microphone
+    [100,100],          // the pos of the display
+    "lime",             // color of the display
+    (render, bin, pos, audioDisplay, accumulator, i)=>{// binCB
+        const maxRadius = 500/AudioDisplay.MAX_NORMALISED_DATA_VALUE, // defining a max radius of 500px
+              precision = 100 // used to skip over some bins (the lowest this is, the more precise the display will be, but the more performance heavy it will be too!)
+        
+        // optimizing with the precision variable (only drawing every <precision> time)
+        if (i%precision==0) {
+
+            // drawing the circles, the radius is based on the current bin value, and it's style is based on this audioDisplay object's styles
+            render.batchStroke(Render.getArc(pos, maxRadius*bin), audioDisplay._color, audioDisplay.visualEffects)
+        }
+    },
+    2000,   // the sample count, here a maximum of 2000 bins would be displayed (and the fftSize will be 4096)
+    true,  // disabling the audio to prevent echo
+)
+
+// Adding the object to the canvas as a definition
+CVS.add(micDisplay, true)
+
+```
+
+#### Example use 3:
+###### - Displaying the screen's audio and applying some audio modifications
+```js
+// Loading and displaying the screen audio. For this the user needs to select a valid tab/window/screen.
+const audioDisplay = new AudioDisplay(AudioDisplay.loadScreenAudio(), [100,100], "lime", AudioDisplay.BARS(), 64)
+
+// Applying some audio modifiers:
+
+// Setting the volume to 200%
+audioDisplay.setVolume(2)
+
+// Sets the audio filter to keep low frequencies and cut high ones
+audioDisplay.setBiquadFilterType(AudioDisplay.BIQUAD_FILTER_TYPES.LOWPASS)
+
+// delays the audio by 1 second
+audioDisplay.setDelay(1)
+
+// sets the distortion level to 10
+audioDisplay.setDistortionCurve(10)
+
+// sets the origin of the audio seems like it's coming from 1 meter to the left
+audioDisplay.setOriginPos(-1)
+
+// since this sounds pretty bad, you could also reset all the modifiers with this:
+//audioDisplay.resetAudioModifiers()
+
+// Adding the object to the canvas as a definition
+CVS.add(audioDisplay, true)
+```
+
+#### Example use 4:
+###### - Creating a reverb effet using the convolverNode
+```js
+// Taking back the audioDisplay from example 1.
+const audioDisplay = new AudioDisplay("./audio/song.mp3", [100,100], "lime", AudioDisplay.BARS(), 64)
+
+// For this to work, you need an impulse response file
+
+// This will load the IR and, by default, assign its buffer to the convolverNode then connect the latter. (You also can handle this yourself by specifying the second parameter: "readyCallback")
+audioDisplay.loadImpulseResponse("./audio/IR.wav")
+
+// To disable this effect, disconnect the convolverNode:
+// audioDisplay.disconnectConvolver()
+
+// Adding the object to the canvas as a definition
+CVS.add(audioDisplay, true)
+```
+
+**Note:** Due to the high customizability of the display, the `getAutomaticPosition` function of Pattern/Gradient classes is not available, therefore the positions need to be entered manually.
 
  
 
@@ -1066,9 +1197,8 @@ const gradientShape = new FilledShape(
 # [Pattern](#table-of-contents)
 
 The Pattern class allows the creation image/video based colors. A Pattern instance can be used in the *color* and *fillColor* fields of canvas objects. 
-
 #### **The Pattern constructor takes the following parameters:**
-###### - `new Pattern(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, frameRate, repeatMode)`
+###### - `new Pattern(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, errorCB, readyCB, frameRate, repeatMode)`
 - **render** -> The canvas Render instance, or context.
 - *source* -> The source declaration of the pattern. One of `ImageDisplay.SOURCE_TYPES`.
 - **positions** -> The positions of the pattern. (`[ [x1, y1], [x2, y2] ]`) Providing a canvas object will automaticlly position it to cover the minimal area containing all of the provided object.
@@ -1076,6 +1206,8 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 - **keepAspectRatio** -> Whether the displayed pattern keeps the same aspect ratio when resizing.
 - **forcedUpdates** -> Whether/How the pattern updates are forced. One of `Pattern.FORCE_UPDATE_LEVELS` .
 - **rotation** -> The pattern's current rotation in degrees.
+- **errorCB** -> A callback called when the source produces an error `(errorType, e?)=>`.
+- **readyCB** -> Similar to `setupCB`. A callback that gets called when the source has been initialized `(pattern)=>`. *Note: this attribute doesn't transfert when calling the duplicate() function to avoid StackOverflow errors.*
 - **frameRate** -> The update frequency of the current source. (Controls the frequency of video/canvas sources updates, as well as the frequency of any other sources when a visible property gets updated: e.g *when the rotation gets changed*)
 - **repeatMode** -> Whether the pattern repeats horizontally/vertically. One of `Pattern.REPETITION_MODES`.
 
@@ -1122,7 +1254,7 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
     const dummyText = new TextDisplay("Hey, this is just\n some random text in\n order to fill up space,\n have a nice day! :D", [250, 250], (render, text)=>
             new Pattern(
                 render, // the render instance
-                ImageDisplay.loadCamera(), // the source of the pattern, here it's we are requesting access to the live camera feed
+                Pattern.loadCamera(), // the source of the pattern, here it's we are requesting access to the live camera feed
                 text, // making the pattern fit the size of the text
                 null, // no source cropping
                 false // resizing will most likely change the aspect ratio
@@ -1134,13 +1266,62 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 #### Example use 3:
 ###### - Sharing VS duplicating a pattern
 ```js
+    // DUPLICATING PATTERN (Can be performance heavy when using dynamic pattern such as video, camera, etc)
+    // Creating and adding a basic shape that contains 9 dots in a 3x3 grid disposition
+    const shape1 = new Shape([100,100],[new Dot([-50, -50]), new Dot([-50, 0]), new Dot([-50, 50]), new Dot([0, -50]), new Dot([0, 0]), new Dot([0, 50]), new Dot([50, -50]), new Dot([50, 0]), new Dot([50, 50])], 25)
+    CVS.add(shape1)
 
+    // Creating a pattern that will get duplicated for each dot of shape1 (set the "positions" (↓) parameter to the placeholder value)
+    const duplicatedPattern = new Pattern(CVS.render, Pattern.loadCamera(), Pattern.PLACEHOLDER, null, null, null, null, null, 
+        (pattern)=>{// readyCB
+            // once the camera is loaded, set the shape1's color to the value of the pattern
+            shape1.setColor(pattern)
+        }
+    )
+```
+```js
+    // SHARED PATTERN
+    // Creating and adding a basic shape that contains 9 dots in a 3x3 grid disposition
+    const shape2 = new Shape([300,100],[new Dot([-50, -50]), new Dot([-50, 0]), new Dot([-50, 50]), new Dot([0, -50]), new Dot([0, 0]), new Dot([0, 50]), new Dot([50, -50]), new Dot([50, 0]), new Dot([50, 50])], 25)
+    CVS.add(shape2)
+
+    // Creating a pattern that will get duplicated for each dot of shape1 (set the "positions" (↓) parameter to the area containing all the dots)
+    const sharedPattern = new Pattern(CVS.render, Pattern.loadCamera(), _DynamicColor.getAutomaticPositions(shape2), null, null, null, null, null,
+        (pattern)=>{// readyCB
+            // once the camera is loaded, set the shape2's color to the value of the pattern
+            shape2.setColor(pattern)
+        }
+    )
 ```
 
 #### Example use 4:
 ###### - Using a pattern to color non objects (In this case, lines)
 ```js
+    // Creating a variable containing the color of the grid's symbol lines
+    let gridLineColor = [255,0,0,1]
 
+    // Creating a simple grid displaying a couple letters
+    const grid = new Grid("abc\nDEF\nghi", [5, 5], 50, null, [50,50], 2, null, null, 
+        (render, dot, ratio, res, m, dist, shape, isActive)=>{// drawEffectCB
+            // simple effect to change the dots radius
+            dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS, ratio, _Obj.DEFAULT_RADIUS)
+
+            // drawing the grid's lines (connections) using the previous variable (↓). Note: the variable could also have been defined in the setupCB
+            CanvasUtils.drawDotConnections(dot, render.profile1.update(gridLineColor, null, null, null, 2, [0]))
+        }
+    )
+
+    // Adding the grid to the canvas. (This initializes it, which is needed properly run getAutomaticPositions() on it)
+    CVS.add(grid)
+
+    // Assigning a pattern to the gridLineColor variable so it displays the camera as the color
+    gridLineColor = new Pattern(CVS.render, Pattern.loadCamera(), _DynamicColor.getAutomaticPositions(grid), null, null, null, null, null, 
+        (pattern)=>{// readyCB
+            // (Optional): You can also set the dots color to be this pattern. 
+            // once the camera is loaded, we're also setting the grid's color to the value of the pattern
+            grid.setColor(pattern)
+        }
+    )
 ```
 
  

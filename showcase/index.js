@@ -62,6 +62,8 @@ let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, 
 })
 testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog, -750))
 
+//let aud = new AudioDisplay(AudioDisplay.loadMicrophone(), [200,50], "lime", AudioDisplay.BARS(), 64, true)
+//CVS.add(aud, true)
 
 
 let test2 = new Shape((shape, idk)=>{return [50+50,100+shape.dots.length]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
@@ -142,7 +144,7 @@ let animTester = new Shape([400,200],[
             dot.x += dx
             ax += dx
         
-            if (prog === 1) {
+            if (prog == 1) {
                 ix = dot.x
                 ax = 0
             }
@@ -188,18 +190,16 @@ const testText2 = new TextDisplay("Test § ->", [100, 550], (render, text)=>new 
 })
 CVS.add(testText2, true)
 
-let imageTester = new ImageDisplay("./img/logo.png", [-250, 75], [250], null, null, ()=>testMore.firstDot)
+let imageTester = new ImageDisplay("./img/logo.png", [-250, 75], [250], (e,a)=>console.log(e,a), null, null, ()=>testMore.firstDot)
 
 
-let compOp = Render.DEFAULT_COMPOSITE_OPERATION
+/*let compOp = Render.DEFAULT_COMPOSITE_OPERATION
 let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], 50, (render, dot, ratio, res, m, dist, shape, isActive)=>{
     const v = CDEUtils.mod(50, ratio)>>0, hasFilter = (v>>0), feDisplacementMap = res[0]
-    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, hasFilter?"url(#test)":"none", compOp, 1, 3, [0]), null, null, null, hasFilter)
 
-    if (v && res[1] != v) {
-        res[1] = v
-        feDisplacementMap.setAttribute("scale", v)
-    }
+    if (feDisplacementMap.getAttribute("scale") != v) feDisplacementMap.setAttribute("scale", v)
+
+    CanvasUtils.drawDotConnections(dot, render.profile3.update(leColor, hasFilter?"url(#test)":"none", compOp, 1, 3, [0]), null, null, null, !hasFilter)
 }, null, ()=>{ 
     Canvas.loadSVGFilter(`<svg>
         <filter id="turbulence">
@@ -256,7 +256,15 @@ let aa = new Shape([100,100], [new Dot([-50, -50]),
 
        return Canvas.getSVGFilter("yo")[1]
 })
-CVS.add(aa)
+CVS.add(aa)*/
+
+Canvas.loadSVGFilter(`<svg>
+    <filter id="turbulence">
+      <feTurbulence type="turbulence" baseFrequency="0.01 0.02" numOctaves="1" result="NOISE"></feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="NOISE" scale="50">
+      </feDisplacementMap>
+    </filter>
+   </svg>`, "f")
 
 CVS.add(generationTester)
 CVS.add(animTester)
@@ -274,8 +282,6 @@ for (let i=0;i<3;i++) {
     dupelicateTester.moveBy([100, 100])
     dupelicateTester = dupelicateTester.duplicate()
 }
-
-
 
 // USER ACTIONS
 let mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"
