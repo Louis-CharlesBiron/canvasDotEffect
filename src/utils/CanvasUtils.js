@@ -102,6 +102,33 @@ class CanvasUtils {
         }
     }
 
+
+    // Returns a callback allowing a dot to have a custom trail effect
+    static getTrailEffectCB(canvas, obj, length=8, moveEffectCB=null, disableDefaultMovements=false) {
+        let trail = [], trailPos = new Array(length).fill(obj.pos), lastPos = null, equals = CDEUtils.arr2Equals, isDefaultMovements = !disableDefaultMovements
+        for (let i=0;i<length;i++) {
+            const trailObj = obj.duplicate()
+            trail.push(trailObj)
+            canvas.add(trailObj, true)
+        }
+
+        return (mouse)=>{
+            const pos = CDEUtils.unlinkArr2(obj.pos)
+            
+            let isMoving = false
+            if (!equals(lastPos, pos)) {
+                trailPos.shift()
+                trailPos.push(pos)
+
+                if (isDefaultMovements) for (let i=0;i<length;i++) trail[i].moveAt(trailPos[i])
+
+                lastPos = pos
+                isMoving = true
+            }
+            if (moveEffectCB) for (let i=0;i<length;i++) moveEffectCB(trail[i], (i+1)/length, isMoving, mouse, i)
+        }
+    }
+
     // Generic function to rotate the gradient of an object
     static rotateGradient(obj, duration=1000, speed=1, isFillColor=false) {
         return obj.playAnim(new Anim((prog)=>obj[isFillColor?"fillColorRaw":"colorRaw"].rotation=-speed*360*prog, duration))
@@ -114,16 +141,14 @@ class CanvasUtils {
     }
 
     // Provides quick generic shape declarations
-    static SHAPES = class {// TODO ?
+    static SHAPES = class {// TODO ? these are more debug I feel?
         static DEBUG_SHAPE(pos, dots) {
             return new Shape(pos||[100,100], dots||[new Dot(), new Dot([100]), new Dot([,100]), new Dot([100,100])])
         }
 
         static THROWABLE_DOT(pos, radius, color) {
             const dragAnim = CanvasUtils.getDraggableDotCB()
-            return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, res, m, dist, shape)=>{
-                dragAnim(shape.firstDot, m, dist, ratio)
-            })
+            return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, res, m, dist, shape)=>dragAnim(shape.firstDot, m, dist, ratio))
         }
     }
 
@@ -215,8 +240,5 @@ class CanvasUtils {
             }
             return [[0,(prog)=>[isForceXFn?forceX(prog)[0]:forceX, isForceYFn?forceY(prog)[1]:forceX]]]
         }
-
-        
     }
-
 }

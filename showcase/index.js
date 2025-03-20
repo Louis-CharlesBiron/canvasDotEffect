@@ -192,6 +192,27 @@ CVS.add(testText2, true)
 
 let imageTester = new ImageDisplay("./img/logo.png", [-250, 75], [250], (e,a)=>console.log(e,a), null, null, ()=>testMore.firstDot)
 
+let trailTester = new Shape([200, 100], new Dot(), null, "lime", null, (render, dot, ratio, res, m, dist, shape)=>{
+    if (dot.id==shape.firstDot.id) {
+        res[0](shape.dots[0], m, dist, ratio)
+        res[1](m)
+    }
+}, null, (shape)=>{
+    return [
+        CanvasUtils.getDraggableDotCB(),
+        CanvasUtils.getTrailEffectCB(CVS, shape.firstDot, 10, (dot, ratio, isMoving, m)=>{
+            if (isMoving && m.clicked) {
+                dot.a = ratio
+                dot.radius = 25*(1-ratio)
+            }
+
+            dot.a -= (1-ratio)/10
+            dot.radius = 25*ratio
+        })
+    ]
+})
+
+CVS.add(trailTester)
 
 /*let compOp = Render.DEFAULT_COMPOSITE_OPERATION
 let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], 50, (render, dot, ratio, res, m, dist, shape, isActive)=>{

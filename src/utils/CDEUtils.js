@@ -120,7 +120,7 @@ class CDEUtils {
     
     // Pos array equals
     static arr2Equals(arr1, arr2) {
-        return arr1==arr2 && arr1[0]==arr2[0] && arr1[1]==arr2[1]
+        return arr1 && arr2 && arr1[0]==arr2[0] && arr1[1]==arr2[1]
     }
 
     /**
