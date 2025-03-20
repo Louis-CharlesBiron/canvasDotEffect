@@ -1254,7 +1254,7 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
     const dummyText = new TextDisplay("Hey, this is just\n some random text in\n order to fill up space,\n have a nice day! :D", [250, 250], (render, text)=>
             new Pattern(
                 render, // the render instance
-                ImageDisplay.loadCamera(), // the source of the pattern, here it's we are requesting access to the live camera feed
+                Pattern.loadCamera(), // the source of the pattern, here it's we are requesting access to the live camera feed
                 text, // making the pattern fit the size of the text
                 null, // no source cropping
                 false // resizing will most likely change the aspect ratio
@@ -1266,13 +1266,13 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 #### Example use 3:
 ###### - Sharing VS duplicating a pattern
 ```js
-    // DUPLICATING PATTERN
+    // DUPLICATING PATTERN (Can be performance heavy when using dynamic pattern such as video, camera, etc)
     // Creating and adding a basic shape that contains 9 dots in a 3x3 grid disposition
     const shape1 = new Shape([100,100],[new Dot([-50, -50]), new Dot([-50, 0]), new Dot([-50, 50]), new Dot([0, -50]), new Dot([0, 0]), new Dot([0, 50]), new Dot([50, -50]), new Dot([50, 0]), new Dot([50, 50])], 25)
     CVS.add(shape1)
 
     // Creating a pattern that will get duplicated for each dot of shape1 (set the "positions" (↓) parameter to the placeholder value)
-    const duplicatedPattern = new Pattern(CVS.render, ImageDisplay.loadCamera(), Pattern.PLACEHOLDER, null, null, null, null, null, 
+    const duplicatedPattern = new Pattern(CVS.render, Pattern.loadCamera(), Pattern.PLACEHOLDER, null, null, null, null, null, 
         (pattern)=>{// readyCB
             // once the camera is loaded, set the shape1's color to the value of the pattern
             shape1.setColor(pattern)
@@ -1286,7 +1286,7 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
     CVS.add(shape2)
 
     // Creating a pattern that will get duplicated for each dot of shape1 (set the "positions" (↓) parameter to the area containing all the dots)
-    const sharedPattern = new Pattern(CVS.render, ImageDisplay.loadCamera(), _DynamicColor.getAutomaticPositions(shape2), null, null, null, null, null,
+    const sharedPattern = new Pattern(CVS.render, Pattern.loadCamera(), _DynamicColor.getAutomaticPositions(shape2), null, null, null, null, null,
         (pattern)=>{// readyCB
             // once the camera is loaded, set the shape2's color to the value of the pattern
             shape2.setColor(pattern)
@@ -1297,8 +1297,31 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 #### Example use 4:
 ###### - Using a pattern to color non objects (In this case, lines)
 ```js
-    TODO
-    // do Pattern.loadCamera() instaed of ImageDisplay.loadCamera(). It will just act as a wrapper and call the loadCamera with the pattern's framerate. (same for capture)
+    // Creating a variable containing the color of the grid's symbol lines
+    let gridLineColor = [255,0,0,1]
+
+    // Creating a simple grid displaying a couple letters
+    const grid = new Grid("abc\nDEF\nghi", [5, 5], 50, null, [50,50], 2, null, null, 
+        (render, dot, ratio, res, m, dist, shape, isActive)=>{// drawEffectCB
+            // simple effect to change the dots radius
+            dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS, ratio, _Obj.DEFAULT_RADIUS)
+
+            // drawing the grid's lines (connections) using the previous variable (↓). Note: the variable could also have been defined in the setupCB
+            CanvasUtils.drawDotConnections(dot, render.profile1.update(gridLineColor, null, null, null, 2, [0]))
+        }
+    )
+
+    // Adding the grid to the canvas. (This initializes it, which is needed properly run getAutomaticPositions() on it)
+    CVS.add(grid)
+
+    // Assigning a pattern to the gridLineColor variable so it displays the camera as the color
+    gridLineColor = new Pattern(CVS.render, Pattern.loadCamera(), _DynamicColor.getAutomaticPositions(grid), null, null, null, null, null, 
+        (pattern)=>{// readyCB
+            // (Optional): You can also set the dots color to be this pattern. 
+            // once the camera is loaded, we're also setting the grid's color to the value of the pattern
+            grid.setColor(pattern)
+        }
+    )
 ```
 
  

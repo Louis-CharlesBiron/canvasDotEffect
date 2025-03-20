@@ -34,7 +34,8 @@ class Pattern extends _DynamicColor {
         this._sourceCroppingPositions = sourceCroppingPositions??null          // source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
         this._keepAspectRatio = keepAspectRatio??false                         // whether the source keeps the same aspect ratio when resizing
         this._forcedUpdates = forcedUpdates??Pattern.DEFAULT_FORCE_UPDATE_LEVEL// whether/how the pattern forces updates
-        this._frameRate = frameRate??Pattern.DEFAULT_FRAME_RATE                // update frequency of video/canvas sources
+        const rawFrameRate = frameRate??Pattern.DEFAULT_FRAME_RATE
+        this._frameRate = (rawFrameRate%1) ? rawFrameRate : 1/Math.max(rawFrameRate, 0) // update frequency of video/canvas sources
         this._errorCB = errorCB                                                // a callback called if there is an error with the source (errorType, e?)=>
         this._readyCB = readyCB                                                // custom callback ran upon source load
         this._repeatMode = repeatMode??Pattern.DEFAULT_REPETITION_MODE         // whether the pattern repeats horizontally/vertically
@@ -166,6 +167,15 @@ class Pattern extends _DynamicColor {
         return new Pattern(render, source, CDEUtils.unlinkArr22(positions), CDEUtils.unlinkArr22(sourceCroppingPositions), keepAspectRatio, forcedUpdates, rotation, errorCB, null, frameRate, repeatMode)
     }
 
+    // Returns a usable camera capture source
+    static loadCamera(resolution, facingMode, frameRate=this._frameRate) {
+        return ImageDisplay.loadCamera(resolution, facingMode, frameRate)
+    }
+
+    // Returns a usable screen capture source
+    static loadCapture(resolution, cursor, frameRate=this.frameRate, mediaSource) {
+        return ImageDisplay.loadCapture(resolution, cursor, frameRate, mediaSource)
+    }
 
     get id() {return this._id}
 	get render() {return this._render}

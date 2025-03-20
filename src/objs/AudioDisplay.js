@@ -134,7 +134,7 @@ class AudioDisplay extends _BaseObj {
         } else if (dataSrc.toString()==types.DYNAMIC) {
             if (dataSrc.type==types.MICROPHONE) AudioDisplay.#initMicrophoneDataSource(dataSrc.settings, loadCallback, errorCB)
             else if (dataSrc.type==types.SCREEN_AUDIO) AudioDisplay.#initScreenAudioDataSource(dataSrc.settings, loadCallback, errorCB)
-        } else if (dataSrc instanceof types.VIDEO) AudioDisplay.#initAudioDataSource(dataSrc, loadCallback, errorCB)
+        } else if (dataSrc instanceof types.VIDEO || dataSrc instanceof types.AUDIO) AudioDisplay.#initAudioDataSource(dataSrc, loadCallback, errorCB)
         else if (dataSrc instanceof MediaStream) {
             if (dataSrc.getAudioTracks().length && CDEUtils.isFunction(loadCallback)) loadCallback(dataSrc, true)
             else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
@@ -143,6 +143,7 @@ class AudioDisplay extends _BaseObj {
 
     // Initializes a audio data source
     static #initAudioDataSource(dataSource, loadCallback, errorCB) {
+        console.log(dataSource, dataSource.readyState)
         const initLoad=()=>{if (CDEUtils.isFunction(loadCallback)) loadCallback(dataSource)}
         dataSource.onerror=e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.FILE_NOT_FOUND, e)}
         if (dataSource.readyState) initLoad()
