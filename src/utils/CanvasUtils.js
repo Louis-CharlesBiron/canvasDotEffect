@@ -125,7 +125,7 @@ class CanvasUtils {
                 lastPos = pos
                 isMoving = true
             }
-            if (moveEffectCB) for (let i=0;i<length;i++) moveEffectCB(trail[i], (i+1)/length, isMoving, mouse, i)
+            if (moveEffectCB) for (let i=0;i<length;i++) moveEffectCB(trail[i], (i+1)/length, isMoving, mouse, trailPos[i], i)
         }
     }
 

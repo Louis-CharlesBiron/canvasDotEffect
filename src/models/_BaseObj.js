@@ -84,7 +84,13 @@ class _BaseObj extends _HasColor {
     }
 
     // Smoothly moves to coords in set time
-    moveTo(pos, time=1000, easing=Anim.easeInOutQuad, initPos=[this.x, this.y], isUnique=true, force=true) {
+    moveTo(pos, time, easing, initPos, isUnique, force) {
+        time??=1000
+        easing??=Anim.easeInOutQuad
+        initPos??=this.pos_
+        isUnique??=true
+        force??=true
+
         const [ix, iy] = initPos, 
             [fx, fy] = this.adjustPos(pos),
             dx = fx-ix,
