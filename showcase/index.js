@@ -63,7 +63,7 @@ let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, 
 testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog, -750))
 
 //let aud = new AudioDisplay(AudioDisplay.loadMicrophone(), [200,50], "lime", AudioDisplay.BARS(), 64, true)
-//CVS.add(aud, true)
+//CVS.add(aud)
 
 
 let test2 = new Shape((shape, idk)=>{return [50+50,100+shape.dots.length]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
@@ -102,6 +102,11 @@ let le = new Grid("abcdefg\nhijklm\nnopqrs\ntuvwxyz", [5, 5], 50, null, [10,200]
 
 
 
+let test = new Grid("abcdefg\nhijklm".toUpperCase(), [5, 5], 50, null, [450,50], 2, null, null, (render, dot, ratio, res, m, dist, shape, isActive)=>{
+    CanvasUtils.drawDotConnections(dot, render.profile1.update([255,255,255,1]))
+})
+
+CVS.add(test)
 
 // SINGLE DRAGGABLE DOT
 let dragAnim1 = CanvasUtils.getDraggableDotCB()
@@ -181,14 +186,14 @@ for (let i = 0;i<20;i++) {
     t.playAnim(new Anim(prog=>{
         t.rotation = -360*prog
     },-22500))
-    CVS.add(t, true)
+    CVS.add(t)
 }
 
 
 const testText2 = new TextDisplay("Test § ->", [100, 550], (render, text)=>new Pattern(render, ImageDisplay.loadVideo("./img/vidTest.mp4",true,true), text), null, null, null, null, (text)=>{
     CanvasUtils.lookAt(testText2, filledShapeTester.firstDot)
 })
-CVS.add(testText2, true)
+CVS.add(testText2)
 
 let imageTester = new ImageDisplay("./img/logo.png", [-250, 75], [250], (e,a)=>console.log(e,a), null, null, ()=>testMore.firstDot)
 
@@ -319,7 +324,7 @@ CVS.add(filledShapeTester)
 CVS.add(movementsTester)
 CVS.add(test2)
 CVS.add(le)
-CVS.add(imageTester, true)
+CVS.add(imageTester)
 
 let dupelicateTester = le.duplicate()
 for (let i=0;i<3;i++) {

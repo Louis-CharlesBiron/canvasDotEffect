@@ -283,15 +283,15 @@ class Canvas {
         return this._settings=st
     }
 
-    // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "active" is false, it only initializes the obj, without adding it to the canvas
-    add(objs, isDef, active=true) {// TODO, automate def and ref
+    // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "inactive" is true, it only initializes the obj, without adding it to the canvas
+    add(objs, inactive=false) {
         const l = objs&&(objs.length??1)
         for (let i=0;i<l;i++) {
             const obj = objs[i]??objs
             obj._parent = this
             
             if (CDEUtils.isFunction(obj.initialize)) obj.initialize()
-            if (active) this._els[isDef?"defs":"refs"].push(obj)
+            if (!inactive) this._els[obj.asSource?"refs":"defs"].push(obj)
 
         }
         this.updateCachedAllEls()
@@ -310,7 +310,12 @@ class Canvas {
 
     // get any element from the canvas by id
     get(id) {
-        return this.allEls.find(el=>el.id==id)
+        const els = this.#cachedEls, e_ll = this.#cachedEls_ll
+        for (let i=0;i<e_ll;i++) {
+            const el = els[i]
+            if (el.id==id) return el
+        }
+        return null
     }
 
     // removes any element from the canvas by instance type

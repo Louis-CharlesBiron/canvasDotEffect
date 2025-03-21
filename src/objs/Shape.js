@@ -66,7 +66,7 @@ class Shape extends _Obj {
 
     // adds one or many dots to the shape
     add(dot) {
-        this._dots.push(...[dot].flat().map(dot=>{
+        this._dots.push(...[dot].flat().filter(dot=>dot).map(dot=>{
             if (dot.initColor==null) dot.initColor = this.colorRaw
             if (dot.initRadius==null) dot.initRadius = this._radius
             if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
@@ -78,15 +78,10 @@ class Shape extends _Obj {
         this._parent.updateCachedAllEls()
     }
 
-    // remove a dot from the shape by its id or by its instance
-    removeDot(idOrDot) {
-        this._dots = this._dots.filter(dot=>dot.id!==(idOrDot?.id??idOrDot))
-        this._parent.updateCachedAllEls()
-    }
-
-    // remove the shape and all its dots
-    remove() {
-        this._parent.remove(this._id)
+    // remove the shape and all its dots, or a single dot if id is specified
+    remove(id=null) {
+        if (id) this._dots = this._dots.filter(dot=>dot.id!=id)
+        else this._parent.remove(this._id)
         this._parent.updateCachedAllEls()
     }
 
@@ -262,6 +257,7 @@ class Shape extends _Obj {
         return false
     }
 
+    // returns the approximated center of the shape, based on its dots pos
     getCenter() {
         const rangeX = CDEUtils.getMinMax(this.dots, "x"), rangeY = CDEUtils.getMinMax(this.dots, "y")
         return [rangeX[0]+(rangeX[1]-rangeX[0])/2, rangeY[0]+(rangeY[1]-rangeY[0])/2]

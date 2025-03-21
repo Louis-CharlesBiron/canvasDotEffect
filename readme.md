@@ -124,16 +124,14 @@ The Canvas class is the core of the project. It manages the main loop, the windo
  
 
 **To add objects to the canvas,** use the add() function:
-###### - add(objs, isDef, active=true)
+###### - add(objs, inactive=false)
 ```js
     // For a source object
     CVS.add(yourShape)
 
-    // For a standalone object
-    CVS.add(yourObject, true)
     
     // For a prefab or inactive shape
-    CVS.add(yourShape, false, false)
+    CVS.add(yourShape, true)
 ```
 
 **To set up mouse/keyboard listeners for the canvas,** use the following prebuilt functions:
@@ -270,8 +268,8 @@ Its other attribute is:
         }
     )
     
-    // Add the dot as a standalone object by setting the 'isDef' to 'true'. (definition)
-    CVS.add(aloneDot, true)
+    // Add the dot as a standalone object. (definition)
+    CVS.add(aloneDot)
 ```
 
 #### Example use 2:
@@ -360,7 +358,11 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
         }
     )
 
-CVS.add(a)
+    // Creating a new shape containing the generated dots
+    const dummyShape = new Shape([0, 0], generatedDots)
+
+    // Adding the shape to the canvas
+    CVS.add(dummyShape)
 
 ```
 
@@ -854,8 +856,8 @@ const helloWorldText = new TextDisplay(
         
     })
 
-// Adding the object to the canvas as a definition, because it doesn't not contain any children.
-CVS.add(helloWorldText, true)
+// Adding the object to the canvas.
+CVS.add(helloWorldText)
 
 ```
  
@@ -880,8 +882,8 @@ The ImageDisplay class allows the drawing of images, videos and live camera/scre
 // Creating an ImageDisplay with a url pointing to an image
 const myCoolImage = new ImageDisplay("https://static.wikia.nocookie.net/ftgd/images/9/97/ExtremeDemon.png/revision/latest?cb=20240801164829")
 
-// Adding the object to the canvas as a definition, because it doesn't not contain any children.
-CVS.add(myCoolImage, true)
+// Adding the object to the canvas.
+CVS.add(myCoolImage)
 ```
 
 #### Example use 2:
@@ -897,8 +899,8 @@ const myCoolImage = new ImageDisplay(
 // Cropping the source image to use only from [20, 20] to [150, 150]
 myCoolImage.sourceCroppingPositions = [[20,20], [150, 150]]
 
-// Adding the object to the canvas as a definition, because it doesn't not contain any children.
-CVS.add(myCoolImage, true)
+// Adding the object to the canvas.
+CVS.add(myCoolImage)
 ```
 
 #### Example use 3:
@@ -917,8 +919,8 @@ const dummyVideo = new ImageDisplay(
     }
 )
 
-// Adding the object to the canvas as a definition
-CVS.add(dummyVideo, true)
+// Adding the object to the canvas.
+CVS.add(dummyVideo)
 ```
 
 #### Example use 4:
@@ -938,9 +940,9 @@ const screenFeed = new ImageDisplay(
     [1920/4, 1080/4] // resize it to Full HD divided by 4
 )
 
-// Adding both objects to the canvas as a definitions
-CVS.add(cameraFeed, true)
-CVS.add(screenFeed, true)
+// Adding both objects to the canvas.
+CVS.add(cameraFeed)
+CVS.add(screenFeed)
 ```
 
 **Note:** Canvas image smoothing property is disabled by default to improve performances.
@@ -993,8 +995,8 @@ const audioDisplay = new AudioDisplay(
     (type, e)=>console.log("Dang it, error! Type:", type, " | ", e) // onerror callback
 )
 
-// Adding the object to the canvas as a definition
-CVS.add(audioDisplay, true)
+// Adding the object to the canvas.
+CVS.add(audioDisplay)
 ```
 
 #### Example use 2:
@@ -1020,8 +1022,8 @@ const micDisplay = new AudioDisplay(
     true,  // disabling the audio to prevent echo
 )
 
-// Adding the object to the canvas as a definition
-CVS.add(micDisplay, true)
+// Adding the object to the canvas.
+CVS.add(micDisplay)
 
 ```
 
@@ -1051,8 +1053,8 @@ audioDisplay.setOriginPos(-1)
 // since this sounds pretty bad, you could also reset all the modifiers with this:
 //audioDisplay.resetAudioModifiers()
 
-// Adding the object to the canvas as a definition
-CVS.add(audioDisplay, true)
+// Adding the object to the canvas.
+CVS.add(audioDisplay)
 ```
 
 #### Example use 4:
@@ -1069,8 +1071,8 @@ audioDisplay.loadImpulseResponse("./audio/IR.wav")
 // To disable this effect, disconnect the convolverNode:
 // audioDisplay.disconnectConvolver()
 
-// Adding the object to the canvas as a definition
-CVS.add(audioDisplay, true)
+// Adding the object to the canvas.
+CVS.add(audioDisplay)
 ```
 
 **Note:** Due to the high customizability of the display, the `getAutomaticPosition` function of Pattern/Gradient classes is not available, therefore the positions need to be entered manually.
@@ -1260,7 +1262,8 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
                 false // resizing will most likely change the aspect ratio
             ))
     
-    CVS.add(dummyText, true)
+    // Adding the text to the canvas
+    CVS.add(dummyText)
 ```
 
 #### Example use 3:

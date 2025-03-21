@@ -32,11 +32,24 @@ let textInputTest = new Grid("a", [5, 5], 50, null, [10,200], 0, null, null, (re
     CanvasUtils.drawDotConnections(dot, render.profile1.update([255,0,0,1],  null, null, null, 2, [0], null, RenderStyles.JOIN_TYPES.BEVEL, RenderStyles.CAP_TYPES.SQUARE))
 })
 
+let curret = new Shape([20,-20], [new Dot(), new Dot([0, 30])], 3, "lime", null, (render, dot)=>{
+    CanvasUtils.drawDotConnections(dot, render.profile1.update(dot._color))
+}, null, (shape)=>{
+shape.playAnim(new Anim((prog, i)=>shape.setColor(Color.rgba(0,255,0,1*(i%2))), -300))
+shape.firstDot.addConnection(shape.secondDot)
+}, null, ()=>textInputTest.lastDot?.pos)
+
+CVS.add(curret)
+
+
 function updateInput(e) {
-    let k = e.key.toLowerCase(), v = textInputTest.keys
-    if (k=="backspace") textInputTest.setKeys(v.slice(0, v.length-1))
-    else if (k=="enter") textInputTest.setKeys(v+"\n")
-    else textInputTest.setKeys(v+k)
+    let k = e.key, v = textInputTest.keys
+    if (k.toLowerCase()=="backspace") textInputTest.setKeys(v.slice(0, v.length-1))
+    else if (k.toLowerCase()=="enter") textInputTest.setKeys(v+"\n")
+    else if (k.length==1) {
+        e.preventDefault()
+        textInputTest.setKeys(v+k)
+    }
 }
 
 CVS.add(textInputTest)

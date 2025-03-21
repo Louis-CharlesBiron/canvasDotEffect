@@ -12,7 +12,7 @@ class CanvasUtils {
         if (!CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]) {
             const dot = new Dot([0,0], radius, color, null, shape)
             CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id] = dot.id
-            CVS.add(dot, true)
+            CVS.add(dot)
         } else {
             CVS.remove(CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id])
             delete CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]
@@ -26,10 +26,10 @@ class CanvasUtils {
             t_d1 = new Dot(res.target.outer, 3, [255,0,0,0.45]),
             t_d2 = new Dot(res.target.inner, 3, [255,0,0,1])
         
-        CVS.add(s_d1, true)
-        CVS.add(s_d2, true)
-        CVS.add(t_d1, true)
-        CVS.add(t_d2, true)
+        CVS.add(s_d1)
+        CVS.add(s_d2)
+        CVS.add(t_d1)
+        CVS.add(t_d2)
     }
 
     // returns true if the provided dot is the first one of the shape
@@ -113,9 +113,7 @@ class CanvasUtils {
         }
 
         return (mouse)=>{
-            const pos = CDEUtils.unlinkArr2(obj.pos)
-            
-            let isMoving = false
+            let pos = CDEUtils.unlinkArr2(obj.pos), isMoving = false
             if (!equals(lastPos, pos)) {
                 trailPos.shift()
                 trailPos.push(pos)
@@ -141,7 +139,7 @@ class CanvasUtils {
     }
 
     // Provides quick generic shape declarations
-    static SHAPES = class {// TODO ? these are more debug I feel?
+    static SHAPES = class {
         static DEBUG_SHAPE(pos, dots) {
             return new Shape(pos||[100,100], dots||[new Dot(), new Dot([100]), new Dot([,100]), new Dot([100,100])])
         }

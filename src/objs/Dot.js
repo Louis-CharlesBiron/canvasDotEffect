@@ -100,8 +100,7 @@ class Dot extends _Obj {
 
     // deletes the dot
     remove() {
-        if (CDEUtils.isFunction(this._parent.removeDot)) this._parent.removeDot(this._id)
-        else this._parent.remove(this._id)
+        this._parent.remove(this._id)
     }
 
     get ctx() {return this._parent.parent.ctx}

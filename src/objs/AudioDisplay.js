@@ -33,17 +33,9 @@ class AudioDisplay extends _BaseObj {
     static ERROR_TYPES = {NO_PERMISSION:0, NO_AUDIO_TRACK:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3}
     static BIQUAD_FILTER_TYPES = {DEFAULT:"allpass", ALLPASS:"allpass", BANDPASS:"bandpass", HIGHPASS:"highpass", HIGHSHELF:"highshelf", LOWPASS:"lowpass", LOWSHELF:"lowshelf", NOTCH:"notch", PEAKING:"peaking"}
 
-
-    /*************
-    TODO
-    - duplicate
-
-    */
-
     #buffer_ll = null
     #data = null
     #fft = null
-    
     constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
         this._source = source??""                                         // the source of the audio
@@ -286,7 +278,7 @@ class AudioDisplay extends _BaseObj {
 
     // sets the convolverNode impulse response buffer
     setReverb(buffer=null) {
-        if (buffer) this._convolverNode.buffer = buffer// TODO
+        if (buffer) this._convolverNode.buffer = buffer
         else this.disconnectConvolver()
     }
     
