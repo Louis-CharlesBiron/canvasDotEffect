@@ -141,20 +141,19 @@ class CanvasUtils {
     }
 
     // Provides quick generic shape declarations
-    static SHAPES = class {// TODO ? these are more debug I feel?
-        static DEBUG_SHAPE(pos, dots) {
+    static SHAPES = {
+        DEBUG_SHAPE: (pos, dots)=>{
             return new Shape(pos||[100,100], dots||[new Dot(), new Dot([100]), new Dot([,100]), new Dot([100,100])])
-        }
-
-        static THROWABLE_DOT(pos, radius, color) {
+        },
+        THROWABLE_DOT: (pos, radius, color)=>{
             const dragAnim = CanvasUtils.getDraggableDotCB()
             return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, res, m, dist, shape)=>dragAnim(shape.firstDot, m, dist, ratio))
         }
     }
 
     // Provides generic follow paths
-    static FOLLOW_PATHS = class {
-        static INFINITY_SIGN(width, height, progressOffset) {
+    static FOLLOW_PATHS = {
+        INFINITY_SIGN: (width, height, progressOffset)=>{
             width??=100
             height??=50
             progressOffset??=0
@@ -162,9 +161,8 @@ class CanvasUtils {
                 const progress = CDEUtils.CIRC*((prog+progressOffset)%1)
                 return [width*Math.sin(progress), height*Math.sin(2*progress)]
             }]]
-        }
-
-        static CIRCLE(width, height, progressOffset) {
+        },
+        CIRCLE: (width, height, progressOffset)=>{
             width??=100
             height??=100
             progressOffset??=0
@@ -172,9 +170,8 @@ class CanvasUtils {
                 const progress = CDEUtils.CIRC*((prog+progressOffset)%1)
                 return [width*Math.cos(progress), height*Math.sin(progress)]
             }]]
-        }
-        
-        static RECTANGLE(width, height, progressOffset) {
+        },
+        RECTANGLE: (width, height, progressOffset)=>{
             width??=100
             height??=100
             progressOffset??=0
@@ -185,9 +182,9 @@ class CanvasUtils {
                 else if (pos < 2*width+height) return [width-(pos-(width+height)), height]
                 else return [0, height-(pos-(2*width+height))]
             }]]
-        }
+        },
 
-        static QUADRATIC(width, height, isFliped) {
+        QUADRATIC: (width, height, isFliped)=>{
             width ??= 100
             height ??= 200
             const maxNaturalHeight = Math.pow(width/2,2)
@@ -196,37 +193,32 @@ class CanvasUtils {
                 if (isFliped) y = height-y
                 return [x, y]
             }]]
-        }
-
-        static LINEAR(width, a) {
+        },
+        LINEAR: (width, a)=>{
             width ??= 100
             a ??= 1
             return [[0, (prog)=>{
                 const x = prog*width, y = a*x
                 return [x, y]
             }]]
-        }
-
-        static SINE_WAVE(width, height) {
+        },
+        SINE_WAVE: (width, height)=>{
             width ??= 100
             height ??= 100
             return [[0, (prog)=>{
                 const x = prog*width, y = height*Math.sin((CDEUtils.CIRC*x)/width)
                 return [x, y]
             }]]
-        }
-
-        static COSINE_WAVE(width, height) {
+        },
+        COSINE_WAVE: (width, height)=>{
             width ??= 100
             height ??= 100
             return [[0, (prog)=>{
                 const x = prog*width, y = height*Math.cos((CDEUtils.CIRC*x)/width)
                 return [x, y]
             }]]
-        }
-
-        // Doesn't move the dot, unless provided a x/y value. Also accepts other generic follow paths as x/y values.
-        static RELATIVE(forceX, forceY) {
+        },
+        RELATIVE: (forceX, forceY)=>{// Doesn't move the dot, unless provided a x/y value. Also accepts other generic follow paths as x/y values.
             forceX??= undefined
             forceY??= undefined
             let isForceXFn = false, isForceYFn = false

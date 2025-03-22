@@ -34,7 +34,7 @@ class Canvas {
     #cachedEls_ll = null     // cached canvas elements count/length
     #lastScrollValues = [window.scrollX, window.screenY]
 
-    constructor(cvs, loopingCallback, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
+    constructor(cvs, loopingCB, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                               // html canvas element
         this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
         this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)       // set styles selector for canvas
@@ -43,7 +43,7 @@ class Canvas {
         this._settings = this.updateSettings(settings)                // set context settings
         this._els = {refs:[], defs:[]}                                // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
         this._looping = false                                         // loop state
-        this._loopingCallback = loopingCallback                       // custom callback called along with the loop() function
+        this._loopingCB = loopingCB                       // custom callback called along with the loop() function
         this.fpsLimit = fpsLimit                                      // delay between each frame to limit fps
         this._speedModifier = 1                                       // animation/drawing speed multiplier
         this.#maxTime = this.#getMaxTime(fpsLimit)                    // max time between frames
@@ -187,7 +187,7 @@ class Canvas {
             this.draw()
             this._render.drawBatched()
             
-            if (CDEUtils.isFunction(this._loopingCallback)) this._loopingCallback()
+            if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB()
 
             this._fixedTimeStamp = 0
         } else if (time) {
@@ -484,7 +484,7 @@ class Canvas {
 	get width() {return this._cvs.width}
 	get height() {return this._cvs.height}
 	get settings() {return this._settings}
-	get loopingCallback() {return this._loopingCallback}
+	get loopingCB() {return this._loopingCB}
 	get looping() {return this._looping}
 	get deltaTime() {return this._deltaTime}
 	get windowListeners() {return this._windowListeners}
@@ -506,7 +506,7 @@ class Canvas {
     get render() {return this._render}
     get speedModifier() {return this._speedModifier}
 
-	set loopingCallback(loopingCallback) {this._loopingCallback = loopingCallback}
+	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
 	set width(w) {this.setSize(w, null)}
 	set height(h) {this.setSize(null, h)}
 	set offset(offset) {this._offset = offset}

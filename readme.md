@@ -33,6 +33,7 @@
   - [Utilities](#utilities)
     - [CanvasUtils](#canvasutils)
     - [CDEUtils](#cdeutils)
+    - [FPSCounter](#fpscounter)
 - [Execution order](#execution-order)
 - [Intended practices](#intended-practices)
 - [Credits](#credits)
@@ -41,12 +42,10 @@
 
 ## Getting Started / Minimal setup
 
-1. **Get the library file. ([canvasDotEffect.min.js](https://github.com/Louis-CharlesBiron/canvasDotEffect/blob/main/dist/canvasDotEffect.min.js))** 
+1. **Get the library file. (`npm install cdejs` or [canvasDotEffect.min.js](https://github.com/Louis-CharlesBiron/canvasDotEffect/blob/main/dist/canvasDotEffect.min.js))** 
 ```HTML
-    <head>
-        ...
-        <script src="canvasDotEffect.min.js"></script>
-    </head>
+    <!-- Only if you're using the browser version! Otherwise use: import {...} from "cdejs" -->
+    <script src="canvasDotEffect.min.js"></script>
 ```
 
 2. **In your HTML file, place a canvas element. The canvas will later automatically take the size of its parent element**.
@@ -101,6 +100,26 @@
     CVS.startLoop()
 ```
 
+**Note:** if you are using de [NPM](https://www.npmjs.com/package/cdejs) version of this librairy, using [Vite](https://vite.dev/) or any other bundler is recommended.
+###### - Minimal example package.json
+```json
+{
+  "name": "my_project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "cdejs": "^1.0.3"
+  },
+  "devDependencies": {
+    "vite": "^6.2.2"
+  }
+}
+```
 
 
 # [Class descriptions](#table-of-contents)
@@ -1856,6 +1875,27 @@ This function is used to return the biggest and lowest values within an array. (
 This function is used to run a callback for a specific amount of time.
 ###### repeatedTimeout(iterationCount, callback, delay=5)
 
+## [FPSCounter](#table-of-contents)
+The FPSCounter class allows to get the live frame per seconds value of a running loop.
+
+
+#### Example use:
+###### - Displaying the canvas FPS
+```js
+// Creating a FPSCounter instance
+const fpsCounter = new FPSCounter()
+
+// Creating a Canvas
+const CVS = new Canvas(canvas, ()=>{//loopingCB
+
+    // Get the fps value (needs to be ran each frame)
+    const fpsValue = fpsCounter.getFps()
+    
+    // Displaying the live FPS
+    document.getElementById("fps_display").textContent = fpsValue+" fps"
+})
+```
+ 
 
 # [Execution Order](#table-of-contents)
 
@@ -1914,7 +1954,7 @@ After this, every dot will be initialized, and all canvas objects will be ready 
  
 
 **Note:**
-- *Reference:* an object containing other objects. (ex: Shape)
+- *Reference:* an object containing other objects. (ex: Shape, FilledShape, Grid)
 - *Definition:* a standalone object. (ex: Dot without a parent Shape, TextDisplay, ImageDisplay)
 
 

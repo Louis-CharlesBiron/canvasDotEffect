@@ -1,4 +1,4 @@
-const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
+const fpsCounter = new FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
     let fps = fpsCounter.getFps()+"\n"+fpsCounter.fpsRaw
     if (fpsDisplay.textContent !== fps) fpsDisplay.textContent = fps
     mouseSpeed.textContent = CVS?.mouse?.speed?.toFixed(2)+" px/sec"

@@ -3,7 +3,7 @@
 // Please don't use or credit this code as your own.
 //
 
-class CDEUtils {
+export class CDEUtils {
     static DEFAULT_ACCEPTABLE_DIFFERENCE = 0.0000001
     static CIRC = 2*Math.PI
     static TO_DEGREES = Math.PI/180
@@ -161,7 +161,7 @@ class CDEUtils {
     }
 }
 // Create an instance of the FPSCounter and run every frame: either getFpsRaw for raw fps AND/OR getFps for averaged fps
-class FPSCounter {
+export class FPSCounter {
     constructor(avgSampleSize) {
         this._t = []
         this._maxFps=0
@@ -195,7 +195,7 @@ class FPSCounter {
 //
 
 // Provides generic canvas functions
-class CanvasUtils {
+export class CanvasUtils {
     static SHOW_CENTERS_DOT_ID = {}
 
     // DEBUG // Can be used to display a dot at the specified shape pos (which is normally not visible)
@@ -431,7 +431,7 @@ class CanvasUtils {
 //
 
 // Represents a color value
-class Color {
+export class Color {
     static DEFAULT_COLOR = "aliceblue"
     static DEFAULT_RGBA = [240, 248, 255, 1]
     static DEFAULT_COLOR_VALUE = "rgba(240, 248, 255, 1)"
@@ -680,7 +680,7 @@ class Color {
 //
 
 // Abstract class, provides color attributes to other classes
-class _HasColor {
+export class _HasColor {
     constructor(color) {
         this._initColor = color       // declaration color value || (ctx, this)=>{return color value}
         this._color = this._initColor // the current color or gradient of the object
@@ -730,7 +730,7 @@ class _HasColor {
     set brightness(brightness) {this._color.brightness = brightness}
     set initColor(initColor) {this._initColor = initColor}
 }
-class GridAssets {
+export class GridAssets {
     static D = ["t","r","b","l","tr","br","bl","tl","i"].reduce((a,b,i)=>(a.places.push([a[b]=1<<i,(ar)=>{if(i==0){return -ar}else if(i==1){return 1}else if(i==2){return ar}else if(i==3){return -1}else if(i==4){return 1-ar}else if(i==5){return ar+1}else if(i==6){return ar-1}else if(i==7){return -ar-1}else if(i==8){return 0}}]),a),{places:[]})
     static DEFAULT_SOURCE = GridAssets.fontSource5x5
 
@@ -1275,7 +1275,7 @@ class GridAssets {
 //
 
 // Represents the user's keyboard
-class TypingDevice {
+export class TypingDevice {
 
     constructor() {
         this._keysPressed = [] // Current keys pressed (down)
@@ -1311,7 +1311,7 @@ class TypingDevice {
 //
 
 // Represents the user's mouse
-class Mouse {
+export class Mouse {
     static DEFAULT_MOUSE_DECELERATION = 0.8
     static DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1
     static DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
@@ -1414,7 +1414,7 @@ class Mouse {
 //
 
 // Drawing manager, centralises most context operation
-class Render {
+export class Render {
     static PROFILE_ID_GIVER = -1
     static TEXT_PROFILE_ID_GIVER = -1
     static COMPOSITE_OPERATIONS = {SOURCE_OVER: "source-over", SOURCE_IN: "source-in", SOURCE_OUT: "source-out", SOURCE_ATOP: "source-atop", DESTINATION_OVER: "destination-over", DESTINATION_IN: "destination-in", DESTINATION_OUT: "destination-out", DESTINATION_ATOP: "destination-atop", LIGHTER: "lighter", COPY: "copy", XOR: "xor", MULTIPLY: "multiply", SCREEN: "screen", OVERLAY: "overlay", DARKEN: "darken", LIGHTEN: "lighten", COLOR_DODGE: "color-dodge", COLOR_BURN: "color-burn", HARD_LIGHT: "hard-light", SOFT_LIGHT: "soft-light", DIFFERENCE: "difference", EXCLUSION: "exclusion", HUE: "hue", SATURATION: "saturation", COLOR: "color", LUMINOSITY: "luminosity"}
@@ -1735,7 +1735,7 @@ class Render {
 //
 
 // Represents a styling profile for text
-class TextStyles {
+export class TextStyles {
     static CAPS_VARIANTS = {NORMAL:"normal", SMALL_CAPS:"small-caps", ALL_SMALL_CAPS:"all-small-caps", PETITE_CAPS:"petite-caps", ALL_PETITE_CAPS:"all-petite-caps", UNICASE:"unicase", TILTING_CAPS:"tilting-caps"}
     static DIRECTIONS = {LEFT_TO_RIGHT:"ltr", RIGHT_TO_LEFT:"rtl", INHERIT:"inherit"}
     static STRETCHES = {ULTRA_CONDENSED:"ultra-condensed", EXTRA_CONDENSED:"extra-condensed", CONDENSED:"condensed", SEMI_CONDENSED:"semi-condensed", NORMAL:"normal", SEMI_EXPANDED:"semi-expanded", EXPANDED:"expanded", EXTRA_EXPANDED:"extra-expanded", ULTRA_EXPANDED:"ultra-expanded"}
@@ -1861,7 +1861,7 @@ class TextStyles {
 //
 
 // Represents a styling profile for paths
-class RenderStyles extends _HasColor {
+export class RenderStyles extends _HasColor {
     static JOIN_TYPES = {MITER:"miter", BEVEL:"bevel", ROUND:"round"} // spiky, flat, round
     static CAP_TYPES = {BUTT:"butt", SQUARE:"square", ROUND:"round"}  // short, long, round
     static DEFAULT_WIDTH = 2
@@ -1993,7 +1993,7 @@ class RenderStyles extends _HasColor {
 const CDE_CANVAS_DEFAULT_TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame
 
 // Represents a html canvas element
-class Canvas {
+export class Canvas {
     static DOMParser = new DOMParser()
     static ELEMENT_ID_GIVER = 0
     static DEFAULT_MAX_DELTATIME_MS = 130
@@ -2509,7 +2509,7 @@ class Canvas {
 //
 
 // Allows the creation of smooth progress based animations 
-class Anim {
+export class Anim {
     static #ANIM_ID_GIVER = 0
     static DEFAULT_DURATION = 1000
 
@@ -2621,7 +2621,7 @@ class Anim {
 //
 
 // Abstract canvas obj class
-class _BaseObj extends _HasColor {
+export class _BaseObj extends _HasColor {
     static DEFAULT_POS = [0,0]
     static ABSOLUTE_ANCHOR = [0,0]
     static POSITION_PRECISION = 4
@@ -2921,7 +2921,7 @@ class _BaseObj extends _HasColor {
 //
 
 // Displays audio as an object
-class AudioDisplay extends _BaseObj {
+export class AudioDisplay extends _BaseObj {
     static LOADED_IR_BUFFERS = []
     static SUPPORTED_AUDIO_FORMATS = ["mp3", "wav", "ogg", "aac", "m4a", "opus", "flac"]
     static SOURCE_TYPES = {FILE_PATH:"string", DYNAMIC:"[object Object]", MICROPHONE:"MICROPHONE", SCREEN_AUDIO:"SCREEN_AUDIO", VIDEO:HTMLVideoElement, AUDIO:HTMLAudioElement}
@@ -3379,7 +3379,7 @@ class AudioDisplay extends _BaseObj {
 //
 
 // Displays an image or a video as an object
-class ImageDisplay extends _BaseObj {
+export class ImageDisplay extends _BaseObj {
     static SUPPORTED_IMAGE_FORMATS = ["jpg","jpeg","png","gif","svg","webp","bmp","tiff","ico","heif","heic"]
     static SUPPORTED_VIDEO_FORMATS = ["mp4","webm","ogv","mov","avi","mkv","flv","wmv","3gp","m4v"]
     static DEFAULT_WIDTH = 128
@@ -3642,7 +3642,7 @@ class ImageDisplay extends _BaseObj {
 //
 
 // Displays text as an object
-class TextDisplay extends _BaseObj {
+export class TextDisplay extends _BaseObj {
     static MEASUREMENT_CTX = new OffscreenCanvas(1,1).getContext("2d") 
 
     #lineCount = 1
@@ -3751,7 +3751,7 @@ class TextDisplay extends _BaseObj {
 //
 
 // Abstract dynamic color class
-class _DynamicColor {
+export class _DynamicColor {
     static PLACEHOLDER = "PLACEHOLDER" // can be used to instantiate a dynamic color without positions, and apply that of the object, on assignement
     static PLACEHOLDER_COLOR = "transparent"
 
@@ -3814,7 +3814,7 @@ class _DynamicColor {
 //
 
 // Allows the creation of custom gradients
-class Pattern extends _DynamicColor {
+export class Pattern extends _DynamicColor {
     static #ID_GIVER = 0
     static #CROPPING_CTX = new OffscreenCanvas(1,1).getContext("2d")
     static #MATRIX = new DOMMatrixReadOnly()
@@ -4058,7 +4058,7 @@ class Pattern extends _DynamicColor {
 //
 
 // Abstract canvas obj class, with radius
-class _Obj extends _BaseObj {
+export class _Obj extends _BaseObj {
     static DEFAULT_RADIUS = 5
 
     constructor(pos, radius, color, setupCB, loopCB, anchorPos, alwaysActive) {
@@ -4101,7 +4101,7 @@ class _Obj extends _BaseObj {
 //
 
 // Contains and controls a group of dots
-class Shape extends _Obj {
+export class Shape extends _Obj {
     static DEFAULT_LIMIT = 100
 
     constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
@@ -4414,7 +4414,7 @@ class Shape extends _Obj {
 //
 
 // Allows the creation of custom gradients
-class Gradient extends _DynamicColor {
+export class Gradient extends _DynamicColor {
     static TYPES = {LINEAR:"Linear", RADIAL:"Radial", CONIC:"Conic"}
     static DEFAULT_TYPE = Gradient.TYPES.LINEAR
     static SERIALIZATION_SEPARATOR = "*"
@@ -4562,7 +4562,7 @@ class Gradient extends _DynamicColor {
 //
 
 // Regular shape with a filled area defined by its dots
-class FilledShape extends Shape {
+export class FilledShape extends Shape {
     #lastDotsPos = null
     constructor(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
         super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)
@@ -4659,7 +4659,7 @@ class FilledShape extends Shape {
 //
 
 // Allows the creation of symbols/text based on specific source
-class Grid extends Shape {
+export class Grid extends Shape {
     static DEFAULT_GAPS = [25, 25]
 
     constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
@@ -4776,7 +4776,7 @@ class Grid extends Shape {
 //
 
 // The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
-class Dot extends _Obj {
+export class Dot extends _Obj {
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
         super(pos, radius, color, setupCB, null, anchorPos, alwaysActive)
         this._connections = []  // array of Dot to eventually draw a connecting line to

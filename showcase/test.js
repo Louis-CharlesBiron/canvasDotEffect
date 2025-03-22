@@ -1,11 +1,11 @@
-const fpsCounter = new CDEUtils.FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
+const fpsCounter = new FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
     let fps = fpsCounter.getFps()+"\n"+fpsCounter.fpsRaw
     if (fpsDisplay.textContent !== fps) fpsDisplay.textContent = fps
     mouseSpeed.textContent = CVS?.mouse?.speed?.toFixed(2)+" px/sec"
     mouseAngle.textContent = CVS?.mouse?.dir?.toFixed(2)+" deg"
 }, null)
 
-const fpsCounter2 = new CDEUtils.FPSCounter(), CVS2 = new Canvas(canvas2, ()=>{//looping
+const fpsCounter2 = new FPSCounter(), CVS2 = new Canvas(canvas2, ()=>{//looping
     let fps = fpsCounter2.getFps()+"\n"+fpsCounter2.fpsRaw
     if (fpsDisplay2.textContent !== fps) fpsDisplay2.textContent = fps
     mouseSpeed2.textContent = CVS2?.mouse?.speed?.toFixed(2)+" px/sec"
