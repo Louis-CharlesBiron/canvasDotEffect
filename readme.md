@@ -63,7 +63,7 @@
 4. **From this Canvas instance, add any canvas objects you want.**
 ```js
     // Create a canvas object
-    const dummyShape = new Shape([50,50],[new Dot()])
+    const dummyShape = new Shape([50, 50], [new Dot()])
     
     // Add it to the canvas
     CVS.add(dummyShape)
@@ -89,7 +89,7 @@
     const CVS = new Canvas(document.getElementById("canvasId"))
     
     // Creating and adding shapes ...
-    const dummyShape = new Shape([50,50],[new Dot()])
+    const dummyShape = new Shape([50,5 0], [new Dot()])
     CVS.add(dummyShape)
     
     CVS.setmousemove(/*custom callback*/)
