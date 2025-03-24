@@ -37,7 +37,7 @@ let movementsTester = new Shape([300,300],[
     }
 
  }, null, null, null, [50,0])
-CanvasUtils.toggleCenter(movementsTester)
+CanvasUtils.toggleCenter(CVS, movementsTester)
 
 
 let dragAnim2 = CanvasUtils.getDraggableDotCB()
@@ -107,6 +107,12 @@ let test = new Grid("abcdefg\nhijklm".toUpperCase(), [5, 5], 50, null, [450,50],
 })
 
 CVS.add(test)
+
+let testtest = new Grid("a\nh".toUpperCase(), [5, 5], 50, null, [400,50], 2, null, null, (render, dot, ratio, res, m, dist, shape, isActive)=>{
+    CanvasUtils.drawDotConnections(dot, render.profile1.update([255,255,255,1]))
+})
+//CVS.add(testtest)
+//testtest.singe([10, 10])
 
 // SINGLE DRAGGABLE DOT
 let dragAnim1 = CanvasUtils.getDraggableDotCB()

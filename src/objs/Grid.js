@@ -6,7 +6,7 @@
 // Allows the creation of symbols/text based on specific source
 class Grid extends Shape {
     static DEFAULT_KEYS = ""
-    static DEFAULT_GAPS = [25, 25]
+    static DEFAULT_GAPS = [10, 10]
     static DEFAULT_SOURCE = GridAssets.DEFAULT_SOURCE
     static DELETION_VALUE = null
     static SAME_VALUE = undefined
@@ -78,7 +78,7 @@ class Grid extends Shape {
         }
     }
 
-    // todo
+    // deletes the symbol at the provided index
     deleteKey(i) {
         if (typeof i=="number") i = this.getKey(i)
         
@@ -88,42 +88,36 @@ class Grid extends Shape {
         }
     }
 
+    // returns the dots composing the symbol at the provided index
     getKey(i) {
-        let ids = this.#symbolsReferences[i]??[], i_ll = ids.length, dots = new Array(i_ll), cvs = this.parent
+        const ids = this.#symbolsReferences[i]??[], i_ll = ids.length, dots = new Array(i_ll), cvs = this.parent
         for (let i=0;i<i_ll;i++) dots[i] = cvs.get(ids[i])
         return dots
     }
 
-    // updates the current keys
-    setKeys(keys) {// TODO OPTIMIZE
-        const n_ll = keys.length>this._keys.length?keys.length:this._keys.length, newKeys = new Array(n_ll)
-        for (let i=0;i<n_ll;i++) {
-            const newKey = keys[i], oldKey = this._keys[i]
-            if (oldKey!=newKey || oldKey=="\n") {
-                newKeys[i] = newKey||Grid.DELETION_VALUE
-                this.deleteKey(i)
-            }
-            else newKeys[i] = Grid.SAME_VALUE
-        }
-        this._keys = keys
-
-        const symbols = this.createGrid(newKeys)
-        this.#updatedCachedSymbolReferences(symbols)
-        super.add(symbols.flat())
-    }
-
     // updates the current gaps
-    setGaps(gaps) {
-        super.clear()
-        this._gaps = gaps
-        super.add(this.createGrid())
+    setGaps(gaps) {// TODO OPTIMIZE
+        gaps??=Grid.DEFAULT_GAPS
+        const oldGaps = this._gaps, d = [oldGaps[0]-gaps[0], oldGaps[1]-gaps[1]], s_ll = this._keys.length, cvs = this.parent
+        if (!CDEUtils.arr2Equals(oldGaps, gaps)) {
+            for (let i=0;i<s_ll;i++) {
+                const ids = this.#symbolsReferences[i], d_ll = ids.length
+                for (let ii=0;ii<d_ll;ii++) {
+                    console.log(ids, ii, ids[ii])
+                    cvs.get(ids[ii]).moveBy([(oldGaps[0]-gaps[0])*ii, (oldGaps[1]-gaps[1])*ii])
+                }
+            }
+            this._gaps = gaps
+        }
+
+        //super.clear()
+        //super.add(this.createGrid())
     }
 
-    // updates the current spacing
-    setSpacing(spacing) {
-        super.clear()
-        this._spacing = spacing
-        super.add(this.createGrid())
+    setGapsOld(gaps) {
+            super.clear()
+            this._gaps = gaps
+            super.add(this.createGrid().flat())
     }
 
     // returns a separate copy of this Grid (only initialized for objects)
@@ -145,6 +139,7 @@ class Grid extends Shape {
         )
         grid._scale = CDEUtils.unlinkArr2(this._scale)
         grid._rotation = this._rotation
+        grid._visualEffects = this.visualEffects_
 
         return this.initialized ? grid : null
     }
@@ -154,9 +149,36 @@ class Grid extends Shape {
 	get spacing() {return this._spacing}
 	get source() {return this._source}
 
-	set keys(keys) {return this._keys = keys}
+	set keys(keys) {// TODO tocheck test.keys = "asd"
+        const n_ll = keys.length>this._keys.length?keys.length:this._keys.length, newKeys = new Array(n_ll)
+        for (let i=0;i<n_ll;i++) {
+            const newKey = keys[i], oldKey = this._keys[i]
+            if (oldKey!=newKey || oldKey=="\n") {
+                newKeys[i] = newKey||Grid.DELETION_VALUE
+                this.deleteKey(i)
+            }
+            else newKeys[i] = Grid.SAME_VALUE
+        }
+        this._keys = keys
+
+        const symbols = this.createGrid(newKeys)
+        this.#updatedCachedSymbolReferences(symbols)
+        super.add(symbols.flat())
+    }
 	set gaps(gaps) {return this._gaps = gaps}
-	set spacing(spacing) {return this._spacing = spacing}
+	set spacing(spacing) {
+        spacing??=this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius
+        const oldSpacing = this._spacing, keys = this._keys, s_ll = keys.length, cvs = this.parent
+        if (oldSpacing != spacing) {
+            for (let i=0,vi=0;i<s_ll;i++,vi=keys[i]=="\n"?-1:vi+1) {
+                const ids = this.#symbolsReferences[i], d_ll = ids.length
+                for (let ii=0;ii<d_ll;ii++) {
+                    cvs.get(ids[ii]).moveBy([(spacing-oldSpacing)*vi])
+                }
+            }
+            this._spacing = spacing
+        }
+    }
 	set source(source) {
         super.clear()
         this._source = source??Grid.DEFAULT_SOURCE

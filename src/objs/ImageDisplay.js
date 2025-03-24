@@ -146,7 +146,7 @@ class ImageDisplay extends _BaseObj {
         if (autoPlay) {
             video.mute = true
             video.autoplay = autoPlay
-            video.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>video.play()))
+            ImageDisplay.playMedia(video)
         }
         return video
     }
@@ -198,10 +198,14 @@ class ImageDisplay extends _BaseObj {
         return this.initialized ? imageDisplay : null
     }
 
+    // Plays the source
+    static playMedia(source) {
+        if (source instanceof HTMLVideoElement || source instanceof HTMLAudioElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>{try{source.play()}catch(e){}}))
+    }
+
     // Plays the source (use only if the source is a video)
     playVideo() {
-        const source = this._source
-        if (source instanceof HTMLVideoElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>video.play()))
+        ImageDisplay.playMedia(this._source)
     }
 
     // Pauses the source (use only if the source is a video)
@@ -242,7 +246,7 @@ class ImageDisplay extends _BaseObj {
     set paused(paused) {
         try {
             if (paused) this._source.pause()
-            else this._source.play()
+            else ImageDisplay.playMedia(this._source)
         }catch(e){}
     }
     set isPaused(isPaused) {this.paused = isPaused}

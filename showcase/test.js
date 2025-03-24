@@ -33,22 +33,22 @@ let textInputTest = new Grid("a", [5, 5], 50, null, [10,200], 0, null, null, (re
 })
 
 let curret = new Shape([20,-20], [new Dot(), new Dot([0, 30])], 3, "lime", null, (render, dot)=>{
-    CanvasUtils.drawDotConnections(dot, render.profile1.update(dot._color))
+    CanvasUtils.drawDotConnections(dot, render.profile5.update(dot._color))
 }, null, (shape)=>{
 shape.playAnim(new Anim((prog, i)=>shape.setColor(Color.rgba(0,255,0,1*(i%2))), -300))
 shape.firstDot.addConnection(shape.secondDot)
-}, null, ()=>textInputTest.lastDot?.pos)
+}, null, ()=>textInputTest.lastDot?.pos, true)
 
 CVS.add(curret)
 
 
 function updateInput(e) {
-    let k = e.key, v = textInputTest.keys
-    if (k.toLowerCase()=="backspace") textInputTest.setKeys(v.slice(0, v.length-1))
-    else if (k.toLowerCase()=="enter") textInputTest.setKeys(v+"\n")
+    let k = e.key, v = textInputTest.keys, kl = k.toLowerCase()
+    if (kl=="backspace") textInputTest.keys = v.slice(0, v.length-1)
+    else if (kl=="enter") textInputTest.keys = v+"\n"
     else if (k.length==1) {
         e.preventDefault()
-        textInputTest.setKeys(v+k)
+        textInputTest.keys = v+k
     }
 }
 

@@ -124,6 +124,7 @@ class Color {
 
     // returns the format of the provided color
     static getFormat(color) {
+        if (!color)CDEUtils.stackTraceLog(color)
         return Array.isArray(color) ?
             (color.length == 4 ? Color.FORMATS.RGBA : Color.FORMATS.HSV) :
         color instanceof Color ? Color.FORMATS.COLOR :
@@ -144,9 +145,11 @@ class Color {
 
     // creates an rgba array
     static rgba(r=255, g=255, b=255, a=1) {
-        return [CDEUtils.round(r, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(g, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(b, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(a, Color.DEFAULT_DECIMAL_ROUNDING_POINT)]
+        const round = CDEUtils.round, roundingPoint = Color.DEFAULT_DECIMAL_ROUNDING_POINT
+        return [round(r, roundingPoint), round(g, roundingPoint), round(b, roundingPoint), round(a, roundingPoint)]
     }
 
+    // returns the usable value of a color from any supported format
     static getColorValue(color) {
         if (typeof color=="string" || color instanceof CanvasGradient || color instanceof CanvasPattern) return color
         else if (color instanceof _DynamicColor) return color.value
@@ -217,31 +220,37 @@ class Color {
 
 
     set color(color) {
-        this._color = color
-        this._format = Color.getFormat(color)
+        this._color = color?._color||color
+        this._format = Color.getFormat(this._color)
         this.#updateCache()
     }
     set r(r) {this.#rgba[0] = CDEUtils.round(r, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
     set g(g) {this.#rgba[1] = CDEUtils.round(g, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
     set b(b) {this.#rgba[2] = CDEUtils.round(b, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
     set a(a) {this.#rgba[3] = CDEUtils.round(a, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
+    set rgba(rgba) {
+        this.#rgba[0] = CDEUtils.round(rgba[0], Color.DEFAULT_DECIMAL_ROUNDING_POINT)
+        this.#rgba[1] = CDEUtils.round(rgba[1], Color.DEFAULT_DECIMAL_ROUNDING_POINT)
+        this.#rgba[2] = CDEUtils.round(rgba[2], Color.DEFAULT_DECIMAL_ROUNDING_POINT)
+        this.#rgba[3] = CDEUtils.round(rgba[3], Color.DEFAULT_DECIMAL_ROUNDING_POINT)
+    }
     set hue(hue) {
         hue = hue%360
-        if (this.#hsv[0] !== hue) {
+        if (this.#hsv[0] != hue) {
             this.#hsv[0] = hue
             this.#rgba = Color.#hsvToRgba(this.#hsv)
         }
     }
     set saturation(saturation) {
         saturation = saturation>100?100:saturation
-        if (this.#hsv[1] !== saturation) {
+        if (this.#hsv[1] != saturation) {
         this.#hsv[1] = saturation
         this.#rgba = Color.#hsvToRgba(this.#hsv)
         }
     }
     set brightness(brightness) {
         brightness = brightness>100?100:brightness
-        if (this.#hsv[2] !== brightness) {
+        if (this.#hsv[2] != brightness) {
             this.#hsv[2] = brightness
             this.#rgba = Color.#hsvToRgba(this.#hsv)
         }

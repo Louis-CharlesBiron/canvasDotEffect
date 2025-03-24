@@ -111,6 +111,7 @@ class RenderStyles extends _HasColor {
     }
 
 
+    get id() {return this.id}
 	get render() {return this._render}
 	get lineWidth() {return this._lineWidth}
 	get lineCap() {return this._lineCap}

@@ -49,7 +49,7 @@ class CDEUtils {
         return [arr[0], arr[1]]
     }
 
-    // creates a copy of the provided array. (only for length 2)
+    // creates a copy of the provided array. (only for length 3)
     static unlinkArr3(arr) {
         return [arr[0], arr[1], arr[2]]
     }
@@ -88,9 +88,14 @@ class CDEUtils {
         return arr1.every((v, i)=>v==arr2[i])
     }
     
-    // Pos array equals
+    // pos array equals
     static arr2Equals(arr1, arr2) {
         return arr1 && arr2 && arr1[0]==arr2[0] && arr1[1]==arr2[1]
+    }
+
+    // positions array equals
+    static arr22Equals(arr1, arr2) {
+        return arr1 && arr2 && arr1[0][0]==arr2[0][0] && arr1[0][1]==arr2[0][1] && arr1[1][0]==arr2[1][0] && arr1[1][1]==arr2[1][1]
     }
 
     /**

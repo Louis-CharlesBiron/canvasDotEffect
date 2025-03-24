@@ -47,6 +47,7 @@ class _BaseObj extends _HasColor {
         return CDEUtils.isFunction(this._initPos) ? CDEUtils.unlinkArr2(this._initPos(this._parent instanceof Canvas?this:this._parent, this)) : CDEUtils.unlinkArr2(this.adjustPos(this._initPos))
     }
 
+    // sets the pos of the object according to its anchorPos
     setAnchoredPos() {
         const anchorPos = this.hasAnchorPosChanged
         if (anchorPos) {
@@ -191,6 +192,12 @@ class _BaseObj extends _HasColor {
         }
         this._anims[isUnique?"backlog":"currents"].push(anim)
         return anim
+    }
+
+    // clears all blacklog and currents anim
+    clearAnims() {
+        this._anims.backlog = []
+        this._anims.currents = []
     }
 
     // allows flexible pos declarations

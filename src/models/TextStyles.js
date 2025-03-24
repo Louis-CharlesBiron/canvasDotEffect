@@ -96,6 +96,7 @@ class TextStyles {
         if (textRendering && currentTextStyles[9] !== textRendering) currentTextStyles[9] = ctx.textRendering = textRendering
     }
 
+    get id() {return this.id}
     get render() {return this._render}
 	get font() {return this._font}
 	get letterSpacing() {return +this._letterSpacing.replace("px","")}

@@ -601,24 +601,6 @@ The Grid class is a derivative of the Shape class. It allows the creation of dot
 - **source** -> The source containing the symbol's definitions. See the *Grid Assets* section.
 - **spacing** -> The distance between each symbol. (Letter spacing)
 
-
-**To update the keys, gaps, source, or spacing:** use the following function:
-
-###### - `setKeys(keys), setGaps(gaps), setSpacing(spacing), setSource(source)`
-```js
-    // Set the text to "hello world"
-    dummyGrid.setKeys("hello world")
-    
-    // This will make the text look stretched vertically, since the X/Y ratio will be 25/100
-    dummyGrid.setGaps([25, 100])
-    
-    // This will make all letters overlap each others
-    dummyGrid.setSpacing(0)
-    
-    // This will change the current source to the default fontSource5x5, which defines A-Z a-z 0-9 and some special characters.   (Some key definitions may not be supported depending of which source or keys you're using)
-    dummyGrid.setSource(GridAssets.fontSource5x5)
-```
-
 #### Example use 1:
 ###### - Displaying all A-Z letters, with a nice effect when passing the mouse over the shape
 ```js
@@ -1278,7 +1260,8 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
                 Pattern.loadCamera(), // the source of the pattern, here it's we are requesting access to the live camera feed
                 text, // making the pattern fit the size of the text
                 null, // no source cropping
-                false // resizing will most likely change the aspect ratio
+                false, // resizing will most likely change the aspect ratio
+                Pattern.FORCE_UPDATE_LEVELS.RESPECT_FRAME_RATE // automatically rezises the pattern if the textDisplay size/pos changes
             ))
     
     // Adding the text to the canvas
@@ -1765,7 +1748,7 @@ This function is used to draw the connections between a Dot and the ones in its 
 
 ****
 ### Generic follow paths
-The sub class FOLLOW_PATHS provides generic follow paths.
+The object FOLLOW_PATHS provides generic follow paths.
 
 - #### Infinity Sign
   **Provides a sideways "8" like follow path.**                                                                    

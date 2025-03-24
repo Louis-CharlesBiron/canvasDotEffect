@@ -165,7 +165,7 @@ class AudioDisplay extends _BaseObj {
         audio.loop = looping
         if (autoPlay) {
             audio.autoplay = autoPlay
-            audio.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>audio.play()))
+            ImageDisplay.playMedia(audio)
         }
         return audio
     }
@@ -423,7 +423,7 @@ class AudioDisplay extends _BaseObj {
     set paused(paused) {
         try {
             if (paused) this._source.pause()
-            else this._source.play()
+            else ImageDisplay.playMedia(this._source)
         }catch(e){}
     }
     set isPaused(isPaused) {this.paused = isPaused}
