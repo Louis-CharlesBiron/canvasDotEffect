@@ -41,29 +41,6 @@ class Shape extends _Obj {
         if (CDEUtils.isFunction(this._ratioPosCB)) this._ratioPos = this._ratioPosCB(this)
     }
 
-    // returns a separate copy of this Shape (only initialized for objects)
-    duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, fragile=this._fragile) {
-        const colorObject = color, colorRaw = colorObject.colorRaw, shape = new Shape(
-            pos,
-            dots,
-            radius,
-            (_,shape)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:shape):colorObject.duplicate(),
-            limit,
-            drawEffectCB,
-            ratioPosCB,
-            setupCB,
-            loopCB,
-            anchorPos,
-            alwaysActive,
-            fragile
-        )
-        shape._scale = CDEUtils.unlinkArr2(this._scale)
-        shape._rotation = this._rotation
-        shape._visualEffects = this.visualEffects_
-
-        return this.initialized ? shape : null
-    }
-
     // adds one or many dots to the shape
     add(dot) {
         this._dots.push(...[dot].flat().filter(dot=>dot).map(dot=>{
@@ -277,6 +254,29 @@ class Shape extends _Obj {
         }
     }
 
+    // returns a separate copy of this Shape (only initialized for objects)
+    duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, fragile=this._fragile) {
+        const colorObject = color, colorRaw = colorObject.colorRaw, shape = new Shape(
+            pos,
+            dots,
+            radius,
+            (_,shape)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:shape):colorObject.duplicate(),
+            limit,
+            drawEffectCB,
+            ratioPosCB,
+            setupCB,
+            loopCB,
+            anchorPos,
+            alwaysActive,
+            fragile
+        )
+        shape._scale = CDEUtils.unlinkArr2(this._scale)
+        shape._rotation = this._rotation
+        shape._visualEffects = this.visualEffects_
+
+        return this.initialized ? shape : null
+    }
+
     get cvs() {return this._parent}
     get ctx() {return this.cvs.ctx}
     get render() {return this.cvs.render}
@@ -298,12 +298,10 @@ class Shape extends _Obj {
     get thirdDot() {return this._dots[2]}
     get lastDot() {return CDEUtils.getLast(this._dots, 0)}
     get asSource() {return this._dots}
-    get setupResults() {return this._setupResults}
 
     set ratioPos(ratioPos) {this._ratioPos = ratioPos}
     set drawEffectCB(cb) {this._drawEffectCB = cb}
     set ratioPosCB(cb) {this._ratioPosCB = cb}
     set lastDotsPos(ldp) {this._lastDotsPos = ldp}
     set limit(limit) {this._limit = limit}
-    set setupResults(_setupResults) {this._setupResults = _setupResults}
 }

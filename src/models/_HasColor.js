@@ -15,8 +15,6 @@ class _HasColor {
         return CDEUtils.isFunction(this._initColor) ? this._initColor(this) : this._initColor||null
     }
 
-    
-
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}
     get color() {return this._color?.color}
@@ -45,8 +43,6 @@ class _HasColor {
             else this._color = Color.adjust(color)
         }
     }
-
-    
     set r(r) {this._color.r = r}
     set g(g) {this._color.g = g}
     set b(b) {this._color.b = b}

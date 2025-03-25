@@ -175,6 +175,7 @@ class Canvas {
         if (this._looping) CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
     }
 
+    // core actions of the main loop
     #loopCore(time) {
         this.#calcDeltaTime(time)
 
@@ -478,6 +479,7 @@ class Canvas {
         return [this.width/2, this.height/2]
     }
 
+    // returns whether the provided position is within the canvas bounds
     isWithin(pos, padding=0) {
         const [x,y] = pos
         return x >= -padding && x <= this.width+padding && y >= -padding && y <= this.height+padding

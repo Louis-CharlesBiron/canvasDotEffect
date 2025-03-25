@@ -122,14 +122,14 @@ class Render {
     }
 
     // creates and adds a new custom RenderStyles profile base on a given base profile
-    addCustomStylesProfile(baseProfile=this._defaultProfile) {
+    createCustomStylesProfile(baseProfile=this._defaultProfile) {
         const profile = baseProfile.duplicate()
         this._profiles.push(profile)
         return profile
     }
 
     // creates and adds a new custom TextStyles profile base on a given base profile
-    addCustomStylesProfile(baseTextProfile=this._defaultTextProfile) {
+    createCustomTextStylesProfile(baseTextProfile=this._defaultTextProfile) {
         const textProfile = baseTextProfile.duplicate()
         this._textProfiles.push(textProfile)
         return textProfile

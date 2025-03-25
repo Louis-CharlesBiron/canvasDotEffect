@@ -180,6 +180,27 @@ class ImageDisplay extends _BaseObj {
         }
     }
 
+    // Plays the source (use only if the source is a video)
+    playVideo() {
+        ImageDisplay.playMedia(this._source)
+    }
+
+    // Pauses the source (use only if the source is a video)
+    pauseVideo() {
+        const source = this._source
+        if (source instanceof HTMLVideoElement) source.pause()
+    }
+    
+    // Plays the source
+    static playMedia(source) {
+        if (source instanceof HTMLVideoElement || source instanceof HTMLAudioElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>{try{source.play()}catch(e){}}))
+    }
+    
+    // returns the natural size of the source
+    static getNaturalSize(source) {
+        return [source?.displayWidth||source?.videoWidth||source?.width, source?.displayHeight||source?.videoHeight||source?.height]
+    }
+
     // returns a separate copy of this ImageDisplay instance
     duplicate(source=this._source, pos=this.pos_, size=this._size, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
         const imageDisplay = new ImageDisplay(
@@ -198,26 +219,6 @@ class ImageDisplay extends _BaseObj {
         return this.initialized ? imageDisplay : null
     }
 
-    // Plays the source
-    static playMedia(source) {
-        if (source instanceof HTMLVideoElement || source instanceof HTMLAudioElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>{try{source.play()}catch(e){}}))
-    }
-
-    // Plays the source (use only if the source is a video)
-    playVideo() {
-        ImageDisplay.playMedia(this._source)
-    }
-
-    // Pauses the source (use only if the source is a video)
-    pauseVideo() {
-        const source = this._source
-        if (source instanceof HTMLVideoElement) source.pause()
-    }
-
-    // returns the natural size of the source
-    static getNaturalSize(source) {
-        return [source?.displayWidth||source?.videoWidth||source?.width, source?.displayHeight||source?.videoHeight||source?.height]
-    }
 
 	get size() {return this._size}
     get width() {return this._size[0]}

@@ -95,31 +95,6 @@ class Grid extends Shape {
         return dots
     }
 
-    // updates the current gaps
-    setGaps(gaps) {// TODO OPTIMIZE
-        gaps??=Grid.DEFAULT_GAPS
-        const oldGaps = this._gaps, d = [oldGaps[0]-gaps[0], oldGaps[1]-gaps[1]], s_ll = this._keys.length, cvs = this.parent
-        if (!CDEUtils.arr2Equals(oldGaps, gaps)) {
-            for (let i=0;i<s_ll;i++) {
-                const ids = this.#symbolsReferences[i], d_ll = ids.length
-                for (let ii=0;ii<d_ll;ii++) {
-                    console.log(ids, ii, ids[ii])
-                    cvs.get(ids[ii]).moveBy([(oldGaps[0]-gaps[0])*ii, (oldGaps[1]-gaps[1])*ii])
-                }
-            }
-            this._gaps = gaps
-        }
-
-        //super.clear()
-        //super.add(this.createGrid())
-    }
-
-    setGapsOld(gaps) {
-            super.clear()
-            this._gaps = gaps
-            super.add(this.createGrid().flat())
-    }
-
     // returns a separate copy of this Grid (only initialized for objects)
     duplicate() {
         const colorObject = this._color, colorRaw = colorObject.colorRaw, grid = new Grid(
@@ -149,7 +124,7 @@ class Grid extends Shape {
 	get spacing() {return this._spacing}
 	get source() {return this._source}
 
-	set keys(keys) {// TODO tocheck test.keys = "asd"
+	set keys(keys) {
         const n_ll = keys.length>this._keys.length?keys.length:this._keys.length, newKeys = new Array(n_ll)
         for (let i=0;i<n_ll;i++) {
             const newKey = keys[i], oldKey = this._keys[i]
@@ -165,7 +140,11 @@ class Grid extends Shape {
         this.#updatedCachedSymbolReferences(symbols)
         super.add(symbols.flat())
     }
-	set gaps(gaps) {return this._gaps = gaps}
+	set gaps(gaps) {
+        super.clear()
+        this._gaps = gaps
+        super.add(this.createGrid().flat())
+    }
 	set spacing(spacing) {
         spacing??=this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius
         const oldSpacing = this._spacing, keys = this._keys, s_ll = keys.length, cvs = this.parent

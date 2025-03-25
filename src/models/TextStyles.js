@@ -123,5 +123,4 @@ class TextStyles {
 	set textAlign(_textAlign) {this._textAlign = _textAlign}
 	set textBaseline(_textBaseline) {this._textBaseline = _textBaseline}
 	set textRendering(_textRendering) {this._textRendering = _textRendering}
-
 }

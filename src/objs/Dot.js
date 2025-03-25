@@ -38,22 +38,6 @@ class Dot extends _Obj {
         super.draw(time, deltaTime)
     }
 
-    
-    // returns a separate copy of this Dot
-    duplicate() {
-        const dot = new Dot(
-            this.getInitPos(),
-            this._radius,
-            this._color.duplicate(),
-            this._setupCB
-        )
-
-        dot._scale = CDEUtils.unlinkArr2(this._scale)
-        dot._rotation = this._rotation
-        dot._visualEffects = this.visualEffects_
-        return dot
-    }
-
     // returns pythagorian distance between the ratio defining position and the dot
     getDistance(fx=this.ratioPos[0], fy=this.ratioPos[1]) {
         return CDEUtils.getDist(fx, fy, this.x, this.y)
@@ -72,6 +56,11 @@ class Dot extends _Obj {
     // removes a Dot from the connection array
     removeConnection(dotOrId) {
         this._connections = this._connections.filter(d=>typeof dotOrId=="number"?d.id!==dotOrId:d.id!==dotOrId.id)
+    }
+
+    // deletes the dot
+    remove() {
+        this._parent.remove(this._id)
     }
 
     /**
@@ -98,9 +87,19 @@ class Dot extends _Obj {
         return [[[s_x1, s_y1], [s_x2, s_y2]], [[t_x2, t_y2], [t_x1, t_y1]]]
     }
 
-    // deletes the dot
-    remove() {
-        this._parent.remove(this._id)
+    // returns a separate copy of this Dot
+    duplicate() {
+        const dot = new Dot(
+            this.getInitPos(),
+            this._radius,
+            this._color.duplicate(),
+            this._setupCB
+        )
+
+        dot._scale = CDEUtils.unlinkArr2(this._scale)
+        dot._rotation = this._rotation
+        dot._visualEffects = this.visualEffects_
+        return dot
     }
 
     get ctx() {return this._parent.parent.ctx}
@@ -111,6 +110,12 @@ class Dot extends _Obj {
     get ratioPos() {return this._parent.ratioPos}
     get connections() {return this._connections}
     get parentSetupResults() {return this._parent?.setupResults}
+    get top() {return this.y-this._radius}
+    get bottom() {return this.y+this._radius}
+    get right() {return this.x+this._radius}
+    get left() {return this.x-this._radius}
+    get width() {return this._radius*2}
+    get height() {return this._radius*2}
 
     set limit(limit) {this._parent.limit = limit}
     set connections(c) {return this._connections = c}

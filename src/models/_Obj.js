@@ -31,12 +31,6 @@ class _Obj extends _BaseObj {
     }
 
     get radius() {return this._radius}
-    get top() {return this.y-this._radius}
-    get bottom() {return this.y+this._radius}
-    get right() {return this.x+this._radius}
-    get left() {return this.x-this._radius}
-    get width() {return this._radius*2}
-    get height() {return this._radius*2}
     get initRadius() {return this._initRadius}
     set radius(radius) {this._radius = radius<0?0:radius}
     set initRadius(initRadius) {this._initRadius = initRadius}

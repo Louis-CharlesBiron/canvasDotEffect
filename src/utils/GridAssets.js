@@ -532,7 +532,4 @@ class GridAssets {
             ]
         }
     }
-
-
-    
 }

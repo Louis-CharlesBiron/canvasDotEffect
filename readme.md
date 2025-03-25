@@ -1393,7 +1393,7 @@ The RenderStyles class allows the customization of renders via style profiles wh
 
     // OR
 
-    // use the render instance function: addCustomStylesProfile()
+    // use the render instance function: createCustomStylesProfile()
 ```
 
 ### **To reuse a style profile for multiple styles,** use the update() function:

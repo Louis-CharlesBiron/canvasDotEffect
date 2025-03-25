@@ -33,9 +33,9 @@ class AudioDisplay extends _BaseObj {
     static ERROR_TYPES = {NO_PERMISSION:0, NO_AUDIO_TRACK:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3}
     static BIQUAD_FILTER_TYPES = {DEFAULT:"allpass", ALLPASS:"allpass", BANDPASS:"bandpass", HIGHPASS:"highpass", HIGHSHELF:"highshelf", LOWPASS:"lowpass", LOWSHELF:"lowshelf", NOTCH:"notch", PEAKING:"peaking"}
 
-    #buffer_ll = null
-    #data = null
-    #fft = null
+    #buffer_ll = null // the length of data
+    #data = null      // the fft data values (raw bins)
+    #fft = null       // the fftSize
     constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
         this._source = source??""                                         // the source of the audio
@@ -384,9 +384,7 @@ class AudioDisplay extends _BaseObj {
         minRadius = minRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
         return (render, bin, pos, audioDisplay, accumulator, i) => {
             const radius = minRadius+maxRadius*bin, angle = angleStep*i
-    
             if (!(i%precision)) render.batchFill(Render.getArc([pos[0]+radius*Math.cos(angle), pos[1]+radius*Math.sin(angle)], particleRadius), audioDisplay._color, audioDisplay.visualEffects)
-    
             return [pos]
         }
     }

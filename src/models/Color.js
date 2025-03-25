@@ -28,17 +28,6 @@ class Color {
         this._isChannel = isChannel // if true, this instance will be used as a color channel and will not duplicate
     }
 
-    // returns a new instance of the same color
-    duplicate(dynamicColorPositions) {
-        if (this._format == Color.FORMATS.GRADIENT || this._format == Color.FORMATS.PATTERN) return new Color(this._color.duplicate(dynamicColorPositions))
-        else return new Color(Color.#unlinkRGBA(this.#rgba))
-    }
-
-    // create a separate copy of an RGBA array
-    static #unlinkRGBA(rgba) {
-        return [rgba[0], rgba[1], rgba[2], rgba[3]]
-    }
-
     // updates the cached rgba value
     #updateCache() {
         if (this._format == Color.FORMATS.GRADIENT ||this._format == Color.FORMATS.PATTERN) this.#rgba = this.#hsv = []
@@ -94,6 +83,11 @@ class Color {
         }
 
         return [hue, max&&(diff/max)*100, max*100]
+    }
+
+    // create a separate copy of an RGBA array
+    static #unlinkRGBA(rgba) {
+        return [rgba[0], rgba[1], rgba[2], rgba[3]]
     }
 
     // converts hsv to rbga (without default alpha)
@@ -195,6 +189,12 @@ class Color {
         return null
     }
 
+    // returns a new instance of the same color
+    duplicate(dynamicColorPositions) {
+        if (this._format == Color.FORMATS.GRADIENT || this._format == Color.FORMATS.PATTERN) return new Color(this._color.duplicate(dynamicColorPositions))
+        else return new Color(Color.#unlinkRGBA(this.#rgba))
+    }
+
     toString() {
         let colorValue = Color.getColorValue(this._color)
         if (colorValue instanceof CanvasGradient || colorValue instanceof CanvasPattern) colorValue = this._color.toString()
@@ -217,7 +217,6 @@ class Color {
     get hue() {return this.#hsv[0]}
     get saturation() {return this.#hsv[1]}
     get brightness() {return this.#hsv[2]}
-
 
     set color(color) {
         this._color = color?._color||color
