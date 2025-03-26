@@ -254,6 +254,18 @@ class Shape extends _Obj {
         }
     }
 
+    // enables path caching for all dots of this shape
+    enableDotsPathCaching() {
+        const dots = this._dots, d_ll = dots.length
+        for (let i=0;i<d_ll;i++) dots[i].updateCachedPath()
+    }
+
+    // disables path caching for all dots of this shape
+    disableDotsPathCaching() {
+        const dots = this._dots, d_ll = dots.length
+        for (let i=0;i<d_ll;i++) dots[i].disablePathCaching()
+    }
+
     // returns a separate copy of this Shape (only initialized for objects)
     duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, fragile=this._fragile) {
         const colorObject = color, colorRaw = colorObject.colorRaw, shape = new Shape(
@@ -281,7 +293,6 @@ class Shape extends _Obj {
     get ctx() {return this.cvs.ctx}
     get render() {return this.cvs.render}
     get dots() {return this._dots}
-    get dotsPos() {return this._dots.map(dot=>dot.pos)}
     get limit() {return this._limit}
 	get initDots() {return this._initDots}
     get drawEffectCB() {return this._drawEffectCB}

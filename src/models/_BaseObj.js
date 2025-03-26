@@ -37,6 +37,18 @@ class _BaseObj extends _HasColor {
         if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this.parent)
     }
 
+    // Runs every frame
+    draw(time, deltaTime) {
+        this.setAnchoredPos()
+        const loopCB = this._loopCB
+        if (loopCB) loopCB(this)
+
+        let anims = this._anims.currents
+        if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
+        const a_ll = anims.length
+        if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
+    }
+
     // returns the value of the inital color declaration
     getInitColor() {
         return CDEUtils.isFunction(this._initColor) ? this._initColor(this.render??this.parent.render, this) : this._initColor||null
@@ -56,18 +68,6 @@ class _BaseObj extends _HasColor {
             this.relativeY += anchorPosY-this.#lastAnchorPos[1]
             this.#lastAnchorPos = anchorPos
         }
-    }
-
-    // Runs every frame
-    draw(time, deltaTime) {
-        this.setAnchoredPos()
-        const loopCB = this._loopCB
-        if (loopCB) loopCB(this)
-
-        let anims = this._anims.currents
-        if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
-        const a_ll = anims.length
-        if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
     }
 
     // Teleports to given coords
@@ -92,11 +92,7 @@ class _BaseObj extends _HasColor {
         isUnique??=true
         force??=true
 
-        const [ix, iy] = initPos, 
-            [fx, fy] = this.adjustPos(pos),
-            dx = fx-ix,
-            dy = fy-iy
-
+        const [ix, iy] = initPos, [fx, fy] = this.adjustPos(pos), dx = fx-ix, dy = fy-iy
         return this.playAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
             this.y = iy+dy*prog
@@ -258,14 +254,15 @@ class _BaseObj extends _HasColor {
     get compositeOperation() {return this._visualEffects?.[1]??Render.DEFAULT_COMPOSITE_OPERATION}
     get opacity() {return this._visualEffects?.[2]??Render.DEFAULT_ALPHA}
 
+
     set x(x) {this._pos[0] = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)}
     set y(y) {this._pos[1] = CDEUtils.round(y, _BaseObj.POSITION_PRECISION)}
     set pos(pos) {
         this.x = pos[0]
         this.y = pos[1]
     }
-    set relativeX(x) {this._pos[0] = CDEUtils.round(this.anchorPos[0]+x, _BaseObj.POSITION_PRECISION)}
-    set relativeY(y) {this._pos[1] = CDEUtils.round(this.anchorPos[1]+y, _BaseObj.POSITION_PRECISION)}
+    set relativeX(x) {this.x = this.anchorPos[0]+x}
+    set relativeY(y) {this.y = this.anchorPos[1]+y}
     set relativePos(pos) {
         this.relativeX = CDEUtils.round(pos[0], _BaseObj.POSITION_PRECISION)
         this.relativeY = CDEUtils.round(pos[1], _BaseObj.POSITION_PRECISION)
