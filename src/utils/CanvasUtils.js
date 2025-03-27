@@ -37,7 +37,7 @@ class CanvasUtils {
         return dot.id==dot.parent.firstDot.id
     }
     
-    // Generic function to draw an outer ring around a dot
+    // Generic function to draw an outer ring around a dot (forceBatching allows to force batching even if a URL filter is defined)
     static drawOuterRing(dot, renderStyles, radiusMultiplier, forceBatching) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
 
@@ -47,7 +47,7 @@ class CanvasUtils {
         else dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
     }
     
-    // Generic function to draw connection between the specified dot and a sourcePos
+    // Generic function to draw connection between the specified dot and a sourcePos (forceBatching allows to force batching even if a URL filter is defined)
     static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
         
@@ -63,7 +63,7 @@ class CanvasUtils {
         }
     }
 
-    // Generic function to draw connections between the specified dot and all the dots in its connections property
+    // Generic function to draw connections between the specified dot and all the dots in its connections property (forceBatching allows to force batching even if a URL filter is defined)
     static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
         const render = dot.render, dotPos = dot.pos, dotConnections = dot.connections, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter, hasURLFilter = filter&&filter.indexOf("#")!==-1
 

@@ -8,18 +8,16 @@ class Dot extends _Obj {
     constructor(pos, radius, color, setupCB, anchorPos, alwaysActive, disablePathCaching) {
         super(pos, radius, color, setupCB, null, anchorPos, alwaysActive)
         this._connections = []  // array of Dot to eventually draw a connecting line to
-        this._cachedPath = null // the cached path2d object or null if path caching is disabled
-        if (!disablePathCaching) this.updateCachedPath()
+        this._cachedPath = !disablePathCaching // the cached path2d object or null if path caching is disabled
     }
 
     /**
         TODO
         - object have disablePathCaching in constructor
-        - update duplicate()
+        - update duplicate() (maybe sstart fix)
         - update setters for each object to auto update cachedPath
 
-        -Dot         : getArc (DONE)
-        -Grid        : complex but for connections
+        -Grid : complex but for connections
 
         - documentation
      */
@@ -48,7 +46,10 @@ class Dot extends _Obj {
                     if (hasScaling) ctx.setTransform(1,0,0,1,0,0)
                 } else render.batchFill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
             }
-        } else this.initialized = true
+        } else {
+            this.initialized = true
+            if (this._cachedPath)this.updateCachedPath()
+        }
         super.draw(time, deltaTime)
     }
 
@@ -112,19 +113,15 @@ class Dot extends _Obj {
     }
 
     // returns a separate copy of this Dot
-    duplicate(pos=this.pos_, radius=this._radius, color=this._color, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, disablePathCaching=!this._cachedPath) {
-        const colorObject = color, colorRaw = colorObject.colorRaw, dot = new Dot(
-            this.getInitPos(),
-            this._radius,
-            this._color.duplicate(),
-            this._setupCB
-            //pos,                  TODO TOCHECK (test.js)
-            //radius,
-            //(_,dot)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:dot):colorObject.duplicate(),
-            //setupCB,
-            //anchorPos,
-            //alwaysActive,
-            //disablePathCaching
+    duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color.duplicate(), setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, disablePathCaching=!this._cachedPath) {
+        const dot = new Dot(
+            pos,
+            radius,
+            color,
+            setupCB,
+            anchorPos,
+            alwaysActive,
+            disablePathCaching
         )
 
         dot._scale = CDEUtils.unlinkArr2(this._scale)

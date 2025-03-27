@@ -217,7 +217,6 @@ let trailTester = new Shape([200, 100], new Dot(), null, "lime", null, (render, 
                 dot.radius = 25*(1-ratio)
             }
 
-            dot.a -= (1-ratio)/10
             dot.radius = 25*ratio
         })
     ]

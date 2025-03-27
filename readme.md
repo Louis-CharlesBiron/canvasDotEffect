@@ -242,21 +242,20 @@ The _Obj class is the template class of any canvas object. **It should not be di
     dot.follow(3000, Anim.easeOutQuad, null, [[0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]]])
 ```
 
-```
 
  
 
 # [Dot](#table-of-contents)
 
-The dot class is **meant** to be the *core* of all effects. It appears as a circular dot on the canvas by default.
+The dot class is **meant** to be the *core* of most effects. It appears as a circular dot on the canvas by default.
 
 #### **The Dot constructor takes the following parameters:**
-###### - `new Dot(pos, radius, color, setupCB, anchorPos, alwaysActive)`
+###### - `new Dot(pos, radius, color, setupCB, anchorPos, alwaysActive, disablePathCaching)`
 - *pos, radius, color, setupCB, anchorPos, alwaysActive* -> See the _Obj class.
 
 Its other attribute is:
 - **connections** -> a list referencing other dots, primarily to draw a connection between them. 
-
+- **cachedPath** -> The cached Path2D object or `null` if path caching is disabled (Controled via the `disablePathCaching` constructor parameter or by the `disablePathCaching()` function)
 
 
 **To add or remove connections,** use the following functions:
@@ -268,7 +267,20 @@ Its other attribute is:
     dot.removeConnection(otherDot)
 ```
 
-**To delete the dot**, use the following function:
+**To control whether a dot caches its path** use the following functions:
+```js
+    // By default, path caching for dots is enabled.
+    // But for very dynamic dots (changes every frame), it's sometime better to disable caching.
+
+    // To disable path caching:
+    const dynamicDot = new Dot(null, null, null, null, null, null, true) // disables the path caching via constructor
+    existingDynamicDot.disablePathCaching() // disables the path caching via this function if the dot already exists
+
+    // To enable path caching back use:
+    existingDynamicDot.updateCachedPath() 
+```
+
+**To delete a dot**, use the following function:
 ```js
     // Removes the dot completely
     dot.remove()
@@ -282,12 +294,12 @@ Its other attribute is:
         [0,0],          // positioned at [0,0]
         25,             // 25px radius
         [0,0,255,0.5],  // blue at 50% opacity
-        ()=>{           // custom callback ran on dot's initialization
+        ()=>{           // setupCB, custom callback ran on dot's initialization
             console.log("I am now added to the canvas and ready to go!")
         }
     )
     
-    // Add the dot as a standalone object. (definition)
+    // Add the dot as a standalone object (definition)
     CVS.add(aloneDot)
 ```
 
@@ -349,7 +361,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 
 
 ### **To modify dots' properties all at once,** use the following functions:
-###### - setRadius(radius, onlyReplaceDefaults),  setColor(color, onlyReplaceDefaults), setLimit(limit, onlyReplaceDefaults)
+###### - setRadius(radius, onlyReplaceDefaults),  setColor(color, onlyReplaceDefaults), setLimit(limit, onlyReplaceDefaults), [enable/disable]DotsPathCaching()
 ```js
     // Sets the radius of all dummyShape's dots to 10
     dummyShape.setRadius(10)
@@ -359,7 +371,13 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
     
     // Sets the limit of all dummyShape's dots to 100
     dummyShape.setLimit(100)
-
+    
+    
+    // Disables the path caching of all dummyShape's dots
+    dummyShape.disableDotsPathCaching()
+    
+    // Enables the path caching of all dummyShape's dots
+    dummyShape.enableDotsPathCaching()
 ```
 
 ### **To dynamically generate a formation of dots** use the `generate` functions:
@@ -1618,39 +1636,39 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 #### Example use 1:
 ###### - Making a dot throwable, and changing its color on mouse hover and click
 ```js
-    // Using the getDraggableDotCB utility function to get a dragCallback
-    const dragCallback = CanvasUtils.getDraggableDotCB()
-    
-    // Creating a mostly default shape, with a single dot
-    const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null, 
-        (render, dot, ratio, setupResults, mouse, dist, shape)=>{// drawEffectCB callback
-    
-            // Changing the dot's size based on mouse distance for an additional small effect
-            dot.radius = CDEUtils.mod(shape.radius*2, ratio, shape.radius*2*0.5)
-            
-            // Checking if the mouse is hovering the dot
-            const isMouseOver = dot.isWithin(m.pos, true)
-            
-            // if the mouse is over and clicked, set the dot's color to red
-            if (isMouseOver && m.clicked) {
-                dot.color = [255, 0, 0, 1]
-            }
-            // if the mouse is only over, set the dot's color to green
-            else if (isMouseOver) {
-                dot.color = [0, 255, 0, 1]
-            }
-            // if the mouse is neither over nor clicked, set the dot's color to white
-            else {
-                dot.color = [255, 255, 255, 1]
-            }
+// Using the getDraggableDotCB utility function to get a dragCallback
+const dragCallback = CanvasUtils.getDraggableDotCB()
+
+// Creating a mostly default shape, with a single dot
+const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null, 
+    (render, dot, ratio, setupResults, mouse, dist, shape)=>{// drawEffectCB callback
+
+        // Changing the dot's size based on mouse distance for an additional small effect
+        dot.radius = CDEUtils.mod(shape.radius*2, ratio, shape.radius*2*0.5)
         
-            // Calling the dragCallback to make the dragging and throwing effect
-            dragCallback(shape.dots[0], m, dist, ratio)
+        // Checking if the mouse is hovering the dot
+        const isMouseOver = dot.isWithin(m.pos, true)
+        
+        // if the mouse is over and clicked, set the dot's color to red
+        if (isMouseOver && m.clicked) {
+            dot.color = [255, 0, 0, 1]
         }
-    )
+        // if the mouse is only over, set the dot's color to green
+        else if (isMouseOver) {
+            dot.color = [0, 255, 0, 1]
+        }
+        // if the mouse is neither over nor clicked, set the dot's color to white
+        else {
+            dot.color = [255, 255, 255, 1]
+        }
     
-    // Adding the shape
-    CVS.add(throwableDot)
+        // Calling the dragCallback to make the dragging and throwing effect
+        dragCallback(shape.dots[0], m, dist, ratio)
+    }
+)
+
+// Adding the shape
+CVS.add(throwableDot)
 ```
 
  
@@ -1662,14 +1680,14 @@ The CanvasUtils class provides generic functions for common effects.
 
 ### DrawOuterRing
 This function is used to draw a ring around a dot.
-###### drawOuterRing(dot, color, radiusMultiplier)
+###### drawOuterRing(dot, color, radiusMultiplier, forceBatching)
 ```js
-    // (Running in the drawEffectCB() function of some shape...)
-    {
-        ...
-        // Draws a ring around the dot, 3x bigger than the dot's radius and of the same color
-        CanvasUtils.drawOuterRing(dot, dot.colorObject, 3)   
-    }
+// (Running in the drawEffectCB() function of some shape...)
+{
+    ...
+    // Draws a ring around the dot, 3x bigger than the dot's radius and of the same color
+    CanvasUtils.drawOuterRing(dot, dot.colorObject, 3)   
+}
 ```
 
 ### RotateGradient
@@ -1690,56 +1708,104 @@ This function is used to rotate the gradient of an object.
 This function is used to make a dot throwable.
 ###### getDraggableDotCB(pickableRadius=50)
 ```js
-    // getDraggableDotCB should only be called once, but it returns a callback that needs to be called every frame
-    
-    // (Running at the top of some js file)
-    // Provides the callback to make the dot throwable. 
-    const dragAnimCallback = CanvasUtils.getDraggableDotCB()
-    
+// getDraggableDotCB should only be called once, but it returns a callback that needs to be called every frame
+
+// (Running in of some js file)
+// Provides the callback to make the dot throwable. 
+const dragAnimCallback = CanvasUtils.getDraggableDotCB()
+
+...
+
+// (Running in the drawEffectCB() function of some shape...)
+{
     ...
-    
-    // (Running in the drawEffectCB() function of some shape...)
-    {
-        ...
-        // Only for the first dot of the shape
-        if (shape.firstDot.id == dot.id) {
-            // Makes the dot pickable in a 100px radius, and throwable using default CDE physics (works best on higher refresh rates)
-            dragAnimCallback(dot, mouse, dist, ratio, 100)
-        }
+    // Only for the first dot of the shape
+    if (shape.firstDot.id == dot.id) {
+        // Makes the dot pickable in a 100px radius, and throwable using default CDE physics (works best on higher refresh rates)
+        dragAnimCallback(dot, mouse, dist, ratio, 100)
     }
+}
+```
+
+### getTrailEffectCB
+This function is used to make an object have a customizable trail effect when moving.
+###### getTrailEffectCB(canvas, obj, length=8, moveEffectCB=null, disableDefaultMovements=false)
+```js
+// getTrailEffectCB should only be called once, but it returns a callback that needs to be called every frame
+
+// Here we create a shape with a single dot receiving the trail effect.
+const trailingDot = new Shape([200, 100], new Dot(), null, "lime", null,
+    (render, dot, ratio, [dragCB, trailCB], mouse, dist, shape)=>{// drawEffectCB
+    
+        // Make sure the effect is only ran on the desired dot (Optional in this example, since there is only one dot)
+        if (dot.id==shape.firstDot.id) {
+            dragCB(shape.firstDot, mouse, dist, ratio) // see previous example for details
+            trailCB(mouse) // call the trail effect callback every frame and give it the mouse in parameter
+        }
+}, null, (shape)=>{// setupCB
+
+    // Here we get get/initialize both effect callbacks in an array to be reused in the drawEffectCB
+    return [
+    
+        CanvasUtils.getDraggableDotCB(), // see previous example for details
+        
+        
+        // Creating a trail effect based on the shape's first dot, with a length of 10
+        CanvasUtils.getTrailEffectCB(CVS, shape.firstDot, 10, (dot, ratio, isMoving, mouse)=>{// moveEffectCB
+            
+            // This callback is called every frame
+            // "ratio" is the index of the object in the trail divided by the length of the trail
+            // "isMoving" represents whether the object is currently moving or not
+            
+            // while the user is dragging/moving the dot, every trail object has a set value
+            if (isMoving && mouse.clicked) {
+                dot.a = ratio
+                dot.radius = 25*(1-ratio)
+            }
+
+            // otherwise, the trail objects progressibely lose visibility
+            dot.a -= (1-ratio)/1000
+            dot.radius = 25*ratio
+        })
+        
+    ]
+})
+
+// Add the shape to the canvas
+CVS.add(trailingDot)
 ```
 
 ### drawLine
 This function is used to draw a connection between a Dot and another pos/object.
-###### drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType, spread)
+###### drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType, spread, forceBatching)
 ```js
-    // (Running in the drawEffectCB() function of some shape...)
-    {
-        ...
-        // Only if the distance with the ratioPos is lower than the shape's limit
-        if (dist < shape.limit) {
-            // Draws a line between the dot and the dot's ratioPos, adjusting the opacity of the line via the distance ratio
-            CanvasUtils.drawLine(
-                dot,        // start Dot
-                [200, 200], // end position (can also be a Dot)
-                render.profile.update(
-                    Color.rgba(dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)) // updates only the color, but uses every previously set styles
-                )
+// (Running in the drawEffectCB() function of some shape...)
+{
+    ...
+    // Only if the distance with the ratioPos is lower than the shape's limit
+    if (dist < shape.limit) {
+        // Draws a line between the dot and the dot's ratioPos, adjusting the opacity of the line via the distance ratio
+        CanvasUtils.drawLine(
+            dot,        // start Dot
+            [200, 200], // end position (can also be a Dot)
+            render.profile.update(
+                Color.rgba(dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)) // updates only the color, but uses every previously set styles
             )
-        }
+        )
     }
+}
 ```
 
 ### drawDotConnections
 This function is used to draw the connections between a Dot and the ones in its `connections` attribute. **(Especially useful when using a Grid!)**
-###### drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType, spread, isSourceOver=false)
+###### drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType, spread, forceBatching)
 ```js
-    // (Running in the drawEffectCB() function of some shape...)
-    {
-        ...
-        // Draws lines between the dot and its connections, using the shape's color, and with a start padding of 2.5x the radius
-        CanvasUtils.drawDotConnections(dot, shape.colorObject, 2.5)
-    }
+// (Running in the drawEffectCB() function of some shape...)
+{
+    ...
+    // Draws lines between the dot and its connections, using the shape's color, and with a start padding of 2.5x the radius
+    CanvasUtils.drawDotConnections(dot, shape.colorObject, 2.5)
+}
 ```
 
  
@@ -1899,18 +1965,18 @@ const CVS = new Canvas(canvas, ()=>{//loopingCB
 - Runs the `initialize()` function on both *references* and *definitions* (On every added object)
 - Adds objects as *references* or *definitions* in the canvas
 
-### Level 3: Direct canvas object initialization
-**At this point all *references* and *definitions* are initialized. By initializing a *reference*, we also initialize its dots.**
+### Level 3: Root canvas object initialization
+**At this point all *references* and *definitions* are initialized. By initializing a *reference*, we also initialize its children (ex: dots).**
 - Creates / adds all of the shapes' dots and sets some of their attributes
 - Runs the `initialize()` function for each dot contained in the shape. (After getting its `initialize()` function called, the shape calls the `initialize()` of all its dots, while also setting some of their attributes.)
 
 **Runs the following on applicable objects:**
-- if `initPos` is a callback -> `initPos(Canvas, this)`
+- if `initPos` is a callback -> `initPos(canvas, this)`
 - if `initDots` is a string -> `createFromString(initDots)`
-- if `initDots` is a callback -> `initDots(this, Canvas)`
+- if `initDots` is a callback -> `initDots(this, canvas)`
 - if `initRadius` is a callback -> `initRadius(this)`
 - if `initColor` is a callback -> `initColor(render, this)`
-- `setupCB(this)`
+- `setupCB(this, parent)`
 - if a FilledShape and `fillColor` is a callback -> `initFillColor(render, this)`
 - Adjusts the `pos` according to the `anchorPos`
 - Sets the `initialized` attribute to `true` for shapes
@@ -1939,10 +2005,11 @@ After this, every dot will be initialized, and all canvas objects will be ready 
 
  
 
-**Note:**
+**Notes:**
 - *Reference:* an object containing other objects. (ex: Shape, FilledShape, Grid)
 - *Definition:* a standalone object. (ex: Dot without a parent Shape, TextDisplay, ImageDisplay)
 
+- When accessing a shape's dots within the *setupCB* call, dots will have their *initialized* attribute set to *false*, but will still be mostly fully initialized, and thus, usable. (Only applicable for dots)
 
 
 # [Intended Practices](#table-of-contents)
