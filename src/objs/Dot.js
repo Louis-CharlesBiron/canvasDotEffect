@@ -11,17 +11,6 @@ class Dot extends _Obj {
         this._cachedPath = !disablePathCaching // the cached path2d object or null if path caching is disabled
     }
 
-    /**
-        TODO
-        - object have disablePathCaching in constructor
-        - update duplicate() (maybe sstart fix)
-        - update setters for each object to auto update cachedPath
-
-        -Grid : complex but for connections
-
-        - documentation
-     */
-
     // runs every frame, draws the dot and runs its parent drawEffect callback
     draw(render, time, deltaTime) {
         if (this.initialized) {
@@ -113,11 +102,11 @@ class Dot extends _Obj {
     }
 
     // returns a separate copy of this Dot
-    duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color.duplicate(), setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, disablePathCaching=!this._cachedPath) {
-        const dot = new Dot(
+    duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, disablePathCaching=!this._cachedPath) {
+        const colorObject = color, colorRaw = colorObject.colorRaw, dot = new Dot(
             pos,
             radius,
-            color,
+            (colorRaw instanceof Gradient||colorRaw instanceof Pattern) && colorRaw._initPositions.id != null && this._parent.id != null && colorRaw._initPositions.id == this._parent.id ? null:(_,dot)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:dot):colorObject.duplicate(),
             setupCB,
             anchorPos,
             alwaysActive,
@@ -131,10 +120,11 @@ class Dot extends _Obj {
     }
 
     get ctx() {return this._parent.parent.ctx}
-    get render() {return this._parent.parent.render}
+    get cvs() {return this._parent.parent||this._parent}
+    get render() {return this.cvs.render}
     get limit() {return this._parent.limit}
     get drawEffectCB() {return this._parent?.drawEffectCB}
-    get mouse() {return this._parent.parent.mouse}
+    get mouse() {return this.cvs.mouse}
     get ratioPos() {return this._parent.ratioPos}
     get connections() {return this._connections}
     get parentSetupResults() {return this._parent?.setupResults}

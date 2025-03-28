@@ -72,10 +72,10 @@
 5. **Set the mouse event listeners for mouse interactions.**
 ```js
     // Set up the prebuilt event listeners, allowing the creation of more interactive effects!
-    CVS.setmousemove(/*custom callback*/)
-    CVS.setmouseleave()
-    CVS.setmousedown()
-    CVS.setmouseup()
+    CVS.setMouseMove(/*custom callback*/)
+    CVS.setMouseLeave()
+    CVS.setMouseDown()
+    CVS.setMouseUp()
 ```
 
 6. **Once everything is created and ready to go, start the drawing loop!**
@@ -92,10 +92,10 @@
     const dummyShape = new Shape([50,5 0], [new Dot()])
     CVS.add(dummyShape)
     
-    CVS.setmousemove(/*custom callback*/)
-    CVS.setmouseleave()
-    CVS.setmousedown()
-    CVS.setmouseup()
+    CVS.setMouseMove(/*custom callback*/)
+    CVS.setMouseLeave()
+    CVS.setMouseDown()
+    CVS.setMouseUp()
     
     CVS.startLoop()
 ```
@@ -156,14 +156,14 @@ The Canvas class is the core of the project. It manages the main loop, the windo
 **To set up mouse/keyboard listeners for the canvas,** use the following prebuilt functions:
 ```js
     // Set the important mouse events 
-    CVS.setmousemove(/*possible custom callback*/)
-    CVS.setmouseleave()
-    CVS.setmousedown()
-    CVS.setmouseup()
+    CVS.setMouseMove(/*possible custom callback*/)
+    CVS.setMouseLeave()
+    CVS.setMouseDown()
+    CVS.setMouseUp()
 
     // Set the important keyboard events 
-    CVS.setkeydown(/*possible custom callback*/)
-    CVS.setkeyup()
+    CVS.setKeyDown(/*possible custom callback*/)
+    CVS.setKeyUp()
 ```
 
 **To control the canvas loop**, use the following functions:
@@ -1587,22 +1587,22 @@ The TypingDevice class is automatically created and accessible by any Canvas ins
 
 
 ### **To set the keys event listeners,** use the following prebuilt functions:
-###### - setkeydown(cb, global), setkeyup(cb, global)
+###### - setKeyDown(cb, global), setKeyUp(cb, global)
 ```js
     // Setting the keydown listener
-    CVS.setkeydown()
+    CVS.setKeyDown()
     
-    // Settign the keyup listener with a custom callback
-    CVS.setkeyup((e)=>{
-        console.log("Custom callback: ", e)
+    // Settign the keyup listener with a custom callback (typingDevice, event)=>
+    CVS.setKeyUp((typingDevice, e)=>{
+        console.log("Custom callback: ", typingDevice, e)
     })
     
     // OR
     
     // Setting both listeners globally. (This will detect the key inputs even when the canvas is not directly focused)
-    CVS.setkeydown(null, true)
-    CVS.setkeyup((e)=>{
-        console.log("Custom callback: ", e)
+    CVS.setKeyDown(null, true)
+    CVS.setKeyUp((typingDevice, e)=>{
+        console.log("Custom callback: ", typingDevice, e)
     }, true)
 ```
 
@@ -1632,6 +1632,29 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 - **scrollClicked** -> Whether the scroll button of the mouse is active (pressed).
 - **extraForwardClicked** -> Whether the extra forward button of the mouse is active (not present on every mouse).
 - **extraBackClicked** -> Whether the extra back button of the mouse is active (not present on every mouse).
+
+### **To set the mouse event listeners,** use the following prebuilt functions:
+###### - setMouseMove(cb, global), setMouseLeave(cb, global), setMouseDown(cb, global), setMouseUp(cb, global)
+```js
+    // Setting the mousemove listener
+    CVS.setMouseMove()
+
+    // Settign the mousedown listener with a custom callback (mouse, event)=>
+    CVS.setMouseDown((mouse, e)=>{
+        console.log("Custom callback: ", mouse, e)
+    })
+
+    // OR
+    
+    // Setting listeners globally. (This will detect the mouse inputs even if the mouse is not directly interacting with the canvas)
+    CVS.setMouseMove(null, true)
+    CVS.setMouseDown((mouse, e)=>{
+        console.log("Custom callback: ", mouse, e)
+    }, true)
+    CVS.setMouseUp((mouse, e)=>{
+        console.log("Other custom callback: ", mouse, e)
+    }, true)
+```
 
 #### Example use 1:
 ###### - Making a dot throwable, and changing its color on mouse hover and click

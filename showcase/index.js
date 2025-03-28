@@ -340,12 +340,12 @@ for (let i=0;i<3;i++) {
 
 // USER ACTIONS
 let mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"
-CVS.setmousemove(mMove)
-CVS.setmouseleave(mMove)
-CVS.setmousedown()
-CVS.setmouseup()
-CVS.setkeydown()
-CVS.setkeyup()
+CVS.setMouseMove(mMove)
+CVS.setMouseLeave(mMove)
+CVS.setMouseDown()
+CVS.setMouseUp()
+CVS.setKeyDown()
+CVS.setKeyUp()
 
 // START
 CVS.startLoop()

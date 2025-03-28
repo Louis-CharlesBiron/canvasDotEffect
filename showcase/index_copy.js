@@ -115,10 +115,10 @@ CVS.add(text)
 
 // USER ACTIONS
 let mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"
-CVS.setmousemove(mMove)
-CVS.setmouseleave(mMove)
-CVS.setmousedown()
-CVS.setmouseup()
+CVS.setMouseMove(mMove)
+CVS.setMouseLeave(mMove)
+CVS.setMouseDown()
+CVS.setMouseUp()
 
 // START
 CVS.startLoop()

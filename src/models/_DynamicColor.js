@@ -47,7 +47,7 @@ class _DynamicColor {
 	get rotation() {return this._rotation}
 	get isDynamic() {return this._initPositions?.pos != null}
     get value() {
-        if (this.isDynamic) this.update(true)
+        if (this.isDynamic) this.update()
         return this._value
     }
 

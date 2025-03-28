@@ -135,7 +135,6 @@ class AudioDisplay extends _BaseObj {
 
     // Initializes a audio data source
     static #initAudioDataSource(dataSource, loadCallback, errorCB) {
-        console.log(dataSource, dataSource.readyState)
         const initLoad=()=>{if (CDEUtils.isFunction(loadCallback)) loadCallback(dataSource)}
         dataSource.onerror=e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.FILE_NOT_FOUND, e)}
         if (dataSource.readyState) initLoad()

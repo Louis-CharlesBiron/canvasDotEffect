@@ -351,13 +351,13 @@ class Canvas {
             const ref = this.refs[i]
             if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos = this._mouse.pos
         }
-        if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
+        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
 
         this._mouse.checkValid()
     }
 
     // defines the onmousemove listener
-    setmousemove(cb) {
+    setMouseMove(cb, global) {
         const onmousemove=e=>{
             // update pos and direction angle
             this._mouse.updatePos(e, this._offset)
@@ -374,33 +374,35 @@ class Canvas {
                 this.#mouseMovements(cb, e)
             }
         }
-        this._frame.addEventListener("mousemove", onmousemove)
-        this._frame.addEventListener("touchmove", ontouchmove)
+        const element = global ? document : this._frame
+        element.addEventListener("mousemove", onmousemove)
+        element.addEventListener("touchmove", ontouchmove)
         return ()=>{
-            this._frame.removeEventListener("mousemove", onmousemove)
-            this._frame.removeEventListener("touchmove", ontouchmove)
+            element.removeEventListener("mousemove", onmousemove)
+            element.removeEventListener("touchmove", ontouchmove)
         }
     }
 
     // defines the onmouseleave listener
-    setmouseleave(cb) {
+    setMouseLeave(cb, global) {
         const onmouseleave=e=>{
             this._mouse.invalidate()
             this.#mouseMovements(cb, e)
         }
-        this._frame.addEventListener("mouseleave", onmouseleave)
-        return ()=>this._frame.removeEventListener("mouseleave", onmouseleave)
+        const element = global ? document : this._frame
+        element.addEventListener("mouseleave", onmouseleave)
+        return ()=>element.removeEventListener("mouseleave", onmouseleave)
     }
 
     // called on any mouse clicks
     #mouseClicks(cb, e) {
         this._mouse.setMouseClicks(e)
-        if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
+        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
         if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
     }
 
     // defines the onmousedown listener
-    setmousedown(cb) {
+    setMouseDown(cb, global) {
         let isTouch = false
         const ontouchstart=e=>{
             isTouch = true
@@ -416,16 +418,17 @@ class Canvas {
             if (!isTouch) this.#mouseClicks(cb, e)
             isTouch = false
         }
-        this._frame.addEventListener("touchstart", ontouchstart)
-        this._frame.addEventListener("mousedown", onmousedown)
+        const element = global ? document : this._frame
+        element.addEventListener("touchstart", ontouchstart)
+        element.addEventListener("mousedown", onmousedown)
         return ()=>{
-            this._frame.removeEventListener("touchstart", ontouchstart)
-            this._frame.removeEventListener("mousedown", onmousedown)
+            element.removeEventListener("touchstart", ontouchstart)
+            element.removeEventListener("mousedown", onmousedown)
         }
     }
 
     // defines the onmouseup listener
-    setmouseup(cb) {
+    setMouseUp(cb, global) {
         let isTouch = false
         const ontouchend=e=>{
             isTouch = true
@@ -441,19 +444,20 @@ class Canvas {
             if (!isTouch) this.#mouseClicks(cb, e)
             isTouch = false
         }
-        this._frame.addEventListener("touchend", ontouchend)
-        this._frame.addEventListener("mouseup", onmouseup)
+        const element = global ? document : this._frame
+        element.addEventListener("touchend", ontouchend)
+        element.addEventListener("mouseup", onmouseup)
         return ()=>{
-            this._frame.removeEventListener("touchend", ontouchend)
-            this._frame.removeEventListener("mouseup", onmouseup)
+            element.removeEventListener("touchend", ontouchend)
+            element.removeEventListener("mouseup", onmouseup)
         }
     }
 
     // defines the onkeydown listener
-    setkeydown(cb, global) {
+    setKeyDown(cb, global) {
         const onkeydown=e=>{
             this._typingDevice.setDown(e)
-            if (CDEUtils.isFunction(cb)) cb(e, this._typingDevice)
+            if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
             }, globalFirstInteractOnKeyDown=e=>{if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)}
         
         const element = global ? document : this._frame
@@ -463,10 +467,10 @@ class Canvas {
     }
 
     // defines the onkeyup listener
-    setkeyup(cb, global) {
+    setKeyUp(cb, global) {
         const onkeyup=e=>{
             this._typingDevice.setUp(e)
-            if (CDEUtils.isFunction(cb)) cb(e, this._typingDevice)
+            if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
         }
 
         const element = global ? document : this._frame

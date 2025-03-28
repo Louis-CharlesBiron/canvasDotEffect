@@ -17,11 +17,14 @@ class Gradient extends _DynamicColor {
             positions, // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
             rotation   // rotation of the gradient, not applicable for radial type
         ) 
+        this.id = Gradient.a++
         this._ctx = ctx.ctx??ctx                 // canvas context
         this._type = type||Gradient.DEFAULT_TYPE // type of gradient
         this._colorStops = colorStops.map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
         this.update()
     }
+
+    static a =0
 
     /**
      * Given an canvas object, returns automatic positions values for linear, radial or conic gradients
@@ -100,8 +103,13 @@ class Gradient extends _DynamicColor {
     }
 
     // Creates and returns the gradient. Updates it if the initPositions is a Shape/Dot/TextDisplay instance
-    update() {
-        if (this._initPositions !== _DynamicColor.PLACEHOLDER) return this._value = Gradient.getCanvasGradient(this._ctx, this._positions = this.getAutomaticPositions(), this._colorStops, this._type, this._rotation)
+    update(force) {
+        if (this._initPositions != _DynamicColor.PLACEHOLDER) {
+            const positions = this.getAutomaticPositions()
+
+            if (!force && Array.isArray(this._positions) && CDEUtils.arr22Equals(positions, this._positions)) return;
+            return this._value = Gradient.getCanvasGradient(this._ctx, this._positions = positions, this._colorStops, this._type, this._rotation)
+        }
     }
 
     // returns a separate copy of the Gradient

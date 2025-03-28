@@ -161,7 +161,8 @@ class CDEUtils {
 
     // console.log with the stack trace (DEBUG)
     static stackTraceLog(...logs) {
-        console.log(...logs)
-        throw new Error("stackTraceLog")
+        try {
+            throw new Error("stackTraceLog")
+        } catch(e) {console.log(e, ...logs)}
     }
 }

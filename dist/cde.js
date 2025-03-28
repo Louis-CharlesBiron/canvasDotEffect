@@ -2338,7 +2338,7 @@ export class Canvas {
     }
 
     // defines the onmousemove listener
-    setmousemove(cb) {
+    setMouseMove(cb) {
         const onmousemove=e=>{
             // update pos and direction angle
             this._mouse.updatePos(e, this._offset)
@@ -2364,7 +2364,7 @@ export class Canvas {
     }
 
     // defines the onmouseleave listener
-    setmouseleave(cb) {
+    setMouseLeave(cb) {
         const onmouseleave=e=>{
             this._mouse.invalidate()
             this.#mouseMovements(cb, e)
@@ -2381,7 +2381,7 @@ export class Canvas {
     }
 
     // defines the onmousedown listener
-    setmousedown(cb) {
+    setMouseDown(cb) {
         let isTouch = false
         const ontouchstart=e=>{
             isTouch = true
@@ -2406,7 +2406,7 @@ export class Canvas {
     }
 
     // defines the onmouseup listener
-    setmouseup(cb) {
+    setMouseUp(cb) {
         let isTouch = false
         const ontouchend=e=>{
             isTouch = true
@@ -2431,7 +2431,7 @@ export class Canvas {
     }
 
     // defines the onkeydown listener
-    setkeydown(cb, global) {
+    setKeyDown(cb, global) {
         const onkeydown=e=>{
             this._typingDevice.setDown(e)
             if (CDEUtils.isFunction(cb)) cb(e, this._typingDevice)
@@ -2444,7 +2444,7 @@ export class Canvas {
     }
 
     // defines the onkeyup listener
-    setkeyup(cb, global) {
+    setKeyUp(cb, global) {
         const onkeyup=e=>{
             this._typingDevice.setUp(e)
             if (CDEUtils.isFunction(cb)) cb(e, this._typingDevice)
