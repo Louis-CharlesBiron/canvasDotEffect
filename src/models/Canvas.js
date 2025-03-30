@@ -22,6 +22,7 @@ class Canvas {
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)"}
+    static STATIC_MODE = 0
     static #ON_LOAD_CALLBACKS = []
     static #ON_FIRST_INTERACT_CALLBACKS = []
 
@@ -233,8 +234,41 @@ class Canvas {
     }
 
     // clears the canvas
-    clear(x1=0, y1=0, x2 = this.width, y2 = this.height) {
-        this._ctx.clearRect(x1, y1, x2, y2)
+    clear(x=0, y=0, x2=this.width, y2=this.height) {
+        this._ctx.clearRect(x, y, x2, y2)
+    }
+
+    // initializes the canvas as static
+    initializeStatic() {
+        this.fpsLimit = 0
+        this.draw()
+        this.drawStatic()
+        
+        const imageDisplays = this.getObjs(ImageDisplay), id_ll = imageDisplays.length
+        for (let i=0;i<id_ll;i++) {
+            const imageDisplay = imageDisplays[i]
+            if (imageDisplay.setupCB === null) imageDisplay.setupCB = el=>el.draw(this.render, this.timeStamp*this._speedModifier, this._deltaTime)
+            else if (CDEUtils.isFunction(imageDisplay.setupCB)) {
+                const oldCB = imageDisplay.setupCB
+                imageDisplay.setupCB = (el, parent)=>{
+                    el.draw(this.render, this.timeStamp*this._speedModifier, this._deltaTime)
+                    oldCB(el, parent)
+                }
+            }
+        }
+    }
+
+    // draws a single frame (use with static canvas)
+    drawStatic() {
+        this.draw()
+        this._render.drawBatched()
+        if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB()
+    }
+
+    // clears the canvas and draws a single frame (use with static canvas)
+    cleanDrawStatic() {
+        this.clear()
+        this.drawStatic()
     }
 
     // resets every fragile references
@@ -511,7 +545,10 @@ class Canvas {
     get allDefsAndRefs() {return this.defs.concat(this.refs)}
     get allEls() {return this.allDefsAndRefs.flatMap(x=>x.dots||x)}
     get fpsLimitRaw() {return this._fpsLimit}
-    get fpsLimit() {return this._fpsLimit==null||!isFinite(this._fpsLimit) ? null : 1/(this._fpsLimit/1000)}
+    get fpsLimit() {
+        const isStatic = !isFinite(this._fpsLimit)
+        return this._fpsLimit==null||isStatic ? isStatic ? "static" : null : 1/(this._fpsLimit/1000)
+    }
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
     get render() {return this._render}

@@ -12,8 +12,8 @@ class Render {
     static DEFAULT_COMPOSITE_OPERATION = Render.COMPOSITE_OPERATIONS.SOURCE_OVER
     static DEFAULT_FILTER = "none"
     static DEFAULT_ALPHA = 1
-    static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
-    static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve}
+    static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
+    static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve}
     static DRAW_METHODS = {FILL:"FILL", STROKE:"STROKE"}
 
     #currentCtxVisuals = [Color.DEFAULT_COLOR_VALUE, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA]
@@ -65,10 +65,10 @@ class Render {
         return [endPos[0]*spread, startPos[1]*spread]
     }
 
-    // instanciates and returns a path containing a cubic beizer curve
-    static getBeizerCurve(startPos, endPos, controlPos1, controlPos2) {
+    // instanciates and returns a path containing a cubic bezier curve
+    static getBezierCurve(startPos, endPos, controlPos1, controlPos2) {
         if (!controlPos2 || !controlPos1) {
-            const controlPoses = Render.getDefaultBeizerControlPos(startPos, endPos, controlPos1||undefined)
+            const controlPoses = Render.getDefaultBezierControlPos(startPos, endPos, controlPos1||undefined)
             controlPos1 = controlPoses[0]
             controlPos2 ??= controlPoses[1]
         }
@@ -79,8 +79,8 @@ class Render {
         return path
     }
 
-    // returns 2 control positions to create a decent default beizer curve
-    static getDefaultBeizerControlPos(startPos, endPos, spread=0.75) {
+    // returns 2 control positions to create a decent default bezier curve
+    static getDefaultBezierControlPos(startPos, endPos, spread=0.75) {
         const [startX, startY] = startPos, [endX, endY] = endPos
         return [[startX+(endX-startX)*(1-spread), startY+(endY-startY)*spread], [endX-(endX-startX)*(1-spread), endY-(endY-startY)*spread]]
     }

@@ -15,7 +15,7 @@ class _BaseObj extends _HasColor {
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
         this._initPos = pos||[0,0]               // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = [0,0]                        // current position from the center of the object : [x,y]
-        this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
+        this._setupCB = setupCB??null            // called on object's initialization (this, this.parent)=>
         this._loopCB = loopCB                    // called each frame for this object (this)=>
         this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
