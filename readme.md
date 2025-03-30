@@ -1,6 +1,9 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/Louis-CharlesBiron/canvasDotEffect?link=https%3A%2F%2Fgithub.com%2FLouis-CharlesBiron%2FcanvasDotEffect%2Fcommits%2Fmain%2F&label=Commit%20Activity)
 ![GitHub last commit](https://img.shields.io/github/last-commit/Louis-CharlesBiron/canvasDotEffect?link=https%3A%2F%2Fgithub.com%2FLouis-CharlesBiron%2FcanvasDotEffect%2Fcommits%2Fmain%2F&label=Last%20Commit)
-![GitHub Created At](https://img.shields.io/github/created-at/Louis-CharlesBiron/canvasDotEffect?label=Since&color=5F9EA0)
+![GitHub Created At](https://img.shields.io/github/created-at/Louis-CharlesBiron/canvasDotEffect?label=Since&color=orange)
+![NPM Downloads](https://img.shields.io/npm/d18m/cdejs?label=NPM%20Downloads&color=%231cc959)
+![NPM License](https://img.shields.io/npm/l/cdejs?label=License&color=cadetblue)
+
 
 # CanvasDotEffect
 
@@ -35,6 +38,7 @@
     - [CDEUtils](#cdeutils)
     - [FPSCounter](#fpscounter)
 - [Execution order](#execution-order)
+- [Optimization](#optimization)
 - [Intended practices](#intended-practices)
 - [Credits](#credits)
 
@@ -72,10 +76,10 @@
 5. **Set the mouse event listeners for mouse interactions.**
 ```js
     // Set up the prebuilt event listeners, allowing the creation of more interactive effects!
-    CVS.setmousemove(/*custom callback*/)
-    CVS.setmouseleave()
-    CVS.setmousedown()
-    CVS.setmouseup()
+    CVS.setMouseMove(/*custom callback*/)
+    CVS.setMouseLeave()
+    CVS.setMouseDown()
+    CVS.setMouseUp()
 ```
 
 6. **Once everything is created and ready to go, start the drawing loop!**
@@ -92,10 +96,10 @@
     const dummyShape = new Shape([50,5 0], [new Dot()])
     CVS.add(dummyShape)
     
-    CVS.setmousemove(/*custom callback*/)
-    CVS.setmouseleave()
-    CVS.setmousedown()
-    CVS.setmouseup()
+    CVS.setMouseMove(/*custom callback*/)
+    CVS.setMouseLeave()
+    CVS.setMouseDown()
+    CVS.setMouseUp()
     
     CVS.startLoop()
 ```
@@ -123,7 +127,7 @@
 
 
 # [Class descriptions](#table-of-contents)
-The following sections are a short documentation of each class, basically what it does and what are the most important aspects of it.
+The following sections are short documentations of each class, basically what it does and what are the most important aspects of it.
 
  
 
@@ -143,29 +147,27 @@ The Canvas class is the core of the project. It manages the main loop, the windo
  
 
 **To add objects to the canvas,** use the add() function:
-###### - add(objs, isDef, active=true)
+###### - add(objs, inactive=false)
 ```js
     // For a source object
     CVS.add(yourShape)
 
-    // For a standalone object
-    CVS.add(yourObject, true)
     
     // For a prefab or inactive shape
-    CVS.add(yourShape, false, false)
+    CVS.add(yourShape, true)
 ```
 
 **To set up mouse/keyboard listeners for the canvas,** use the following prebuilt functions:
 ```js
     // Set the important mouse events 
-    CVS.setmousemove(/*possible custom callback*/)
-    CVS.setmouseleave()
-    CVS.setmousedown()
-    CVS.setmouseup()
+    CVS.setMouseMove(/*possible custom callback*/)
+    CVS.setMouseLeave()
+    CVS.setMouseDown()
+    CVS.setMouseUp()
 
     // Set the important keyboard events 
-    CVS.setkeydown(/*possible custom callback*/)
-    CVS.setkeyup()
+    CVS.setKeyDown(/*possible custom callback*/)
+    CVS.setKeyUp()
 ```
 
 **To control the canvas loop**, use the following functions:
@@ -178,7 +180,7 @@ The Canvas class is the core of the project. It manages the main loop, the windo
 ```
 
 #### Example use:
-###### - Creating a Canvas instance that display fps
+###### - Creating a Canvas instance that displays fps
 ```js
     // Creating a FPSCounter instance
     const fpsCounter = new CDEUtils.FPSCounter()
@@ -215,8 +217,8 @@ The _Obj class is the template class of any canvas object. **It should not be di
 - **alwaysActive** -> Whether the object stays active when outside the canvas bounds.
 - ***initialized*** -> Whether the object has been initialized.
 - ***parent*** -> The parent of the object. (Shape, Canvas, ...)
-- ***rotation*** -> The object's rotation in degrees. Use the `rotateAt`, `rotateBy`, `rotateTo` functions to modify.
-- ***scale*** -> The shape's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy`, `scaleTo` functions to modify.
+- ***rotation*** -> The object's rotation in degrees. Use the `rotateAt`, `rotateBy` and `rotateTo` functions to modify.
+- ***scale*** -> The shape's X and Y scale factors `[scaleX, scaleY]`. Use the `scaleAt`, `scaleBy` and `scaleTo` functions to modify.
 - ***visualEffects*** -> The visual effects of the object in an array: `[filter, compositeOperation, opacity]`. `filter` is a string containing a regular css filter (`"blur(5px)"`, `url(#svgFilterId)`, etc). `compositeOperation` is one of `Render.COMPOSITE_OPERATIONS` (see [global composite operations](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation) for more information). `opacity` is the alpha value of the object (in addition to the object's color alpha).
 
 **This class also defines other useful base functions**, such as:
@@ -244,21 +246,20 @@ The _Obj class is the template class of any canvas object. **It should not be di
     dot.follow(3000, Anim.easeOutQuad, null, [[0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]]])
 ```
 
-```
 
  
 
 # [Dot](#table-of-contents)
 
-The dot class is **meant** to be the *core* of all effects. It appears as a circular dot on the canvas by default.
+The dot class is **meant** to be the *core* of most effects. It appears as a circular dot on the canvas by default.
 
 #### **The Dot constructor takes the following parameters:**
-###### - `new Dot(pos, radius, color, setupCB, anchorPos, alwaysActive)`
+###### - `new Dot(pos, radius, color, setupCB, anchorPos, alwaysActive, disablePathCaching)`
 - *pos, radius, color, setupCB, anchorPos, alwaysActive* -> See the _Obj class.
 
 Its other attribute is:
 - **connections** -> a list referencing other dots, primarily to draw a connection between them. 
-
+- **cachedPath** -> The cached Path2D object or `null` if path caching is disabled (Controlled via the `disablePathCaching` constructor parameter or by the `disablePathCaching()` function)
 
 
 **To add or remove connections,** use the following functions:
@@ -270,7 +271,20 @@ Its other attribute is:
     dot.removeConnection(otherDot)
 ```
 
-**To delete the dot**, use the following function:
+**To control whether a dot caches its path** use the following functions:
+```js
+    // By default, path caching for dots is enabled.
+    // But for very dynamic dots (changes every frame), sometimes it might be better to disable caching.
+
+    // To disable path caching:
+    const dynamicDot = new Dot(null, null, null, null, null, null, true) // disables the path caching via constructor
+    existingDynamicDot.disablePathCaching() // disables the path caching via this function if the dot already exists
+
+    // To enable path caching back use:
+    existingDynamicDot.updateCachedPath() 
+```
+
+**To delete a dot**, use the following function:
 ```js
     // Removes the dot completely
     dot.remove()
@@ -284,13 +298,13 @@ Its other attribute is:
         [0,0],          // positioned at [0,0]
         25,             // 25px radius
         [0,0,255,0.5],  // blue at 50% opacity
-        ()=>{           // custom callback ran on dot's initialization
+        ()=>{           // setupCB, custom callback ran on dot's initialization
             console.log("I am now added to the canvas and ready to go!")
         }
     )
     
-    // Add the dot as a standalone object by setting the 'isDef' to 'true'. (definition)
-    CVS.add(aloneDot, true)
+    // Add the dot as a standalone object (definition)
+    CVS.add(aloneDot)
 ```
 
 #### Example use 2:
@@ -351,7 +365,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 
 
 ### **To modify dots' properties all at once,** use the following functions:
-###### - setRadius(radius, onlyReplaceDefaults),  setColor(color, onlyReplaceDefaults), setLimit(limit, onlyReplaceDefaults)
+###### - setRadius(radius, onlyReplaceDefaults),  setColor(color, onlyReplaceDefaults), setLimit(limit, onlyReplaceDefaults), [enable/disable]DotsPathCaching()
 ```js
     // Sets the radius of all dummyShape's dots to 10
     dummyShape.setRadius(10)
@@ -361,25 +375,35 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
     
     // Sets the limit of all dummyShape's dots to 100
     dummyShape.setLimit(100)
-
+    
+    
+    // Disables the path caching of all dummyShape's dots
+    dummyShape.disableDotsPathCaching()
+    
+    // Enables the path caching of all dummyShape's dots
+    dummyShape.enableDotsPathCaching()
 ```
 
 ### **To dynamically generate a formation of dots** use the `generate` functions:
 ###### - generate(yTrajectory, startOffset, length, gapX, yModifier, generationCallback)
 ```js
-    // Generating a sine wave based formation
+    // Generating a sine wave-based formation
     const generatedDots = Shape.generate(
         x=>Math.sin(x/50)*100, // make the y follow a sine wave pattern
-        [-50, 0],              // the generation start is offset by -50 horizontally
-        1000,                  // the generation will span 1000 px in length
-        10,                    // the generation is sectionned in 10px intervals
-        [5, -5],               // a range allowing random Y between the [min, max]
+        [-50, 0],           // the generation start is offset by -50 horizontally
+        1000,               // the generation will span 1000 px in length
+        10,                   // the generation is sectioned in 10px intervals
+        [5, -5],            // a range allowing random Y between the [min, max]
         (dot, nextDot)=>{
             dot.addConnection(nextDot) // adding a connection between each dot
         }
     )
 
-CVS.add(a)
+    // Creating a new shape containing the generated dots
+    const dummyShape = new Shape([0, 0], generatedDots)
+
+    // Adding the shape to the canvas
+    CVS.add(dummyShape)
 
 ```
 
@@ -599,24 +623,6 @@ The Grid class is a derivative of the Shape class. It allows the creation of dot
 - **source** -> The source containing the symbol's definitions. See the *Grid Assets* section.
 - **spacing** -> The distance between each symbol. (Letter spacing)
 
-
-**To update the keys, gaps, source, or spacing:** use the following function:
-
-###### - `setKeys(keys), setGaps(gaps), setSpacing(spacing), setSource(source)`
-```js
-    // Set the text to "hello world"
-    dummyGrid.setKeys("hello world")
-    
-    // This will make the text look stretched vertically, since the X/Y ratio will be 25/100
-    dummyGrid.setGaps([25, 100])
-    
-    // This will make all letters overlap each others
-    dummyGrid.setSpacing(0)
-    
-    // This will change the current source to the default fontSource5x5, which defines A-Z a-z 0-9 and some special characters.   (Some key definitions may not be supported depending of which source or keys you're using)
-    dummyGrid.setSource(GridAssets.fontSource5x5)
-```
-
 #### Example use 1:
 ###### - Displaying all A-Z letters, with a nice effect when passing the mouse over the shape
 ```js
@@ -652,7 +658,7 @@ The Grid class is a derivative of the Shape class. It allows the creation of dot
 #### Example use 2:
 ###### - Creating a distorted grid, that clears up an area around the mouse on hover
 ```js
-// Creating a grid with symbols that distorts themselve on mouse hover
+// Creating a grid with symbols that distort themselves on mouse hover
 const distortedGrid = new Grid(
     "abc\n123\n%?&", // symbols used
     [7, 7],     // gaps of 7px between each dot
@@ -694,7 +700,7 @@ const distortedGrid = new Grid(
     return filterId
 })
 
-// adding the grid to the canvas
+// Adding the grid to the canvas
 CVS.add(distortedGrid)
 ```
  
@@ -840,7 +846,7 @@ A symbol has this structure: `[...[index, directions]]`. It is composed of a mai
 
 # [TextDisplay](#table-of-contents)
 
-The TextDisplay class allows the drawing of text as an canvas object.
+The TextDisplay class allows the drawing of text as a canvas object.
 
 #### **The TextDisplay constructor takes the following parameters:**
 ###### - `new TextDisplay(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, alwaysActive)`
@@ -858,9 +864,9 @@ The TextDisplay class allows the drawing of text as an canvas object.
 ```js
 const helloWorldText = new TextDisplay(
     "Hello World!", // Displayed text
-    [200, 100],     // positionned at [200, 100]
-    "lightblue",    // colored lightblue
-    (render)=>render.textProfile1.update("italic 24px monospace"), // using the textProfile1 styles, only over writting the font
+    [200, 100],     // positioned at [200, 100]
+    "lightblue",    // colored light blue
+    (render)=>render.textProfile1.update("italic 24px monospace"), // using the textProfile1 styles, only over writing the font
     null, // leaving drawMethod to the default value ("FILL")
     null, // leaving maxWidth to the default value (undefined)
     (textDisplay)=>{// setupCB
@@ -873,15 +879,15 @@ const helloWorldText = new TextDisplay(
         
     })
 
-// Adding the object to the canvas as a definition, because it doesn't not contain any children.
-CVS.add(helloWorldText, true)
+// Adding the object to the canvas.
+CVS.add(helloWorldText)
 
 ```
  
 
 # [ImageDisplay](#table-of-contents)
 
-The ImageDisplay class allows the drawing of images, videos and live camera/screen feed.
+The ImageDisplay class allows the drawing of images, videos and live camera/screen feeds.
 
 #### **The ImageDisplay constructor takes the following parameters:**
 ###### - `new ImageDisplay(source, pos, size, errorCB, setupCB, loopCB, anchorPos, alwaysActive)`
@@ -899,14 +905,14 @@ The ImageDisplay class allows the drawing of images, videos and live camera/scre
 // Creating an ImageDisplay with a url pointing to an image
 const myCoolImage = new ImageDisplay("https://static.wikia.nocookie.net/ftgd/images/9/97/ExtremeDemon.png/revision/latest?cb=20240801164829")
 
-// Adding the object to the canvas as a definition, because it doesn't not contain any children.
-CVS.add(myCoolImage, true)
+// Adding the object to the canvas.
+CVS.add(myCoolImage)
 ```
 
 #### Example use 2:
 ###### - Drawing an image from a file, resizing it, and cropping it
 ```js
-// Creating an ImageDisplay with loading a local file, and ajusting the sizes
+// Creating an ImageDisplay by loading a local file, and adjusting the sizes
 const myCoolImage = new ImageDisplay(
     "./img/logo.png", // local file located at [currentFolder]/img/logo.png
     [0,0],            // position of the top-left corner
@@ -916,8 +922,8 @@ const myCoolImage = new ImageDisplay(
 // Cropping the source image to use only from [20, 20] to [150, 150]
 myCoolImage.sourceCroppingPositions = [[20,20], [150, 150]]
 
-// Adding the object to the canvas as a definition, because it doesn't not contain any children.
-CVS.add(myCoolImage, true)
+// Adding the object to the canvas.
+CVS.add(myCoolImage)
 ```
 
 #### Example use 3:
@@ -936,12 +942,12 @@ const dummyVideo = new ImageDisplay(
     }
 )
 
-// Adding the object to the canvas as a definition
-CVS.add(dummyVideo, true)
+// Adding the object to the canvas.
+CVS.add(dummyVideo)
 ```
 
 #### Example use 4:
-###### - Drawing live feeds from the camera and from the screen
+###### - Drawing live feeds from the camera and screen
 ```js
 // Creating an ImageDisplay displaying the camera (requires user permission)
 const cameraFeed = new ImageDisplay(
@@ -950,16 +956,16 @@ const cameraFeed = new ImageDisplay(
     ImageDisplay.RESOLUTIONS.SD // shrink it down to 640x480
 )
 
-// Creating an ImageDisplay displaying a screen (requires user actions and permisson)
+// Creating an ImageDisplay displaying a screen (requires user actions and permission)
 const screenFeed = new ImageDisplay(
     ImageDisplay.loadCapture(), // get the screen capture, with default settings
     [640,0], // draw next to the camera display
     [1920/4, 1080/4] // resize it to Full HD divided by 4
 )
 
-// Adding both objects to the canvas as a definitions
-CVS.add(cameraFeed, true)
-CVS.add(screenFeed, true)
+// Adding both objects to the canvas.
+CVS.add(cameraFeed)
+CVS.add(screenFeed)
 ```
 
 **Note:** Canvas image smoothing property is disabled by default to improve performances.
@@ -975,7 +981,7 @@ The AudioDisplay class allows the visualization of audio from song, videos, live
 ###### - `new AudioDisplay(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, loadErrorCB, setupCB, loopCB, anchorPos, alwaysActive)`
 - *pos, color, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
 - **source** -> The source of the audio. One of `AudioDisplay.SOURCE_TYPES`.
-- **binCB** -> A callback called for each bin of the FFT data array. Used to draw the audio. `(render, bin, atPos, accumulator audioDisplay, i, sampleCount, rawBin)=>{... return? [ [newX, newY], newAccumulatorValue ]}`
+- **binCB** -> A custom callback called for each bin of the FFT data array. Used to draw the audio. `(render, bin, atPos, accumulator audioDisplay, i, sampleCount, rawBin)=>{... return? [ [newX, newY], newAccumulatorValue ]}`
 - **sampleCount** -> The count of bins to use / display. Ex: if sampleCount is "32" and the display style is `BARS`, 32 bars will be displayed. *Note: (fftSize is calculated by selecting the nearest valid value based on twice the provided sampleCount).*
 - **disableAudio** -> Whether this AudioDisplay actually output outputs sounds/audio. *Note: (This value does not affect the visual display, only whether you can hear what is playing or not).*
 - **offsetPourcent** -> A number between 0 and 1 representing the offset pourcent in the order of the bins when calling binCB. 
@@ -998,7 +1004,7 @@ The AudioDisplay class allows the visualization of audio from song, videos, live
 **Note:** ↑ *The audio chain is also defined in the above order.* 
 
 #### Example use 1:
-###### - Displaying the waveform of an .mp3 file
+###### - Displaying the waveform of a .mp3 file
 ```js
 // Creating an AudioDisplay playing and displaying a local file
 const audioDisplay = new AudioDisplay(
@@ -1012,21 +1018,21 @@ const audioDisplay = new AudioDisplay(
     (type, e)=>console.log("Dang it, error! Type:", type, " | ", e) // onerror callback
 )
 
-// Adding the object to the canvas as a definition
-CVS.add(audioDisplay, true)
+// Adding the object to the canvas.
+CVS.add(audioDisplay)
 ```
 
 #### Example use 2:
 ###### - Displaying the microphone output as a circle
 ```js
-// Creating an AudioDisplay displaying a the microphone
+// Creating an AudioDisplay displaying the microphone
 const micDisplay = new AudioDisplay(
     AudioDisplay.loadMicrophone(), // loading the microphone
     [100,100],          // the pos of the display
     "lime",             // color of the display
     (render, bin, pos, audioDisplay, accumulator, i)=>{// binCB
         const maxRadius = 500/AudioDisplay.MAX_NORMALISED_DATA_VALUE, // defining a max radius of 500px
-              precision = 100 // used to skip over some bins (the lowest this is, the more precise the display will be, but the more performance heavy it will be too!)
+              precision = 100 // used to skip over some bins (the lowest this is, the more precise the display will be, but the more performance-heavy it will be too!)
         
         // optimizing with the precision variable (only drawing every <precision> time)
         if (i%precision==0) {
@@ -1039,15 +1045,15 @@ const micDisplay = new AudioDisplay(
     true,  // disabling the audio to prevent echo
 )
 
-// Adding the object to the canvas as a definition
-CVS.add(micDisplay, true)
+// Adding the object to the canvas.
+CVS.add(micDisplay)
 
 ```
 
 #### Example use 3:
 ###### - Displaying the screen's audio and applying some audio modifications
 ```js
-// Loading and displaying the screen audio. For this the user needs to select a valid tab/window/screen.
+// Loading and displaying the screen audio. For this, the user needs to select a valid tab/window/screen.
 const audioDisplay = new AudioDisplay(AudioDisplay.loadScreenAudio(), [100,100], "lime", AudioDisplay.BARS(), 64)
 
 // Applying some audio modifiers:
@@ -1064,18 +1070,18 @@ audioDisplay.setDelay(1)
 // sets the distortion level to 10
 audioDisplay.setDistortionCurve(10)
 
-// sets the origin of the audio seems like it's coming from 1 meter to the left
+// sets the origin of the audio to seem like it's coming from 1 meter to the left
 audioDisplay.setOriginPos(-1)
 
 // since this sounds pretty bad, you could also reset all the modifiers with this:
 //audioDisplay.resetAudioModifiers()
 
-// Adding the object to the canvas as a definition
-CVS.add(audioDisplay, true)
+// Adding the object to the canvas.
+CVS.add(audioDisplay)
 ```
 
 #### Example use 4:
-###### - Creating a reverb effet using the convolverNode
+###### - Creating a reverb effect using the convolverNode
 ```js
 // Taking back the audioDisplay from example 1.
 const audioDisplay = new AudioDisplay("./audio/song.mp3", [100,100], "lime", AudioDisplay.BARS(), 64)
@@ -1088,8 +1094,8 @@ audioDisplay.loadImpulseResponse("./audio/IR.wav")
 // To disable this effect, disconnect the convolverNode:
 // audioDisplay.disconnectConvolver()
 
-// Adding the object to the canvas as a definition
-CVS.add(audioDisplay, true)
+// Adding the object to the canvas.
+CVS.add(audioDisplay)
 ```
 
 **Note:** Due to the high customizability of the display, the `getAutomaticPosition` function of Pattern/Gradient classes is not available, therefore the positions need to be entered manually.
@@ -1146,7 +1152,7 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
 #### **The Gradient constructor takes the following parameters:**
 ###### - `new Gradient(render, positions, colorStops, type, rotation)`
 - **render** -> The canvas Render instance, or context.
-- **positions** -> The positions of the gradient. Providing a canvas object will automaticlly position it to cover the minimal area containing all of the provided object. For manual positions: **linear gradients**: `[ [x1, y1], [x2, y2] ]`, **radial gradients** `[ [x1, y1, r1], [x2, y2, r2] ]`, *conic gradients:* `[ x, y ]`.
+- **positions** -> The positions of the gradient. Providing a canvas object will automatically position it to cover the minimal area containing all of the provided objects. For manual positions: **linear gradients**: `[ [x1, y1], [x2, y2] ]`, **radial gradients** `[ [x1, y1, r1], [x2, y2, r2] ]`, *conic gradients:* `[ x, y ]`.
 - **colorStops** -> An array containing the difference colors and their range `[0..1, color]`. Ex: `[ [0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"] ]`.
 - **type** -> The type of gradient. Either: Linear, Radial or Conic. (Defaults to Linear)
 - **rotation** -> The rotation in degrees of the gradient. (Not applicable for Radial gradients)
@@ -1173,14 +1179,14 @@ The Gradient class allows the creation of custom linear / radial gradients. A Gr
     dummyFilledShape.fillColorRaw.update()
 ```
 
-**Note:** when using a Shape, a Dot or a TextDisplay instance as the 'positions' parameter, the gradient will update every frame automatically.
+**Note:** when using a Shape, a Dot, or a TextDisplay instance as the 'positions' parameter, the gradient will update every frame automatically.
 
 #### Example use 1:
 ###### - Coloring a FilledShape with a gradient and making a rotating gradient effect
 ```js
 const gradientShape = new FilledShape(
         // Creating and returning a linear gradient with a callback.
-        // This linear gradient will auto-position itself according to the shape's dots, start at 90deg rotation and will go from purple->red->yellow-ish
+        // This linear gradient will auto-position itself according to the shape's dots, start at 90deg rotation, and will go from purple->red->yellow-ish
         (render, shape)=>new Gradient(render, shape, [[0, "purple"], [0.5, [255,0,0,1]], [1, "#ABC123"]], null, 90), 
         
         // Other parameters are used by the FilledShape, to make a square at [100, 100]
@@ -1220,13 +1226,13 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 ###### - `new Pattern(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, errorCB, readyCB, frameRate, repeatMode)`
 - **render** -> The canvas Render instance, or context.
 - *source* -> The source declaration of the pattern. One of `ImageDisplay.SOURCE_TYPES`.
-- **positions** -> The positions of the pattern. (`[ [x1, y1], [x2, y2] ]`) Providing a canvas object will automaticlly position it to cover the minimal area containing all of the provided object.
+- **positions** -> The positions of the pattern. (`[ [x1, y1], [x2, y2] ]`) Providing a canvas object will automatically position it to cover the minimal area containing all of the provided objects.
 - **sourceCroppingPositions** -> The source cropping positions. Delimits a rectangle which indicates the source drawing area to draw from: `[ [startX, startY], [endX, endY] ]`. (Defaults to no cropping)
 - **keepAspectRatio** -> Whether the displayed pattern keeps the same aspect ratio when resizing.
 - **forcedUpdates** -> Whether/How the pattern updates are forced. One of `Pattern.FORCE_UPDATE_LEVELS` .
 - **rotation** -> The pattern's current rotation in degrees.
 - **errorCB** -> A callback called when the source produces an error `(errorType, e?)=>`.
-- **readyCB** -> Similar to `setupCB`. A callback that gets called when the source has been initialized `(pattern)=>`. *Note: this attribute doesn't transfert when calling the duplicate() function to avoid StackOverflow errors.*
+- **readyCB** -> Similar to `setupCB`. A callback that gets called when the source has been initialized `(pattern)=>`. *Note: this attribute doesn't transfer when calling the duplicate() function to avoid StackOverflow errors.*
 - **frameRate** -> The update frequency of the current source. (Controls the frequency of video/canvas sources updates, as well as the frequency of any other sources when a visible property gets updated: e.g *when the rotation gets changed*)
 - **repeatMode** -> Whether the pattern repeats horizontally/vertically. One of `Pattern.REPETITION_MODES`.
 
@@ -1276,16 +1282,18 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
                 Pattern.loadCamera(), // the source of the pattern, here it's we are requesting access to the live camera feed
                 text, // making the pattern fit the size of the text
                 null, // no source cropping
-                false // resizing will most likely change the aspect ratio
+                false, // resizing will most likely change the aspect ratio
+                Pattern.FORCE_UPDATE_LEVELS.RESPECT_FRAME_RATE // automatically resizes the pattern if the textDisplay size/pos changes
             ))
     
-    CVS.add(dummyText, true)
+    // Adding the text to the canvas
+    CVS.add(dummyText)
 ```
 
 #### Example use 3:
 ###### - Sharing VS duplicating a pattern
 ```js
-    // DUPLICATING PATTERN (Can be performance heavy when using dynamic pattern such as video, camera, etc)
+    // DUPLICATING PATTERN (Can be performance-heavy when using dynamic patterns such as video, camera, etc)
     // Creating and adding a basic shape that contains 9 dots in a 3x3 grid disposition
     const shape1 = new Shape([100,100],[new Dot([-50, -50]), new Dot([-50, 0]), new Dot([-50, 50]), new Dot([0, -50]), new Dot([0, 0]), new Dot([0, 50]), new Dot([50, -50]), new Dot([50, 0]), new Dot([50, 50])], 25)
     CVS.add(shape1)
@@ -1314,15 +1322,15 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 ```
 
 #### Example use 4:
-###### - Using a pattern to color non objects (In this case, lines)
+###### - Using a pattern to color non-objects (In this case, lines)
 ```js
     // Creating a variable containing the color of the grid's symbol lines
     let gridLineColor = [255,0,0,1]
 
-    // Creating a simple grid displaying a couple letters
+    // Creating a simple grid displaying a couple of letters
     const grid = new Grid("abc\nDEF\nghi", [5, 5], 50, null, [50,50], 2, null, null, 
         (render, dot, ratio, res, m, dist, shape, isActive)=>{// drawEffectCB
-            // simple effect to change the dots radius
+            // simple effect to change the dot's radius
             dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS, ratio, _Obj.DEFAULT_RADIUS)
 
             // drawing the grid's lines (connections) using the previous variable (↓). Note: the variable could also have been defined in the setupCB
@@ -1330,13 +1338,13 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
         }
     )
 
-    // Adding the grid to the canvas. (This initializes it, which is needed properly run getAutomaticPositions() on it)
+    // Adding the grid to the canvas. (This initializes it, which is needed to properly run getAutomaticPositions() on it)
     CVS.add(grid)
 
     // Assigning a pattern to the gridLineColor variable so it displays the camera as the color
     gridLineColor = new Pattern(CVS.render, Pattern.loadCamera(), _DynamicColor.getAutomaticPositions(grid), null, null, null, null, null, 
         (pattern)=>{// readyCB
-            // (Optional): You can also set the dots color to be this pattern. 
+            // (Optional): You can also set the dot's color to be this pattern. 
             // once the camera is loaded, we're also setting the grid's color to the value of the pattern
             grid.setColor(pattern)
         }
@@ -1347,17 +1355,17 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 
 # [Render](#table-of-contents)
 
-Render is a class that centralizes most context operation. It provides functions to get *lines* and *text*, as well as functions to *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles for lines and text (RenderStyles, TextDisplay). Finally, it is automatically instanciated by, and linked to, any Canvas instance and should not be instanciated manually.
+Render is a class that centralizes most context operations. It provides functions to get *lines* and *text*, as well as functions to *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles for lines and text (RenderStyles, TextDisplay). Finally, it is automatically instantiated by, and linked to, any Canvas instance and should not be instantiated manually.
 
 #### Example use 1:
-###### - Manually drawing a custom beizer curve 
+###### - Manually drawing a custom bezier curve 
 ```js
     // Running in the drawEffectCB of a dummy shape...
     {
         ...
         
-        // Drawing a beizer curve from [100, 100] to [100, 200], using the default control points, in red
-        render.stroke(Render.getBeizerCurve([100,100], [100, 200]), [255, 0, 0, 1])
+        // Drawing a bezier curve from [100, 100] to [100, 200], using the default control points, in red
+        render.stroke(Render.getBezierCurve([100,100], [100, 200]), [255, 0, 0, 1])
         
     }
 ```
@@ -1369,7 +1377,7 @@ Render is a class that centralizes most context operation. It provides functions
     {
         ...
         
-        // Drawing a beizer curve from [100, 400] to [400, 300], using the default control points with 0.5 spread
+        // Drawing a bezier curve from [100, 400] to [400, 300], using the default control points with 0.5 spread
         render.fill(Render.getQuadCurve(startPos, endPos, Render.getDefaultQuadraticControlPos([100, 400], [400, 300], 0.5)))
         
     }
@@ -1383,7 +1391,7 @@ The RenderStyles class allows the customization of renders via style profiles wh
 ###### - `new RenderStyles(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)`
 - **render** -> The canvas Render instance.
 - **color** -> Either an RGBA array `[r, g, b, a]` or a `Color` instance.
-- **filter** -> A string containing a filter in CSS formating: `"blur(5px)"`, `url(#svgFilterId)`, etc. (Usage of filters may cause some perfomance issues, and some SVG filter can be invasive)
+- **filter** -> A string containing a filter in CSS formatting: `"blur(5px)"`, `url(#svgFilterId)`, etc. (Usage of filters may cause some performance issues, and some SVG filters can be invasive)
 - **compositeOperation** -> The composite operation used. One of `Render.COMPOSITE_OPERATIONS` (see [global composite operations](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation) for more information) (some composite operations can be invasive)
 - **opacity** -> The alpha value of the object ranging from 0 to 1. (This alpha is additive to the object's color alpha).
 - **lineWidth** -> The width in px of the drawn line.
@@ -1403,11 +1411,11 @@ The RenderStyles class allows the customization of renders via style profiles wh
     const myNewStyleProfile = RenderStyles.DEFAULT_PROFILE.duplicate(CVS.render)
 
     // Adding a new style profile to the render's custom profile list
-    CVS.render.profiles.push(myNewStyleProfile) // the style profile is now accessible via render.profiles
+    CVS.render.profiles.push(myNewStyleProfile) //The style profile is now accessible via render.profiles
 
     // OR
 
-    // use the render instance function: addCustomStylesProfile()
+    // use the render instance function: createCustomStylesProfile()
 ```
 
 ### **To reuse a style profile for multiple styles,** use the update() function:
@@ -1429,14 +1437,14 @@ The RenderStyles class allows the customization of renders via style profiles wh
  
 
 #### Example use 1:
-###### - Styling a beizer curve (based on the example in *Render*)
+###### - Styling a bezier curve (based on the example in *Render*)
 ```js
     // Running in the drawEffectCB of a dummy shape...
     {
         ...
         
-        // Drawing a beizer curve from [100, 100] to [100, 200], using the styles from the render's profile1
-        render.stroke(Render.getBeizerCurve([100,100], [100, 200], [150, 100], [100, 150], render.profile1)
+        // Drawing a bezier curve from [100, 100] to [100, 200], using the styles from the render's profile1
+        render.stroke(Render.getBezierCurve([100,100], [100, 200], [150, 100], [100, 150], render.profile1)
     }
 ```
 
@@ -1454,7 +1462,7 @@ The RenderStyles class allows the customization of renders via style profiles wh
             [10] // updating the lineDash to 10px
         ),
         0, // no radius padding
-        Render.LINE_TYPES.CUBIC_BEIZER // using a default beizer curve
+        Render.LINE_TYPES.CUBIC_BEZIER // using a default bezier curve
     )
         
     }
@@ -1471,8 +1479,8 @@ The TextStyles class (similar to TextStyles) allows the customization of text vi
 - **letterSpacing** -> The gap in pixels between the letters.
 - **wordSpacing** -> Then gaps in pixels between the words.
 - **fontVariantCaps** -> Specifies an alternative capitalization style.
-- **direction** -> Specifies the text writting direction.
-- **fontStretch** -> The text streching property.
+- **direction** -> Specifies the text writing direction.
+- **fontStretch** -> The text stretching property.
 - **fontKerning** -> Whether the default spacing of certain letters is uniform.
 - **textAlign** -> The text horizontal alignment.
 - **textBaseline** -> The text vertical alignment.
@@ -1583,22 +1591,22 @@ The TypingDevice class is automatically created and accessible by any Canvas ins
 
 
 ### **To set the keys event listeners,** use the following prebuilt functions:
-###### - setkeydown(cb, global), setkeyup(cb, global)
+###### - setKeyDown(cb, global), setKeyUp(cb, global)
 ```js
     // Setting the keydown listener
-    CVS.setkeydown()
+    CVS.setKeyDown()
     
-    // Settign the keyup listener with a custom callback
-    CVS.setkeyup((e)=>{
-        console.log("Custom callback: ", e)
+    // Setting the keyup listener with a custom callback (typingDevice, event)=>
+    CVS.setKeyUp((typingDevice, e)=>{
+        console.log("Custom callback: ", typingDevice, e)
     })
     
     // OR
     
     // Setting both listeners globally. (This will detect the key inputs even when the canvas is not directly focused)
-    CVS.setkeydown(null, true)
-    CVS.setkeyup((e)=>{
-        console.log("Custom callback: ", e)
+    CVS.setKeyDown(null, true)
+    CVS.setKeyUp((typingDevice, e)=>{
+        console.log("Custom callback: ", typingDevice, e)
     }, true)
 ```
 
@@ -1629,42 +1637,65 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 - **extraForwardClicked** -> Whether the extra forward button of the mouse is active (not present on every mouse).
 - **extraBackClicked** -> Whether the extra back button of the mouse is active (not present on every mouse).
 
+### **To set the mouse event listeners,** use the following prebuilt functions:
+###### - setMouseMove(cb, global), setMouseLeave(cb, global), setMouseDown(cb, global), setMouseUp(cb, global)
+```js
+    // Setting the mousemove listener
+    CVS.setMouseMove()
+
+    // Setting the mousedown listener with a custom callback (mouse, event)=>
+    CVS.setMouseDown((mouse, e)=>{
+        console.log("Custom callback: ", mouse, e)
+    })
+
+    // OR
+    
+    // Setting listeners globally. (This will detect the mouse inputs even if the mouse is not directly interacting with the canvas)
+    CVS.setMouseMove(null, true)
+    CVS.setMouseDown((mouse, e)=>{
+        console.log("Custom callback: ", mouse, e)
+    }, true)
+    CVS.setMouseUp((mouse, e)=>{
+        console.log("Other custom callback: ", mouse, e)
+    }, true)
+```
+
 #### Example use 1:
 ###### - Making a dot throwable, and changing its color on mouse hover and click
 ```js
-    // Using the getDraggableDotCB utility function to get a dragCallback
-    const dragCallback = CanvasUtils.getDraggableDotCB()
-    
-    // Creating a mostly default shape, with a single dot
-    const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null, 
-        (render, dot, ratio, setupResults, mouse, dist, shape)=>{// drawEffectCB callback
-    
-            // Changing the dot's size based on mouse distance for an additional small effect
-            dot.radius = CDEUtils.mod(shape.radius*2, ratio, shape.radius*2*0.5)
-            
-            // Checking if the mouse is hovering the dot
-            const isMouseOver = dot.isWithin(m.pos, true)
-            
-            // if the mouse is over and clicked, set the dot's color to red
-            if (isMouseOver && m.clicked) {
-                dot.color = [255, 0, 0, 1]
-            }
-            // if the mouse is only over, set the dot's color to green
-            else if (isMouseOver) {
-                dot.color = [0, 255, 0, 1]
-            }
-            // if the mouse is neither over nor clicked, set the dot's color to white
-            else {
-                dot.color = [255, 255, 255, 1]
-            }
+// Using the getDraggableDotCB utility function to get a dragCallback
+const dragCallback = CanvasUtils.getDraggableDotCB()
+
+// Creating a mostly default shape, with a single dot
+const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null, 
+    (render, dot, ratio, setupResults, mouse, dist, shape)=>{// drawEffectCB callback
+
+        // Changing the dot's size based on mouse distance for an additional small effect
+        dot.radius = CDEUtils.mod(shape.radius*2, ratio, shape.radius*2*0.5)
         
-            // Calling the dragCallback to make the dragging and throwing effect
-            dragCallback(shape.dots[0], m, dist, ratio)
+        // Checking if the mouse is hovering the dot
+        const isMouseOver = dot.isWithin(m.pos, true)
+        
+        // if the mouse is over and clicked, set the dot's color to red
+        if (isMouseOver && m.clicked) {
+            dot.color = [255, 0, 0, 1]
         }
-    )
+        // if the mouse is only over, set the dot's color to green
+        else if (isMouseOver) {
+            dot.color = [0, 255, 0, 1]
+        }
+        // if the mouse is neither over nor clicked, set the dot's color to white
+        else {
+            dot.color = [255, 255, 255, 1]
+        }
     
-    // Adding the shape
-    CVS.add(throwableDot)
+        // Calling the dragCallback to make the dragging and throwing effect
+        dragCallback(shape.dots[0], m, dist, ratio)
+    }
+)
+
+// Adding the shape
+CVS.add(throwableDot)
 ```
 
  
@@ -1676,14 +1707,14 @@ The CanvasUtils class provides generic functions for common effects.
 
 ### DrawOuterRing
 This function is used to draw a ring around a dot.
-###### drawOuterRing(dot, color, radiusMultiplier)
+###### drawOuterRing(dot, color, radiusMultiplier, forceBatching)
 ```js
-    // (Running in the drawEffectCB() function of some shape...)
-    {
-        ...
-        // Draws a ring around the dot, 3x bigger than the dot's radius and of the same color
-        CanvasUtils.drawOuterRing(dot, dot.colorObject, 3)   
-    }
+// (Running in the drawEffectCB() function of some shape...)
+{
+    ...
+    // Draws a ring around the dot, 3x bigger than the dot's radius and of the same color
+    CanvasUtils.drawOuterRing(dot, dot.colorObject, 3)   
+}
 ```
 
 ### RotateGradient
@@ -1704,56 +1735,104 @@ This function is used to rotate the gradient of an object.
 This function is used to make a dot throwable.
 ###### getDraggableDotCB(pickableRadius=50)
 ```js
-    // getDraggableDotCB should only be called once, but it returns a callback that needs to be called every frame
-    
-    // (Running at the top of some js file)
-    // Provides the callback to make the dot throwable. 
-    const dragAnimCallback = CanvasUtils.getDraggableDotCB()
-    
+// getDraggableDotCB should only be called once, but it returns a callback that needs to be called every frame
+
+// (Running in of some js file)
+// Provides the callback to make the dot throwable. 
+const dragAnimCallback = CanvasUtils.getDraggableDotCB()
+
+...
+
+// (Running in the drawEffectCB() function of some shape...)
+{
     ...
-    
-    // (Running in the drawEffectCB() function of some shape...)
-    {
-        ...
-        // Only for the first dot of the shape
-        if (shape.firstDot.id == dot.id) {
-            // Makes the dot pickable in a 100px radius, and throwable using default CDE physics (works best on higher refresh rates)
-            dragAnimCallback(dot, mouse, dist, ratio, 100)
-        }
+    // Only for the first dot of the shape
+    if (shape.firstDot.id == dot.id) {
+        // Makes the dot pickable in a 100px radius, and throwable using default CDE physics (works best on higher refresh rates)
+        dragAnimCallback(dot, mouse, dist, ratio, 100)
     }
+}
+```
+
+### getTrailEffectCB
+This function is used to make an object have a customizable trail effect when moving.
+###### getTrailEffectCB(canvas, obj, length=8, moveEffectCB=null, disableDefaultMovements=false)
+```js
+// getTrailEffectCB should only be called once, but it returns a callback that needs to be called every frame
+
+// Here we create a shape with a single dot receiving the trail effect.
+const trailingDot = new Shape([200, 100], new Dot(), null, "lime", null,
+    (render, dot, ratio, [dragCB, trailCB], mouse, dist, shape)=>{// drawEffectCB
+    
+        // Make sure the effect is only running on the desired dot (Optional in this example, since there is only one dot)
+        if (dot.id==shape.firstDot.id) {
+            dragCB(shape.firstDot, mouse, dist, ratio) // see previous example for details
+            trailCB(mouse) // call the trail effect callback every frame and give it the mouse in parameter
+        }
+}, null, (shape)=>{// setupCB
+
+    // Here we get/initialize both effect callbacks in an array to be reused in the drawEffectCB
+    return [
+    
+        CanvasUtils.getDraggableDotCB(), // see previous example for details
+        
+        
+        // Creating a trail effect based on the shape's first dot, with a length of 10
+        CanvasUtils.getTrailEffectCB(CVS, shape.firstDot, 10, (dot, ratio, isMoving, mouse)=>{// moveEffectCB
+            
+            // This callback is called every frame
+            // "ratio" is the index of the object in the trail divided by the length of the trail
+            // "isMoving" represents whether the object is currently moving or not
+            
+            //While the user is dragging/moving the dot, every trail object has a set value
+            if (isMoving && mouse.clicked) {
+                dot.a = ratio
+                dot.radius = 25*(1-ratio)
+            }
+
+            // otherwise, the trail objects progressively lose visibility
+            dot.a -= (1-ratio)/1000
+            dot.radius = 25*ratio
+        })
+        
+    ]
+})
+
+// Add the shape to the canvas
+CVS.add(trailingDot)
 ```
 
 ### drawLine
 This function is used to draw a connection between a Dot and another pos/object.
-###### drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType, spread)
+###### drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType, spread, forceBatching)
 ```js
-    // (Running in the drawEffectCB() function of some shape...)
-    {
-        ...
-        // Only if the distance with the ratioPos is lower than the shape's limit
-        if (dist < shape.limit) {
-            // Draws a line between the dot and the dot's ratioPos, adjusting the opacity of the line via the distance ratio
-            CanvasUtils.drawLine(
-                dot,        // start Dot
-                [200, 200], // end position (can also be a Dot)
-                render.profile.update(
-                    Color.rgba(dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)) // updates only the color, but uses every previously set styles
-                )
+// (Running in the drawEffectCB() function of some shape...)
+{
+    ...
+    // Only if the distance with the ratioPos is lower than the shape's limit
+    if (dist < shape.limit) {
+        // Draws a line between the dot and the dot's ratioPos, adjusting the opacity of the line via the distance ratio
+        CanvasUtils.drawLine(
+            dot,        // start Dot
+            [200, 200], // end position (can also be a Dot)
+            render.profile.update(
+                Color.rgba(dot.r,dot.g,dot.b,CDEUtils.mod(0.5, ratio)) // updates only the color, but uses every previously set styles
             )
-        }
+        )
     }
+}
 ```
 
 ### drawDotConnections
 This function is used to draw the connections between a Dot and the ones in its `connections` attribute. **(Especially useful when using a Grid!)**
-###### drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType, spread, isSourceOver=false)
+###### drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType, spread, forceBatching)
 ```js
-    // (Running in the drawEffectCB() function of some shape...)
-    {
-        ...
-        // Draws lines between the dot and its connections, using the shape's color, and with a start padding of 2.5x the radius
-        CanvasUtils.drawDotConnections(dot, shape.colorObject, 2.5)
-    }
+// (Running in the drawEffectCB() function of some shape...)
+{
+    ...
+    // Draws lines between the dot and its connections, using the shape's color, and with a start padding of 2.5x the radius
+    CanvasUtils.drawDotConnections(dot, shape.colorObject, 2.5)
+}
 ```
 
  
@@ -1762,10 +1841,10 @@ This function is used to draw the connections between a Dot and the ones in its 
 
 ****
 ### Generic follow paths
-The sub class FOLLOW_PATHS provides generic follow paths.
+The object FOLLOW_PATHS provides generic follow paths.
 
 - #### Infinity Sign
-  **Provides a sideways "8" like follow path.**                                                                    
+  **Provides a sideways "8"-like follow path.**                                                                    
   *`INFINITY_SIGN(width, height, progressOffset)`*
 
 - #### Circle
@@ -1785,11 +1864,11 @@ The sub class FOLLOW_PATHS provides generic follow paths.
   *`LINEAR(width, a)`*
 
 - #### Sine Wave
-  **Provides a sine wave like follow path.**                                                                    
+  **Provides a sine wave-like follow path.**                                                                    
   *`SINE_WAVE(width, height)`*
 
 - #### Cosine Wave
-  **Similar to Sine Wave, provides a cosine wave like follow path.**                                            
+  **Similar to Sine Wave, provides a cosine wave-like follow path.**                                            
   *`COSINE_WAVE(width, height)`*
 
 - #### Relative
@@ -1834,7 +1913,7 @@ const manualSineWaveDrawer = new Shape([100, 100], [
 
 }, null, null, true)
 
-// adding the shape to the canvas
+//Adding the shape to the canvas
 CVS.add(manualSineWaveDrawer)
 ```
 
@@ -1864,7 +1943,7 @@ This function is used to clamp a value within certain bounds.
 ###### clamp(value, min=Infinity, max=Infinity)
 
 ### getDist
-This function is used to return the Pythagorian distance between two positions.
+This function is used to return the Pythagorean distance between two positions.
 ###### getDist(x1, y1, x2, y2)
 
 ### getMinMax
@@ -1876,7 +1955,7 @@ This function is used to run a callback for a specific amount of time.
 ###### repeatedTimeout(iterationCount, callback, delay=5)
 
 ## [FPSCounter](#table-of-contents)
-The FPSCounter class allows to get the live frame per seconds value of a running loop.
+The FPSCounter class allows to get the live frame per second value of a running loop.
 
 
 #### Example use:
@@ -1888,13 +1967,14 @@ const fpsCounter = new FPSCounter()
 // Creating a Canvas
 const CVS = new Canvas(canvas, ()=>{//loopingCB
 
-    // Get the fps value (needs to be ran each frame)
+    // Get the fps value (needs to be run each frame)
     const fpsValue = fpsCounter.getFps()
     
     // Displaying the live FPS
     document.getElementById("fps_display").textContent = fpsValue+" fps"
 })
 ```
+
  
 
 # [Execution Order](#table-of-contents)
@@ -1902,7 +1982,7 @@ const CVS = new Canvas(canvas, ()=>{//loopingCB
 ### Level 1: Static setup
 **This is mostly the declaration state, nothing is fully created / usable just yet.**
 - Canvas instance creation
-- Initial canvas objects creation (shapes, dots, ...)
+- Initial canvas object creation (shapes, dots, ...)
 - Adding the initial canvas objects to the canvas
 - Settings events listeners
 - Starting the main loop
@@ -1913,18 +1993,18 @@ const CVS = new Canvas(canvas, ()=>{//loopingCB
 - Runs the `initialize()` function on both *references* and *definitions* (On every added object)
 - Adds objects as *references* or *definitions* in the canvas
 
-### Level 3: Direct canvas object initialization
-**At this point all *references* and *definitions* are initialized. By initializing a *reference*, we also initialize its dots.**
+### Level 3: Root canvas object initialization
+**At this point all *references* and *definitions* are initialized. By initializing a *reference*, we also initialize its children (ex: dots).**
 - Creates / adds all of the shapes' dots and sets some of their attributes
 - Runs the `initialize()` function for each dot contained in the shape. (After getting its `initialize()` function called, the shape calls the `initialize()` of all its dots, while also setting some of their attributes.)
 
 **Runs the following on applicable objects:**
-- if `initPos` is a callback -> `initPos(Canvas, this)`
+- if `initPos` is a callback -> `initPos(canvas, this)`
 - if `initDots` is a string -> `createFromString(initDots)`
-- if `initDots` is a callback -> `initDots(this, Canvas)`
+- if `initDots` is a callback -> `initDots(this, canvas)`
 - if `initRadius` is a callback -> `initRadius(this)`
 - if `initColor` is a callback -> `initColor(render, this)`
-- `setupCB(this)`
+- `setupCB(this, parent)`
 - if a FilledShape and `fillColor` is a callback -> `initFillColor(render, this)`
 - Adjusts the `pos` according to the `anchorPos`
 - Sets the `initialized` attribute to `true` for shapes
@@ -1953,15 +2033,61 @@ After this, every dot will be initialized, and all canvas objects will be ready 
 
  
 
-**Note:**
+**Notes:**
 - *Reference:* an object containing other objects. (ex: Shape, FilledShape, Grid)
 - *Definition:* a standalone object. (ex: Dot without a parent Shape, TextDisplay, ImageDisplay)
 
+- When accessing a shape's dots within the *setupCB* call, dots will have their *initialized* attribute set to *false*, but will still be mostly fully initialized, and thus, usable. (Only applicable for dots)
 
+ 
+
+# [Optimization](#table-of-contents)
+To keep the best performance in your website/app, you may want to use some optimization techniques. Here are some tips you can use to optimize your effects.
+
+
+### Using a static canvas:
+Using a static canvas is a lot more performant when working with stuff that doesn't need to be updated often.
+
+#### Static canvas example:
+```js
+// Creating a static canvas uses the same declaration as a classic canvas
+const staticCVS = new Canvas(canvasElement, ()=>{/*Custom callback that gets call each frame*/})
+
+// ** Here you would declare and add all the shapes and objects **
+
+// Here is a simple shape for example
+const dummyShape = new Shape([100, 100],[new Dot([-50, -50]),new Dot([-50, 50]),new Dot([50, -50]),new Dot([50, 50]),])
+staticCVS.add(dummyShape)
+
+// Once declarations are done, initialize the canvas as static
+staticCVS.initializeStatic()
+
+```
+#### Updating a static canvas:
+```js
+// (Considering the example above ↑)
+// You can use the following:
+
+// Draw a single frame
+staticCVS.drawStatic()
+
+// Clear the canvas
+staticCVS.clear()
+
+// Clear the canvas and draw a frame
+staticCVS.cleanDrawStatic()
+```
+**Notes:** 
+- Since there is no drawing loop, you do not need to run `CVS.startLoop()`
+- You can also overlay dynamic and static canvases to seamlessly distribute the drawing process.
+
+
+ 
 
 # [Intended Practices](#table-of-contents)
 
 - Putting `null` as any parameter value will assign it the default value.
+- Putting `undefined` as any parameter value will override the default behavior if applicable.
 
 - Use the `mod()` function for effective ratio usages.
 - If needed and applicable, use the available prebuilt event listeners.

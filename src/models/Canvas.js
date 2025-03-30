@@ -22,6 +22,7 @@ class Canvas {
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)"}
+    static STATIC_MODE = 0
     static #ON_LOAD_CALLBACKS = []
     static #ON_FIRST_INTERACT_CALLBACKS = []
 
@@ -175,6 +176,7 @@ class Canvas {
         if (this._looping) CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
     }
 
+    // core actions of the main loop
     #loopCore(time) {
         this.#calcDeltaTime(time)
 
@@ -232,8 +234,41 @@ class Canvas {
     }
 
     // clears the canvas
-    clear(x1=0, y1=0, x2 = this.width, y2 = this.height) {
-        this._ctx.clearRect(x1, y1, x2, y2)
+    clear(x=0, y=0, x2=this.width, y2=this.height) {
+        this._ctx.clearRect(x, y, x2, y2)
+    }
+
+    // initializes the canvas as static
+    initializeStatic() {
+        this.fpsLimit = 0
+        this.draw()
+        this.drawStatic()
+        
+        const imageDisplays = this.getObjs(ImageDisplay), id_ll = imageDisplays.length
+        for (let i=0;i<id_ll;i++) {
+            const imageDisplay = imageDisplays[i]
+            if (imageDisplay.setupCB === null) imageDisplay.setupCB = el=>el.draw(this.render, this.timeStamp*this._speedModifier, this._deltaTime)
+            else if (CDEUtils.isFunction(imageDisplay.setupCB)) {
+                const oldCB = imageDisplay.setupCB
+                imageDisplay.setupCB = (el, parent)=>{
+                    el.draw(this.render, this.timeStamp*this._speedModifier, this._deltaTime)
+                    oldCB(el, parent)
+                }
+            }
+        }
+    }
+
+    // draws a single frame (use with static canvas)
+    drawStatic() {
+        this.draw()
+        this._render.drawBatched()
+        if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB()
+    }
+
+    // clears the canvas and draws a single frame (use with static canvas)
+    cleanDrawStatic() {
+        this.clear()
+        this.drawStatic()
     }
 
     // resets every fragile references
@@ -283,15 +318,15 @@ class Canvas {
         return this._settings=st
     }
 
-    // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "active" is false, it only initializes the obj, without adding it to the canvas
-    add(objs, isDef, active=true) {// TODO, automate def and ref
+    // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "inactive" is true, it only initializes the obj, without adding it to the canvas
+    add(objs, inactive=false) {
         const l = objs&&(objs.length??1)
         for (let i=0;i<l;i++) {
             const obj = objs[i]??objs
             obj._parent = this
             
             if (CDEUtils.isFunction(obj.initialize)) obj.initialize()
-            if (active) this._els[isDef?"defs":"refs"].push(obj)
+            if (!inactive) this._els[obj.asSource?"refs":"defs"].push(obj)
 
         }
         this.updateCachedAllEls()
@@ -310,7 +345,12 @@ class Canvas {
 
     // get any element from the canvas by id
     get(id) {
-        return this.allEls.find(el=>el.id==id)
+        const els = this.#cachedEls, e_ll = this.#cachedEls_ll
+        for (let i=0;i<e_ll;i++) {
+            const el = els[i]
+            if (el.id==id) return el
+        }
+        return null
     }
 
     // removes any element from the canvas by instance type
@@ -345,13 +385,13 @@ class Canvas {
             const ref = this.refs[i]
             if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos = this._mouse.pos
         }
-        if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
+        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
 
         this._mouse.checkValid()
     }
 
     // defines the onmousemove listener
-    setmousemove(cb) {
+    setMouseMove(cb, global) {
         const onmousemove=e=>{
             // update pos and direction angle
             this._mouse.updatePos(e, this._offset)
@@ -368,33 +408,35 @@ class Canvas {
                 this.#mouseMovements(cb, e)
             }
         }
-        this._frame.addEventListener("mousemove", onmousemove)
-        this._frame.addEventListener("touchmove", ontouchmove)
+        const element = global ? document : this._frame
+        element.addEventListener("mousemove", onmousemove)
+        element.addEventListener("touchmove", ontouchmove)
         return ()=>{
-            this._frame.removeEventListener("mousemove", onmousemove)
-            this._frame.removeEventListener("touchmove", ontouchmove)
+            element.removeEventListener("mousemove", onmousemove)
+            element.removeEventListener("touchmove", ontouchmove)
         }
     }
 
     // defines the onmouseleave listener
-    setmouseleave(cb) {
+    setMouseLeave(cb, global) {
         const onmouseleave=e=>{
             this._mouse.invalidate()
             this.#mouseMovements(cb, e)
         }
-        this._frame.addEventListener("mouseleave", onmouseleave)
-        return ()=>this._frame.removeEventListener("mouseleave", onmouseleave)
+        const element = global ? document : this._frame
+        element.addEventListener("mouseleave", onmouseleave)
+        return ()=>element.removeEventListener("mouseleave", onmouseleave)
     }
 
     // called on any mouse clicks
     #mouseClicks(cb, e) {
         this._mouse.setMouseClicks(e)
-        if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
+        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
         if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
     }
 
     // defines the onmousedown listener
-    setmousedown(cb) {
+    setMouseDown(cb, global) {
         let isTouch = false
         const ontouchstart=e=>{
             isTouch = true
@@ -410,16 +452,17 @@ class Canvas {
             if (!isTouch) this.#mouseClicks(cb, e)
             isTouch = false
         }
-        this._frame.addEventListener("touchstart", ontouchstart)
-        this._frame.addEventListener("mousedown", onmousedown)
+        const element = global ? document : this._frame
+        element.addEventListener("touchstart", ontouchstart)
+        element.addEventListener("mousedown", onmousedown)
         return ()=>{
-            this._frame.removeEventListener("touchstart", ontouchstart)
-            this._frame.removeEventListener("mousedown", onmousedown)
+            element.removeEventListener("touchstart", ontouchstart)
+            element.removeEventListener("mousedown", onmousedown)
         }
     }
 
     // defines the onmouseup listener
-    setmouseup(cb) {
+    setMouseUp(cb, global) {
         let isTouch = false
         const ontouchend=e=>{
             isTouch = true
@@ -435,19 +478,20 @@ class Canvas {
             if (!isTouch) this.#mouseClicks(cb, e)
             isTouch = false
         }
-        this._frame.addEventListener("touchend", ontouchend)
-        this._frame.addEventListener("mouseup", onmouseup)
+        const element = global ? document : this._frame
+        element.addEventListener("touchend", ontouchend)
+        element.addEventListener("mouseup", onmouseup)
         return ()=>{
-            this._frame.removeEventListener("touchend", ontouchend)
-            this._frame.removeEventListener("mouseup", onmouseup)
+            element.removeEventListener("touchend", ontouchend)
+            element.removeEventListener("mouseup", onmouseup)
         }
     }
 
     // defines the onkeydown listener
-    setkeydown(cb, global) {
+    setKeyDown(cb, global) {
         const onkeydown=e=>{
             this._typingDevice.setDown(e)
-            if (CDEUtils.isFunction(cb)) cb(e, this._typingDevice)
+            if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
             }, globalFirstInteractOnKeyDown=e=>{if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)}
         
         const element = global ? document : this._frame
@@ -457,10 +501,10 @@ class Canvas {
     }
 
     // defines the onkeyup listener
-    setkeyup(cb, global) {
+    setKeyUp(cb, global) {
         const onkeyup=e=>{
             this._typingDevice.setUp(e)
-            if (CDEUtils.isFunction(cb)) cb(e, this._typingDevice)
+            if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
         }
 
         const element = global ? document : this._frame
@@ -473,6 +517,7 @@ class Canvas {
         return [this.width/2, this.height/2]
     }
 
+    // returns whether the provided position is within the canvas bounds
     isWithin(pos, padding=0) {
         const [x,y] = pos
         return x >= -padding && x <= this.width+padding && y >= -padding && y <= this.height+padding
@@ -500,7 +545,10 @@ class Canvas {
     get allDefsAndRefs() {return this.defs.concat(this.refs)}
     get allEls() {return this.allDefsAndRefs.flatMap(x=>x.dots||x)}
     get fpsLimitRaw() {return this._fpsLimit}
-    get fpsLimit() {return this._fpsLimit==null||!isFinite(this._fpsLimit) ? null : 1/(this._fpsLimit/1000)}
+    get fpsLimit() {
+        const isStatic = !isFinite(this._fpsLimit)
+        return this._fpsLimit==null||isStatic ? isStatic ? "static" : null : 1/(this._fpsLimit/1000)
+    }
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
     get render() {return this._render}

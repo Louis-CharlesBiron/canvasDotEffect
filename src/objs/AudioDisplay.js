@@ -33,17 +33,9 @@ class AudioDisplay extends _BaseObj {
     static ERROR_TYPES = {NO_PERMISSION:0, NO_AUDIO_TRACK:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3}
     static BIQUAD_FILTER_TYPES = {DEFAULT:"allpass", ALLPASS:"allpass", BANDPASS:"bandpass", HIGHPASS:"highpass", HIGHSHELF:"highshelf", LOWPASS:"lowpass", LOWSHELF:"lowshelf", NOTCH:"notch", PEAKING:"peaking"}
 
-
-    /*************
-    TODO
-    - duplicate
-
-    */
-
-    #buffer_ll = null
-    #data = null
-    #fft = null
-    
+    #buffer_ll = null // the length of data
+    #data = null      // the fft data values (raw bins)
+    #fft = null       // the fftSize
     constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
         this._source = source??""                                         // the source of the audio
@@ -143,7 +135,6 @@ class AudioDisplay extends _BaseObj {
 
     // Initializes a audio data source
     static #initAudioDataSource(dataSource, loadCallback, errorCB) {
-        console.log(dataSource, dataSource.readyState)
         const initLoad=()=>{if (CDEUtils.isFunction(loadCallback)) loadCallback(dataSource)}
         dataSource.onerror=e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.FILE_NOT_FOUND, e)}
         if (dataSource.readyState) initLoad()
@@ -173,7 +164,7 @@ class AudioDisplay extends _BaseObj {
         audio.loop = looping
         if (autoPlay) {
             audio.autoplay = autoPlay
-            audio.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>audio.play()))
+            ImageDisplay.playMedia(audio)
         }
         return audio
     }
@@ -286,7 +277,7 @@ class AudioDisplay extends _BaseObj {
 
     // sets the convolverNode impulse response buffer
     setReverb(buffer=null) {
-        if (buffer) this._convolverNode.buffer = buffer// TODO
+        if (buffer) this._convolverNode.buffer = buffer
         else this.disconnectConvolver()
     }
     
@@ -392,9 +383,7 @@ class AudioDisplay extends _BaseObj {
         minRadius = minRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
         return (render, bin, pos, audioDisplay, accumulator, i) => {
             const radius = minRadius+maxRadius*bin, angle = angleStep*i
-    
             if (!(i%precision)) render.batchFill(Render.getArc([pos[0]+radius*Math.cos(angle), pos[1]+radius*Math.sin(angle)], particleRadius), audioDisplay._color, audioDisplay.visualEffects)
-    
             return [pos]
         }
     }
@@ -431,7 +420,7 @@ class AudioDisplay extends _BaseObj {
     set paused(paused) {
         try {
             if (paused) this._source.pause()
-            else this._source.play()
+            else ImageDisplay.playMedia(this._source)
         }catch(e){}
     }
     set isPaused(isPaused) {this.paused = isPaused}

@@ -5,9 +5,10 @@
 
 // The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
 class Dot extends _Obj {
-    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
+    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive, disablePathCaching) {
         super(pos, radius, color, setupCB, null, anchorPos, alwaysActive)
         this._connections = []  // array of Dot to eventually draw a connecting line to
+        this._cachedPath = !disablePathCaching // the cached path2d object or null if path caching is disabled
     }
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
@@ -30,28 +31,15 @@ class Dot extends _Obj {
                         ctx.translate(-x, -y)
                     }
 
-                    render.fill(Render.getArc(this._pos, this._radius, 0, CDEUtils.CIRC), this._color, this.visualEffects)
+                    render.fill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
                     if (hasScaling) ctx.setTransform(1,0,0,1,0,0)
-                } else render.batchFill(Render.getArc(this._pos, this._radius, 0, CDEUtils.CIRC), this._color, this.visualEffects)
+                } else render.batchFill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
             }
-        } else this.initialized = true
+        } else {
+            this.initialized = true
+            if (this._cachedPath)this.updateCachedPath()
+        }
         super.draw(time, deltaTime)
-    }
-
-    
-    // returns a separate copy of this Dot
-    duplicate() {
-        const dot = new Dot(
-            this.getInitPos(),
-            this._radius,
-            this._color.duplicate(),
-            this._setupCB
-        )
-
-        dot._scale = CDEUtils.unlinkArr2(this._scale)
-        dot._rotation = this._rotation
-        dot._visualEffects = this.visualEffects_
-        return dot
     }
 
     // returns pythagorian distance between the ratio defining position and the dot
@@ -72,6 +60,11 @@ class Dot extends _Obj {
     // removes a Dot from the connection array
     removeConnection(dotOrId) {
         this._connections = this._connections.filter(d=>typeof dotOrId=="number"?d.id!==dotOrId:d.id!==dotOrId.id)
+    }
+
+    // deletes the dot
+    remove() {
+        this._parent.remove(this._id)
     }
 
     /**
@@ -98,21 +91,94 @@ class Dot extends _Obj {
         return [[[s_x1, s_y1], [s_x2, s_y2]], [[t_x2, t_y2], [t_x1, t_y1]]]
     }
 
-    // deletes the dot
-    remove() {
-        if (CDEUtils.isFunction(this._parent.removeDot)) this._parent.removeDot(this._id)
-        else this._parent.remove(this._id)
+    // activates path caching and updates the cached path
+    updateCachedPath() {
+        this._cachedPath = Render.getArc(this._pos, this._radius)
+    }
+
+    // disables path caching
+    disablePathCaching() {
+        this._cachedPath = null
+    }
+
+    // returns a separate copy of this Dot
+    duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, disablePathCaching=!this._cachedPath) {
+        const colorObject = color, colorRaw = colorObject.colorRaw, dot = new Dot(
+            pos,
+            radius,
+            (colorRaw instanceof Gradient||colorRaw instanceof Pattern) && colorRaw._initPositions.id != null && this._parent.id != null && colorRaw._initPositions.id == this._parent.id ? null:(_,dot)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:dot):colorObject.duplicate(),
+            setupCB,
+            anchorPos,
+            alwaysActive,
+            disablePathCaching
+        )
+
+        dot._scale = CDEUtils.unlinkArr2(this._scale)
+        dot._rotation = this._rotation
+        dot._visualEffects = this.visualEffects_
+        return dot
     }
 
     get ctx() {return this._parent.parent.ctx}
-    get render() {return this._parent.parent.render}
+    get cvs() {return this._parent.parent||this._parent}
+    get render() {return this.cvs.render}
     get limit() {return this._parent.limit}
     get drawEffectCB() {return this._parent?.drawEffectCB}
-    get mouse() {return this._parent.parent.mouse}
+    get mouse() {return this.cvs.mouse}
     get ratioPos() {return this._parent.ratioPos}
     get connections() {return this._connections}
     get parentSetupResults() {return this._parent?.setupResults}
+    get top() {return this.y-this._radius}
+    get bottom() {return this.y+this._radius}
+    get right() {return this.x+this._radius}
+    get left() {return this.x-this._radius}
+    get width() {return this._radius*2}
+    get height() {return this._radius*2}
+    get x() {return super.x}
+    get y() {return super.y}
+    get pos() {return this._pos}
+    get relativeX() {return super.relativeX}
+    get relativeY() {return super.relativeY}
+    get relativePos() {return super.relativePos}
+    get radius() {return super.radius}
+    get cachedPath() {return this._cachedPath}
 
+
+    set x(x) {
+        x = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)
+        if (this._pos[0] != x) {
+            this._pos[0] = x
+            if (this._cachedPath) this.updateCachedPath()
+        }
+    }
+    set y(y) {
+        y = CDEUtils.round(y, _BaseObj.POSITION_PRECISION)
+        if (this._pos[1] != y) {
+            this._pos[1] = y
+            if (this._cachedPath) this.updateCachedPath()
+        }
+    }
+    set pos(pos) {
+        if (!CDEUtils.arr2Equals(pos, this._pos)) {
+            this.x = pos[0]
+            this.y = pos[1]
+            if (this._cachedPath) this.updateCachedPath()
+        }
+    }
+    set relativeX(x) {this.x = this.anchorPos[0]+x}
+    set relativeY(y) {this.y = this.anchorPos[1]+y}
+    set relativePos(pos) {
+        this.relativeX = CDEUtils.round(pos[0], _BaseObj.POSITION_PRECISION)
+        this.relativeY = CDEUtils.round(pos[1], _BaseObj.POSITION_PRECISION)
+    }
+    set radius(radius) {
+        radius = CDEUtils.round(radius<0?0:radius, _Obj.RADIUS_PRECISION)
+        if (this._radius != radius) {
+            this._radius = radius
+            if (this._cachedPath) this.updateCachedPath()
+        }
+    }
     set limit(limit) {this._parent.limit = limit}
     set connections(c) {return this._connections = c}
+    set cachedPath(path) {this._cachedPath = path}
 }

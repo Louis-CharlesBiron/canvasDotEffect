@@ -17,11 +17,14 @@ class Gradient extends _DynamicColor {
             positions, // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
             rotation   // rotation of the gradient, not applicable for radial type
         ) 
+        this.id = Gradient.a++
         this._ctx = ctx.ctx??ctx                 // canvas context
         this._type = type||Gradient.DEFAULT_TYPE // type of gradient
         this._colorStops = colorStops.map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
         this.update()
     }
+
+    static a =0
 
     /**
      * Given an canvas object, returns automatic positions values for linear, radial or conic gradients
@@ -59,8 +62,8 @@ class Gradient extends _DynamicColor {
     }
 
     #getLinearPositions(x, y, x2, y2, cx, cy) {
-        const cosV = Math.cos(CDEUtils.toRad(this._rotation)), sinV = Math.sin(CDEUtils.toRad(this._rotation))
-        return [[CDEUtils.round((x*cosV-y*sinV)+cx), CDEUtils.round((x*sinV+y*cosV)+cy)], [CDEUtils.round((x2*cosV-y2*sinV)+cx), CDEUtils.round((x2*sinV+y2*cosV)+cy)]]
+        const cosV = Math.cos(CDEUtils.toRad(this._rotation)), sinV = Math.sin(CDEUtils.toRad(this._rotation)), round = CDEUtils.round
+        return [[round((x*cosV-y*sinV)+cx), round((x*sinV+y*cosV)+cy)], [round((x2*cosV-y2*sinV)+cx), round((x2*sinV+y2*cosV)+cy)]]
     }
 
     #getRadialPositions(x, y, coverRadius) {
@@ -100,15 +103,13 @@ class Gradient extends _DynamicColor {
     }
 
     // Creates and returns the gradient. Updates it if the initPositions is a Shape/Dot/TextDisplay instance
-    update() {
-        if (this._initPositions !== _DynamicColor.PLACEHOLDER) return this._value = Gradient.getCanvasGradient(this._ctx, this._positions = this.getAutomaticPositions(), this._colorStops, this._type, this._rotation)
-    }
+    update(force) {
+        if (this._initPositions != _DynamicColor.PLACEHOLDER) {
+            const positions = this.getAutomaticPositions()
 
-    // returns a CanvasGradient instance from the provided parameters
-    static getCanvasGradient(ctx, positions, colorStops, type, rotation) {
-        const canvasGradient = type==Gradient.TYPES.CONIC ? ctx.createConicGradient(CDEUtils.toRad(rotation), positions[0], positions[1]) : ctx[`create${type}Gradient`](...positions[0], ...positions[1]), cs_ll = colorStops.length
-        for (let i=0;i<cs_ll;i++) canvasGradient.addColorStop(colorStops[i][0], Color.getColorValue(colorStops[i][1]))
-        return canvasGradient
+            if (!force && Array.isArray(this._positions) && CDEUtils.arr22Equals(positions, this._positions)) return;
+            return this._value = Gradient.getCanvasGradient(this._ctx, this._positions = positions, this._colorStops, this._type, this._rotation)
+        }
     }
 
     // returns a separate copy of the Gradient
@@ -119,6 +120,13 @@ class Gradient extends _DynamicColor {
     toString() {
         const sep = Gradient.SERIALIZATION_SEPARATOR
         return this._positions+sep+this._colorStops.flat().join(Gradient.SERIALIZATION_COLOR_STOPS_SEPARATOR)+sep+this._type+sep+this._rotation
+    }
+
+    // returns a CanvasGradient instance from the provided parameters
+    static getCanvasGradient(ctx, positions, colorStops, type, rotation) {
+        const canvasGradient = type==Gradient.TYPES.CONIC ? ctx.createConicGradient(CDEUtils.toRad(rotation), positions[0], positions[1]) : ctx[`create${type}Gradient`](...positions[0], ...positions[1]), cs_ll = colorStops.length
+        for (let i=0;i<cs_ll;i++) canvasGradient.addColorStop(colorStops[i][0], Color.getColorValue(colorStops[i][1]))
+        return canvasGradient
     }
 
     // returns a CanvasGradient instance from a serialized Gradient string
@@ -144,5 +152,4 @@ class Gradient extends _DynamicColor {
         this._type = type
         if (!this.isDynamic) this.update()
     }
-
 }

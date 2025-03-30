@@ -5,7 +5,6 @@
 
 // Represents the user's keyboard
 class TypingDevice {
-
     constructor() {
         this._keysPressed = [] // Current keys pressed (down)
     }

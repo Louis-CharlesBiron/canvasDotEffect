@@ -32,6 +32,25 @@ class FilledShape extends Shape {
         }
     }
 
+    // updates the path perimeter if the dots pos have changed
+    updatePath() {
+        const d_ll = this.dots.length
+        if (d_ll) {
+            const currentDotPos = this.dotsPositions
+            if (currentDotPos !== this.#lastDotsPos) {
+                this.#lastDotsPos = currentDotPos
+                this._path = new Path2D()
+                const firstDotPos = this.dots[0].pos
+                this._path.moveTo(firstDotPos[0], firstDotPos[1])
+                for (let i=1;i<d_ll;i++) {
+                    const dotPos = this.dots[i].pos
+                    this._path.lineTo(dotPos[0], dotPos[1])
+                }
+                this._path.closePath()
+            } 
+        }
+    }
+
     // returns a separate copy of this FilledShape (only initialized for objects)
     duplicate() {
         const fillColorObject = this._fillColor, fillColorRaw = fillColorObject.colorRaw, colorObject = this._color, colorRaw = colorObject.colorRaw, filledShape = new FilledShape(
@@ -55,25 +74,6 @@ class FilledShape extends Shape {
         return this.initialized ? filledShape : null
     }
 
-    // updates the path perimeter if the dots pos have changed
-    updatePath() {
-        const d_ll = this.dots.length
-        if (d_ll) {
-            const currentDotPos = this.dotsPositions
-            if (currentDotPos !== this.#lastDotsPos) {
-                this.#lastDotsPos = currentDotPos
-                this._path = new Path2D()
-                const firstDotPos = this.dots[0].pos
-                this._path.moveTo(firstDotPos[0], firstDotPos[1])
-                for (let i=1;i<d_ll;i++) {
-                    const dotPos = this.dots[i].pos
-                    this._path.lineTo(dotPos[0], dotPos[1])
-                }
-                this._path.closePath()
-            } 
-        }
-    }
-
     get fillColorObject() {return this._fillColor}
     get fillColorRaw() {return this._fillColor.colorRaw}
     get fillColor() {return this._fillColor.color}
@@ -81,8 +81,9 @@ class FilledShape extends Shape {
 	get path() {return this._path}
 	get dynamicUpdates() {return this._dynamicUpdates}
 
-    set fillColor(fillColor) {// todo, kind duplicated code ↓
-        if (!this._fillColor || this._fillColor?.colorRaw?.toString() !== fillColor?.toString()) {
+    set fillColor(fillColor) {
+        const fc = this._fillColor
+        if (!fc || fc?.colorRaw?.toString() !== fillColor?.toString()) {
             const specialColor = fillColor?.colorRaw||fillColor
             if (specialColor?.positions==_DynamicColor.PLACEHOLDER) {
                 if (!fillColor.isChannel) fillColor = specialColor.duplicate()
@@ -90,7 +91,9 @@ class FilledShape extends Shape {
                 fillColor.initPositions = this
             }
 
-            this._fillColor = Color.adjust(fillColor) // TODO OPTIMIZE
+            
+            if (fc instanceof Color) fc.color = color
+            else this._fillColor = Color.adjust(fillColor)
         }
     }
 	set dynamicUpdates(_dynamicUpdates) {return this._dynamicUpdates = _dynamicUpdates}

@@ -49,7 +49,7 @@ class CDEUtils {
         return [arr[0], arr[1]]
     }
 
-    // creates a copy of the provided array. (only for length 2)
+    // creates a copy of the provided array. (only for length 3)
     static unlinkArr3(arr) {
         return [arr[0], arr[1], arr[2]]
     }
@@ -88,9 +88,14 @@ class CDEUtils {
         return arr1.every((v, i)=>v==arr2[i])
     }
     
-    // Pos array equals
+    // pos array equals
     static arr2Equals(arr1, arr2) {
         return arr1 && arr2 && arr1[0]==arr2[0] && arr1[1]==arr2[1]
+    }
+
+    // positions array equals
+    static arr22Equals(arr1, arr2) {
+        return arr1 && arr2 && arr1[0][0]==arr2[0][0] && arr1[0][1]==arr2[0][1] && arr1[1][0]==arr2[1][0] && arr1[1][1]==arr2[1][1]
     }
 
     /**
@@ -154,10 +159,11 @@ class CDEUtils {
         }
     }
 
-    // console.log with the stack trace
+    // console.log with the stack trace (DEBUG)
     static stackTraceLog(...logs) {
-        console.log(...logs)
-        throw new Error("stackTraceLog")
+        try {
+            throw new Error("stackTraceLog")
+        } catch(e) {console.log(e, ...logs)}
     }
 }
 // Create an instance of the FPSCounter and run every frame: either getFpsRaw for raw fps AND/OR getFps for averaged fps
@@ -199,28 +205,28 @@ class CanvasUtils {
     static SHOW_CENTERS_DOT_ID = {}
 
     // DEBUG // Can be used to display a dot at the specified shape pos (which is normally not visible)
-    static toggleCenter(shape, radius=5, color=[255,0,0,1]) {
+    static toggleCenter(canvas, shape, radius=5, color=[255,0,0,1]) {
         if (!CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]) {
             const dot = new Dot([0,0], radius, color, null, shape)
             CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id] = dot.id
-            CVS.add(dot, true)
+            canvas.add(dot)
         } else {
-            CVS.remove(CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id])
+            canvas.remove(CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id])
             delete CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]
         }
     }
 
     // DEBUG // Create dots at provided intersection points
-    static showIntersectionPoints(res) {
+    static showIntersectionPoints(canvas, res) {
         const s_d1 = new Dot(res.source.inner, 3, [255,0,0,1]),
             s_d2 = new Dot(res.source.outer, 3, [255,0,0,0.45]),
             t_d1 = new Dot(res.target.outer, 3, [255,0,0,0.45]),
             t_d2 = new Dot(res.target.inner, 3, [255,0,0,1])
         
-        CVS.add(s_d1, true)
-        CVS.add(s_d2, true)
-        CVS.add(t_d1, true)
-        CVS.add(t_d2, true)
+        canvas.add(s_d1)
+        canvas.add(s_d2)
+        canvas.add(t_d1)
+        canvas.add(t_d2)
     }
 
     // returns true if the provided dot is the first one of the shape
@@ -228,7 +234,7 @@ class CanvasUtils {
         return dot.id==dot.parent.firstDot.id
     }
     
-    // Generic function to draw an outer ring around a dot
+    // Generic function to draw an outer ring around a dot (forceBatching allows to force batching even if a URL filter is defined)
     static drawOuterRing(dot, renderStyles, radiusMultiplier, forceBatching) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
 
@@ -238,7 +244,7 @@ class CanvasUtils {
         else dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
     }
     
-    // Generic function to draw connection between the specified dot and a sourcePos
+    // Generic function to draw connection between the specified dot and a sourcePos (forceBatching allows to force batching even if a URL filter is defined)
     static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
         
@@ -254,7 +260,7 @@ class CanvasUtils {
         }
     }
 
-    // Generic function to draw connections between the specified dot and all the dots in its connections property
+    // Generic function to draw connections between the specified dot and all the dots in its connections property (forceBatching allows to force batching even if a URL filter is defined)
     static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
         const render = dot.render, dotPos = dot.pos, dotConnections = dot.connections, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter, hasURLFilter = filter&&filter.indexOf("#")!==-1
 
@@ -293,20 +299,17 @@ class CanvasUtils {
         }
     }
 
-
     // Returns a callback allowing a dot to have a custom trail effect
     static getTrailEffectCB(canvas, obj, length=8, moveEffectCB=null, disableDefaultMovements=false) {
         let trail = [], trailPos = new Array(length).fill(obj.pos), lastPos = null, equals = CDEUtils.arr2Equals, isDefaultMovements = !disableDefaultMovements
         for (let i=0;i<length;i++) {
             const trailObj = obj.duplicate()
             trail.push(trailObj)
-            canvas.add(trailObj, true)
+            canvas.add(trailObj)
         }
 
         return (mouse)=>{
-            const pos = CDEUtils.unlinkArr2(obj.pos)
-            
-            let isMoving = false
+            let pos = CDEUtils.unlinkArr2(obj.pos), isMoving = false
             if (!equals(lastPos, pos)) {
                 trailPos.shift()
                 trailPos.push(pos)
@@ -455,17 +458,6 @@ class Color {
         this._isChannel = isChannel // if true, this instance will be used as a color channel and will not duplicate
     }
 
-    // returns a new instance of the same color
-    duplicate(dynamicColorPositions) {
-        if (this._format == Color.FORMATS.GRADIENT || this._format == Color.FORMATS.PATTERN) return new Color(this._color.duplicate(dynamicColorPositions))
-        else return new Color(Color.#unlinkRGBA(this.#rgba))
-    }
-
-    // create a separate copy of an RGBA array
-    static #unlinkRGBA(rgba) {
-        return [rgba[0], rgba[1], rgba[2], rgba[3]]
-    }
-
     // updates the cached rgba value
     #updateCache() {
         if (this._format == Color.FORMATS.GRADIENT ||this._format == Color.FORMATS.PATTERN) this.#rgba = this.#hsv = []
@@ -523,6 +515,11 @@ class Color {
         return [hue, max&&(diff/max)*100, max*100]
     }
 
+    // create a separate copy of an RGBA array
+    static #unlinkRGBA(rgba) {
+        return [rgba[0], rgba[1], rgba[2], rgba[3]]
+    }
+
     // converts hsv to rbga (without default alpha)
     static #hsvToRgba(hsva) {
         let hue = hsva[0], sat = hsva[1]/100, bright = hsva[2]/100,
@@ -551,6 +548,7 @@ class Color {
 
     // returns the format of the provided color
     static getFormat(color) {
+        if (!color)CDEUtils.stackTraceLog(color)
         return Array.isArray(color) ?
             (color.length == 4 ? Color.FORMATS.RGBA : Color.FORMATS.HSV) :
         color instanceof Color ? Color.FORMATS.COLOR :
@@ -571,9 +569,11 @@ class Color {
 
     // creates an rgba array
     static rgba(r=255, g=255, b=255, a=1) {
-        return [CDEUtils.round(r, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(g, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(b, Color.DEFAULT_DECIMAL_ROUNDING_POINT), CDEUtils.round(a, Color.DEFAULT_DECIMAL_ROUNDING_POINT)]
+        const round = CDEUtils.round, roundingPoint = Color.DEFAULT_DECIMAL_ROUNDING_POINT
+        return [round(r, roundingPoint), round(g, roundingPoint), round(b, roundingPoint), round(a, roundingPoint)]
     }
 
+    // returns the usable value of a color from any supported format
     static getColorValue(color) {
         if (typeof color=="string" || color instanceof CanvasGradient || color instanceof CanvasPattern) return color
         else if (color instanceof _DynamicColor) return color.value
@@ -619,6 +619,12 @@ class Color {
         return null
     }
 
+    // returns a new instance of the same color
+    duplicate(dynamicColorPositions) {
+        if (this._format == Color.FORMATS.GRADIENT || this._format == Color.FORMATS.PATTERN) return new Color(this._color.duplicate(dynamicColorPositions))
+        else return new Color(Color.#unlinkRGBA(this.#rgba))
+    }
+
     toString() {
         let colorValue = Color.getColorValue(this._color)
         if (colorValue instanceof CanvasGradient || colorValue instanceof CanvasPattern) colorValue = this._color.toString()
@@ -642,33 +648,38 @@ class Color {
     get saturation() {return this.#hsv[1]}
     get brightness() {return this.#hsv[2]}
 
-
     set color(color) {
-        this._color = color
-        this._format = Color.getFormat(color)
+        this._color = color?._color||color
+        this._format = Color.getFormat(this._color)
         this.#updateCache()
     }
     set r(r) {this.#rgba[0] = CDEUtils.round(r, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
     set g(g) {this.#rgba[1] = CDEUtils.round(g, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
     set b(b) {this.#rgba[2] = CDEUtils.round(b, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
     set a(a) {this.#rgba[3] = CDEUtils.round(a, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
+    set rgba(rgba) {
+        this.#rgba[0] = CDEUtils.round(rgba[0], Color.DEFAULT_DECIMAL_ROUNDING_POINT)
+        this.#rgba[1] = CDEUtils.round(rgba[1], Color.DEFAULT_DECIMAL_ROUNDING_POINT)
+        this.#rgba[2] = CDEUtils.round(rgba[2], Color.DEFAULT_DECIMAL_ROUNDING_POINT)
+        this.#rgba[3] = CDEUtils.round(rgba[3], Color.DEFAULT_DECIMAL_ROUNDING_POINT)
+    }
     set hue(hue) {
         hue = hue%360
-        if (this.#hsv[0] !== hue) {
+        if (this.#hsv[0] != hue) {
             this.#hsv[0] = hue
             this.#rgba = Color.#hsvToRgba(this.#hsv)
         }
     }
     set saturation(saturation) {
         saturation = saturation>100?100:saturation
-        if (this.#hsv[1] !== saturation) {
+        if (this.#hsv[1] != saturation) {
         this.#hsv[1] = saturation
         this.#rgba = Color.#hsvToRgba(this.#hsv)
         }
     }
     set brightness(brightness) {
         brightness = brightness>100?100:brightness
-        if (this.#hsv[2] !== brightness) {
+        if (this.#hsv[2] != brightness) {
             this.#hsv[2] = brightness
             this.#rgba = Color.#hsvToRgba(this.#hsv)
         }
@@ -691,8 +702,6 @@ class _HasColor {
         return CDEUtils.isFunction(this._initColor) ? this._initColor(this) : this._initColor||null
     }
 
-    
-
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}
     get color() {return this._color?.color}
@@ -708,7 +717,8 @@ class _HasColor {
     get brightness() {return this._color.brightness}
 
     set color(color) {
-        if (!this._color || this._color?.colorRaw?.toString() !== color?.toString()) {
+        const c = this._color
+        if (!c || c?.colorRaw?.toString() !== color?.toString()) {
             const specialColor = color?.colorRaw||color
             if (specialColor?.positions==_DynamicColor.PLACEHOLDER) {
                 if (!color.isChannel) color = specialColor.duplicate()
@@ -716,11 +726,10 @@ class _HasColor {
                 color.initPositions = this
             }
 
-            this._color = Color.adjust(color) // TODO OPTIMIZE
+            if (c instanceof Color) c.color = color
+            else this._color = Color.adjust(color)
         }
     }
-
-    
     set r(r) {this._color.r = r}
     set g(g) {this._color.g = g}
     set b(b) {this._color.b = b}
@@ -1264,11 +1273,7 @@ class GridAssets {
             ]
         }
     }
-
-
-    
 }
-
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
 // Please don't use or credit this code as your own.
@@ -1276,7 +1281,6 @@ class GridAssets {
 
 // Represents the user's keyboard
 class TypingDevice {
-
     constructor() {
         this._keysPressed = [] // Current keys pressed (down)
     }
@@ -1386,6 +1390,7 @@ class Mouse {
 	get valid() {return this._valid}
 	get x() {return this._x}
 	get y() {return this._y}
+	get pos() {return [this._x, this._y]}
 	get lastX() {return this._lastX}
 	get lastY() {return this._lastY}
 	get dir() {return this._dir}
@@ -1395,7 +1400,6 @@ class Mouse {
 	get rightClicked() {return this._rightClicked}
 	get extraBackClicked() {return this._extraBackClicked}
 	get extraForwardClicked() {return this._extraForwardClicked}
-	get pos() {return [this._x, this._y]}
 
 	set valid(valid) {return this._valid = valid}
 	set lastX(_lastX) {return this._lastX = _lastX}
@@ -1422,8 +1426,8 @@ class Render {
     static DEFAULT_COMPOSITE_OPERATION = Render.COMPOSITE_OPERATIONS.SOURCE_OVER
     static DEFAULT_FILTER = "none"
     static DEFAULT_ALPHA = 1
-    static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
-    static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEIZER:Render.getBeizerCurve}
+    static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
+    static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve}
     static DRAW_METHODS = {FILL:"FILL", STROKE:"STROKE"}
 
     #currentCtxVisuals = [Color.DEFAULT_COLOR_VALUE, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA]
@@ -1475,10 +1479,10 @@ class Render {
         return [endPos[0]*spread, startPos[1]*spread]
     }
 
-    // instanciates and returns a path containing a cubic beizer curve
-    static getBeizerCurve(startPos, endPos, controlPos1, controlPos2) {
+    // instanciates and returns a path containing a cubic bezier curve
+    static getBezierCurve(startPos, endPos, controlPos1, controlPos2) {
         if (!controlPos2 || !controlPos1) {
-            const controlPoses = Render.getDefaultBeizerControlPos(startPos, endPos, controlPos1||undefined)
+            const controlPoses = Render.getDefaultBezierControlPos(startPos, endPos, controlPos1||undefined)
             controlPos1 = controlPoses[0]
             controlPos2 ??= controlPoses[1]
         }
@@ -1489,8 +1493,8 @@ class Render {
         return path
     }
 
-    // returns 2 control positions to create a decent default beizer curve
-    static getDefaultBeizerControlPos(startPos, endPos, spread=0.75) {
+    // returns 2 control positions to create a decent default bezier curve
+    static getDefaultBezierControlPos(startPos, endPos, spread=0.75) {
         const [startX, startY] = startPos, [endX, endY] = endPos
         return [[startX+(endX-startX)*(1-spread), startY+(endY-startY)*spread], [endX-(endX-startX)*(1-spread), endY-(endY-startY)*spread]]
     }
@@ -1532,14 +1536,14 @@ class Render {
     }
 
     // creates and adds a new custom RenderStyles profile base on a given base profile
-    addCustomStylesProfile(baseProfile=this._defaultProfile) {
+    createCustomStylesProfile(baseProfile=this._defaultProfile) {
         const profile = baseProfile.duplicate()
         this._profiles.push(profile)
         return profile
     }
 
     // creates and adds a new custom TextStyles profile base on a given base profile
-    addCustomStylesProfile(baseTextProfile=this._defaultTextProfile) {
+    createCustomTextStylesProfile(baseTextProfile=this._defaultTextProfile) {
         const textProfile = baseTextProfile.duplicate()
         this._textProfiles.push(textProfile)
         return textProfile
@@ -1827,6 +1831,7 @@ class TextStyles {
         if (textRendering && currentTextStyles[9] !== textRendering) currentTextStyles[9] = ctx.textRendering = textRendering
     }
 
+    get id() {return this.id}
     get render() {return this._render}
 	get font() {return this._font}
 	get letterSpacing() {return +this._letterSpacing.replace("px","")}
@@ -1853,7 +1858,6 @@ class TextStyles {
 	set textAlign(_textAlign) {this._textAlign = _textAlign}
 	set textBaseline(_textBaseline) {this._textBaseline = _textBaseline}
 	set textRendering(_textRendering) {this._textRendering = _textRendering}
-
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -1968,6 +1972,7 @@ class RenderStyles extends _HasColor {
     }
 
 
+    get id() {return this.id}
 	get render() {return this._render}
 	get lineWidth() {return this._lineWidth}
 	get lineCap() {return this._lineCap}
@@ -2009,6 +2014,7 @@ class Canvas {
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)"}
+    static STATIC_MODE = 0
     static #ON_LOAD_CALLBACKS = []
     static #ON_FIRST_INTERACT_CALLBACKS = []
 
@@ -2021,7 +2027,7 @@ class Canvas {
     #cachedEls_ll = null     // cached canvas elements count/length
     #lastScrollValues = [window.scrollX, window.screenY]
 
-    constructor(cvs, loopingCallback, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
+    constructor(cvs, loopingCB, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                               // html canvas element
         this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
         this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)       // set styles selector for canvas
@@ -2030,7 +2036,7 @@ class Canvas {
         this._settings = this.updateSettings(settings)                // set context settings
         this._els = {refs:[], defs:[]}                                // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
         this._looping = false                                         // loop state
-        this._loopingCallback = loopingCallback                       // custom callback called along with the loop() function
+        this._loopingCB = loopingCB                       // custom callback called along with the loop() function
         this.fpsLimit = fpsLimit                                      // delay between each frame to limit fps
         this._speedModifier = 1                                       // animation/drawing speed multiplier
         this.#maxTime = this.#getMaxTime(fpsLimit)                    // max time between frames
@@ -2162,6 +2168,7 @@ class Canvas {
         if (this._looping) CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
     }
 
+    // core actions of the main loop
     #loopCore(time) {
         this.#calcDeltaTime(time)
 
@@ -2174,7 +2181,7 @@ class Canvas {
             this.draw()
             this._render.drawBatched()
             
-            if (CDEUtils.isFunction(this._loopingCallback)) this._loopingCallback()
+            if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB()
 
             this._fixedTimeStamp = 0
         } else if (time) {
@@ -2219,8 +2226,41 @@ class Canvas {
     }
 
     // clears the canvas
-    clear(x1=0, y1=0, x2 = this.width, y2 = this.height) {
-        this._ctx.clearRect(x1, y1, x2, y2)
+    clear(x=0, y=0, x2=this.width, y2=this.height) {
+        this._ctx.clearRect(x, y, x2, y2)
+    }
+
+    // initializes the canvas as static
+    initializeStatic() {
+        this.fpsLimit = 0
+        this.draw()
+        this.drawStatic()
+        
+        const imageDisplays = this.getObjs(ImageDisplay), id_ll = imageDisplays.length
+        for (let i=0;i<id_ll;i++) {
+            const imageDisplay = imageDisplays[i]
+            if (imageDisplay.setupCB === null) imageDisplay.setupCB = el=>el.draw(this.render, this.timeStamp*this._speedModifier, this._deltaTime)
+            else if (CDEUtils.isFunction(imageDisplay.setupCB)) {
+                const oldCB = imageDisplay.setupCB
+                imageDisplay.setupCB = (el, parent)=>{
+                    el.draw(this.render, this.timeStamp*this._speedModifier, this._deltaTime)
+                    oldCB(el, parent)
+                }
+            }
+        }
+    }
+
+    // draws a single frame (use with static canvas)
+    drawStatic() {
+        this.draw()
+        this._render.drawBatched()
+        if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB()
+    }
+
+    // clears the canvas and draws a single frame (use with static canvas)
+    cleanDrawStatic() {
+        this.clear()
+        this.drawStatic()
     }
 
     // resets every fragile references
@@ -2270,15 +2310,15 @@ class Canvas {
         return this._settings=st
     }
 
-    // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "active" is false, it only initializes the obj, without adding it to the canvas
-    add(objs, isDef, active=true) {// TODO, automate def and ref
+    // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "inactive" is true, it only initializes the obj, without adding it to the canvas
+    add(objs, inactive=false) {
         const l = objs&&(objs.length??1)
         for (let i=0;i<l;i++) {
             const obj = objs[i]??objs
             obj._parent = this
             
             if (CDEUtils.isFunction(obj.initialize)) obj.initialize()
-            if (active) this._els[isDef?"defs":"refs"].push(obj)
+            if (!inactive) this._els[obj.asSource?"refs":"defs"].push(obj)
 
         }
         this.updateCachedAllEls()
@@ -2297,7 +2337,12 @@ class Canvas {
 
     // get any element from the canvas by id
     get(id) {
-        return this.allEls.find(el=>el.id==id)
+        const els = this.#cachedEls, e_ll = this.#cachedEls_ll
+        for (let i=0;i<e_ll;i++) {
+            const el = els[i]
+            if (el.id==id) return el
+        }
+        return null
     }
 
     // removes any element from the canvas by instance type
@@ -2332,13 +2377,13 @@ class Canvas {
             const ref = this.refs[i]
             if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos = this._mouse.pos
         }
-        if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
+        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
 
         this._mouse.checkValid()
     }
 
     // defines the onmousemove listener
-    setmousemove(cb) {
+    setMouseMove(cb, global) {
         const onmousemove=e=>{
             // update pos and direction angle
             this._mouse.updatePos(e, this._offset)
@@ -2355,33 +2400,35 @@ class Canvas {
                 this.#mouseMovements(cb, e)
             }
         }
-        this._frame.addEventListener("mousemove", onmousemove)
-        this._frame.addEventListener("touchmove", ontouchmove)
+        const element = global ? document : this._frame
+        element.addEventListener("mousemove", onmousemove)
+        element.addEventListener("touchmove", ontouchmove)
         return ()=>{
-            this._frame.removeEventListener("mousemove", onmousemove)
-            this._frame.removeEventListener("touchmove", ontouchmove)
+            element.removeEventListener("mousemove", onmousemove)
+            element.removeEventListener("touchmove", ontouchmove)
         }
     }
 
     // defines the onmouseleave listener
-    setmouseleave(cb) {
+    setMouseLeave(cb, global) {
         const onmouseleave=e=>{
             this._mouse.invalidate()
             this.#mouseMovements(cb, e)
         }
-        this._frame.addEventListener("mouseleave", onmouseleave)
-        return ()=>this._frame.removeEventListener("mouseleave", onmouseleave)
+        const element = global ? document : this._frame
+        element.addEventListener("mouseleave", onmouseleave)
+        return ()=>element.removeEventListener("mouseleave", onmouseleave)
     }
 
     // called on any mouse clicks
     #mouseClicks(cb, e) {
         this._mouse.setMouseClicks(e)
-        if (CDEUtils.isFunction(cb)) cb(e, this._mouse)
+        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
         if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
     }
 
     // defines the onmousedown listener
-    setmousedown(cb) {
+    setMouseDown(cb, global) {
         let isTouch = false
         const ontouchstart=e=>{
             isTouch = true
@@ -2397,16 +2444,17 @@ class Canvas {
             if (!isTouch) this.#mouseClicks(cb, e)
             isTouch = false
         }
-        this._frame.addEventListener("touchstart", ontouchstart)
-        this._frame.addEventListener("mousedown", onmousedown)
+        const element = global ? document : this._frame
+        element.addEventListener("touchstart", ontouchstart)
+        element.addEventListener("mousedown", onmousedown)
         return ()=>{
-            this._frame.removeEventListener("touchstart", ontouchstart)
-            this._frame.removeEventListener("mousedown", onmousedown)
+            element.removeEventListener("touchstart", ontouchstart)
+            element.removeEventListener("mousedown", onmousedown)
         }
     }
 
     // defines the onmouseup listener
-    setmouseup(cb) {
+    setMouseUp(cb, global) {
         let isTouch = false
         const ontouchend=e=>{
             isTouch = true
@@ -2422,19 +2470,20 @@ class Canvas {
             if (!isTouch) this.#mouseClicks(cb, e)
             isTouch = false
         }
-        this._frame.addEventListener("touchend", ontouchend)
-        this._frame.addEventListener("mouseup", onmouseup)
+        const element = global ? document : this._frame
+        element.addEventListener("touchend", ontouchend)
+        element.addEventListener("mouseup", onmouseup)
         return ()=>{
-            this._frame.removeEventListener("touchend", ontouchend)
-            this._frame.removeEventListener("mouseup", onmouseup)
+            element.removeEventListener("touchend", ontouchend)
+            element.removeEventListener("mouseup", onmouseup)
         }
     }
 
     // defines the onkeydown listener
-    setkeydown(cb, global) {
+    setKeyDown(cb, global) {
         const onkeydown=e=>{
             this._typingDevice.setDown(e)
-            if (CDEUtils.isFunction(cb)) cb(e, this._typingDevice)
+            if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
             }, globalFirstInteractOnKeyDown=e=>{if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)}
         
         const element = global ? document : this._frame
@@ -2444,10 +2493,10 @@ class Canvas {
     }
 
     // defines the onkeyup listener
-    setkeyup(cb, global) {
+    setKeyUp(cb, global) {
         const onkeyup=e=>{
             this._typingDevice.setUp(e)
-            if (CDEUtils.isFunction(cb)) cb(e, this._typingDevice)
+            if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
         }
 
         const element = global ? document : this._frame
@@ -2460,6 +2509,7 @@ class Canvas {
         return [this.width/2, this.height/2]
     }
 
+    // returns whether the provided position is within the canvas bounds
     isWithin(pos, padding=0) {
         const [x,y] = pos
         return x >= -padding && x <= this.width+padding && y >= -padding && y <= this.height+padding
@@ -2471,7 +2521,7 @@ class Canvas {
 	get width() {return this._cvs.width}
 	get height() {return this._cvs.height}
 	get settings() {return this._settings}
-	get loopingCallback() {return this._loopingCallback}
+	get loopingCB() {return this._loopingCB}
 	get looping() {return this._looping}
 	get deltaTime() {return this._deltaTime}
 	get windowListeners() {return this._windowListeners}
@@ -2487,13 +2537,16 @@ class Canvas {
     get allDefsAndRefs() {return this.defs.concat(this.refs)}
     get allEls() {return this.allDefsAndRefs.flatMap(x=>x.dots||x)}
     get fpsLimitRaw() {return this._fpsLimit}
-    get fpsLimit() {return this._fpsLimit==null||!isFinite(this._fpsLimit) ? null : 1/(this._fpsLimit/1000)}
+    get fpsLimit() {
+        const isStatic = !isFinite(this._fpsLimit)
+        return this._fpsLimit==null||isStatic ? isStatic ? "static" : null : 1/(this._fpsLimit/1000)
+    }
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
     get render() {return this._render}
     get speedModifier() {return this._speedModifier}
 
-	set loopingCallback(loopingCallback) {this._loopingCallback = loopingCallback}
+	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
 	set width(w) {this.setSize(w, null)}
 	set height(h) {this.setSize(null, h)}
 	set offset(offset) {this._offset = offset}
@@ -2632,7 +2685,7 @@ class _BaseObj extends _HasColor {
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
         this._initPos = pos||[0,0]               // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = [0,0]                        // current position from the center of the object : [x,y]
-        this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
+        this._setupCB = setupCB??null            // called on object's initialization (this, this.parent)=>
         this._loopCB = loopCB                    // called each frame for this object (this)=>
         this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
@@ -2654,26 +2707,6 @@ class _BaseObj extends _HasColor {
         if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this.parent)
     }
 
-    // returns the value of the inital color declaration
-    getInitColor() {
-        return CDEUtils.isFunction(this._initColor) ? this._initColor(this.render??this.parent.render, this) : this._initColor||null
-    }
-
-    // returns the value of the inital pos declaration
-    getInitPos() {
-        return CDEUtils.isFunction(this._initPos) ? CDEUtils.unlinkArr2(this._initPos(this._parent instanceof Canvas?this:this._parent, this)) : CDEUtils.unlinkArr2(this.adjustPos(this._initPos))
-    }
-
-    setAnchoredPos() {
-        const anchorPos = this.hasAnchorPosChanged
-        if (anchorPos) {
-            const [anchorPosX, anchorPosY] = anchorPos
-            this.relativeX += anchorPosX-this.#lastAnchorPos[0]
-            this.relativeY += anchorPosY-this.#lastAnchorPos[1]
-            this.#lastAnchorPos = anchorPos
-        }
-    }
-
     // Runs every frame
     draw(time, deltaTime) {
         this.setAnchoredPos()
@@ -2684,6 +2717,27 @@ class _BaseObj extends _HasColor {
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         const a_ll = anims.length
         if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
+    }
+
+    // returns the value of the inital color declaration
+    getInitColor() {
+        return CDEUtils.isFunction(this._initColor) ? this._initColor(this.render??this.parent.render, this) : this._initColor||null
+    }
+
+    // returns the value of the inital pos declaration
+    getInitPos() {
+        return CDEUtils.isFunction(this._initPos) ? CDEUtils.unlinkArr2(this._initPos(this._parent instanceof Canvas?this:this._parent, this)) : CDEUtils.unlinkArr2(this.adjustPos(this._initPos))
+    }
+
+    // sets the pos of the object according to its anchorPos
+    setAnchoredPos() {
+        const anchorPos = this.hasAnchorPosChanged
+        if (anchorPos) {
+            const [anchorPosX, anchorPosY] = anchorPos
+            this.relativeX += anchorPosX-this.#lastAnchorPos[0]
+            this.relativeY += anchorPosY-this.#lastAnchorPos[1]
+            this.#lastAnchorPos = anchorPos
+        }
     }
 
     // Teleports to given coords
@@ -2708,11 +2762,7 @@ class _BaseObj extends _HasColor {
         isUnique??=true
         force??=true
 
-        const [ix, iy] = initPos, 
-            [fx, fy] = this.adjustPos(pos),
-            dx = fx-ix,
-            dy = fy-iy
-
+        const [ix, iy] = initPos, [fx, fy] = this.adjustPos(pos), dx = fx-ix, dy = fy-iy
         return this.playAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
             this.y = iy+dy*prog
@@ -2810,6 +2860,12 @@ class _BaseObj extends _HasColor {
         return anim
     }
 
+    // clears all blacklog and currents anim
+    clearAnims() {
+        this._anims.backlog = []
+        this._anims.currents = []
+    }
+
     // allows flexible pos declarations
     adjustPos(pos) {
         let [x, y] = pos
@@ -2868,14 +2924,15 @@ class _BaseObj extends _HasColor {
     get compositeOperation() {return this._visualEffects?.[1]??Render.DEFAULT_COMPOSITE_OPERATION}
     get opacity() {return this._visualEffects?.[2]??Render.DEFAULT_ALPHA}
 
+
     set x(x) {this._pos[0] = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)}
     set y(y) {this._pos[1] = CDEUtils.round(y, _BaseObj.POSITION_PRECISION)}
     set pos(pos) {
         this.x = pos[0]
         this.y = pos[1]
     }
-    set relativeX(x) {this._pos[0] = CDEUtils.round(this.anchorPos[0]+x, _BaseObj.POSITION_PRECISION)}
-    set relativeY(y) {this._pos[1] = CDEUtils.round(this.anchorPos[1]+y, _BaseObj.POSITION_PRECISION)}
+    set relativeX(x) {this.x = this.anchorPos[0]+x}
+    set relativeY(y) {this.y = this.anchorPos[1]+y}
     set relativePos(pos) {
         this.relativeX = CDEUtils.round(pos[0], _BaseObj.POSITION_PRECISION)
         this.relativeY = CDEUtils.round(pos[1], _BaseObj.POSITION_PRECISION)
@@ -2950,17 +3007,9 @@ class AudioDisplay extends _BaseObj {
     static ERROR_TYPES = {NO_PERMISSION:0, NO_AUDIO_TRACK:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3}
     static BIQUAD_FILTER_TYPES = {DEFAULT:"allpass", ALLPASS:"allpass", BANDPASS:"bandpass", HIGHPASS:"highpass", HIGHSHELF:"highshelf", LOWPASS:"lowpass", LOWSHELF:"lowshelf", NOTCH:"notch", PEAKING:"peaking"}
 
-
-    /*************
-    TODO
-    - duplicate
-
-    */
-
-    #buffer_ll = null
-    #data = null
-    #fft = null
-    
+    #buffer_ll = null // the length of data
+    #data = null      // the fft data values (raw bins)
+    #fft = null       // the fftSize
     constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
         this._source = source??""                                         // the source of the audio
@@ -3060,7 +3109,6 @@ class AudioDisplay extends _BaseObj {
 
     // Initializes a audio data source
     static #initAudioDataSource(dataSource, loadCallback, errorCB) {
-        console.log(dataSource, dataSource.readyState)
         const initLoad=()=>{if (CDEUtils.isFunction(loadCallback)) loadCallback(dataSource)}
         dataSource.onerror=e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.FILE_NOT_FOUND, e)}
         if (dataSource.readyState) initLoad()
@@ -3090,7 +3138,7 @@ class AudioDisplay extends _BaseObj {
         audio.loop = looping
         if (autoPlay) {
             audio.autoplay = autoPlay
-            audio.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>audio.play()))
+            ImageDisplay.playMedia(audio)
         }
         return audio
     }
@@ -3203,7 +3251,7 @@ class AudioDisplay extends _BaseObj {
 
     // sets the convolverNode impulse response buffer
     setReverb(buffer=null) {
-        if (buffer) this._convolverNode.buffer = buffer// TODO
+        if (buffer) this._convolverNode.buffer = buffer
         else this.disconnectConvolver()
     }
     
@@ -3309,9 +3357,7 @@ class AudioDisplay extends _BaseObj {
         minRadius = minRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
         return (render, bin, pos, audioDisplay, accumulator, i) => {
             const radius = minRadius+maxRadius*bin, angle = angleStep*i
-    
             if (!(i%precision)) render.batchFill(Render.getArc([pos[0]+radius*Math.cos(angle), pos[1]+radius*Math.sin(angle)], particleRadius), audioDisplay._color, audioDisplay.visualEffects)
-    
             return [pos]
         }
     }
@@ -3348,7 +3394,7 @@ class AudioDisplay extends _BaseObj {
     set paused(paused) {
         try {
             if (paused) this._source.pause()
-            else this._source.play()
+            else ImageDisplay.playMedia(this._source)
         }catch(e){}
     }
     set isPaused(isPaused) {this.paused = isPaused}
@@ -3521,7 +3567,7 @@ class ImageDisplay extends _BaseObj {
         if (autoPlay) {
             video.mute = true
             video.autoplay = autoPlay
-            video.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>video.play()))
+            ImageDisplay.playMedia(video)
         }
         return video
     }
@@ -3555,6 +3601,27 @@ class ImageDisplay extends _BaseObj {
         }
     }
 
+    // Plays the source (use only if the source is a video)
+    playVideo() {
+        ImageDisplay.playMedia(this._source)
+    }
+
+    // Pauses the source (use only if the source is a video)
+    pauseVideo() {
+        const source = this._source
+        if (source instanceof HTMLVideoElement) source.pause()
+    }
+    
+    // Plays the source
+    static playMedia(source) {
+        if (source instanceof HTMLVideoElement || source instanceof HTMLAudioElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>{try{source.play()}catch(e){}}))
+    }
+    
+    // returns the natural size of the source
+    static getNaturalSize(source) {
+        return [source?.displayWidth||source?.videoWidth||source?.width, source?.displayHeight||source?.videoHeight||source?.height]
+    }
+
     // returns a separate copy of this ImageDisplay instance
     duplicate(source=this._source, pos=this.pos_, size=this._size, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
         const imageDisplay = new ImageDisplay(
@@ -3573,22 +3640,6 @@ class ImageDisplay extends _BaseObj {
         return this.initialized ? imageDisplay : null
     }
 
-    // Plays the source (use only if the source is a video)
-    playVideo() {
-        const source = this._source
-        if (source instanceof HTMLVideoElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>video.play()))
-    }
-
-    // Pauses the source (use only if the source is a video)
-    pauseVideo() {
-        const source = this._source
-        if (source instanceof HTMLVideoElement) source.pause()
-    }
-
-    // returns the natural size of the source
-    static getNaturalSize(source) {
-        return [source?.displayWidth||source?.videoWidth||source?.width, source?.displayHeight||source?.videoHeight||source?.height]
-    }
 
 	get size() {return this._size}
     get width() {return this._size[0]}
@@ -3617,7 +3668,7 @@ class ImageDisplay extends _BaseObj {
     set paused(paused) {
         try {
             if (paused) this._source.pause()
-            else this._source.play()
+            else ImageDisplay.playMedia(this._source)
         }catch(e){}
     }
     set isPaused(isPaused) {this.paused = isPaused}
@@ -3794,7 +3845,7 @@ class _DynamicColor {
 	get rotation() {return this._rotation}
 	get isDynamic() {return this._initPositions?.pos != null}
     get value() {
-        if (this.isDynamic) this.update(true)
+        if (this.isDynamic) this.update()
         return this._value
     }
 
@@ -3916,8 +3967,11 @@ class Pattern extends _DynamicColor {
                 if (time-this.#lastUpdateTime >= this._frameRate) this.#lastUpdateTime = time
                 else return;
             }
+
+            const positions = this.getAutomaticPositions()
+            if ((!source.currentTime || source.paused) && Array.isArray(this._positions) && CDEUtils.arr22Equals(positions, this._positions)) return;
+            this._positions = positions
             
-            this._positions = this.getAutomaticPositions()
             if (isCanvas) this._render._bactchedStandalones.push(()=>this._value = this.#getPattern(ctx, source))
             else this._value = this.#getPattern(ctx, source)
         }
@@ -3960,12 +4014,12 @@ class Pattern extends _DynamicColor {
 
     // Plays the source (use only if the source is a video)
     playVideo() {
-        this._source.play()
+        ImageDisplay.playMedia(this._source)
     }
 
     // Pauses the source (use only if the source is a video)
     pauseVideo() {
-        this._source.pause()
+        try {this._source.pause()}catch(e){}
     }
 
     // returns a separate copy of this Pattern instance
@@ -3998,7 +4052,7 @@ class Pattern extends _DynamicColor {
     get value() {
         const data = this._source
         if (data instanceof HTMLVideoElement && (!data.src && !data.srcObject?.active)) return Pattern.PLACEHOLDER_COLOR
-        if (this._forcedUpdates || data instanceof HTMLVideoElement || data instanceof HTMLCanvasElement) this.update() // TODO, for images/paused vids/static idk with forcedUpdates, only update when the positions have changed
+        if (this._forcedUpdates || data instanceof HTMLVideoElement || data instanceof HTMLCanvasElement) this.update()
         return this._value??Pattern.PLACEHOLDER_COLOR
     }
     get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
@@ -4060,6 +4114,7 @@ class Pattern extends _DynamicColor {
 // Abstract canvas obj class, with radius
 class _Obj extends _BaseObj {
     static DEFAULT_RADIUS = 5
+    static RADIUS_PRECISION = 4
 
     constructor(pos, radius, color, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
@@ -4085,14 +4140,9 @@ class _Obj extends _BaseObj {
     }
 
     get radius() {return this._radius}
-    get top() {return this.y-this._radius}
-    get bottom() {return this.y+this._radius}
-    get right() {return this.x+this._radius}
-    get left() {return this.x-this._radius}
-    get width() {return this._radius*2}
-    get height() {return this._radius*2}
     get initRadius() {return this._initRadius}
-    set radius(radius) {this._radius = radius<0?0:radius}
+
+    set radius(radius) {this._radius = CDEUtils.round(radius<0?0:radius, _Obj.RADIUS_PRECISION)}
     set initRadius(initRadius) {this._initRadius = initRadius}
 }
 // JS
@@ -4138,32 +4188,9 @@ class Shape extends _Obj {
         if (CDEUtils.isFunction(this._ratioPosCB)) this._ratioPos = this._ratioPosCB(this)
     }
 
-    // returns a separate copy of this Shape (only initialized for objects)
-    duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, fragile=this._fragile) {
-        const colorObject = color, colorRaw = colorObject.colorRaw, shape = new Shape(
-            pos,
-            dots,
-            radius,
-            (_,shape)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:shape):colorObject.duplicate(),
-            limit,
-            drawEffectCB,
-            ratioPosCB,
-            setupCB,
-            loopCB,
-            anchorPos,
-            alwaysActive,
-            fragile
-        )
-        shape._scale = CDEUtils.unlinkArr2(this._scale)
-        shape._rotation = this._rotation
-        shape._visualEffects = this.visualEffects_
-
-        return this.initialized ? shape : null
-    }
-
     // adds one or many dots to the shape
     add(dot) {
-        this._dots.push(...[dot].flat().map(dot=>{
+        this._dots.push(...[dot].flat().filter(dot=>dot).map(dot=>{
             if (dot.initColor==null) dot.initColor = this.colorRaw
             if (dot.initRadius==null) dot.initRadius = this._radius
             if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
@@ -4175,15 +4202,10 @@ class Shape extends _Obj {
         this._parent.updateCachedAllEls()
     }
 
-    // remove a dot from the shape by its id or by its instance
-    removeDot(idOrDot) {
-        this._dots = this._dots.filter(dot=>dot.id!==(idOrDot?.id??idOrDot))
-        this._parent.updateCachedAllEls()
-    }
-
-    // remove the shape and all its dots
-    remove() {
-        this._parent.remove(this._id)
+    // remove the shape and all its dots, or a single dot if id is specified
+    remove(id=null) {
+        if (id) this._dots = this._dots.filter(dot=>dot.id!=id)
+        else this._parent.remove(this._id)
         this._parent.updateCachedAllEls()
     }
 
@@ -4359,6 +4381,7 @@ class Shape extends _Obj {
         return false
     }
 
+    // returns the approximated center of the shape, based on its dots pos
     getCenter() {
         const rangeX = CDEUtils.getMinMax(this.dots, "x"), rangeY = CDEUtils.getMinMax(this.dots, "y")
         return [rangeX[0]+(rangeX[1]-rangeX[0])/2, rangeY[0]+(rangeY[1]-rangeY[0])/2]
@@ -4378,11 +4401,45 @@ class Shape extends _Obj {
         }
     }
 
+    // enables path caching for all dots of this shape
+    enableDotsPathCaching() {
+        const dots = this._dots, d_ll = dots.length
+        for (let i=0;i<d_ll;i++) dots[i].updateCachedPath()
+    }
+
+    // disables path caching for all dots of this shape
+    disableDotsPathCaching() {
+        const dots = this._dots, d_ll = dots.length
+        for (let i=0;i<d_ll;i++) dots[i].disablePathCaching()
+    }
+
+    // returns a separate copy of this Shape (only initialized for objects)
+    duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, fragile=this._fragile) {
+        const colorObject = color, colorRaw = colorObject.colorRaw, shape = new Shape(
+            pos,
+            dots,
+            radius,
+            (_,shape)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:shape):colorObject.duplicate(),
+            limit,
+            drawEffectCB,
+            ratioPosCB,
+            setupCB,
+            loopCB,
+            anchorPos,
+            alwaysActive,
+            fragile
+        )
+        shape._scale = CDEUtils.unlinkArr2(this._scale)
+        shape._rotation = this._rotation
+        shape._visualEffects = this.visualEffects_
+
+        return this.initialized ? shape : null
+    }
+
     get cvs() {return this._parent}
     get ctx() {return this.cvs.ctx}
     get render() {return this.cvs.render}
     get dots() {return this._dots}
-    get dotsPos() {return this._dots.map(dot=>dot.pos)}
     get limit() {return this._limit}
 	get initDots() {return this._initDots}
     get drawEffectCB() {return this._drawEffectCB}
@@ -4399,14 +4456,12 @@ class Shape extends _Obj {
     get thirdDot() {return this._dots[2]}
     get lastDot() {return CDEUtils.getLast(this._dots, 0)}
     get asSource() {return this._dots}
-    get setupResults() {return this._setupResults}
 
     set ratioPos(ratioPos) {this._ratioPos = ratioPos}
     set drawEffectCB(cb) {this._drawEffectCB = cb}
     set ratioPosCB(cb) {this._ratioPosCB = cb}
     set lastDotsPos(ldp) {this._lastDotsPos = ldp}
     set limit(limit) {this._limit = limit}
-    set setupResults(_setupResults) {this._setupResults = _setupResults}
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -4427,11 +4482,14 @@ class Gradient extends _DynamicColor {
             positions, // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
             rotation   // rotation of the gradient, not applicable for radial type
         ) 
+        this.id = Gradient.a++
         this._ctx = ctx.ctx??ctx                 // canvas context
         this._type = type||Gradient.DEFAULT_TYPE // type of gradient
         this._colorStops = colorStops.map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
         this.update()
     }
+
+    static a =0
 
     /**
      * Given an canvas object, returns automatic positions values for linear, radial or conic gradients
@@ -4469,8 +4527,8 @@ class Gradient extends _DynamicColor {
     }
 
     #getLinearPositions(x, y, x2, y2, cx, cy) {
-        const cosV = Math.cos(CDEUtils.toRad(this._rotation)), sinV = Math.sin(CDEUtils.toRad(this._rotation))
-        return [[CDEUtils.round((x*cosV-y*sinV)+cx), CDEUtils.round((x*sinV+y*cosV)+cy)], [CDEUtils.round((x2*cosV-y2*sinV)+cx), CDEUtils.round((x2*sinV+y2*cosV)+cy)]]
+        const cosV = Math.cos(CDEUtils.toRad(this._rotation)), sinV = Math.sin(CDEUtils.toRad(this._rotation)), round = CDEUtils.round
+        return [[round((x*cosV-y*sinV)+cx), round((x*sinV+y*cosV)+cy)], [round((x2*cosV-y2*sinV)+cx), round((x2*sinV+y2*cosV)+cy)]]
     }
 
     #getRadialPositions(x, y, coverRadius) {
@@ -4510,15 +4568,13 @@ class Gradient extends _DynamicColor {
     }
 
     // Creates and returns the gradient. Updates it if the initPositions is a Shape/Dot/TextDisplay instance
-    update() {
-        if (this._initPositions !== _DynamicColor.PLACEHOLDER) return this._value = Gradient.getCanvasGradient(this._ctx, this._positions = this.getAutomaticPositions(), this._colorStops, this._type, this._rotation)
-    }
+    update(force) {
+        if (this._initPositions != _DynamicColor.PLACEHOLDER) {
+            const positions = this.getAutomaticPositions()
 
-    // returns a CanvasGradient instance from the provided parameters
-    static getCanvasGradient(ctx, positions, colorStops, type, rotation) {
-        const canvasGradient = type==Gradient.TYPES.CONIC ? ctx.createConicGradient(CDEUtils.toRad(rotation), positions[0], positions[1]) : ctx[`create${type}Gradient`](...positions[0], ...positions[1]), cs_ll = colorStops.length
-        for (let i=0;i<cs_ll;i++) canvasGradient.addColorStop(colorStops[i][0], Color.getColorValue(colorStops[i][1]))
-        return canvasGradient
+            if (!force && Array.isArray(this._positions) && CDEUtils.arr22Equals(positions, this._positions)) return;
+            return this._value = Gradient.getCanvasGradient(this._ctx, this._positions = positions, this._colorStops, this._type, this._rotation)
+        }
     }
 
     // returns a separate copy of the Gradient
@@ -4529,6 +4585,13 @@ class Gradient extends _DynamicColor {
     toString() {
         const sep = Gradient.SERIALIZATION_SEPARATOR
         return this._positions+sep+this._colorStops.flat().join(Gradient.SERIALIZATION_COLOR_STOPS_SEPARATOR)+sep+this._type+sep+this._rotation
+    }
+
+    // returns a CanvasGradient instance from the provided parameters
+    static getCanvasGradient(ctx, positions, colorStops, type, rotation) {
+        const canvasGradient = type==Gradient.TYPES.CONIC ? ctx.createConicGradient(CDEUtils.toRad(rotation), positions[0], positions[1]) : ctx[`create${type}Gradient`](...positions[0], ...positions[1]), cs_ll = colorStops.length
+        for (let i=0;i<cs_ll;i++) canvasGradient.addColorStop(colorStops[i][0], Color.getColorValue(colorStops[i][1]))
+        return canvasGradient
     }
 
     // returns a CanvasGradient instance from a serialized Gradient string
@@ -4554,7 +4617,6 @@ class Gradient extends _DynamicColor {
         this._type = type
         if (!this.isDynamic) this.update()
     }
-
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -4590,6 +4652,25 @@ class FilledShape extends Shape {
         }
     }
 
+    // updates the path perimeter if the dots pos have changed
+    updatePath() {
+        const d_ll = this.dots.length
+        if (d_ll) {
+            const currentDotPos = this.dotsPositions
+            if (currentDotPos !== this.#lastDotsPos) {
+                this.#lastDotsPos = currentDotPos
+                this._path = new Path2D()
+                const firstDotPos = this.dots[0].pos
+                this._path.moveTo(firstDotPos[0], firstDotPos[1])
+                for (let i=1;i<d_ll;i++) {
+                    const dotPos = this.dots[i].pos
+                    this._path.lineTo(dotPos[0], dotPos[1])
+                }
+                this._path.closePath()
+            } 
+        }
+    }
+
     // returns a separate copy of this FilledShape (only initialized for objects)
     duplicate() {
         const fillColorObject = this._fillColor, fillColorRaw = fillColorObject.colorRaw, colorObject = this._color, colorRaw = colorObject.colorRaw, filledShape = new FilledShape(
@@ -4613,25 +4694,6 @@ class FilledShape extends Shape {
         return this.initialized ? filledShape : null
     }
 
-    // updates the path perimeter if the dots pos have changed
-    updatePath() {
-        const d_ll = this.dots.length
-        if (d_ll) {
-            const currentDotPos = this.dotsPositions
-            if (currentDotPos !== this.#lastDotsPos) {
-                this.#lastDotsPos = currentDotPos
-                this._path = new Path2D()
-                const firstDotPos = this.dots[0].pos
-                this._path.moveTo(firstDotPos[0], firstDotPos[1])
-                for (let i=1;i<d_ll;i++) {
-                    const dotPos = this.dots[i].pos
-                    this._path.lineTo(dotPos[0], dotPos[1])
-                }
-                this._path.closePath()
-            } 
-        }
-    }
-
     get fillColorObject() {return this._fillColor}
     get fillColorRaw() {return this._fillColor.colorRaw}
     get fillColor() {return this._fillColor.color}
@@ -4639,8 +4701,9 @@ class FilledShape extends Shape {
 	get path() {return this._path}
 	get dynamicUpdates() {return this._dynamicUpdates}
 
-    set fillColor(fillColor) {// todo, kind duplicated code â†“
-        if (!this._fillColor || this._fillColor?.colorRaw?.toString() !== fillColor?.toString()) {
+    set fillColor(fillColor) {
+        const fc = this._fillColor
+        if (!fc || fc?.colorRaw?.toString() !== fillColor?.toString()) {
             const specialColor = fillColor?.colorRaw||fillColor
             if (specialColor?.positions==_DynamicColor.PLACEHOLDER) {
                 if (!fillColor.isChannel) fillColor = specialColor.duplicate()
@@ -4648,7 +4711,9 @@ class FilledShape extends Shape {
                 fillColor.initPositions = this
             }
 
-            this._fillColor = Color.adjust(fillColor) // TODO OPTIMIZE
+            
+            if (fc instanceof Color) fc.color = color
+            else this._fillColor = Color.adjust(fillColor)
         }
     }
 	set dynamicUpdates(_dynamicUpdates) {return this._dynamicUpdates = _dynamicUpdates}
@@ -4660,28 +4725,94 @@ class FilledShape extends Shape {
 
 // Allows the creation of symbols/text based on specific source
 class Grid extends Shape {
-    static DEFAULT_GAPS = [25, 25]
+    static DEFAULT_KEYS = ""
+    static DEFAULT_GAPS = [10, 10]
+    static DEFAULT_SOURCE = GridAssets.DEFAULT_SOURCE
+    static DELETION_VALUE = null
+    static SAME_VALUE = undefined
 
+    #symbolsReferences = []
     constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
         super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)
 
-        this._keys = keys                                  // keys to convert to source's values as a string
-        this._gaps = gaps ?? Grid.DEFAULT_GAPS             // [x, y] gap length within the dots
-        this._source = source ?? GridAssets.DEFAULT_SOURCE // symbols' source
-        this._spacing = spacing ?? this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
+        this._keys = keys??Grid.DEFAULT_KEYS        // keys to convert to source's values as a string
+        this._gaps = gaps??Grid.DEFAULT_GAPS        // [x, y] gap length within the dots
+        this._source = source?? Grid.DEFAULT_SOURCE // symbols' source
+        this._spacing = spacing??this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
     }
 
     initialize() {
         this._pos = this.getInitPos()
         this.setAnchoredPos()
 
-        if (this._keys) this.add(this.createGrid())
+        if (this._keys) {
+            const symbols = this.createGrid()
+            this.add(symbols.flat())
+            this.#updatedCachedSymbolReferences(symbols)
+        }
 
         this.setRadius(this.getInitRadius(), true)
         this.setColor(this.getInitColor(), true)
 
         this.initialized = true
         if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this?.parent)
+    }
+
+    // Creates a formation of symbols
+    createGrid(keys=this._keys, pos=[0,0], gaps=this._gaps, spacing=this._spacing, source=this._source) {
+        let [cx, cy] = pos, isNewLine=true, symbols=[], k_ll = keys.length
+        for (let i=0;i<k_ll;i++) {
+            const l = keys[i], symbol = this.createSymbol(l, [cx=(l=="\n")?pos[0]:(cx+spacing*(!isNewLine)), cy+=(l=="\n")&&source.width*gaps[1]+this.radius])
+            isNewLine = (l=="\n")
+            symbols.push(symbol)
+        }
+
+        return symbols
+    }
+
+    // Creates the dot based symbol at given pos, based on given source
+    createSymbol(key, pos=super.relativePos, source=this._source) {
+        let dotGroup = [], [gx, gy] = this._gaps, xi=[0,0], yi=0, s = source[key],
+        sourceRadius = Math.sqrt(source.width*source.height)
+
+        if (key===Grid.DELETION_VALUE || key===Grid.SAME_VALUE) return key
+
+        if (s) s.map((d,i)=>[new Dot([pos[0]+(xi[0]=d[0]??xi[0]+1,isNaN(Math.abs(d[0]))?xi[0]:Math.abs(d[0]))*gx, pos[1]+(yi+=(xi[0]<=xi[1]||!i)||Math.sign(1/xi[0])==-1)*gy]), d[1], yi*sourceRadius+(xi[1]=Math.abs(xi[0]))]).forEach(([dot, c, p],_,a)=>{
+            if (isFinite(p)) {
+                GridAssets.D.places.forEach(dir=>c&dir[0]&&dot.addConnection(a.find(n=>n[2]==p+dir[1](sourceRadius))?.[0])) 
+                dotGroup.push(dot)
+            }
+        })
+        return dotGroup
+    }
+
+    #updatedCachedSymbolReferences(symbols) {
+        const ll = symbols.length
+        for (let i=0;i<ll;i++) {
+            const dots = symbols[i]
+            if (dots!=Grid.SAME_VALUE) {
+                const d_ll = dots.length, ids = new Array(d_ll)
+                for (let ii=0;ii<d_ll;ii++) ids[ii] = dots[ii].id
+                this.#symbolsReferences[i] = ids
+            } else if (dots===Grid.DELETION_VALUE) delete this.#symbolsReferences[i]
+        }
+    }
+
+    // deletes the symbol at the provided index
+    deleteKey(i) {
+        if (typeof i=="number") i = this.getKey(i)
+        
+        if (i) {
+            const k_ll = i.length 
+            for (let ii=0;ii<k_ll;ii++) i[ii].remove()
+        }
+    }
+
+    // returns the dots composing the symbol at the provided index
+    getKey(i) {
+        const ids = this.#symbolsReferences[i]??[], i_ll = ids.length, dots = new Array(i_ll), cvs = this.parent
+        for (let i=0;i<i_ll;i++) dots[i] = cvs.get(ids[i])
+        return dots
     }
 
     // returns a separate copy of this Grid (only initialized for objects)
@@ -4703,61 +4834,9 @@ class Grid extends Shape {
         )
         grid._scale = CDEUtils.unlinkArr2(this._scale)
         grid._rotation = this._rotation
+        grid._visualEffects = this.visualEffects_
 
         return this.initialized ? grid : null
-    }
-
-    // Creates a formation of symbols
-    createGrid(keys=this._keys, pos=[0,0], gaps=this._gaps, spacing=this._spacing, source=this._source) {
-        let [cx, cy] = pos, isNewLine=true, symbols=[]
-        ;[...keys].forEach(l=>{
-            const symbol = this.createSymbol(l, [cx=(l=="\n")?pos[0]:(cx+spacing*(!isNewLine)), cy+=(l=="\n")&&source.width*gaps[1]+this.radius])
-            isNewLine = (l=="\n")
-            symbols.push(symbol)
-        })
-        return symbols.flat()
-    }
-
-    // Creates the dot based symbol at given pos, based on given source
-    createSymbol(key, pos=super.relativePos, source=this._source) {
-        let dotGroup = [], [gx, gy] = this._gaps, xi=[0,0], yi=0, s = source[key],
-        sourceRadius = Math.sqrt(source.width*source.height)
-
-        if (s) s.map((d,i)=>[new Dot([pos[0]+(xi[0]=d[0]??xi[0]+1,isNaN(Math.abs(d[0]))?xi[0]:Math.abs(d[0]))*gx, pos[1]+(yi+=(xi[0]<=xi[1]||!i)||Math.sign(1/xi[0])==-1)*gy]), d[1], yi*sourceRadius+(xi[1]=Math.abs(xi[0]))]).forEach(([dot, c, p],_,a)=>{
-            if (isFinite(p)) {
-                GridAssets.D.places.forEach(dir=>c&dir[0]&&dot.addConnection(a.find(n=>n[2]==p+dir[1](sourceRadius))?.[0])) 
-                dotGroup.push(dot)
-            }
-        })
-        return dotGroup
-    }
-
-    // updates the current keys
-    setKeys(keys) {// TODO OPTIMIZE
-        super.clear()
-        this._keys = keys
-        super.add(this.createGrid())
-    }
-
-    // updates the current gaps
-    setGaps(gaps) {
-        super.clear()
-        this._gaps = gaps
-        super.add(this.createGrid())
-    }
-
-    // updates the current spacing
-    setSpacing(spacing) {
-        super.clear()
-        this._spacing = spacing
-        super.add(this.createGrid())
-    }
-
-    // updates the current source
-    setSource(source) {
-        super.clear()
-        this._source = source
-        super.add(this.createGrid())
     }
 
     get keys() {return this._keys}
@@ -4765,10 +4844,45 @@ class Grid extends Shape {
 	get spacing() {return this._spacing}
 	get source() {return this._source}
 
-	set keys(keys) {return this._keys = keys}
-	set gaps(gaps) {return this._gaps = gaps}
-	set spacing(spacing) {return this._spacing = spacing}
-	set source(source) {return this._source = source}
+	set keys(keys) {
+        const n_ll = keys.length>this._keys.length?keys.length:this._keys.length, newKeys = new Array(n_ll)
+        for (let i=0;i<n_ll;i++) {
+            const newKey = keys[i], oldKey = this._keys[i]
+            if (oldKey!=newKey || oldKey=="\n") {
+                newKeys[i] = newKey||Grid.DELETION_VALUE
+                this.deleteKey(i)
+            }
+            else newKeys[i] = Grid.SAME_VALUE
+        }
+        this._keys = keys
+
+        const symbols = this.createGrid(newKeys)
+        this.#updatedCachedSymbolReferences(symbols)
+        super.add(symbols.flat())
+    }
+	set gaps(gaps) {
+        super.clear()
+        this._gaps = gaps
+        super.add(this.createGrid().flat())
+    }
+	set spacing(spacing) {
+        spacing??=this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius
+        const oldSpacing = this._spacing, keys = this._keys, s_ll = keys.length, cvs = this.parent
+        if (oldSpacing != spacing) {
+            for (let i=0,vi=0;i<s_ll;i++,vi=keys[i]=="\n"?-1:vi+1) {
+                const ids = this.#symbolsReferences[i], d_ll = ids.length
+                for (let ii=0;ii<d_ll;ii++) {
+                    cvs.get(ids[ii]).moveBy([(spacing-oldSpacing)*vi])
+                }
+            }
+            this._spacing = spacing
+        }
+    }
+	set source(source) {
+        super.clear()
+        this._source = source??Grid.DEFAULT_SOURCE
+        super.add(this.createGrid())
+    }
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -4777,9 +4891,10 @@ class Grid extends Shape {
 
 // The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
 class Dot extends _Obj {
-    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive) {
+    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive, disablePathCaching) {
         super(pos, radius, color, setupCB, null, anchorPos, alwaysActive)
         this._connections = []  // array of Dot to eventually draw a connecting line to
+        this._cachedPath = !disablePathCaching // the cached path2d object or null if path caching is disabled
     }
 
     // runs every frame, draws the dot and runs its parent drawEffect callback
@@ -4802,28 +4917,15 @@ class Dot extends _Obj {
                         ctx.translate(-x, -y)
                     }
 
-                    render.fill(Render.getArc(this._pos, this._radius, 0, CDEUtils.CIRC), this._color, this.visualEffects)
+                    render.fill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
                     if (hasScaling) ctx.setTransform(1,0,0,1,0,0)
-                } else render.batchFill(Render.getArc(this._pos, this._radius, 0, CDEUtils.CIRC), this._color, this.visualEffects)
+                } else render.batchFill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
             }
-        } else this.initialized = true
+        } else {
+            this.initialized = true
+            if (this._cachedPath)this.updateCachedPath()
+        }
         super.draw(time, deltaTime)
-    }
-
-    
-    // returns a separate copy of this Dot
-    duplicate() {
-        const dot = new Dot(
-            this.getInitPos(),
-            this._radius,
-            this._color.duplicate(),
-            this._setupCB
-        )
-
-        dot._scale = CDEUtils.unlinkArr2(this._scale)
-        dot._rotation = this._rotation
-        dot._visualEffects = this.visualEffects_
-        return dot
     }
 
     // returns pythagorian distance between the ratio defining position and the dot
@@ -4844,6 +4946,11 @@ class Dot extends _Obj {
     // removes a Dot from the connection array
     removeConnection(dotOrId) {
         this._connections = this._connections.filter(d=>typeof dotOrId=="number"?d.id!==dotOrId:d.id!==dotOrId.id)
+    }
+
+    // deletes the dot
+    remove() {
+        this._parent.remove(this._id)
     }
 
     /**
@@ -4870,21 +4977,94 @@ class Dot extends _Obj {
         return [[[s_x1, s_y1], [s_x2, s_y2]], [[t_x2, t_y2], [t_x1, t_y1]]]
     }
 
-    // deletes the dot
-    remove() {
-        if (CDEUtils.isFunction(this._parent.removeDot)) this._parent.removeDot(this._id)
-        else this._parent.remove(this._id)
+    // activates path caching and updates the cached path
+    updateCachedPath() {
+        this._cachedPath = Render.getArc(this._pos, this._radius)
+    }
+
+    // disables path caching
+    disablePathCaching() {
+        this._cachedPath = null
+    }
+
+    // returns a separate copy of this Dot
+    duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, disablePathCaching=!this._cachedPath) {
+        const colorObject = color, colorRaw = colorObject.colorRaw, dot = new Dot(
+            pos,
+            radius,
+            (colorRaw instanceof Gradient||colorRaw instanceof Pattern) && colorRaw._initPositions.id != null && this._parent.id != null && colorRaw._initPositions.id == this._parent.id ? null:(_,dot)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:dot):colorObject.duplicate(),
+            setupCB,
+            anchorPos,
+            alwaysActive,
+            disablePathCaching
+        )
+
+        dot._scale = CDEUtils.unlinkArr2(this._scale)
+        dot._rotation = this._rotation
+        dot._visualEffects = this.visualEffects_
+        return dot
     }
 
     get ctx() {return this._parent.parent.ctx}
-    get render() {return this._parent.parent.render}
+    get cvs() {return this._parent.parent||this._parent}
+    get render() {return this.cvs.render}
     get limit() {return this._parent.limit}
     get drawEffectCB() {return this._parent?.drawEffectCB}
-    get mouse() {return this._parent.parent.mouse}
+    get mouse() {return this.cvs.mouse}
     get ratioPos() {return this._parent.ratioPos}
     get connections() {return this._connections}
     get parentSetupResults() {return this._parent?.setupResults}
+    get top() {return this.y-this._radius}
+    get bottom() {return this.y+this._radius}
+    get right() {return this.x+this._radius}
+    get left() {return this.x-this._radius}
+    get width() {return this._radius*2}
+    get height() {return this._radius*2}
+    get x() {return super.x}
+    get y() {return super.y}
+    get pos() {return this._pos}
+    get relativeX() {return super.relativeX}
+    get relativeY() {return super.relativeY}
+    get relativePos() {return super.relativePos}
+    get radius() {return super.radius}
+    get cachedPath() {return this._cachedPath}
 
+
+    set x(x) {
+        x = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)
+        if (this._pos[0] != x) {
+            this._pos[0] = x
+            if (this._cachedPath) this.updateCachedPath()
+        }
+    }
+    set y(y) {
+        y = CDEUtils.round(y, _BaseObj.POSITION_PRECISION)
+        if (this._pos[1] != y) {
+            this._pos[1] = y
+            if (this._cachedPath) this.updateCachedPath()
+        }
+    }
+    set pos(pos) {
+        if (!CDEUtils.arr2Equals(pos, this._pos)) {
+            this.x = pos[0]
+            this.y = pos[1]
+            if (this._cachedPath) this.updateCachedPath()
+        }
+    }
+    set relativeX(x) {this.x = this.anchorPos[0]+x}
+    set relativeY(y) {this.y = this.anchorPos[1]+y}
+    set relativePos(pos) {
+        this.relativeX = CDEUtils.round(pos[0], _BaseObj.POSITION_PRECISION)
+        this.relativeY = CDEUtils.round(pos[1], _BaseObj.POSITION_PRECISION)
+    }
+    set radius(radius) {
+        radius = CDEUtils.round(radius<0?0:radius, _Obj.RADIUS_PRECISION)
+        if (this._radius != radius) {
+            this._radius = radius
+            if (this._cachedPath) this.updateCachedPath()
+        }
+    }
     set limit(limit) {this._parent.limit = limit}
     set connections(c) {return this._connections = c}
+    set cachedPath(path) {this._cachedPath = path}
 }

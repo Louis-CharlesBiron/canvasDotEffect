@@ -15,7 +15,7 @@ class _BaseObj extends _HasColor {
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
         this._initPos = pos||[0,0]               // initial position : [x,y] || (Canvas)=>{return [x,y]}
         this._pos = [0,0]                        // current position from the center of the object : [x,y]
-        this._setupCB = setupCB                  // called on object's initialization (this, this.parent)=>
+        this._setupCB = setupCB??null            // called on object's initialization (this, this.parent)=>
         this._loopCB = loopCB                    // called each frame for this object (this)=>
         this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
@@ -37,26 +37,6 @@ class _BaseObj extends _HasColor {
         if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this.parent)
     }
 
-    // returns the value of the inital color declaration
-    getInitColor() {
-        return CDEUtils.isFunction(this._initColor) ? this._initColor(this.render??this.parent.render, this) : this._initColor||null
-    }
-
-    // returns the value of the inital pos declaration
-    getInitPos() {
-        return CDEUtils.isFunction(this._initPos) ? CDEUtils.unlinkArr2(this._initPos(this._parent instanceof Canvas?this:this._parent, this)) : CDEUtils.unlinkArr2(this.adjustPos(this._initPos))
-    }
-
-    setAnchoredPos() {
-        const anchorPos = this.hasAnchorPosChanged
-        if (anchorPos) {
-            const [anchorPosX, anchorPosY] = anchorPos
-            this.relativeX += anchorPosX-this.#lastAnchorPos[0]
-            this.relativeY += anchorPosY-this.#lastAnchorPos[1]
-            this.#lastAnchorPos = anchorPos
-        }
-    }
-
     // Runs every frame
     draw(time, deltaTime) {
         this.setAnchoredPos()
@@ -67,6 +47,27 @@ class _BaseObj extends _HasColor {
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
         const a_ll = anims.length
         if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
+    }
+
+    // returns the value of the inital color declaration
+    getInitColor() {
+        return CDEUtils.isFunction(this._initColor) ? this._initColor(this.render??this.parent.render, this) : this._initColor||null
+    }
+
+    // returns the value of the inital pos declaration
+    getInitPos() {
+        return CDEUtils.isFunction(this._initPos) ? CDEUtils.unlinkArr2(this._initPos(this._parent instanceof Canvas?this:this._parent, this)) : CDEUtils.unlinkArr2(this.adjustPos(this._initPos))
+    }
+
+    // sets the pos of the object according to its anchorPos
+    setAnchoredPos() {
+        const anchorPos = this.hasAnchorPosChanged
+        if (anchorPos) {
+            const [anchorPosX, anchorPosY] = anchorPos
+            this.relativeX += anchorPosX-this.#lastAnchorPos[0]
+            this.relativeY += anchorPosY-this.#lastAnchorPos[1]
+            this.#lastAnchorPos = anchorPos
+        }
     }
 
     // Teleports to given coords
@@ -91,11 +92,7 @@ class _BaseObj extends _HasColor {
         isUnique??=true
         force??=true
 
-        const [ix, iy] = initPos, 
-            [fx, fy] = this.adjustPos(pos),
-            dx = fx-ix,
-            dy = fy-iy
-
+        const [ix, iy] = initPos, [fx, fy] = this.adjustPos(pos), dx = fx-ix, dy = fy-iy
         return this.playAnim(new Anim((prog)=>{
             this.x = ix+dx*prog
             this.y = iy+dy*prog
@@ -193,6 +190,12 @@ class _BaseObj extends _HasColor {
         return anim
     }
 
+    // clears all blacklog and currents anim
+    clearAnims() {
+        this._anims.backlog = []
+        this._anims.currents = []
+    }
+
     // allows flexible pos declarations
     adjustPos(pos) {
         let [x, y] = pos
@@ -251,14 +254,15 @@ class _BaseObj extends _HasColor {
     get compositeOperation() {return this._visualEffects?.[1]??Render.DEFAULT_COMPOSITE_OPERATION}
     get opacity() {return this._visualEffects?.[2]??Render.DEFAULT_ALPHA}
 
+
     set x(x) {this._pos[0] = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)}
     set y(y) {this._pos[1] = CDEUtils.round(y, _BaseObj.POSITION_PRECISION)}
     set pos(pos) {
         this.x = pos[0]
         this.y = pos[1]
     }
-    set relativeX(x) {this._pos[0] = CDEUtils.round(this.anchorPos[0]+x, _BaseObj.POSITION_PRECISION)}
-    set relativeY(y) {this._pos[1] = CDEUtils.round(this.anchorPos[1]+y, _BaseObj.POSITION_PRECISION)}
+    set relativeX(x) {this.x = this.anchorPos[0]+x}
+    set relativeY(y) {this.y = this.anchorPos[1]+y}
     set relativePos(pos) {
         this.relativeX = CDEUtils.round(pos[0], _BaseObj.POSITION_PRECISION)
         this.relativeY = CDEUtils.round(pos[1], _BaseObj.POSITION_PRECISION)

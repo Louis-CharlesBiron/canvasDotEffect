@@ -106,8 +106,11 @@ class Pattern extends _DynamicColor {
                 if (time-this.#lastUpdateTime >= this._frameRate) this.#lastUpdateTime = time
                 else return;
             }
+
+            const positions = this.getAutomaticPositions()
+            if ((!source.currentTime || source.paused) && Array.isArray(this._positions) && CDEUtils.arr22Equals(positions, this._positions)) return;
+            this._positions = positions
             
-            this._positions = this.getAutomaticPositions()
             if (isCanvas) this._render._bactchedStandalones.push(()=>this._value = this.#getPattern(ctx, source))
             else this._value = this.#getPattern(ctx, source)
         }
@@ -150,12 +153,12 @@ class Pattern extends _DynamicColor {
 
     // Plays the source (use only if the source is a video)
     playVideo() {
-        this._source.play()
+        ImageDisplay.playMedia(this._source)
     }
 
     // Pauses the source (use only if the source is a video)
     pauseVideo() {
-        this._source.pause()
+        try {this._source.pause()}catch(e){}
     }
 
     // returns a separate copy of this Pattern instance
@@ -188,7 +191,7 @@ class Pattern extends _DynamicColor {
     get value() {
         const data = this._source
         if (data instanceof HTMLVideoElement && (!data.src && !data.srcObject?.active)) return Pattern.PLACEHOLDER_COLOR
-        if (this._forcedUpdates || data instanceof HTMLVideoElement || data instanceof HTMLCanvasElement) this.update() // TODO, for images/paused vids/static idk with forcedUpdates, only update when the positions have changed
+        if (this._forcedUpdates || data instanceof HTMLVideoElement || data instanceof HTMLCanvasElement) this.update()
         return this._value??Pattern.PLACEHOLDER_COLOR
     }
     get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}

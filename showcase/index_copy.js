@@ -111,14 +111,14 @@ let aasdasd = new Shape([600,100],[
 CVS.add(aasdasd)
 
 let text = new TextDisplay("yoman test", [200, 600], "lime")
-CVS.add(text,true)
+CVS.add(text)
 
 // USER ACTIONS
 let mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"
-CVS.setmousemove(mMove)
-CVS.setmouseleave(mMove)
-CVS.setmousedown()
-CVS.setmouseup()
+CVS.setMouseMove(mMove)
+CVS.setMouseLeave(mMove)
+CVS.setMouseDown()
+CVS.setMouseUp()
 
 // START
 CVS.startLoop()

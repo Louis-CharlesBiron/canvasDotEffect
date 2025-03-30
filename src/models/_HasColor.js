@@ -15,8 +15,6 @@ class _HasColor {
         return CDEUtils.isFunction(this._initColor) ? this._initColor(this) : this._initColor||null
     }
 
-    
-
     get colorObject() {return this._color}
     get colorRaw() {return this._color.colorRaw}
     get color() {return this._color?.color}
@@ -32,7 +30,8 @@ class _HasColor {
     get brightness() {return this._color.brightness}
 
     set color(color) {
-        if (!this._color || this._color?.colorRaw?.toString() !== color?.toString()) {
+        const c = this._color
+        if (!c || c?.colorRaw?.toString() !== color?.toString()) {
             const specialColor = color?.colorRaw||color
             if (specialColor?.positions==_DynamicColor.PLACEHOLDER) {
                 if (!color.isChannel) color = specialColor.duplicate()
@@ -40,11 +39,10 @@ class _HasColor {
                 color.initPositions = this
             }
 
-            this._color = Color.adjust(color) // TODO OPTIMIZE
+            if (c instanceof Color) c.color = color
+            else this._color = Color.adjust(color)
         }
     }
-
-    
     set r(r) {this._color.r = r}
     set g(g) {this._color.g = g}
     set b(b) {this._color.b = b}

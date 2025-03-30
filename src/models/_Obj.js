@@ -6,6 +6,7 @@
 // Abstract canvas obj class, with radius
 class _Obj extends _BaseObj {
     static DEFAULT_RADIUS = 5
+    static RADIUS_PRECISION = 4
 
     constructor(pos, radius, color, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
@@ -31,13 +32,8 @@ class _Obj extends _BaseObj {
     }
 
     get radius() {return this._radius}
-    get top() {return this.y-this._radius}
-    get bottom() {return this.y+this._radius}
-    get right() {return this.x+this._radius}
-    get left() {return this.x-this._radius}
-    get width() {return this._radius*2}
-    get height() {return this._radius*2}
     get initRadius() {return this._initRadius}
-    set radius(radius) {this._radius = radius<0?0:radius}
+
+    set radius(radius) {this._radius = CDEUtils.round(radius<0?0:radius, _Obj.RADIUS_PRECISION)}
     set initRadius(initRadius) {this._initRadius = initRadius}
 }

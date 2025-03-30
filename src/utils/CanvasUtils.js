@@ -8,28 +8,28 @@ class CanvasUtils {
     static SHOW_CENTERS_DOT_ID = {}
 
     // DEBUG // Can be used to display a dot at the specified shape pos (which is normally not visible)
-    static toggleCenter(shape, radius=5, color=[255,0,0,1]) {
+    static toggleCenter(canvas, shape, radius=5, color=[255,0,0,1]) {
         if (!CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]) {
             const dot = new Dot([0,0], radius, color, null, shape)
             CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id] = dot.id
-            CVS.add(dot, true)
+            canvas.add(dot)
         } else {
-            CVS.remove(CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id])
+            canvas.remove(CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id])
             delete CanvasUtils.SHOW_CENTERS_DOT_ID[shape.id]
         }
     }
 
     // DEBUG // Create dots at provided intersection points
-    static showIntersectionPoints(res) {
+    static showIntersectionPoints(canvas, res) {
         const s_d1 = new Dot(res.source.inner, 3, [255,0,0,1]),
             s_d2 = new Dot(res.source.outer, 3, [255,0,0,0.45]),
             t_d1 = new Dot(res.target.outer, 3, [255,0,0,0.45]),
             t_d2 = new Dot(res.target.inner, 3, [255,0,0,1])
         
-        CVS.add(s_d1, true)
-        CVS.add(s_d2, true)
-        CVS.add(t_d1, true)
-        CVS.add(t_d2, true)
+        canvas.add(s_d1)
+        canvas.add(s_d2)
+        canvas.add(t_d1)
+        canvas.add(t_d2)
     }
 
     // returns true if the provided dot is the first one of the shape
@@ -37,7 +37,7 @@ class CanvasUtils {
         return dot.id==dot.parent.firstDot.id
     }
     
-    // Generic function to draw an outer ring around a dot
+    // Generic function to draw an outer ring around a dot (forceBatching allows to force batching even if a URL filter is defined)
     static drawOuterRing(dot, renderStyles, radiusMultiplier, forceBatching) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
 
@@ -47,7 +47,7 @@ class CanvasUtils {
         else dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
     }
     
-    // Generic function to draw connection between the specified dot and a sourcePos
+    // Generic function to draw connection between the specified dot and a sourcePos (forceBatching allows to force batching even if a URL filter is defined)
     static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
         
@@ -63,7 +63,7 @@ class CanvasUtils {
         }
     }
 
-    // Generic function to draw connections between the specified dot and all the dots in its connections property
+    // Generic function to draw connections between the specified dot and all the dots in its connections property (forceBatching allows to force batching even if a URL filter is defined)
     static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
         const render = dot.render, dotPos = dot.pos, dotConnections = dot.connections, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter, hasURLFilter = filter&&filter.indexOf("#")!==-1
 
@@ -102,20 +102,17 @@ class CanvasUtils {
         }
     }
 
-
     // Returns a callback allowing a dot to have a custom trail effect
     static getTrailEffectCB(canvas, obj, length=8, moveEffectCB=null, disableDefaultMovements=false) {
         let trail = [], trailPos = new Array(length).fill(obj.pos), lastPos = null, equals = CDEUtils.arr2Equals, isDefaultMovements = !disableDefaultMovements
         for (let i=0;i<length;i++) {
             const trailObj = obj.duplicate()
             trail.push(trailObj)
-            canvas.add(trailObj, true)
+            canvas.add(trailObj)
         }
 
         return (mouse)=>{
-            const pos = CDEUtils.unlinkArr2(obj.pos)
-            
-            let isMoving = false
+            let pos = CDEUtils.unlinkArr2(obj.pos), isMoving = false
             if (!equals(lastPos, pos)) {
                 trailPos.shift()
                 trailPos.push(pos)

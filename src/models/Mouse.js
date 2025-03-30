@@ -79,6 +79,7 @@ class Mouse {
 	get valid() {return this._valid}
 	get x() {return this._x}
 	get y() {return this._y}
+	get pos() {return [this._x, this._y]}
 	get lastX() {return this._lastX}
 	get lastY() {return this._lastY}
 	get dir() {return this._dir}
@@ -88,7 +89,6 @@ class Mouse {
 	get rightClicked() {return this._rightClicked}
 	get extraBackClicked() {return this._extraBackClicked}
 	get extraForwardClicked() {return this._extraForwardClicked}
-	get pos() {return [this._x, this._y]}
 
 	set valid(valid) {return this._valid = valid}
 	set lastX(_lastX) {return this._lastX = _lastX}
