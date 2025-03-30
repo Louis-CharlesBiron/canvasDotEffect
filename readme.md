@@ -1,9 +1,9 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/Louis-CharlesBiron/canvasDotEffect?link=https%3A%2F%2Fgithub.com%2FLouis-CharlesBiron%2FcanvasDotEffect%2Fcommits%2Fmain%2F&label=Commit%20Activity)
 ![GitHub last commit](https://img.shields.io/github/last-commit/Louis-CharlesBiron/canvasDotEffect?link=https%3A%2F%2Fgithub.com%2FLouis-CharlesBiron%2FcanvasDotEffect%2Fcommits%2Fmain%2F&label=Last%20Commit)
-![GitHub Created At](https://img.shields.io/github/created-at/Louis-CharlesBiron/canvasDotEffect?label=Since&color=orange)
+![NPM Version](https://img.shields.io/npm/v/cdejs?label=Version&color=%237761c0)
 ![NPM Downloads](https://img.shields.io/npm/d18m/cdejs?label=NPM%20Downloads&color=%231cc959)
+![GitHub Created At](https://img.shields.io/github/created-at/Louis-CharlesBiron/canvasDotEffect?label=Since&color=orange)
 ![NPM License](https://img.shields.io/npm/l/cdejs?label=License&color=cadetblue)
-
 
 # CanvasDotEffect
 
