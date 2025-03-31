@@ -338,7 +338,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 - **initDots** -> Initial dots declaration. Can either be: an array of dots `[new Dot(...), existingDot, ...]`, a **String** (this will automatically call the shape's createFromString() function), or a callback `(Shape, Canvas)=>{... return anArrayOfDots}` 
 - ***dots*** -> Array of all the current dots contained by the shape. 
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
-- **drawEffectCB** -> A callback containing your custom effect to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, parentSetupResults, mouse, distance, parent, isActive, rawRatio)=>{...}`.
+- **drawEffectCB** -> A custom callback containing the effects to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, parentSetupResults, mouse, distance, parent, isActive, rawRatio)=>{...}`.
 - **ratioPosCB**? -> References the mouse position by default. Can be used to set a custom *ratioPos* target `(Shape, dots)=>{... return [x, y]}`. Can be disabled if set to `null`.
 - **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused)
 
@@ -2045,7 +2045,7 @@ After this, every dot will be initialized, and all canvas objects will be ready 
 To keep the best performance in your website/app, you may want to use some optimization techniques. Here are some tips you can use to optimize your effects.
 
 
-### Using a static canvas:
+## - Using a static canvas:
 Using a static canvas is a lot more performant when working with stuff that doesn't need to be updated often.
 
 #### Static canvas example:
@@ -2080,7 +2080,73 @@ staticCVS.cleanDrawStatic()
 **Notes:** 
 - Since there is no drawing loop, you do not need to run `CVS.startLoop()`
 - You can also overlay dynamic and static canvases to seamlessly distribute the drawing process.
+ 
 
+## - Optimize repetitive operations:
+Callbacks such as `drawEffectCB` can sometimes run thousands of times per second, so make sure these are as optimized as possible.
+
+#### Optimization examples for `drawEffectCB`:
+```js
+/*
+In this example, we compare two drawEffectCB that both do the same thing,
+one version is optimized while the other isn't.
+*/
+
+
+const badDrawEffectCB = (render, dot, ratio, dragAnim, mouse, dist, shape)=>{
+
+    // Logging the current dot to the console
+    console.log(dot)
+
+    // Dynamically updating the current dot's alpha
+    dot.a = CDEUtils.mod(1, ratio, 0.6)
+    
+    // Drawing a line between the current dot and its ratioPos
+    CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.update(Color.rgba(0,255,255,CDEUtils.mod(1, ratio, 0.8))))
+
+    // Running the draggableCB to make ONLY the first dot draggable (here dragAnim comes from the setupCB)    
+    dragAnim(shape.dots[0], mouse, dist, ratio)
+    
+    // Updating the first dot's color on mouse hover/click
+    const mouseOn = shape.dots[0].isWithin(mouse.pos, true)
+    if (mouseOn && mouse.clicked) shape.dots[0].color = [255, 0, 0, 1]
+    else if (mouseOn) shape.dots[0].color = [0, 254, 0, 1]
+    else shape.dots[0].color = [255, 255, 255, 1]
+    
+}
+
+
+
+const optimizedDrawEffectCB = (render, dot, ratio, dragAnim, mouse, dist, shape, isActive)=>{
+
+    // Never leave console logs in drawEffectCb for production as these cause ABSOLUTELY HORENDOUS LAG, especially when the console is opened.
+    // DONT DO THIS -> console.log(dot)
+
+    // This was pretty much already optimized
+    dot.a = CDEUtils.mod(1, ratio, 0.6)
+    
+    // Here, since the alpha is going to be 0, we can prevent drawing when the lines are not visible anyway (outside the shape's limit)
+    if (dist < shape.limit) CanvasUtils.drawLine(dot, dot.ratioPos, render.profile1.update([0,255,255,CDEUtils.mod(1, ratio, 0.8)]))
+
+    // We can store the firstDot into a variable to avoid the object lookups each time
+    const firstDot = shape.dots[0]
+    
+    // Since only the first dot is made draggable, it is better to avoid calling the dragAnim for each dot
+    if (firstDot.id == dot.id) {
+        dragAnim(firstDot, mouse, dist, ratio)
+        
+        // Again, the effect is only for the first dot
+        // Here we use the provided "isActive" variable to make sure the mouse checks are only running when necessary
+        if (isActive) {// (isActive is only true if ratio < 1)
+            const mouseOn = firstDot.isWithin(mouse.pos, true)
+            if (mouseOn && mouse.clicked) firstDot.color = [255, 0, 0, 1]
+            else if (mouseOn) firstDot.color = [0, 254, 0, 1]
+            else firstDot.color = [255, 255, 255, 1]
+        }
+    }
+    
+}
+```
 
  
 
