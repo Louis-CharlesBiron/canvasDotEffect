@@ -14,7 +14,7 @@
 - [Getting Started / Minimal setup](#getting-started--minimal-setup)
 - [Classes](#classes)
   - [Canvas](#canvas)
-  - [_Obj](#obj)
+  - [_Obj](#_obj)
   - [Dot](#dot)
   - [Shape](#shape)
   - [Filled Shape](#filled-shape)
@@ -117,7 +117,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.0.7"
+    "cdejs": "^1.0.8"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -212,7 +212,7 @@ The _Obj class is the template class of any canvas object. **It should not be di
 - **color** -> Either a Color instance `new Color("red")`, a string `"red"`, a hex value `#FF0000` or a RGBA array `[255, 0, 0, 1]`
 - **setupCB** -> Custom callback called on the object's initialization `(this, this?.parent)=>{}`s
 - ***setupResults*** -> The value returned by the `setupCB` call.
-- - **loopCB** -> Custom callback called each frame for the object (this)=>
+- **loopCB** -> Custom callback called each frame for the object (this)=>
 - **anchorPos** -> The reference point from which the object's pos will be set. Can either be a pos `[x,y]`, another canvas object instance, or a callback `(this, Canvas or parent)=>{... return [x,y]}` (Defaults to the parent's pos, or `[0, 0]` if the object has no parent). If your *anchorPos* references another object, make sure it is defined and initialized when used as the *anchorPos* value.
 - **alwaysActive** -> Whether the object stays active when outside the canvas bounds.
 - ***initialized*** -> Whether the object has been initialized.

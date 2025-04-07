@@ -61,5 +61,5 @@ Start-Process -FilePath $terser -ArgumentList "$toMinifyPath -o $minifiedCodePat
 #ADD UMD WRAPPER
 $minifiedCode = Get-Content -Path $minifiedCodePathUMD -Raw
 Set-Content -Path $minifiedCodePathUMD -Value @"
-(function(factory){typeof define=="function"&&define.amd?define(factory):factory()})((function(){"use strict";$minifiedCode;const classes={$UMDCJSClasses};if(typeof window!=="undefined"){window.CDE=classes,$UMDJSClasses}else if(typeof module!=="undefined"&&module.exports)module.exports=classes}))
+(function(factory){typeof define=="function"&&define.amd?define(factory):factory()})((function(){"use strict";$minifiedCode;const classes={$UMDCJSClasses};if(typeof window!=="undefined"){window.CDE=classes}else if(typeof module!=="undefined"&&module.exports)module.exports=classes}))
 "@

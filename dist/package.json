@@ -1,6 +1,6 @@
 {
     "name": "cdejs",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "description": "CanvasDotEffect is a lightweight JS library that helps create customizable and interactive dot-based effects using the Canvas API",
     "author": "Louis-Charles Biron",
     "license": "MIT",
@@ -14,5 +14,5 @@
     "exports": {
       "import": "./cde.min.js"
     },
-    "keywords": ["canvas", "library", "cde", "canvasDotEffect", "effects", "dot", "lcb", "canvasdoteffect", "js", "javascript"]
+    "keywords": ["canvas", "library", "cde", "canvasDotEffect", "effects", "dot", "interactive", "dynamic", "graphics", "designs", "canvasdoteffect", "js", "javascript"]
 }

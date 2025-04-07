@@ -92,7 +92,7 @@ class FilledShape extends Shape {
             }
 
             
-            if (fc instanceof Color) fc.color = color
+            if (fc instanceof Color) fc.color = fillColor
             else this._fillColor = Color.adjust(fillColor)
         }
     }
