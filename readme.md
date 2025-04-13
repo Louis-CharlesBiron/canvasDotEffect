@@ -40,6 +40,7 @@
 - [Execution order](#execution-order)
 - [Optimization](#optimization)
 - [Intended practices](#intended-practices)
+- [React Component Template](#react-component-template)
 - [Credits](#credits)
 
 
@@ -93,7 +94,7 @@
     const CVS = new Canvas(document.getElementById("canvasId"))
     
     // Creating and adding shapes ...
-    const dummyShape = new Shape([50,5 0], [new Dot()])
+    const dummyShape = new Shape([50, 50], [new Dot()])
     CVS.add(dummyShape)
     
     CVS.setMouseMove(/*custom callback*/)
@@ -117,7 +118,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.0.8"
+    "cdejs": "^1.0.9"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -134,17 +135,15 @@ The following sections are short documentations of each class, basically what it
 # [Canvas](#table-of-contents)
 
 The Canvas class is the core of the project. It manages the main loop, the window listeners, the delta time, the HTML canvas element, all the canvas objects, and much more.
-
 #### **The Canvas constructor takes the following parameters:**
-###### - `new Canvas(cvs, loopingCallback, frame, settings)`
+###### - `new Canvas(cvs, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently)`
 - **cvs** -> The HTML canvas element to link to.
-- **loopingCallback**? -> A custom callback ran each frame.
+- **loopingCB**? -> A callback ran each frame. `()=>`
 - **fpsLimit**? -> The maximum fps cap. Defaults to V-Sync.
-- **frame**? -> If you don't want the canvas to take the size of its direct parent, you can provide another custom HTML element here.
-- **settings**? -> The custom canvas settings (leave blank for prebuilt default settings).
+- **visibilityChangeCB**? -> A callback called on document visibility change. `(isVisible, cvs, event)=>`
+- **cvsFrame**? -> If you don't want the canvas to take the size of its direct parent, you can provide another custom HTML element here.
+- **settings**? -> The custom canvas settings (leave `null` for prebuilt default settings).
 - **willReadFrequently**? -> If `true`, optimizes the canvas context for frequent readings. (Defaults to `false`)
-
- 
 
 **To add objects to the canvas,** use the add() function:
 ###### - add(objs, inactive=false)
@@ -656,7 +655,7 @@ The Grid class is a derivative of the Shape class. It allows the creation of dot
 ```
 
 #### Example use 2:
-###### - Creating a distorted grid, that clears up an area around the mouse on hover
+###### - Creating a grid, that gets distorted around the area of the mouse
 ```js
 // Creating a grid with symbols that distort themselves on mouse hover
 const distortedGrid = new Grid(
@@ -2148,8 +2147,6 @@ const optimizedDrawEffectCB = (render, dot, ratio, dragAnim, mouse, dist, shape,
 }
 ```
 
- 
-
 # [Intended Practices](#table-of-contents)
 
 - Putting `null` as any parameter value will assign it the default value.
@@ -2159,7 +2156,57 @@ const optimizedDrawEffectCB = (render, dot, ratio, dragAnim, mouse, dist, shape,
 - If needed and applicable, use the available prebuilt event listeners.
 - More complex shapes can have very extensive declarations, declare them in a separate file(s) and use them in a centralized project file. 
 
- 
+# [React Component Template](#table-of-contents)
+
+Here is the proposed CDECanvas React component. Create a CDECanvas.jsx file, then copy and paste the code below.
+
+```jsx
+import {forwardRef, useEffect, useImperativeHandle, useRef, useState} from "react"
+import {Canvas, CDEUtils, FPSCounter} from "cdejs"
+
+/**
+ * HOW TO USE:
+ * 
+ * 1. Add the <CDECanvas/> component at the root of your target element.
+ * 2. If necessary, create a ref and link it to your <CDECanvas ref={*yourRef*}/> component to access some utility functions of the canvas. (See the imperativeHandle bellow)
+ * 3. Create your declarations and interactions and build cool effects!
+ * 
+ * PARAMETERS:
+ * - declarations -> A callback containing the setup/declaration of all canvas obj and if applicable, adding them to the canvas. (CVS)=>{...}
+ * - interactions -> A callback containing the desired built-in input device listeners. (CVS)=>{...}
+ * - isStatic -> If true, initializes the canvas as static.
+ * - loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently -> see https://github.com/Louis-CharlesBiron/canvasDotEffect?#canvas
+ */
+export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently}, ref)=>{
+    const htmlElementCanvasRef = useRef(null), cvsInstanceRef = useRef(null), [getFps, setFps] = useState(0)
+
+    // Utility canvas functions
+    useImperativeHandle(ref, ()=>({
+        getCVS:()=>cvsInstanceRef.current,
+        adjustSize:()=>cvsInstanceRef.current.setSize()
+    }))
+
+    useEffect(()=>{
+        const CVS = new Canvas(htmlElementCanvasRef.current, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently)
+        cvsInstanceRef.current = CVS
+
+        // Setup canvas objects and listeners
+        if (CDEUtils.isFunction(declarations)) declarations(CVS)
+        if (CDEUtils.isFunction(interactions)) interactions(CVS)
+        
+        // Start
+        if (isStatic) CVS.initializeStatic()
+        else CVS.startLoop()
+
+        // On unmount
+        return ()=>{
+            CVS.stopLoop()
+        }
+    }, [])
+
+    return <canvas ref={htmlElementCanvasRef}></canvas>
+})
+```
 
 ****
 ### [Credits](#table-of-contents)

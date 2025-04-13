@@ -10,13 +10,19 @@ class TypingDevice {
     }
 
     setDown(e) {
-        const key = e.key.toUpperCase()
-        if (!this.isDown(key)) this._keysPressed.push({key, keyCode:e.keyCode})
+        let key = e.key
+        if (key) {
+            key = key.toUpperCase()
+            if (!this.isDown(key)) this._keysPressed.push({key, keyCode:e.keyCode})
+        }
     }
 
     setUp(e) {
-        const key = e.key.toUpperCase()
-        if (this.isDown(key)) this._keysPressed = this._keysPressed.filter(v=>v.key!==key)
+        let key = e.key
+        if (key) {
+            key = key.toUpperCase()
+            if (this.isDown(key)) this._keysPressed = this._keysPressed.filter(v=>v.key!==key)
+        }
     }
 
     isDown(key) {

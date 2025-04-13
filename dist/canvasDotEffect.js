@@ -1286,13 +1286,19 @@ class TypingDevice {
     }
 
     setDown(e) {
-        const key = e.key.toUpperCase()
-        if (!this.isDown(key)) this._keysPressed.push({key, keyCode:e.keyCode})
+        let key = e.key
+        if (key) {
+            key = key.toUpperCase()
+            if (!this.isDown(key)) this._keysPressed.push({key, keyCode:e.keyCode})
+        }
     }
 
     setUp(e) {
-        const key = e.key.toUpperCase()
-        if (this.isDown(key)) this._keysPressed = this._keysPressed.filter(v=>v.key!==key)
+        let key = e.key
+        if (key) {
+            key = key.toUpperCase()
+            if (this.isDown(key)) this._keysPressed = this._keysPressed.filter(v=>v.key!==key)
+        }
     }
 
     isDown(key) {
@@ -2014,6 +2020,7 @@ class Canvas {
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)"}
+
     static STATIC_MODE = 0
     static #ON_LOAD_CALLBACKS = []
     static #ON_FIRST_INTERACT_CALLBACKS = []
@@ -2027,7 +2034,7 @@ class Canvas {
     #cachedEls_ll = null     // cached canvas elements count/length
     #lastScrollValues = [window.scrollX, window.screenY]
 
-    constructor(cvs, loopingCB, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
+    constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                               // html canvas element
         this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
         this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)       // set styles selector for canvas
@@ -2036,8 +2043,9 @@ class Canvas {
         this._settings = this.updateSettings(settings)                // set context settings
         this._els = {refs:[], defs:[]}                                // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
         this._looping = false                                         // loop state
-        this._loopingCB = loopingCB                       // custom callback called along with the loop() function
+        this._loopingCB = loopingCB                                   // custom callback called along with the loop() function
         this.fpsLimit = fpsLimit                                      // delay between each frame to limit fps
+        this.visibilityChangeCB = visibilityChangeCB                  // callback with the actions to be taken on document visibility change (isVisible, CVS, e)=>
         this._speedModifier = 1                                       // animation/drawing speed multiplier
         this.#maxTime = this.#getMaxTime(fpsLimit)                    // max time between frames
         this._deltaTime = null                                        // useable delta time in seconds
@@ -2064,7 +2072,7 @@ class Canvas {
     // sets resize and visibility change listeners on the window
     #initWindowListeners() {
         const onresize=()=>this.setSize(),
-              onvisibilitychange=()=>{if (!document.hidden) this.resetReferences()},
+              onvisibilitychange=e=>this._visibilityChangeCB(!document.hidden, this, e),
               onscroll=()=>{
                 const scrollX = window.scrollX, scrollY = window.scrollY
                 this.updateOffset()
@@ -2290,17 +2298,20 @@ class Canvas {
         this.updateOffset()
     }
 
-    // sets the width and height in px of the canvas element. If "forceCSSupdate" is true, it also resizes the frame with css
-    setSize(w, h, forceCSSupdate) {
-        const {width, height} = this._frame.getBoundingClientRect()
-        this._cvs.width = w??width
-        this._cvs.height = h??height
-        if (forceCSSupdate) {
-            this._frame.style.width = this.width+"px"
-            this._frame.style.height = this.height+"px"
+    // sets the width and height in px of the canvas element. If "forceCSSupdate" is true, it also force the resizes on the frame with css
+    setSize(forceWidth, forceHeight, forceCSSupdate) {
+        const {width, height} = this._frame.getBoundingClientRect(), w = forceWidth??width, h = forceHeight??height
+
+        if (this._cvs.width !== w || this._cvs.width !== h) {
+            this._cvs.width = w??width
+            this._cvs.height = h??height
+            if (forceCSSupdate) {
+                this._frame.style.width = this.width+"px"
+                this._frame.style.height = this.height+"px"
+            }
+            this.updateSettings()
+            this.updateOffset()
         }
-        this.updateSettings()
-        this.updateOffset()
     }
 
     // updates current canvas settings
@@ -2541,6 +2552,7 @@ class Canvas {
         const isStatic = !isFinite(this._fpsLimit)
         return this._fpsLimit==null||isStatic ? isStatic ? "static" : null : 1/(this._fpsLimit/1000)
     }
+    get visibilityChangeCB() {return this._visibilityChangeCB}
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
     get render() {return this._render}
@@ -2553,6 +2565,12 @@ class Canvas {
 	set fpsLimit(fpsLimit) {
         this._fpsLimit = CDEUtils.isDefined(fpsLimit)&&isFinite(fpsLimit) ? 1000/Math.max(fpsLimit, 0) : null
         this.#maxTime = this.#getMaxTime(fpsLimit)
+    }
+    set visibilityChangeCB(visibilityChangeCB) {
+        this._visibilityChangeCB = (isVisible, CVS, e)=>{
+            if (isVisible) this.resetReferences()
+            if (CDEUtils.isFunction(visibilityChangeCB)) visibilityChangeCB(isVisible, CVS, e)
+        }
     }
     set speedModifier(speedModifier) {this._speedModifier = speedModifier}
 }
