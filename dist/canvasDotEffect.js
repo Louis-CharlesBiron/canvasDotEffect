@@ -1210,7 +1210,7 @@ class GridAssets {
                 [-2,D.br],
                 [-3,D.br],
                 [-4]
-            ],"8": [
+            ],"0": [
                 [1,D.bl+D.r],[,D.br],
                 [0,D.b],[3,D.b],
                 [0,D.b],[,D.r],[],[,D.b],
@@ -4749,7 +4749,7 @@ class Grid extends Shape {
     constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
         super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)
 
-        this._keys = keys??Grid.DEFAULT_KEYS        // keys to convert to source's values as a string
+        this._keys = keys+""||Grid.DEFAULT_KEYS     // keys to convert to source's values as a string
         this._gaps = gaps??Grid.DEFAULT_GAPS        // [x, y] gap length within the dots
         this._source = source?? Grid.DEFAULT_SOURCE // symbols' source
         this._spacing = spacing??this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
