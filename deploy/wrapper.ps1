@@ -15,8 +15,6 @@ $terser = "$deploy\node_modules\.bin\terser"
 (Get-Content $readme) -replace '"cdejs": "\^.*?"', @"
 `"cdejs`": `"^$((Get-Content "$dist\package.json" | ConvertFrom-Json).version)`"
 "@ | Set-Content $readme
-$a = '"cdejs": "^1.0.5"'
-$asd = "1.0.6"
 
 Copy-Item "$root\readme.md" -Destination "$dist\readme.md" -Force
 
