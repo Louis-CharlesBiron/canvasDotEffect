@@ -13,6 +13,8 @@ class Mouse {
         this._valid = false               // whether the mouse pos is valid (is inside the canvas and initialized)
         this._x = null                    // current x value of the mouse on the canvas
         this._y = null                    // current y value of the mouse on the canvas
+        this._rawX = null                 // current x value of the mouse on the canvas without any offsets
+        this._rawY = null                 // current y value of the mouse on the canvas without any offsets
         this._lastX = null                // previous x value of the mouse on the canvas
         this._lastY = null                // previous y value of the mouse on the canvas
         this._dir = null                  // direction in degrees of the mouse
@@ -61,11 +63,15 @@ class Mouse {
     invalidate() {
         this._x = Infinity
         this._y = Infinity
+        this._rawX = Infinity
+        this._rawY = Infinity
     }
     
     // updates current mouse position considering page offsets
     updatePos(e, offset) {
         this._valid = true
+        this._rawX = e.x
+        this._rawY = e.y
         this._x = e.x-offset.x
         this._y = e.y-offset.y
     }
@@ -79,7 +85,10 @@ class Mouse {
 	get valid() {return this._valid}
 	get x() {return this._x}
 	get y() {return this._y}
+    get rawX() {return this._rawX}
+	get rawY() {return this._rawY}
 	get pos() {return [this._x, this._y]}
+	get rawPos() {return [this._rawX, this._rawY]}
 	get lastX() {return this._lastX}
 	get lastY() {return this._lastY}
 	get dir() {return this._dir}

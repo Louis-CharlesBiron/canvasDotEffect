@@ -237,7 +237,13 @@ class Canvas {
 
     // clears the canvas
     clear(x=0, y=0, x2=this.width, y2=this.height) {
-        this._ctx.clearRect(x, y, x2, y2)
+        const [oX, oY] = this._viewPos
+        if (oX || oY) {
+            this.save()
+            this.resetTransformations()
+            this._ctx.clearRect(x, y, x2, y2)
+            this.restore()
+        } else this._ctx.clearRect(x, y, x2, y2)
     }
 
     // initializes the canvas as static
@@ -288,7 +294,10 @@ class Canvas {
         let [x, y] = pos
         this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
         this._viewPos = [this._viewPos[0]+x, this._viewPos[1]+y]
+
         this.updateOffset()
+        this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
+        this.#mouseMovements()
     }
 
     // moves the context to a specific x/y value
@@ -297,7 +306,10 @@ class Canvas {
         this.resetTransformations()
         this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
         this._viewPos = [x, y]
+        
         this.updateOffset()
+        this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
+        this.#mouseMovements()
     }
 
     // sets the width and height in px of the canvas element. If "forceCSSupdate" is true, it also force the resizes on the frame with css
@@ -524,8 +536,8 @@ class Canvas {
 
     // returns whether the provided position is within the canvas bounds
     isWithin(pos, padding=0) {
-        const [x,y] = pos
-        return x >= -padding && x <= this.width+padding && y >= -padding && y <= this.height+padding
+        const [x,y] = pos, [ox, oy] = this._viewPos
+        return x >= -padding-ox && x <= this.width+padding-ox && y >= -padding-oy && y <= this.height+padding-oy
     }
     
 	get cvs() {return this._cvs}

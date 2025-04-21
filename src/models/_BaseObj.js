@@ -213,7 +213,7 @@ class _BaseObj extends _HasColor {
     get x() {return this._pos[0]}
     get y() {return this._pos[1]}
     get pos() {return this._pos}
-    get pos_() {return CDEUtils.unlinkArr2(this._pos)}// unlinked position
+    get pos_() {return CDEUtils.unlinkArr2(this._pos)}
     get relativeX() {return this.x-this.anchorPos[0]}
     get relativeY() {return this.y-this.anchorPos[1]}
     get relativePos() {return [this.relativeX, this.relativeY]}

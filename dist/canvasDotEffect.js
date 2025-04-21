@@ -240,8 +240,8 @@ class CanvasUtils {
 
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
-        if (filter&&filter.indexOf("#")!==-1 && !forceBatching) dot.render.stroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
-        else dot.render.batchStroke(Render.getArc(dot.pos, dot.radius*radiusMultiplier), renderStyles)
+        if (filter&&filter.indexOf("#")!==-1 && !forceBatching) dot.render.stroke(Render.getArc(dot.pos, (dot.radius||1)*radiusMultiplier), renderStyles)
+        else dot.render.batchStroke(Render.getArc(dot.pos, (dot.radius||1)*radiusMultiplier), renderStyles)
     }
     
     // Generic function to draw connection between the specified dot and a sourcePos (forceBatching allows to force batching even if a URL filter is defined)
@@ -1330,6 +1330,8 @@ class Mouse {
         this._valid = false               // whether the mouse pos is valid (is inside the canvas and initialized)
         this._x = null                    // current x value of the mouse on the canvas
         this._y = null                    // current y value of the mouse on the canvas
+        this._rawX = null                 // current x value of the mouse on the canvas without any offsets
+        this._rawY = null                 // current y value of the mouse on the canvas without any offsets
         this._lastX = null                // previous x value of the mouse on the canvas
         this._lastY = null                // previous y value of the mouse on the canvas
         this._dir = null                  // direction in degrees of the mouse
@@ -1378,11 +1380,15 @@ class Mouse {
     invalidate() {
         this._x = Infinity
         this._y = Infinity
+        this._rawX = Infinity
+        this._rawY = Infinity
     }
     
     // updates current mouse position considering page offsets
     updatePos(e, offset) {
         this._valid = true
+        this._rawX = e.x
+        this._rawY = e.y
         this._x = e.x-offset.x
         this._y = e.y-offset.y
     }
@@ -1396,7 +1402,10 @@ class Mouse {
 	get valid() {return this._valid}
 	get x() {return this._x}
 	get y() {return this._y}
+    get rawX() {return this._rawX}
+	get rawY() {return this._rawY}
 	get pos() {return [this._x, this._y]}
+	get rawPos() {return [this._rawX, this._rawY]}
 	get lastX() {return this._lastX}
 	get lastY() {return this._lastY}
 	get dir() {return this._dir}
@@ -2235,7 +2244,13 @@ class Canvas {
 
     // clears the canvas
     clear(x=0, y=0, x2=this.width, y2=this.height) {
-        this._ctx.clearRect(x, y, x2, y2)
+        const [oX, oY] = this._viewPos
+        if (oX || oY) {
+            this.save()
+            this.resetTransformations()
+            this._ctx.clearRect(x, y, x2, y2)
+            this.restore()
+        } else this._ctx.clearRect(x, y, x2, y2)
     }
 
     // initializes the canvas as static
@@ -2286,7 +2301,10 @@ class Canvas {
         let [x, y] = pos
         this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
         this._viewPos = [this._viewPos[0]+x, this._viewPos[1]+y]
+
         this.updateOffset()
+        this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
+        this.#mouseMovements()
     }
 
     // moves the context to a specific x/y value
@@ -2295,7 +2313,10 @@ class Canvas {
         this.resetTransformations()
         this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
         this._viewPos = [x, y]
+        
         this.updateOffset()
+        this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
+        this.#mouseMovements()
     }
 
     // sets the width and height in px of the canvas element. If "forceCSSupdate" is true, it also force the resizes on the frame with css
@@ -2522,8 +2543,8 @@ class Canvas {
 
     // returns whether the provided position is within the canvas bounds
     isWithin(pos, padding=0) {
-        const [x,y] = pos
-        return x >= -padding && x <= this.width+padding && y >= -padding && y <= this.height+padding
+        const [x,y] = pos, [ox, oy] = this._viewPos
+        return x >= -padding-ox && x <= this.width+padding-ox && y >= -padding-oy && y <= this.height+padding-oy
     }
     
 	get cvs() {return this._cvs}
@@ -2901,7 +2922,7 @@ class _BaseObj extends _HasColor {
     get x() {return this._pos[0]}
     get y() {return this._pos[1]}
     get pos() {return this._pos}
-    get pos_() {return CDEUtils.unlinkArr2(this._pos)}// unlinked position
+    get pos_() {return CDEUtils.unlinkArr2(this._pos)}
     get relativeX() {return this.x-this.anchorPos[0]}
     get relativeY() {return this.y-this.anchorPos[1]}
     get relativePos() {return [this.relativeX, this.relativeY]}
@@ -4150,7 +4171,7 @@ class _Obj extends _BaseObj {
     // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the radius)
     isWithin(pos, circularDetection) {
         const [x,y]=pos
-        return  (CDEUtils.isDefined(x)&&CDEUtils.isDefined(y)) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= this.radius*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
+        return  (CDEUtils.isDefined(x)&&CDEUtils.isDefined(y)) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= (this.radius||1)*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
     }
 
     get radius() {return this._radius}
