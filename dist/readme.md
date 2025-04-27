@@ -47,6 +47,8 @@
 
 ## Getting Started / Minimal setup
 
+
+#### Either run: `npx cdejs-template yourFolderName` or follow these couple steps! (↓)
 1. **Get the library file. (`npm install cdejs` or [canvasDotEffect.min.js](https://github.com/Louis-CharlesBiron/canvasDotEffect/blob/main/dist/canvasDotEffect.min.js))** 
 ```HTML
     <!-- Only if you're using the browser version! Otherwise use: import {...} from "cdejs" -->
@@ -118,7 +120,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.0.12"
+    "cdejs": "^1.0.13"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -138,7 +140,7 @@ The Canvas class is the core of the project. It manages the main loop, the windo
 #### **The Canvas constructor takes the following parameters:**
 ###### - `new Canvas(cvs, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently)`
 - **cvs** -> The HTML canvas element to link to.
-- **loopingCB**? -> A callback ran each frame. `()=>`
+- **loopingCB**? -> A callback ran each frame. `(Canvas)=>`
 - **fpsLimit**? -> The maximum fps cap. Defaults to V-Sync.
 - **visibilityChangeCB**? -> A callback called on document visibility change. `(isVisible, cvs, event)=>`
 - **cvsFrame**? -> If you don't want the canvas to take the size of its direct parent, you can provide another custom HTML element here.
@@ -203,16 +205,16 @@ The _Obj class is the template class of any canvas object. **It should not be di
 
 #### **All canvas objects will have at least these attributes:**
 - ***id*** -> Id of the object.
-- **initPos** -> Initial pos declaration. Can either be a pos array `[x, y]` or a callback `(Canvas)=>{... return [x, y]}`
+- **initPos** -> Initial pos declaration. Can either be a pos array `[x, y]` or a callback `(Canvas, obj)=>{... return [x, y]}`
 - ***pos*** -> Array containing the `[x, y]` position of the object.
-- ***initRadius*** -> Initial radius declaration. Can either be a number or a callback `(parent or this)=>{... return radius}`
+- ***initRadius*** -> Initial radius declaration. Can either be a number or a callback `(parent or obj)=>{... return radiusValue}`
 - **radius** -> The radius in px object the dot (Or the radius of its dots if is a Shape).
-- ***initColor*** -> Initial color declaration. Can either be a color value (see ↓) or a callback `(render, this)=>{... return colorValue}`
+- ***initColor*** -> Initial color declaration. Can either be a color value (see ↓) or a callback `(render, obj)=>{... return colorValue}`
 - **color** -> Either a Color instance `new Color("red")`, a string `"red"`, a hex value `#FF0000` or a RGBA array `[255, 0, 0, 1]`
-- **setupCB** -> Custom callback called on the object's initialization `(this, this?.parent)=>{}`s
+- **setupCB** -> Custom callback called on the object's initialization `(this, parent?)=>{}`s
 - ***setupResults*** -> The value returned by the `setupCB` call.
-- **loopCB** -> Custom callback called each frame for the object (this)=>
-- **anchorPos** -> The reference point from which the object's pos will be set. Can either be a pos `[x,y]`, another canvas object instance, or a callback `(this, Canvas or parent)=>{... return [x,y]}` (Defaults to the parent's pos, or `[0, 0]` if the object has no parent). If your *anchorPos* references another object, make sure it is defined and initialized when used as the *anchorPos* value.
+- **loopCB** -> Custom callback called each frame for the object (obj)=>
+- **anchorPos** -> The reference point from which the object's pos will be set. Can either be a pos `[x,y]`, another canvas object instance, or a callback `(obj, Canvas or parent)=>{... return [x,y]}` (Defaults to the parent's pos, or `[0, 0]` if the object has no parent). If your *anchorPos* references another object, make sure it is defined and initialized when used as the *anchorPos* value.
 - **alwaysActive** -> Whether the object stays active when outside the canvas bounds.
 - ***initialized*** -> Whether the object has been initialized.
 - ***parent*** -> The parent of the object. (Shape, Canvas, ...)
@@ -2158,11 +2160,13 @@ const optimizedDrawEffectCB = (render, dot, ratio, dragAnim, mouse, dist, shape,
 
 # [React Component Template](#table-of-contents)
 
-Here is the proposed CDECanvas React component. Create a CDECanvas.jsx file, then copy and paste the code below.
+Here is the proposed CDECanvas React component. Run **`npx cdejs-react`** or create a CDECanvas.jsx file and copy and paste the code below.
+
+
 
 ```jsx
-import {forwardRef, useEffect, useImperativeHandle, useRef, useState} from "react"
-import {Canvas, CDEUtils, FPSCounter} from "cdejs"
+import {forwardRef, useEffect, useImperativeHandle, useRef} from "react"
+import {Canvas, CDEUtils} from "cdejs"
 
 /**
  * HOW TO USE:
@@ -2178,7 +2182,7 @@ import {Canvas, CDEUtils, FPSCounter} from "cdejs"
  * - loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently -> see https://github.com/Louis-CharlesBiron/canvasDotEffect?#canvas
  */
 export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently}, ref)=>{
-    const htmlElementCanvasRef = useRef(null), cvsInstanceRef = useRef(null), [getFps, setFps] = useState(0)
+    const htmlElementCanvasRef = useRef(null), cvsInstanceRef = useRef(null)
 
     // Utility canvas functions
     useImperativeHandle(ref, ()=>({
@@ -2199,9 +2203,7 @@ export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loop
         else CVS.startLoop()
 
         // On unmount
-        return ()=>{
-            CVS.stopLoop()
-        }
+        return ()=>CVS.stopLoop()
     }, [])
 
     return <canvas ref={htmlElementCanvasRef}></canvas>

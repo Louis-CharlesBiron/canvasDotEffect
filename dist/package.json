@@ -1,18 +1,30 @@
 {
     "name": "cdejs",
-    "version": "1.0.12",
+    "version": "1.0.13",
     "description": "CanvasDotEffect is a lightweight JS library that helps create customizable and interactive dot-based effects using the Canvas API",
     "author": "Louis-Charles Biron",
     "license": "MIT",
     "repository": {
-      "type": "git",
-      "url": "https://github.com/Louis-CharlesBiron/canvasDotEffect"
+        "type": "git",
+        "url": "https://github.com/Louis-CharlesBiron/canvasDotEffect"
     },
     "type": "module",
     "main": "canvasDotEffect.min.js",
-    "files": ["cde.min.js", "canvasDotEffect.min.js"],
+    "files": [
+        "cde.min.js",
+        "canvasDotEffect.min.js",
+        "bins/"
+    ],
     "exports": {
-      "import": "./cde.min.js"
+        "import": "./cde.min.js"
     },
-    "keywords": ["canvas", "library", "cde", "canvasDotEffect", "effects", "dot", "interactive", "dynamic", "graphics", "designs", "canvasdoteffect", "js", "javascript"]
+    "bin": {
+        "cdejs-template": "./bins/createProjectTemplate.js",
+        "cdejs-react": "./bins/createDefaultReactComponent.js",
+        "cdejs-doc": "./bins/openDocumentation.js",
+        "cdejs-documentation": "./bins/openDocumentation.js",
+        "cdejs-signature": "./bins/getSignature.js",
+        "cdejs-sig": "./bins/getSignature.js"
+    },
+    "keywords": ["canvas", "library", "cde", "canvasDotEffect", "effects", "dot", "interactive", "dynamic", "graphics", "designs", "cool", "canvasdoteffect", "js", "javascript"]
 }

@@ -455,7 +455,7 @@ class Color {
         this._format = Color.getFormat(this._color) // the format of the color
         this.#updateCache()
 
-        this._isChannel = isChannel // if true, this instance will be used as a color channel and will not duplicate
+        this._isChannel = isChannel||false // if true, this instance will be used as a color channel and will not duplicate
     }
 
     // updates the cached rgba value
@@ -2198,7 +2198,7 @@ class Canvas {
             this.draw()
             this._render.drawBatched()
             
-            if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB()
+            if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB(this)
 
             this._fixedTimeStamp = 0
         } else if (time) {
@@ -2546,12 +2546,23 @@ class Canvas {
         const [x,y] = pos, [ox, oy] = this._viewPos
         return x >= -padding-ox && x <= this.width+padding-ox && y >= -padding-oy && y <= this.height+padding-oy
     }
+
+    // returns the px value of the provided pourcent value. PourcentileValue should be a number between 0 and 1. UseWidth determines whether the width or height should be used.
+    pct(pourcentileValue, useWidth=true) {
+        return useWidth ? this.width*pourcentileValue : this.height*pourcentileValue
+    }
+
+    // Returns the px values of the provided pourcent values. PourcentilePos should be an array(2) of numbers between 0 and 1. ReferenceDims is the reference dimensions used to calculate the values
+    getResponsivePos(pourcentilePos, referenceDims=this.size) {
+        return [pourcentilePos[0]*referenceDims[0], pourcentilePos[1]*referenceDims[1]]
+    }
     
 	get cvs() {return this._cvs}
 	get frame() {return this._frame}
 	get ctx() {return this._ctx}
 	get width() {return this._cvs.width}
 	get height() {return this._cvs.height}
+	get size() {return [this.width, this.height]}
 	get settings() {return this._settings}
 	get loopingCB() {return this._loopingCB}
 	get looping() {return this._looping}
@@ -3679,7 +3690,7 @@ class ImageDisplay extends _BaseObj {
 	get size() {return this._size}
     get width() {return this._size[0]}
     get height() {return this._size[1]}
-    get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
+    get trueSize() {return [Math.abs(this._size[0]*this._scale[0]), Math.abs(this._size[1]*this._scale[1])]}
     get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
     get centerX() {return this._pos[0]+this._size[0]/2}
     get centerY() {return this._pos[1]+this._size[1]/2}
@@ -3812,7 +3823,7 @@ class TextDisplay extends _BaseObj {
 	get maxWidth() {return this._maxWidth}
     get size() {return this._size}
     get lineHeigth() {return this._lineHeigth}
-    get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
+    get trueSize() {return [Math.abs(this._size[0]*this._scale[0]), Math.abs(this._size[1]*this._scale[1])]}
     get render() {return this._parent.render}
     get lineCount() {return this.#lineCount}
 
@@ -3961,7 +3972,7 @@ class Pattern extends _DynamicColor {
             return this._positions
         } else if (obj instanceof TextDisplay) {
             if (this.#hasTextDisplayChanged(obj)) {
-                const [width, height] = obj.trueSize, lh = obj.lineHeigth, w2 = width/2, h2 = height/2, cx = obj.x, topY = obj.y-lh/1.8
+                const width = obj.size[0], lh = obj.lineHeigth, w2 = width/2, cx = obj.x, topY = obj.y-lh/1.8
                 return [[cx-w2, topY], [cx+w2, topY+lh*obj.lineCount]]
             } return this._positions
         } else if (obj instanceof AudioDisplay) return _DynamicColor.getAutomaticPositions(obj)
@@ -4064,6 +4075,16 @@ class Pattern extends _DynamicColor {
             source.setAttribute("fakeload", "1")
         }
         return new Pattern(render, source, CDEUtils.unlinkArr22(positions), CDEUtils.unlinkArr22(sourceCroppingPositions), keepAspectRatio, forcedUpdates, rotation, errorCB, null, frameRate, repeatMode)
+    }
+
+    // Returns a usable image source
+    static loadImage(path) {
+        return ImageDisplay.loadImage(path)
+    }
+
+    // Returns a usable video source
+    static loadVideo(path, looping=true, autoPlay=true) {
+        return ImageDisplay.loadVideo(path, looping, autoPlay)
     }
 
     // Returns a usable camera capture source

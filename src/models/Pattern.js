@@ -65,7 +65,7 @@ class Pattern extends _DynamicColor {
             return this._positions
         } else if (obj instanceof TextDisplay) {
             if (this.#hasTextDisplayChanged(obj)) {
-                const [width, height] = obj.trueSize, lh = obj.lineHeigth, w2 = width/2, h2 = height/2, cx = obj.x, topY = obj.y-lh/1.8
+                const width = obj.size[0], lh = obj.lineHeigth, w2 = width/2, cx = obj.x, topY = obj.y-lh/1.8
                 return [[cx-w2, topY], [cx+w2, topY+lh*obj.lineCount]]
             } return this._positions
         } else if (obj instanceof AudioDisplay) return _DynamicColor.getAutomaticPositions(obj)
@@ -168,6 +168,16 @@ class Pattern extends _DynamicColor {
             source.setAttribute("fakeload", "1")
         }
         return new Pattern(render, source, CDEUtils.unlinkArr22(positions), CDEUtils.unlinkArr22(sourceCroppingPositions), keepAspectRatio, forcedUpdates, rotation, errorCB, null, frameRate, repeatMode)
+    }
+
+    // Returns a usable image source
+    static loadImage(path) {
+        return ImageDisplay.loadImage(path)
+    }
+
+    // Returns a usable video source
+    static loadVideo(path, looping=true, autoPlay=true) {
+        return ImageDisplay.loadVideo(path, looping, autoPlay)
     }
 
     // Returns a usable camera capture source

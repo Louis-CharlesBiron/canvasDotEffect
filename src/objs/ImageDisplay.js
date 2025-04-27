@@ -219,7 +219,7 @@ class ImageDisplay extends _BaseObj {
 	get size() {return this._size}
     get width() {return this._size[0]}
     get height() {return this._size[1]}
-    get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
+    get trueSize() {return [Math.abs(this._size[0]*this._scale[0]), Math.abs(this._size[1]*this._scale[1])]}
     get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
     get centerX() {return this._pos[0]+this._size[0]/2}
     get centerY() {return this._pos[1]+this._size[1]/2}

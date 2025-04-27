@@ -88,7 +88,7 @@ class TextDisplay extends _BaseObj {
 	get maxWidth() {return this._maxWidth}
     get size() {return this._size}
     get lineHeigth() {return this._lineHeigth}
-    get trueSize() {return [this._size[0]*this._scale[0], this._size[1]*this._scale[1]]}
+    get trueSize() {return [Math.abs(this._size[0]*this._scale[0]), Math.abs(this._size[1]*this._scale[1])]}
     get render() {return this._parent.render}
     get lineCount() {return this.#lineCount}
 

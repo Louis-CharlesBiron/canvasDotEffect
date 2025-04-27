@@ -191,7 +191,7 @@ class Canvas {
             this.draw()
             this._render.drawBatched()
             
-            if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB()
+            if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB(this)
 
             this._fixedTimeStamp = 0
         } else if (time) {
@@ -539,12 +539,23 @@ class Canvas {
         const [x,y] = pos, [ox, oy] = this._viewPos
         return x >= -padding-ox && x <= this.width+padding-ox && y >= -padding-oy && y <= this.height+padding-oy
     }
+
+    // returns the px value of the provided pourcent value. PourcentileValue should be a number between 0 and 1. UseWidth determines whether the width or height should be used.
+    pct(pourcentileValue, useWidth=true) {
+        return useWidth ? this.width*pourcentileValue : this.height*pourcentileValue
+    }
+
+    // Returns the px values of the provided pourcent values. PourcentilePos should be an array(2) of numbers between 0 and 1. ReferenceDims is the reference dimensions used to calculate the values
+    getResponsivePos(pourcentilePos, referenceDims=this.size) {
+        return [pourcentilePos[0]*referenceDims[0], pourcentilePos[1]*referenceDims[1]]
+    }
     
 	get cvs() {return this._cvs}
 	get frame() {return this._frame}
 	get ctx() {return this._ctx}
 	get width() {return this._cvs.width}
 	get height() {return this._cvs.height}
+	get size() {return [this.width, this.height]}
 	get settings() {return this._settings}
 	get loopingCB() {return this._loopingCB}
 	get looping() {return this._looping}

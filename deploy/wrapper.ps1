@@ -7,15 +7,19 @@ function getAt() {$inv=$global:MyInvocation.MyCommand;if($inv.CommandType -eq "E
 $at = getAt
 $root = Split-Path -Path $at -Parent
 $dist = "$root\dist"
-$readme = "$root\readme.md"
+$verisonedFiles = @("$root\readme.md", "$dist\bins\src\projectTemplate\package.json")
 $deploy = "$root\deploy"
 $terser = "$deploy\node_modules\.bin\terser"
+$cdeVersion = (Get-Content "$dist\package.json" | ConvertFrom-Json).version
 
-#UPDATE README
-(Get-Content $readme) -replace '"cdejs": "\^.*?"', @"
-`"cdejs`": `"^$((Get-Content "$dist\package.json" | ConvertFrom-Json).version)`"
-"@ | Set-Content $readme
+#UPDATE VERSIONED FILES
+foreach ($filepath in $verisonedFiles) {
+(Get-Content $filepath) -replace '"cdejs": "\^.*?"', @"
+`"cdejs`": `"^$cdeVersion`"
+"@ | Set-Content $filepath
+}
 
+# UPDATE DIST README
 Copy-Item "$root\readme.md" -Destination "$dist\readme.md" -Force
 
 #GET CONFIG

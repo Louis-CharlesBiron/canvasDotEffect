@@ -25,7 +25,7 @@ class Color {
         this._format = Color.getFormat(this._color) // the format of the color
         this.#updateCache()
 
-        this._isChannel = isChannel // if true, this instance will be used as a color channel and will not duplicate
+        this._isChannel = isChannel||false // if true, this instance will be used as a color channel and will not duplicate
     }
 
     // updates the cached rgba value
