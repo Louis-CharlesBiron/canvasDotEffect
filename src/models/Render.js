@@ -153,7 +153,7 @@ class Render {
         } 
     }
 
-    // Fills and strokes all batched path
+    // Fills and strokes all batched paths
     drawBatched() {
         const strokes = Object.entries(this._batchedStrokes), s_ll = strokes.length,
               fills = Object.entries(this._batchedFills), f_ll = fills.length,

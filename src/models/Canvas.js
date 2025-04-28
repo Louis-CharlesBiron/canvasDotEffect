@@ -17,6 +17,7 @@ class Canvas {
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
     static DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX = "CDE_FE_"
     static DEFAULT_CUSTOM_SVG_FILTER_CONTAINER_ID = Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+"CONTAINER"
+    static CURSOR_STYLES = {CUSTOM:(filepath, offsetPos=[0,0], fallbackCursorStyle=Canvas.CURSOR_STYLES.AUTO)=>`url("${filepath}") ${offsetPos.join(" ")}, ${fallbackCursorStyle}`, AUTO:"auto", POINTER:"pointer", DEFAULT:"default", CROSSHAIR:"crosshair", MOVE:"move", TEXT:"text", WAIT:"wait", HELP:"help", NONE:"none", GRAB:"grab", GRABBING:"grabbing", ALL_SCROLL:"all-scroll", COL_RESIZE:"col-resize", ROW_RESIZE:"row-resize", N_RESIZE:"n-resize", E_RESIZE:"e-resize", S_RESIZE:"s-resize", W_RESIZE:"w-resize", NE_RESIZE:"ne-resize", NW_RESIZE:"nw-resize", SE_RESIZE:"se-resize", SW_RESIZE:"sw-resize", ZOOM_IN:"zoom-in", ZOOM_OUT:"zoom-out", NO_DROP:"no-drop", COPY:"copy", NOT_ALLOWED:"not-allowed", VERTICAL_TEXT:"vertical-text", CELL:"cell", CONTEXT_MENU:"context-menu", EXT_RESIZE:"ext-resize", DEFAULT_ARROW:"default", UNSET:"unset"}
     static LOADED_SVG_FILTERS = {}
     static DEFAULT_CTX_SETTINGS = {"imageSmoothingEnabled":false, "willReadFrequently":false, "font":TextStyles.DEFAULT_FONT, "letterSpacing":TextStyles.DEFAULT_LETTER_SPACING, "wordSpacing":TextStyles.DEFAULT_WORD_SPACING, "fontVariantCaps":TextStyles.DEFAULT_FONT_VARIANT_CAPS, "direction":TextStyles.DEFAULT_DIRECTION, "fontSretch":TextStyles.DEFAULT_FONT_STRETCH, "fontKerning":TextStyles.DEFAULT_FONT_KERNING, "textAlign":TextStyles.DEFAULT_TEXT_ALIGN, "textBaseline":TextStyles.DEFAULT_TEXT_BASELINE, "textRendering":TextStyles.DEFAULT_TEXT_RENDERING, "lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR}
     static DEFAULT_CANVAS_WIDTH = 800
@@ -99,6 +100,12 @@ class Canvas {
             onscroll:()=>window.removeEventListener("scroll", onscroll),
             onDOMContentLoaded:()=>window.removeEventListener("load", onLoad)
         }
+    }
+
+    // sets the cursor style on the canvas
+    setCursorStyle(cursorStyle=Canvas.CURSOR_STYLES.DEFAULT) {
+        const frame = this._frame
+        if (frame.style.cursor !== cursorStyle) frame.style.cursor = cursorStyle
     }
 
     // adds a callback to be called once the document is loaded
