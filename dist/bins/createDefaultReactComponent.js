@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import {copyFileSync} from "fs"
-import {join} from "path"
+import {dirname, join} from "path"
+import {fileURLToPath} from "url"
 
-copyFileSync(join(import.meta.dirname, "./src/CDECanvas.jsx"), join(process.cwd(), "CDECanvas.jsx"))
+copyFileSync(join(dirname(fileURLToPath(import.meta.url)), "./src/CDECanvas.jsx"), join(process.cwd(), "CDECanvas.jsx"))
 
 console.log("Default CDECanvas React component created!")
