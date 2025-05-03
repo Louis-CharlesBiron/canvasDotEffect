@@ -1341,6 +1341,7 @@ class Mouse {
         this._scrollClicked = false       // whether the scroll button of the mouse is active (pressed)
         this._extraForwardClicked = false // whether the extra foward button of the mouse is active (not present on every mouse)
         this._extraBackClicked = false    // whether the extra back button of the mouse is active (not present on every mouse)
+        this._holdValue = null            // a custom manual value. Ex: can be used to easily reference an object the mouse is holding 
     }
 
     // calculates and sets the current mouse speed (loop every frame)
@@ -1415,17 +1416,19 @@ class Mouse {
 	get rightClicked() {return this._rightClicked}
 	get extraBackClicked() {return this._extraBackClicked}
 	get extraForwardClicked() {return this._extraForwardClicked}
+	get holdValue() {return this._holdValue}
 
-	set valid(valid) {return this._valid = valid}
-	set lastX(_lastX) {return this._lastX = _lastX}
-	set lastY(_lastY) {return this._lastY = _lastY}
-	set dir(_dir) {return this._dir = _dir}
-	set speed(_speed) {return this._speed = _speed}
-	set clicked(_clicked) {return this._clicked = _clicked}
-	set scrollClicked(_scrollClicked) {return this._scrollClicked = _scrollClicked}
-	set rightClicked(_rightClicked) {return this._rightClicked = _rightClicked}
-	set extraBackClicked(_extraBackClicked) {return this._extraBackClicked = _extraBackClicked}
-	set extraForwardClicked(_extraForwardClicked) {return this._extraForwardClicked = _extraForwardClicked}
+	set valid(valid) {this._valid = valid}
+	set lastX(_lastX) {this._lastX = _lastX}
+	set lastY(_lastY) {this._lastY = _lastY}
+	set dir(_dir) {this._dir = _dir}
+	set speed(_speed) {this._speed = _speed}
+	set clicked(_clicked) {this._clicked = _clicked}
+	set scrollClicked(_scrollClicked) {this._scrollClicked = _scrollClicked}
+	set rightClicked(_rightClicked) {this._rightClicked = _rightClicked}
+	set extraBackClicked(_extraBackClicked) {this._extraBackClicked = _extraBackClicked}
+	set extraForwardClicked(_extraForwardClicked) {this._extraForwardClicked = _extraForwardClicked}
+	set holdValue(holdValue) {this._holdValue = holdValue}
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron

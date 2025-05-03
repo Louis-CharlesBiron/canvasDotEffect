@@ -120,7 +120,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.0.15"
+    "cdejs": "^1.0.16"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -1637,6 +1637,7 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 - **scrollClicked** -> Whether the scroll button of the mouse is active (pressed).
 - **extraForwardClicked** -> Whether the extra forward button of the mouse is active (not present on every mouse).
 - **extraBackClicked** -> Whether the extra back button of the mouse is active (not present on every mouse).
+- **holdValue** -> A custom value to set manually. Ex: can be used to reference an object the mouse is holding more easily 
 
 ### **To set the mouse event listeners,** use the following prebuilt functions:
 ###### - setMouseMove(cb, global), setMouseLeave(cb, global), setMouseDown(cb, global), setMouseUp(cb, global)
