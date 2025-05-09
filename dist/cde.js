@@ -1286,23 +1286,24 @@ export class TypingDevice {
     }
 
     setDown(e) {
-        let key = e.key
-        if (key) {
-            key = key.toUpperCase()
-            if (!this.isDown(key)) this._keysPressed.push({key, keyCode:e.keyCode})
-        }
+        const key = e.key?.toUpperCase()
+        if (key && !this.isDown(key)) this._keysPressed.push({key, keyCode:e.keyCode})
     }
 
     setUp(e) {
-        let key = e.key
-        if (key) {
-            key = key.toUpperCase()
-            if (this.isDown(key)) this._keysPressed = this._keysPressed.filter(v=>v.key!==key)
-        }
+        const key = e.key?.toUpperCase()
+        if (key && this.isDown(key)) this._keysPressed = this._keysPressed.filter(v=>v.key!==key)
     }
 
-    isDown(key) {
-        return Boolean(this._keysPressed.find(v=>v.key==key.toUpperCase()))
+    isDown(keys) {
+        const keysPressed = this._keysPressed, kp_ll = keysPressed.length, isMultipleKeys = Array.isArray(keys)
+
+        for (let i=0;i<kp_ll;i++) {
+            const pressedKey = keysPressed[i].toUpperCase()
+
+            if (isMultipleKeys && keys.includes(pressedKey)) return true
+            else if (!isMultipleKeys && pressedKey==keys.toUpperCase()) return true
+        }
     }
 
     hasKeysDown() {
