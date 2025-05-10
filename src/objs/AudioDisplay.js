@@ -72,6 +72,7 @@ class AudioDisplay extends _BaseObj {
         if (this.initialized) {
             const ctx = render.ctx, x = this.x, y = this.y, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling, data = this.#data
             if (hasTransforms) {
+                ctx.save()
                 ctx.translate(x, y)
                 if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                 if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -87,7 +88,7 @@ class AudioDisplay extends _BaseObj {
                 if (newAcc) accumulator = newAcc
             }
 
-            if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
+            if (hasTransforms) ctx.restore()
         }
         super.draw(time, deltaTime)
     }

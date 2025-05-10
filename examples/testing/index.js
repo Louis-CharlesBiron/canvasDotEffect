@@ -62,8 +62,8 @@ let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, 
 })
 testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog, -750))
 
-//let aud = new AudioDisplay(AudioDisplay.loadMicrophone(), [200,50], "lime", AudioDisplay.BARS(), 64, true)
-//CVS.add(aud)
+let aud = new AudioDisplay("./img/song.mp3", [800,250], "lime", AudioDisplay.BARS(100, 3, 10), 32, true)
+CVS.add(aud)
 
 
 let test2 = new Shape((shape, idk)=>{return [50+50,100+shape.dots.length]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
@@ -108,11 +108,6 @@ let test = new Grid("abcdefg\nhijklm".toUpperCase(), [5, 5], 50, null, [450,50],
 
 CVS.add(test)
 
-let testtest = new Grid("a\nh".toUpperCase(), [5, 5], 50, null, [400,50], 2, null, null, (render, dot, ratio, res, m, dist, shape, isActive)=>{
-    CanvasUtils.drawDotConnections(dot, render.profile1.update([255,255,255,1]))
-})
-//CVS.add(testtest)
-//testtest.singe([10, 10])
 
 // SINGLE DRAGGABLE DOT
 let dragAnim1 = CanvasUtils.getDraggableDotCB()
@@ -224,7 +219,7 @@ let trailTester = new Shape([200, 100], new Dot(), null, "lime", null, (render, 
 
 CVS.add(trailTester)
 
-let yo = new Shape([0,0], new Dot([900, 700]), null, "aqua", null, (render, dot, ratio, res, m, dist, shape)=>{
+let yo = new Shape([0,0], new Dot([700, 600]), null, "aqua", null, (render, dot, ratio, res, m, dist, shape)=>{
     if (dot.id==shape.firstDot.id) {
         res[0](shape.dots[0], m, dist, ratio)
         res[1](m)
@@ -247,7 +242,7 @@ let yo = new Shape([0,0], new Dot([900, 700]), null, "aqua", null, (render, dot,
 })
 
 CVS.add(yo)
-
+/*
 /*let compOp = Render.DEFAULT_COMPOSITE_OPERATION
 let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], 50, (render, dot, ratio, res, m, dist, shape, isActive)=>{
     const v = CDEUtils.mod(50, ratio)>>0, hasFilter = (v>>0), feDisplacementMap = res[0]
@@ -321,15 +316,16 @@ Canvas.loadSVGFilter(`<svg>
     </filter>
    </svg>`, "f")
 
-CVS.add(generationTester)
-CVS.add(animTester)
-CVS.add(draggableDotTester)
-CVS.add(testMore)
-CVS.add(filledShapeTester)
 CVS.add(movementsTester)
+CVS.add(filledShapeTester)
+CVS.add(testMore)
 CVS.add(test2)
 CVS.add(le)
+CVS.add(draggableDotTester)
+CVS.add(animTester)
+CVS.add(generationTester)
 CVS.add(imageTester)
+
 
 let dupelicateTester = le.duplicate()
 for (let i=0;i<3;i++) {

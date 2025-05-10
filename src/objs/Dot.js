@@ -25,6 +25,7 @@ class Dot extends _Obj {
 
                 if (hasTransforms) {
                     if (hasScaling) {
+                        ctx.save()
                         ctx.translate(x, y)
                         ctx.scale(scaleX, scaleY)
                         if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
@@ -32,7 +33,7 @@ class Dot extends _Obj {
                     }
 
                     render.fill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
-                    if (hasScaling) ctx.setTransform(1,0,0,1,0,0)
+                    if (hasScaling) ctx.restore()
                 } else render.batchFill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
             }
         } else {

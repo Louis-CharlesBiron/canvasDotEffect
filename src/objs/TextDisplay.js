@@ -32,6 +32,7 @@ class TextDisplay extends _BaseObj {
                 const ctx = render.ctx, x = this._pos[0], y = this._pos[1], hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation || hasScaling, textValue = this.getTextValue()
 
                 if (hasTransforms) {
+                    ctx.save()
                     ctx.translate(x, y)
                     if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                     if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -41,7 +42,7 @@ class TextDisplay extends _BaseObj {
                 if (this._drawMethod=="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
                 else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
                 
-                if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
+                if (hasTransforms) ctx.restore()
             }
         } else this.initialized = true
 

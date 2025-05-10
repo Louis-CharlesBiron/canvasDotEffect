@@ -131,7 +131,7 @@ class CanvasUtils {
         return obj.playAnim(new Anim((prog)=>obj[isFillColor?"fillColorRaw":"colorRaw"].rotation=-speed*360*prog, duration))
     }
 
-    // Rotates the provided obj for it to face the target. Offsets: top->90, right->0, bottom->270, left->180
+    // Rotates the provided obj for it to face the target. Offsets: top:90, right:0, bottom:270, left:180
     static lookAt(obj, target, offset=0) {
         const [sx, sy] = obj.pos, [tx, ty] = target?.pos??target
         obj.rotation = offset-CDEUtils.toDeg(Math.atan2(sy-ty, -(sx-tx)))

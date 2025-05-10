@@ -328,7 +328,7 @@ class CanvasUtils {
         return obj.playAnim(new Anim((prog)=>obj[isFillColor?"fillColorRaw":"colorRaw"].rotation=-speed*360*prog, duration))
     }
 
-    // Rotates the provided obj for it to face the target. Offsets: top->90, right->0, bottom->270, left->180
+    // Rotates the provided obj for it to face the target. Offsets: top:90, right:0, bottom:270, left:180
     static lookAt(obj, target, offset=0) {
         const [sx, sy] = obj.pos, [tx, ty] = target?.pos??target
         obj.rotation = offset-CDEUtils.toDeg(Math.atan2(sy-ty, -(sx-tx)))
@@ -2083,6 +2083,7 @@ class Canvas {
         this._mouse = new Mouse()                                     // mouse info
         this._offset = this.updateOffset()                            // cvs page offset
         this._render = new Render(this._ctx)                          // render instance
+        this._anims = []                                              // current animations
     }
 
     // sets css styles on the canvas and the parent
@@ -2210,16 +2211,19 @@ class Canvas {
     #loopCore(time) {
         this.#calcDeltaTime(time)
 
-        const delay = Math.abs((time-this.#timeStamp)-this.deltaTime*1000)
+        const deltaTime = this._deltaTime, delay = Math.abs((time-this.#timeStamp)-deltaTime*1000)
         if (this._fixedTimeStamp==0) this._fixedTimeStamp = time-this.#frameSkipsOffset
         if (time && this._fixedTimeStamp && delay < this.#maxTime) {
-            this._mouse.calcSpeed(this._deltaTime)
+            this._mouse.calcSpeed(deltaTime)
 
             this.clear()
             this.draw()
             this._render.drawBatched()
             
-            if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB(this)
+            if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB(deltaTime)
+
+            const anims = this._anims, a_ll = anims.length
+            if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
 
             this._fixedTimeStamp = 0
         } else if (time) {
@@ -2317,27 +2321,68 @@ class Canvas {
         this.ctx.setTransform(1,0,0,1,0,0)
     }
 
+    // moves the context to a specific x/y value
+    moveViewAt(pos) {
+        let [x, y] = pos
+        this.resetTransformations()
+        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
+        this._viewPos[0] = x
+        this._viewPos[1] = y
+        
+        this.updateOffset()
+        this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
+        this.#mouseMovements()
+    }
+
     // moves the context by specified x/y values
     moveViewBy(pos) {
         let [x, y] = pos
         this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
-        this._viewPos = [this._viewPos[0]+x, this._viewPos[1]+y]
+        this._viewPos[0] += x
+        this._viewPos[1] += y
 
         this.updateOffset()
         this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
         this.#mouseMovements()
     }
 
-    // moves the context to a specific x/y value
-    moveViewAt(pos) {
-        let [x, y] = pos
-        this.resetTransformations()
-        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
-        this._viewPos = [x, y]
-        
-        this.updateOffset()
-        this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
-        this.#mouseMovements()
+    // Smoothly moves to coords in set time
+    moveViewTo(pos, time, easing, initPos) {
+        time??=1000
+        easing??=Anim.easeInOutQuad
+        initPos??=this._viewPos
+
+        let [fx, fy] = pos, [ix, iy] = initPos, lx = ix, ly = iy
+        if (!CDEUtils.isDefined(fx)) fx = ix??0
+        if (!CDEUtils.isDefined(fy)) fy = iy??0
+
+        const fdx = fx-ix, fdy = fy-iy
+        if (fdx || fdy) {
+            return this.playAnim(new Anim((prog)=>{
+                const nx = ix+fdx*prog, ny = iy+fdy*prog, dx = nx-lx, dy = ny-ly
+                this._ctx.translate(dx,dy)
+
+                this._viewPos[0] += dx
+                this._viewPos[1] += dy
+                lx = nx
+                ly = ny
+
+                this.updateOffset()
+                this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
+                this.#mouseMovements()
+            }, time, easing))
+        }
+    }
+
+    // adds an animation to play
+    playAnim(anim) {
+        const initEndCB = anim.endCallback
+        anim.endCallback=()=>{
+            this._anims = this._anims.filter(a=>a.id!==anim.id)
+            if (CDEUtils.isFunction(initEndCB)) initEndCB()
+        }
+        this._anims.push(anim)
+        return anim
     }
 
     // sets the width and height in px of the canvas element. If "forceCSSupdate" is true, it also force the resizes on the frame with css
@@ -2610,6 +2655,7 @@ class Canvas {
     get viewPos() {return this._viewPos}
     get render() {return this._render}
     get speedModifier() {return this._speedModifier}
+    get anims() {return this._anims}
 
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
 	set width(w) {this.setSize(w, null)}
@@ -3117,6 +3163,7 @@ class AudioDisplay extends _BaseObj {
         if (this.initialized) {
             const ctx = render.ctx, x = this.x, y = this.y, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling, data = this.#data
             if (hasTransforms) {
+                ctx.save()
                 ctx.translate(x, y)
                 if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                 if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -3132,7 +3179,7 @@ class AudioDisplay extends _BaseObj {
                 if (newAcc) accumulator = newAcc
             }
 
-            if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
+            if (hasTransforms) ctx.restore()
         }
         super.draw(time, deltaTime)
     }
@@ -3550,6 +3597,7 @@ class ImageDisplay extends _BaseObj {
             const ctx = render.ctx, x = this.centerX, y = this.centerY, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
 
             if (hasTransforms) {
+                ctx.save()
                 ctx.translate(x, y)
                 if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                 if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -3559,7 +3607,7 @@ class ImageDisplay extends _BaseObj {
             if (this._source instanceof HTMLCanvasElement) render.drawLateImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
             else render.drawImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
 
-            if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
+            if (hasTransforms) ctx.restore()
         }
         super.draw(time, deltaTime)
     }
@@ -3788,6 +3836,7 @@ class TextDisplay extends _BaseObj {
                 const ctx = render.ctx, x = this._pos[0], y = this._pos[1], hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation || hasScaling, textValue = this.getTextValue()
 
                 if (hasTransforms) {
+                    ctx.save()
                     ctx.translate(x, y)
                     if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                     if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -3797,7 +3846,7 @@ class TextDisplay extends _BaseObj {
                 if (this._drawMethod=="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
                 else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
                 
-                if (hasTransforms) ctx.setTransform(1,0,0,1,0,0)
+                if (hasTransforms) ctx.restore()
             }
         } else this.initialized = true
 
@@ -4988,6 +5037,7 @@ class Dot extends _Obj {
 
                 if (hasTransforms) {
                     if (hasScaling) {
+                        ctx.save()
                         ctx.translate(x, y)
                         ctx.scale(scaleX, scaleY)
                         if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
@@ -4995,7 +5045,7 @@ class Dot extends _Obj {
                     }
 
                     render.fill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
-                    if (hasScaling) ctx.setTransform(1,0,0,1,0,0)
+                    if (hasScaling) ctx.restore()
                 } else render.batchFill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
             }
         } else {
