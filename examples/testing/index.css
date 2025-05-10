@@ -1,0 +1,36 @@
+html, body {
+    background-color: black;
+    overflow: hidden;
+    color: aliceblue;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+}
+
+html {
+    overflow: visible;
+}
+
+#holder, #holder2 {
+    width: 98%;
+    height: 88%;
+    border: 2px solid aliceblue;
+    user-select: none;
+}
+
+.canvasas {
+    width: 100%;
+    height: 50%;
+}
+
+#largeBody {
+    height: 10000px;
+    overflow: overlay;
+}
+
+.canvasas {
+    width: 100%;
+    height: 450px;
+}
+
+*::-webkit-scrollbar {width: 5px;}

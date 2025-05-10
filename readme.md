@@ -1612,12 +1612,20 @@ The TypingDevice class is automatically created and accessible by any Canvas ins
 ```
 
 ### **To get whether a certain key is down,** use the isDown() function:
-###### - isDown(key)
+###### - isDown(keys)
 ```js
     // Accessing the typing device's "a" key state
     const isKey_A_down = CVS.typingDevice.isDown("a")
     
     console.log("Is the 'a' key down: ", isKey_A_down)
+
+    // OR
+
+    // Checking whether one of muliple keys is down
+    const arrowKeys = [TypingDevice.KEYS.ARROW_UP, TypingDevice.KEYS.ARROW_DOWN, TypingDevice.KEYS.ARROW_LEFT, TypingDevice.KEYS.ARROW_RIGHT]
+    const isAnyArrowKeyPressed = CVS.typingDevice.isDown(arrowKeys)
+    
+    console.log("Is pressing any arrow key: ", isAnyArrowKeyPressed)
 ```
 
 ## [Mouse](#table-of-contents)
