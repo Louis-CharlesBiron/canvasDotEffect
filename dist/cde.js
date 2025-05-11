@@ -450,7 +450,7 @@ export class Color {
     
     #rgba = null // cached rgba value
     #hsv = null  // cached hsv value
-    constructor(color, isChannel=false) {
+    constructor(color, isChannel) {
         this._color = color instanceof Color ? color._color : color||Color.DEFAULT_COLOR // the color value declaration, in any supported format
         this._format = Color.getFormat(this._color) // the format of the color
         this.#updateCache()
@@ -2096,7 +2096,13 @@ export class Canvas {
 
     // sets resize and visibility change listeners on the window
     #initWindowListeners() {
-        const onresize=()=>this.setSize(),
+        const onresize=()=>{
+            const render = this._render, [lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = render.currentCtxStyles, [font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering] = render.currentCtxTextStyles, [color, filter, compositeOperation, alpha] = render.currentCtxVisuals
+            this.setSize()
+            this._ctx.strokeStyle = this._ctx.fillStyle = Color.getColorValue(color)
+            RenderStyles.apply(render, null, filter, compositeOperation, alpha, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
+            TextStyles.apply(this._ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
+        },
               onvisibilitychange=e=>this._visibilityChangeCB(!document.hidden, this, e),
               onscroll=()=>{
                 const scrollX = window.scrollX, scrollY = window.scrollY
@@ -3596,8 +3602,9 @@ export class ImageDisplay extends _BaseObj {
 
             const ctx = render.ctx, x = this.centerX, y = this.centerY, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
 
+            let viewPos
             if (hasTransforms) {
-                ctx.save()
+                viewPos = this.parent.viewPos
                 ctx.translate(x, y)
                 if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                 if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -3607,7 +3614,7 @@ export class ImageDisplay extends _BaseObj {
             if (this._source instanceof HTMLCanvasElement) render.drawLateImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
             else render.drawImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
 
-            if (hasTransforms) ctx.restore()
+            if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
         }
         super.draw(time, deltaTime)
     }
@@ -3819,7 +3826,6 @@ export class TextDisplay extends _BaseObj {
         this._drawMethod = drawMethod?.toUpperCase()??Render.DRAW_METHODS.FILL // text draw method, either "fill" or "stroke"
         this._maxWidth = maxWidth??undefined // maximal width of the displayed text in px
         this._lineHeigth = null              // lineHeight in px of the text for multi-line display
-
         this._size = null                    // the text's default size [width, height]
     }
     
@@ -3835,18 +3841,21 @@ export class TextDisplay extends _BaseObj {
             if (this.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
                 const ctx = render.ctx, x = this._pos[0], y = this._pos[1], hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation || hasScaling, textValue = this.getTextValue()
 
+                let viewPos
                 if (hasTransforms) {
-                    ctx.save()
+                    viewPos = this.parent.viewPos
+
                     ctx.translate(x, y)
                     if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                     if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
                     ctx.translate(-x, -y)
+                    
                 }
 
                 if (this._drawMethod=="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
                 else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
                 
-                if (hasTransforms) ctx.restore()
+                if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
             }
         } else this.initialized = true
 
@@ -4608,14 +4617,11 @@ export class Gradient extends _DynamicColor {
             positions, // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
             rotation   // rotation of the gradient, not applicable for radial type
         ) 
-        this.id = Gradient.a++
         this._ctx = ctx.ctx??ctx                 // canvas context
         this._type = type||Gradient.DEFAULT_TYPE // type of gradient
         this._colorStops = colorStops.map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
         this.update()
     }
-
-    static a =0
 
     /**
      * Given an canvas object, returns automatic positions values for linear, radial or conic gradients
@@ -4752,7 +4758,7 @@ export class Gradient extends _DynamicColor {
 // Regular shape with a filled area defined by its dots
 export class FilledShape extends Shape {
     #lastDotsPos = null
-    constructor(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
+    constructor(fillColor, dynamicUpdates=false, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
         super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)
         this._initFillColor = fillColor       // declaration color fill value
         this._fillColor = this._initFillColor // the current color or gradient of the filled shape
@@ -4854,6 +4860,7 @@ export class Grid extends Shape {
     static DEFAULT_KEYS = ""
     static DEFAULT_GAPS = [10, 10]
     static DEFAULT_SOURCE = GridAssets.DEFAULT_SOURCE
+    static DEFAULT_SPACING = (grid)=>grid._source.width*grid._gaps[0]+grid._gaps[0]-grid._source.width+grid._radius
     static DELETION_VALUE = null
     static SAME_VALUE = undefined
 
@@ -4861,10 +4868,10 @@ export class Grid extends Shape {
     constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
         super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)
 
-        this._keys = keys+""||Grid.DEFAULT_KEYS     // keys to convert to source's values as a string
-        this._gaps = gaps??Grid.DEFAULT_GAPS        // [x, y] gap length within the dots
-        this._source = source?? Grid.DEFAULT_SOURCE // symbols' source
-        this._spacing = spacing??this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
+        this._keys = keys+""||Grid.DEFAULT_KEYS             // keys to convert to source's values as a string
+        this._gaps = gaps??Grid.DEFAULT_GAPS                // [x, y] gap length within the dots
+        this._source = source?? Grid.DEFAULT_SOURCE         // symbols' source
+        this._spacing = spacing??Grid.DEFAULT_SPACING(this) // gap length between symbols
     }
 
     initialize() {
@@ -5017,7 +5024,7 @@ export class Grid extends Shape {
 
 // The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
 export class Dot extends _Obj {
-    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive, disablePathCaching) {
+    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive, disablePathCaching=false) {
         super(pos, radius, color, setupCB, null, anchorPos, alwaysActive)
         this._connections = []  // array of Dot to eventually draw a connecting line to
         this._cachedPath = !disablePathCaching // the cached path2d object or null if path caching is disabled
@@ -5036,8 +5043,9 @@ export class Dot extends _Obj {
                 const ctx = render.ctx, x = this._pos[0], y = this._pos[1], scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")!==-1)||this._rotation
 
                 if (hasTransforms) {
+                    let viewPos
                     if (hasScaling) {
-                        ctx.save()
+                        viewPos = this.cvs.viewPos
                         ctx.translate(x, y)
                         ctx.scale(scaleX, scaleY)
                         if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
@@ -5045,7 +5053,7 @@ export class Dot extends _Obj {
                     }
 
                     render.fill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
-                    if (hasScaling) ctx.restore()
+                    if (hasScaling) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
                 } else render.batchFill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
             }
         } else {

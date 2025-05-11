@@ -8,6 +8,7 @@ class Grid extends Shape {
     static DEFAULT_KEYS = ""
     static DEFAULT_GAPS = [10, 10]
     static DEFAULT_SOURCE = GridAssets.DEFAULT_SOURCE
+    static DEFAULT_SPACING = (grid)=>grid._source.width*grid._gaps[0]+grid._gaps[0]-grid._source.width+grid._radius
     static DELETION_VALUE = null
     static SAME_VALUE = undefined
 
@@ -15,10 +16,10 @@ class Grid extends Shape {
     constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
         super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)
 
-        this._keys = keys+""||Grid.DEFAULT_KEYS     // keys to convert to source's values as a string
-        this._gaps = gaps??Grid.DEFAULT_GAPS        // [x, y] gap length within the dots
-        this._source = source?? Grid.DEFAULT_SOURCE // symbols' source
-        this._spacing = spacing??this._source.width*this._gaps[0]+this._gaps[0]-this._source.width+this._radius // gap length between symbols
+        this._keys = keys+""||Grid.DEFAULT_KEYS             // keys to convert to source's values as a string
+        this._gaps = gaps??Grid.DEFAULT_GAPS                // [x, y] gap length within the dots
+        this._source = source?? Grid.DEFAULT_SOURCE         // symbols' source
+        this._spacing = spacing??Grid.DEFAULT_SPACING(this) // gap length between symbols
     }
 
     initialize() {

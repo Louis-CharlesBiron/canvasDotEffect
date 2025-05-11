@@ -15,7 +15,6 @@ class TextDisplay extends _BaseObj {
         this._drawMethod = drawMethod?.toUpperCase()??Render.DRAW_METHODS.FILL // text draw method, either "fill" or "stroke"
         this._maxWidth = maxWidth??undefined // maximal width of the displayed text in px
         this._lineHeigth = null              // lineHeight in px of the text for multi-line display
-
         this._size = null                    // the text's default size [width, height]
     }
     
@@ -31,18 +30,21 @@ class TextDisplay extends _BaseObj {
             if (this.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
                 const ctx = render.ctx, x = this._pos[0], y = this._pos[1], hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation || hasScaling, textValue = this.getTextValue()
 
+                let viewPos
                 if (hasTransforms) {
-                    ctx.save()
+                    viewPos = this.parent.viewPos
+
                     ctx.translate(x, y)
                     if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                     if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
                     ctx.translate(-x, -y)
+                    
                 }
 
                 if (this._drawMethod=="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
                 else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
                 
-                if (hasTransforms) ctx.restore()
+                if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
             }
         } else this.initialized = true
 

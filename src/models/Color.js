@@ -20,7 +20,7 @@ class Color {
     
     #rgba = null // cached rgba value
     #hsv = null  // cached hsv value
-    constructor(color, isChannel=false) {
+    constructor(color, isChannel) {
         this._color = color instanceof Color ? color._color : color||Color.DEFAULT_COLOR // the color value declaration, in any supported format
         this._format = Color.getFormat(this._color) // the format of the color
         this.#updateCache()

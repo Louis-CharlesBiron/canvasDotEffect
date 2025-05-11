@@ -5,7 +5,7 @@
 
 // The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
 class Dot extends _Obj {
-    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive, disablePathCaching) {
+    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive, disablePathCaching=false) {
         super(pos, radius, color, setupCB, null, anchorPos, alwaysActive)
         this._connections = []  // array of Dot to eventually draw a connecting line to
         this._cachedPath = !disablePathCaching // the cached path2d object or null if path caching is disabled
@@ -24,8 +24,9 @@ class Dot extends _Obj {
                 const ctx = render.ctx, x = this._pos[0], y = this._pos[1], scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")!==-1)||this._rotation
 
                 if (hasTransforms) {
+                    let viewPos
                     if (hasScaling) {
-                        ctx.save()
+                        viewPos = this.cvs.viewPos
                         ctx.translate(x, y)
                         ctx.scale(scaleX, scaleY)
                         if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
@@ -33,7 +34,7 @@ class Dot extends _Obj {
                     }
 
                     render.fill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
-                    if (hasScaling) ctx.restore()
+                    if (hasScaling) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
                 } else render.batchFill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
             }
         } else {

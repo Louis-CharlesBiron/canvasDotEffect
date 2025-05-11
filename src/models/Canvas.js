@@ -75,7 +75,13 @@ class Canvas {
 
     // sets resize and visibility change listeners on the window
     #initWindowListeners() {
-        const onresize=()=>this.setSize(),
+        const onresize=()=>{
+            const render = this._render, [lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = render.currentCtxStyles, [font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering] = render.currentCtxTextStyles, [color, filter, compositeOperation, alpha] = render.currentCtxVisuals
+            this.setSize()
+            this._ctx.strokeStyle = this._ctx.fillStyle = Color.getColorValue(color)
+            RenderStyles.apply(render, null, filter, compositeOperation, alpha, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
+            TextStyles.apply(this._ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
+        },
               onvisibilitychange=e=>this._visibilityChangeCB(!document.hidden, this, e),
               onscroll=()=>{
                 const scrollX = window.scrollX, scrollY = window.scrollY

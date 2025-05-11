@@ -37,10 +37,11 @@
     - [CanvasUtils](#canvasutils)
     - [CDEUtils](#cdeutils)
     - [FPSCounter](#fpscounter)
+- [Npx commands](#npx-commands)
+- [React component template](#react-component-template)
 - [Execution order](#execution-order)
 - [Optimization](#optimization)
 - [Intended practices](#intended-practices)
-- [React Component Template](#react-component-template)
 - [Credits](#credits)
 
 
@@ -48,7 +49,7 @@
 ## Getting Started / Minimal setup
 
 
-#### Either run: `npx cdejs-template yourFolderName` or follow these couple steps! (↓)
+#### Either run: `npx cdejs-template yourProjectName` or follow these couple steps! (↓)
 1. **Get the library file. (`npm install cdejs` or [canvasDotEffect.min.js](https://github.com/Louis-CharlesBiron/canvasDotEffect/blob/main/dist/canvasDotEffect.min.js))** 
 ```HTML
     <!-- Only if you're using the browser version! Otherwise use: import {...} from "cdejs" -->
@@ -1985,7 +1986,90 @@ const CVS = new Canvas(canvas, ()=>{//loopingCB
 })
 ```
 
- 
+# [Npx Commands](#table-of-contents)
+
+Here is the list of available npx commands:
+
+### To create a project template
+
+#### `npx cdejs-template <projectName?>`
+
+This command creates a modular CanvasDotEffect project template. It accepts an optional project name as parameter.
+
+### To create the CDECanvas React component
+
+#### `npx cdejs-react`
+
+This command creates the proposed CDECanvas React component, for usage of this library with React. (See [React component template](#react-component-template) for more informations)
+
+### To open the documentation
+
+#### `npx cdejs-documentation` | `npx cdejs-doc`
+
+This command opens the library documentation in the default browser.
+
+### To view classes / common callbacks signatures
+
+#### `npx cdejs-signature <filter?> <withDefaultValues?>` | `npx cdejs-sig <filter?> <withDefaultValues?>`
+
+This command shows the signature of classes and common available callbacks. It accepts an optional filter as its first parameter. 
+
+Examples: 
+- `npx cdejs-signature *` will return every available signature
+
+- `npx cdejs-signature shape` will return every available signature containing "shape" (*Shape / FilledShape*)
+
+- `npx cdejs-signature dot true` will return the *Dot* signature and will show all default parameters
+
+# [React component template](#table-of-contents)
+
+Here is the proposed CDECanvas React component. Run **`npx cdejs-react`** or create a CDECanvas.jsx file and copy and paste the code below.
+
+```jsx
+import {forwardRef, useEffect, useImperativeHandle, useRef} from "react"
+import {Canvas, CDEUtils} from "cdejs"
+
+/**
+ * HOW TO USE:
+ * 
+ * 1. Add the <CDECanvas/> component at the root of your target element.
+ * 2. If necessary, create a ref and link it to your <CDECanvas ref={*yourRef*}/> component to access some utility functions of the canvas. (See the imperativeHandle bellow)
+ * 3. Create your declarations and interactions and build cool effects!
+ * 
+ * PARAMETERS:
+ * - declarations -> A callback containing the setup/declaration of all canvas obj and if applicable, adding them to the canvas. (CVS)=>{...}
+ * - interactions -> A callback containing the desired built-in input device listeners. (CVS)=>{...}
+ * - isStatic -> If true, initializes the canvas as static.
+ * - loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently -> see https://github.com/Louis-CharlesBiron/canvasDotEffect?#canvas
+ */
+export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently}, ref)=>{
+    const htmlElementCanvasRef = useRef(null), cvsInstanceRef = useRef(null)
+
+    // Utility canvas functions
+    useImperativeHandle(ref, ()=>({
+        getCVS:()=>cvsInstanceRef.current,
+        adjustSize:()=>cvsInstanceRef.current.setSize()
+    }))
+
+    useEffect(()=>{
+        const CVS = new Canvas(htmlElementCanvasRef.current, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently)
+        cvsInstanceRef.current = CVS
+
+        // Setup canvas objects and listeners
+        if (CDEUtils.isFunction(declarations)) declarations(CVS)
+        if (CDEUtils.isFunction(interactions)) interactions(CVS)
+        
+        // Start
+        if (isStatic) CVS.initializeStatic()
+        else CVS.startLoop()
+
+        // On unmount
+        return ()=>CVS.stopLoop()
+    }, [])
+
+    return <canvas ref={htmlElementCanvasRef}></canvas>
+})
+```
 
 # [Execution Order](#table-of-contents)
 
@@ -2167,57 +2251,6 @@ const optimizedDrawEffectCB = (render, dot, ratio, dragAnim, mouse, dist, shape,
 - If needed and applicable, use the available prebuilt event listeners.
 - More complex shapes can have very extensive declarations, declare them in a separate file(s) and use them in a centralized project file. 
 
-# [React Component Template](#table-of-contents)
-
-Here is the proposed CDECanvas React component. Run **`npx cdejs-react`** or create a CDECanvas.jsx file and copy and paste the code below.
-
-
-
-```jsx
-import {forwardRef, useEffect, useImperativeHandle, useRef} from "react"
-import {Canvas, CDEUtils} from "cdejs"
-
-/**
- * HOW TO USE:
- * 
- * 1. Add the <CDECanvas/> component at the root of your target element.
- * 2. If necessary, create a ref and link it to your <CDECanvas ref={*yourRef*}/> component to access some utility functions of the canvas. (See the imperativeHandle bellow)
- * 3. Create your declarations and interactions and build cool effects!
- * 
- * PARAMETERS:
- * - declarations -> A callback containing the setup/declaration of all canvas obj and if applicable, adding them to the canvas. (CVS)=>{...}
- * - interactions -> A callback containing the desired built-in input device listeners. (CVS)=>{...}
- * - isStatic -> If true, initializes the canvas as static.
- * - loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently -> see https://github.com/Louis-CharlesBiron/canvasDotEffect?#canvas
- */
-export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently}, ref)=>{
-    const htmlElementCanvasRef = useRef(null), cvsInstanceRef = useRef(null)
-
-    // Utility canvas functions
-    useImperativeHandle(ref, ()=>({
-        getCVS:()=>cvsInstanceRef.current,
-        adjustSize:()=>cvsInstanceRef.current.setSize()
-    }))
-
-    useEffect(()=>{
-        const CVS = new Canvas(htmlElementCanvasRef.current, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently)
-        cvsInstanceRef.current = CVS
-
-        // Setup canvas objects and listeners
-        if (CDEUtils.isFunction(declarations)) declarations(CVS)
-        if (CDEUtils.isFunction(interactions)) interactions(CVS)
-        
-        // Start
-        if (isStatic) CVS.initializeStatic()
-        else CVS.startLoop()
-
-        // On unmount
-        return ()=>CVS.stopLoop()
-    }, [])
-
-    return <canvas ref={htmlElementCanvasRef}></canvas>
-})
-```
 
 ****
 ### [Credits](#table-of-contents)

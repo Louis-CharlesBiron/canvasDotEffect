@@ -17,14 +17,11 @@ class Gradient extends _DynamicColor {
             positions, // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
             rotation   // rotation of the gradient, not applicable for radial type
         ) 
-        this.id = Gradient.a++
         this._ctx = ctx.ctx??ctx                 // canvas context
         this._type = type||Gradient.DEFAULT_TYPE // type of gradient
         this._colorStops = colorStops.map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
         this.update()
     }
-
-    static a =0
 
     /**
      * Given an canvas object, returns automatic positions values for linear, radial or conic gradients
