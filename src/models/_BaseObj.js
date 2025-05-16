@@ -209,6 +209,16 @@ class _BaseObj extends _HasColor {
         this._parent.remove(this._id)
     }
 
+    // returns whether the provided pos is inside the obj
+    isWithin(pos) {
+        const [x,y]=pos
+        if (this._initialized) {
+           const positions = _DynamicColor.getAutomaticPositions(this)
+           return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
+        }
+        return false
+    }
+
 	get id() {return this._id}
     get x() {return this._pos[0]}
     get y() {return this._pos[1]}

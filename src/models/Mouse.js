@@ -27,7 +27,7 @@ class Mouse {
         this._holdValue = null            // a custom manual value. Ex: can be used to easily reference an object the mouse is holding 
     }
 
-    // calculates and sets the current mouse speed (loop every frame)
+    // calculates and sets the current mouse speed (run every frame)
     calcSpeed(deltaTime) {
         const DECELERATION = Mouse.DEFAULT_MOUSE_DECELERATION
         if (isFinite(this._lastX) && isFinite(this._lastY) && deltaTime) {
@@ -51,7 +51,7 @@ class Mouse {
     }
 
     // given an mouse event, sets the current mouse active buttons
-    setMouseClicks(e) {
+    updateMouseClicks(e) {
         const v = e.type=="mousedown"||e.type=="touchstart"
         if (e.button==0) this._clicked = v
         else if (e.button==1) this._scrollClicked = v

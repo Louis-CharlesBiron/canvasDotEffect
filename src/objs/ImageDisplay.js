@@ -44,7 +44,6 @@ class ImageDisplay extends _BaseObj {
             if (!CDEUtils.isDefined(this._size[1])) this._size = [this._size[0], size[1]]
             this._initialized = true
             if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this._parent, this._source)
-
         }, this._errorCB)
 
         this._pos = this.getInitPos()||_BaseObj.DEFAULT_POS

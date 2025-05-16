@@ -505,7 +505,7 @@ class Canvas {
 
     // called on any mouse clicks
     #mouseClicks(cb, e) {
-        this._mouse.setMouseClicks(e)
+        this._mouse.updateMouseClicks(e)
         if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
         if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
     }
