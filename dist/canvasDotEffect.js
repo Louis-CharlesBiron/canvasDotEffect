@@ -1281,7 +1281,7 @@ class GridAssets {
 
 // Represents the user"s keyboard
 class TypingDevice {
-    static KEYS = {A:"A", B:"B", C:"C", D:"D", E:"E", F:"F", G:"G", H:"H", I:"I", J:"J", K:"K", L:"L", M:"M", N:"N", O:"O", P:"P", Q:"Q", R:"R", S:"S", T:"T", U:"U", V:"V", W:"W", X:"X", Y:"Y", Z:"Z", DIGIT_0:"0", DIGIT_1:"1", DIGIT_2:"2", DIGIT_3:"3", DIGIT_4:"4", DIGIT_5:"5", DIGIT_6:"6", DIGIT_7:"7", DIGIT_8:"8", DIGIT_9:"9", SPACE:" ", ENTER:"ENTER", TAB:"TAB", BACKSPACE:"BACKSPACE", ESCAPE:"ESCAPE", SHIFT:"SHIFT", CONTROL:"CONTROL", ALT:"ALT", ALT_GRAPH:"ALTGRAPH", META:"META", CAPS_LOCK:"CAPSLOCK", CONTEXT_MENU:"CONTEXTMENU", ARROW_UP:"ARROWUP", ARROW_DOWN:"ARROWDOWN", ARROW_LEFT:"ARROWLEFT", ARROW_RIGHT:"ARROWRIGHT", HOME:"HOME", END:"END", PAGE_UP:"PAGEUP", PAGE_DOWN:"PAGEDOWN", INSERT:"INSERT", DELETE:"DELETE", F1:"F1", F2:"F2", F3:"F3", F4:"F4", F5:"F5", F6:"F6", F7:"F7", F8:"F8", F9:"F9", F10:"F10", F11:"F11", F12:"F12", F13:"F13", F14:"F14", F15:"F15", F16:"F16", F17:"F17", F18:"F18", F19:"F19", F20:"F20", F21:"F21", F22:"F22", F23:"F23", F24:"F24", NUMPAD_0:"NUMPAD0", NUMPAD_1:"NUMPAD1", NUMPAD_2:"NUMPAD2", NUMPAD_3:"NUMPAD3", NUMPAD_4:"NUMPAD4", NUMPAD_5:"NUMPAD5", NUMPAD_6:"NUMPAD6", NUMPAD_7:"NUMPAD7", NUMPAD_8:"NUMPAD8", NUMPAD_9:"NUMPAD9", NUMPAD_ADD:"NUMPADADD", NUMPAD_SUBTRACT:"NUMPADSUBTRACT", NUMPAD_MULTIPLY:"NUMPADMULTIPLY", NUMPAD_DIVIDE:"NUMPADDIVIDE", NUMPAD_DECIMAL:"NUMPADDECIMAL", NUMPAD_ENTER:"NUMPADENTER", PAUSE:"PAUSE", PRINT_SCREEN:"PRINTSCREEN", SCROLL_LOCK:"SCROLLLOCK", NUM_LOCK:"NUMLOCK", LAUNCH_APPLICATION_1:"LAUNCHAPPLICATION1", LAUNCH_APPLICATION_2:"LAUNCHAPPLICATION2", BRACKET_LEFT:"BRACKETLEFT", BRACKET_RIGHT:"BRACKETRIGHT", SEMICOLON:"SEMICOLON", QUOTE:"QUOTE", COMMA:"COMMA", PERIOD:"PERIOD", SLASH:"SLASH", BACKSLASH:"BACKSLASH", EQUAL:"EQUAL", MINUS:"MINUS", BACKQUOTE:"BACKQUOTE", AUDIO_VOLUME_UP:"AUDIOVOLUMEUP", AUDIO_VOLUME_DOWN:"AUDIOVOLUMEDOWN", AUDIO_VOLUME_MUTE:"AUDIOVOLUMEMUTE", MEDIA_PLAY_PAUSE:"MEDIAPLAYPAUSE", MEDIA_NEXT_TRACK:"MEDIANEXTTRACK", MEDIA_PREVIOUS_TRACK:"MEDIAPREVIOUSTRACK", MEDIA_STOP:"MEDIASTOP", BROWSER_BACK:"BROWSERBACK", BROWSER_FORWARD:"BROWSERFORWARD", BROWSER_REFRESH:"BROWSERREFRESH", BROWSER_STOP:"BROWSERSTOP", BROWSER_SEARCH:"BROWSERSEARCH", BROWSER_FAVORITES:"BROWSERFAVORITES", BROWSER_HOME:"BROWSERHOME"};
+    static KEYS = {A:"A", B:"B", C:"C", D:"D", E:"E", F:"F", G:"G", H:"H", I:"I", J:"J", K:"K", L:"L", M:"M", N:"N", O:"O", P:"P", Q:"Q", R:"R", S:"S", T:"T", U:"U", V:"V", W:"W", X:"X", Y:"Y", Z:"Z", DIGIT_0:"0", DIGIT_1:"1", DIGIT_2:"2", DIGIT_3:"3", DIGIT_4:"4", DIGIT_5:"5", DIGIT_6:"6", DIGIT_7:"7", DIGIT_8:"8", DIGIT_9:"9", SPACE:" ", ENTER:"ENTER", TAB:"TAB", BACKSPACE:"BACKSPACE", ESCAPE:"ESCAPE", SHIFT:"SHIFT", CONTROL:"CONTROL", ALT:"ALT", ALT_GRAPH:"ALTGRAPH", META:"META", CAPS_LOCK:"CAPSLOCK", CONTEXT_MENU:"CONTEXTMENU", ARROW_UP:"ARROWUP", ARROW_DOWN:"ARROWDOWN", ARROW_LEFT:"ARROWLEFT", ARROW_RIGHT:"ARROWRIGHT", HOME:"HOME", END:"END", PAGE_UP:"PAGEUP", PAGE_DOWN:"PAGEDOWN", INSERT:"INSERT", DELETE:"DELETE", F1:"F1", F2:"F2", F3:"F3", F4:"F4", F5:"F5", F6:"F6", F7:"F7", F8:"F8", F9:"F9", F10:"F10", F11:"F11", F12:"F12", F13:"F13", F14:"F14", F15:"F15", F16:"F16", F17:"F17", F18:"F18", F19:"F19", F20:"F20", F21:"F21", F22:"F22", F23:"F23", F24:"F24", NUMPAD_0:"NUMPAD0", NUMPAD_1:"NUMPAD1", NUMPAD_2:"NUMPAD2", NUMPAD_3:"NUMPAD3", NUMPAD_4:"NUMPAD4", NUMPAD_5:"NUMPAD5", NUMPAD_6:"NUMPAD6", NUMPAD_7:"NUMPAD7", NUMPAD_8:"NUMPAD8", NUMPAD_9:"NUMPAD9", NUMPAD_ADD:"NUMPADADD", NUMPAD_SUBTRACT:"NUMPADSUBTRACT", NUMPAD_MULTIPLY:"NUMPADMULTIPLY", NUMPAD_DIVIDE:"NUMPADDIVIDE", NUMPAD_DECIMAL:"NUMPADDECIMAL", NUMPAD_ENTER:"NUMPADENTER", PAUSE:"PAUSE", PRINT_SCREEN:"PRINTSCREEN", SCROLL_LOCK:"SCROLLLOCK", NUM_LOCK:"NUMLOCK", LAUNCH_APPLICATION_1:"LAUNCHAPPLICATION1", LAUNCH_APPLICATION_2:"LAUNCHAPPLICATION2", BRACKET_LEFT:"BRACKETLEFT", BRACKET_RIGHT:"BRACKETRIGHT", SEMICOLON:"SEMICOLON", QUOTE:"QUOTE", COMMA:"COMMA", PERIOD:"PERIOD", SLASH:"SLASH", BACKSLASH:"BACKSLASH", EQUAL:"EQUAL", MINUS:"MINUS", BACKQUOTE:"BACKQUOTE", AUDIO_VOLUME_UP:"AUDIOVOLUMEUP", AUDIO_VOLUME_DOWN:"AUDIOVOLUMEDOWN", AUDIO_VOLUME_MUTE:"AUDIOVOLUMEMUTE", MEDIA_PLAY_PAUSE:"MEDIAPLAYPAUSE", MEDIA_NEXT_TRACK:"MEDIANEXTTRACK", MEDIA_PREVIOUS_TRACK:"MEDIAPREVIOUSTRACK", MEDIA_STOP:"MEDIASTOP", BROWSER_BACK:"BROWSERBACK", BROWSER_FORWARD:"BROWSERFORWARD", BROWSER_REFRESH:"BROWSERREFRESH", BROWSER_STOP:"BROWSERSTOP", BROWSER_SEARCH:"BROWSERSEARCH", BROWSER_FAVORITES:"BROWSERFAVORITES", BROWSER_HOME:"BROWSERHOME"}
 
     constructor() {
         this._keysPressed = [] // Current keys pressed (down)
@@ -1336,7 +1336,11 @@ class Mouse {
     static DEFAULT_MOUSE_DECELERATION = 0.8
     static DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1
     static DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
-
+    static #LISTENER_ID_GIVER = 0
+    static LISTENER_TYPES = {CLICK:0, DOWN:0, UP:1, MAIN_DOWN:0, MAIN_UP:1, MIDDLE_DOWN:2, MIDDLE_UP:3, RIGHT_DOWN:4, RIGHT_UP:5, EXTRA_FOWARD_DOWN:6, EXTRA_FOWARD_UP:7, EXTRA_BACK_DOWN:8, EXTRA_BACK_UP:9, ENTER:10, LEAVE:11, EXIT:11}
+    
+    #fixedLastPos = [0,0]
+    #wasWithin = false
     constructor() {
         this._valid = false               // whether the mouse pos is valid (is inside the canvas and initialized)
         this._x = null                    // current x value of the mouse on the canvas
@@ -1352,10 +1356,13 @@ class Mouse {
         this._scrollClicked = false       // whether the scroll button of the mouse is active (pressed)
         this._extraForwardClicked = false // whether the extra foward button of the mouse is active (not present on every mouse)
         this._extraBackClicked = false    // whether the extra back button of the mouse is active (not present on every mouse)
-        this._holdValue = null            // a custom manual value. Ex: can be used to easily reference an object the mouse is holding 
+        this._holdValue = null            // a custom manual value. Ex: can be used to easily reference an object the mouse is holding
+        this._listeners = []              // list of all current listeners
+
+        this._moveListenersOptimizationEnabled = true // when true, only checks move listeners on mouse move, else checks every frame
     }
 
-    // calculates and sets the current mouse speed (loop every frame)
+    // calculates and sets the current mouse speed (run every frame)
     calcSpeed(deltaTime) {
         const DECELERATION = Mouse.DEFAULT_MOUSE_DECELERATION
         if (isFinite(this._lastX) && isFinite(this._lastY) && deltaTime) {
@@ -1379,13 +1386,29 @@ class Mouse {
     }
 
     // given an mouse event, sets the current mouse active buttons
-    setMouseClicks(e) {
-        const v = e.type=="mousedown"||e.type=="touchstart"
-        if (e.button==0) this._clicked = v
-        else if (e.button==1) this._scrollClicked = v
-        else if (e.button==2) this._rightClicked = v
-        else if (e.button==3) this._extraBackClicked = v
-        else if (e.button==4) this._extraForwardClicked = v
+    updateMouseClicks(e) {
+        const isMouseDownEvent = e.type=="mousedown"||e.type=="touchstart", TYPES = Mouse.LISTENER_TYPES
+        if (e.button==0) {
+            this._clicked = isMouseDownEvent
+            this.checkListeners(isMouseDownEvent?TYPES.MAIN_DOWN:TYPES.MAIN_UP)
+        }
+        else if (e.button==1) {
+            this._scrollClicked = isMouseDownEvent
+            this.checkListeners(isMouseDownEvent?TYPES.MIDDLE_DOWN:TYPES.MIDDLE_UP)
+        }
+        else if (e.button==2) {
+            this._rightClicked = isMouseDownEvent
+            this.checkListeners(isMouseDownEvent?TYPES.RIGHT_DOWN:TYPES.RIGHT_UP)
+        }
+        else if (e.button==3) {
+            this._extraBackClicked = isMouseDownEvent
+            this.checkListeners(isMouseDownEvent?TYPES.EXTRA_BACK_DOWN:TYPES.EXTRA_BACK_UP)
+        }
+        else if (e.button==4) {
+            this._extraForwardClicked = isMouseDownEvent
+            this.checkListeners(isMouseDownEvent?TYPES.EXTRA_FOWARD_DOWN:TYPES.EXTRA_FOWARD_UP)
+        }
+
     }
 
     // invalidates mouse position
@@ -1403,6 +1426,13 @@ class Mouse {
         this._rawY = e.y
         this._x = e.x-offset.x
         this._y = e.y-offset.y
+
+        if (this._moveListenersOptimizationEnabled) {
+            this.checkListeners(10) // enter
+            this.checkListeners(11) // leave
+            this.#fixedLastPos[0] = this._x
+            this.#fixedLastPos[1] = this._y
+        }
     }
 
     // sets and returns whether the current mouse position is valid
@@ -1411,15 +1441,99 @@ class Mouse {
         else if (!this._valid) return this._valid = true
     }
 
+    /**
+     * Adds a custom mouse event listener binded to an object/area
+     * @param {canvas object - [[x1,y1],[x2,y2]]} obj: Either a canvas object or a positions array 
+     * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
+     * @param {Function} callback: a custom function called upon event trigger. (obj, mousePos)=> 
+     * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
+     * @returns The listener id
+     */
+    addListener(obj, type, callback, forceStaticPositions) {
+        const listener = [forceStaticPositions?_DynamicColor.getAutomaticPositions(obj):obj, callback, Mouse.#LISTENER_ID_GIVER++]
+        if (!this._listeners[type]) this._listeners[type] = []
+        this._listeners[type].push(listener)
+        return listener[2]
+    }
+
+    // checks conditions for every listeners of a certain type, if valid, calls the listeners callback as such: (obj, mousePos)=>
+    checkListeners(type) {
+        const typedListeners = this._listeners[type], typedListeners_ll = typedListeners?.length
+
+        if (typedListeners_ll) {
+            let TYPES = Mouse.LISTENER_TYPES, mousePos = this.pos, validation = true
+
+            if (type >= TYPES.ENTER) {
+                validation = 2
+                if (type==TYPES.LEAVE) validation = 1
+
+                for (let i=0;i<typedListeners_ll;i++) {
+                    const [obj, callback] = typedListeners[i], isPositionsArray = Array.isArray(obj), nowWithin = ((!isPositionsArray && obj.isWithin(mousePos)) || (isPositionsArray && this.isWithin(mousePos, obj)))
+                    
+                    if (this._moveListenersOptimizationEnabled) {
+                        if ((nowWithin*2)+((!isPositionsArray && obj.isWithin(this.#fixedLastPos)) || (isPositionsArray && this.isWithin(this.#fixedLastPos, obj)))==validation) callback(obj, mousePos)
+                    } else {
+                        if (!this.#wasWithin && nowWithin && validation==2) {
+                            this.#wasWithin = true
+                            callback(obj, mousePos)
+                        }
+                        else if (!nowWithin && this.#wasWithin && validation==1) {
+                            this.#wasWithin = false
+                            callback(obj, mousePos)
+                        }
+                    }
+                }
+            } else {
+                if (type==TYPES.MAIN_DOWN||type==TYPES.RIGHT_DOWN||type==TYPES.MIDDLE_DOWN||type==TYPES.EXTRA_BACK_DOWN||type==TYPES.EXTRA_FOWARD_DOWN) validation = this._clicked
+                else if (type==TYPES.MAIN_UP||type==TYPES.RIGHT_UP||type==TYPES.MIDDLE_UP||type==TYPES.EXTRA_BACK_UP||type==TYPES.EXTRA_FOWARD_UP) validation = !this._clicked
+
+                for (let i=0;i<typedListeners_ll;i++) {
+                    const [obj, callback] = typedListeners[i], isPositionsArray = Array.isArray(obj)
+                    if (validation && ((!isPositionsArray && obj.isWithin(mousePos)) || (isPositionsArray && this.isWithin(mousePos, obj)))) callback(obj, mousePos)
+                }
+            }
+        }
+    }
+
+    /**
+     * Updates an existing listener
+     * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
+     * @param {Number} id: listener's id 
+     * @param {canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
+     * @param {Function?} newCallback: if provided, updates the listeners's callback to this value
+     * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
+     */
+    updateListener(type, id, newObj, newCallback, forceStaticPositions) {
+        const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[2]==(id?.[2]??id))]
+        if (newObj) listener[0] = forceStaticPositions?_DynamicColor.getAutomaticPositions(newObj):newObj
+        if (newCallback) listener[1] = newCallback
+    }
+
+    /**
+     * Removes one or all exisiting listeners of a certain type 
+     * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
+     * @param {Number | String} id: Either the listener's id or * to remove all listeners of this type 
+     */
+    removeListener(type, id) {
+        this._listeners[type] = id=="*"?[]:this._listeners[type].filter(l=>l[2]!==(id?.[2]??id))
+    }
+
+    // returns whether the provided pos is inside the provided positions
+    isWithin(pos, positions) {
+        const [x,y]=pos
+        return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
+    }
+
 	get valid() {return this._valid}
 	get x() {return this._x}
 	get y() {return this._y}
+	get pos() {return [this._x, this._y]}
     get rawX() {return this._rawX}
 	get rawY() {return this._rawY}
-	get pos() {return [this._x, this._y]}
 	get rawPos() {return [this._rawX, this._rawY]}
 	get lastX() {return this._lastX}
 	get lastY() {return this._lastY}
+	get lastPos() {return [this._lastX, this._lastY]}
 	get dir() {return this._dir}
 	get speed() {return this._speed}
 	get clicked() {return this._clicked}
@@ -1428,6 +1542,8 @@ class Mouse {
 	get extraBackClicked() {return this._extraBackClicked}
 	get extraForwardClicked() {return this._extraForwardClicked}
 	get holdValue() {return this._holdValue}
+	get listeners() {return this._listeners}
+    get moveListenersOptimizationEnabled() {return this._moveListenersOptimizationEnabled}
 
 	set valid(valid) {this._valid = valid}
 	set lastX(_lastX) {this._lastX = _lastX}
@@ -2217,10 +2333,14 @@ class Canvas {
     #loopCore(time) {
         this.#calcDeltaTime(time)
 
-        const deltaTime = this._deltaTime, delay = Math.abs((time-this.#timeStamp)-deltaTime*1000)
+        const deltaTime = this._deltaTime, delay = Math.abs((time-this.#timeStamp)-deltaTime*1000), mouse = this._mouse
         if (this._fixedTimeStamp==0) this._fixedTimeStamp = time-this.#frameSkipsOffset
         if (time && this._fixedTimeStamp && delay < this.#maxTime) {
-            this._mouse.calcSpeed(deltaTime)
+            mouse.calcSpeed(deltaTime)
+            if (!mouse._moveListenersOptimizationEnabled) {
+                mouse.checkListeners(10) // enter
+                mouse.checkListeners(11) // leave
+            }
 
             this.clear()
             this.draw()
@@ -2426,6 +2546,7 @@ class Canvas {
 
         }
         this.updateCachedAllEls()
+        return objs
     }
 
     // removes any element from the canvas by id
@@ -2526,7 +2647,7 @@ class Canvas {
 
     // called on any mouse clicks
     #mouseClicks(cb, e) {
-        this._mouse.setMouseClicks(e)
+        this._mouse.updateMouseClicks(e)
         if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
         if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
     }
@@ -2662,6 +2783,7 @@ class Canvas {
     get render() {return this._render}
     get speedModifier() {return this._speedModifier}
     get anims() {return this._anims}
+    get mouseMoveListenersOptimizationEnabled() {return this._mouse._moveListenersOptimizationEnabled}
 
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
 	set width(w) {this.setSize(w, null)}
@@ -2678,6 +2800,7 @@ class Canvas {
         }
     }
     set speedModifier(speedModifier) {this._speedModifier = speedModifier}
+    set mouseMoveListenersOptimizationEnabled(enabled) {this._mouse._moveListenersOptimizationEnabled = enabled}
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -3000,6 +3123,16 @@ class _BaseObj extends _HasColor {
     // deletes the object from the canvas
     remove() {
         this._parent.remove(this._id)
+    }
+
+    // returns whether the provided pos is inside the obj
+    isWithin(pos) {
+        const [x,y]=pos
+        if (this._initialized) {
+           const positions = _DynamicColor.getAutomaticPositions(this)
+           return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
+        }
+        return false
     }
 
 	get id() {return this._id}
@@ -3589,7 +3722,6 @@ class ImageDisplay extends _BaseObj {
             if (!CDEUtils.isDefined(this._size[1])) this._size = [this._size[0], size[1]]
             this._initialized = true
             if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this._parent, this._source)
-
         }, this._errorCB)
 
         this._pos = this.getInitPos()||_BaseObj.DEFAULT_POS
@@ -3864,10 +3996,15 @@ class TextDisplay extends _BaseObj {
 
     // Returns the width and height of the text, according to the textStyles, excluding the scale or rotation
     getSize(textStyles=this._textStyles, text=this.getTextValue()) {
+        return TextDisplay.getSize(textStyles, text, this.#lineCount, this._maxWidth)
+    }
+
+    // Returns the width and height of the given text, according to the textStyles, including potential scaling
+    static getSize(textStyles, text, lineCount, maxWidth, scale=[1,1]) {
         TextStyles.apply(TextDisplay.MEASUREMENT_CTX, ...textStyles.getStyles())
-        const lines = text.split("\n"), l_ll = this.#lineCount = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
+        const lines = text.split("\n"), l_ll = lineCount = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
               {width, actualBoundingBoxAscent, actualBoundingBoxDescent} = TextDisplay.MEASUREMENT_CTX.measureText(longestText)
-        return [CDEUtils.round(this._maxWidth||width, 2), (actualBoundingBoxAscent+actualBoundingBoxDescent)*l_ll]
+        return [CDEUtils.round(maxWidth||width, 2)*scale[0], (actualBoundingBoxAscent+actualBoundingBoxDescent)*l_ll*scale[1]]
     }
 
     // Returns the current text value
@@ -3955,8 +4092,11 @@ class _DynamicColor {
             positions = [[cx-w2, cy-h2], [cx+w2, cy+h2]]
         } else if (obj instanceof AudioDisplay) {
             const size = AudioDisplay.DEFAULT_MICROPHONE_SAMPLE_SIZE
-            return [[obj.x-size,obj.y-size], [obj.x+size,obj.y+size]]
-        }
+            positions = [[obj.x-size,obj.y-size], [obj.x+size,obj.y+size]]
+        } else if (obj instanceof ImageDisplay) {
+            const [sx, sy] = obj.trueSize
+           positions = [[obj.x,obj.y], [obj.x+sx,obj.y+sy]]
+        } else if (Array.isArray(obj)) positions = obj
 
         positions[0][0] -= pL
         positions[0][1] -= pT
@@ -4271,7 +4411,7 @@ class _Obj extends _BaseObj {
     // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the radius)
     isWithin(pos, circularDetection) {
         const [x,y]=pos
-        return  (CDEUtils.isDefined(x)&&CDEUtils.isDefined(y)) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= (this.radius||1)*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
+        return (CDEUtils.isDefined(x)&&CDEUtils.isDefined(y)) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= (this.radius||1)*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
     }
 
     get radius() {return this._radius}

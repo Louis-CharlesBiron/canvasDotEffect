@@ -121,7 +121,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.0.16"
+    "cdejs": "^1.0.17"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -578,7 +578,7 @@ The FilledShape class is a derivative of the Shape class. It allows to fill the 
 - **dynamicUpdates** -> Whether the shape's fill area checks for updates every frame
 
 
-**To update the fill area manually:** use the `updatePath()` function:
+#### **To update the fill area manually:** use the `updatePath()` function:
 
 ###### - `updatePath()`
 ```js
@@ -1631,7 +1631,7 @@ The TypingDevice class is automatically created and accessible by any Canvas ins
 
 ## [Mouse](#table-of-contents)
 
-The Mouse class is automatically created and accessible by any Canvas instance. It provides information about the user's mouse, such a position, speed, direction, and buttons pressed.
+The Mouse class is automatically created and accessible by any Canvas instance. It provides information about the user's mouse, such a position, speed, direction, and buttons pressed as well as adding custom listeners.
 
 **Note:** for setting the *move*, *leave*, *up*, and *down* mouse event listeners, use the prebuilt functions from the Canvas class.
 
@@ -1641,12 +1641,13 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 - **y** -> The current y value of the mouse on the canvas.
 - **dir** -> The direction in degrees of the mouse's last movement.
 - **speed** -> The current speed (in px/s) of the mouse.
-- **clicked** -> Whether the main button of the mouse is active.
-- **rightClicked** -> Whether the secondary button of the mouse is active.
-- **scrollClicked** -> Whether the scroll button of the mouse is active (pressed).
-- **extraForwardClicked** -> Whether the extra forward button of the mouse is active (not present on every mouse).
-- **extraBackClicked** -> Whether the extra back button of the mouse is active (not present on every mouse).
-- **holdValue** -> A custom value to set manually. Ex: can be used to reference an object the mouse is holding more easily 
+- **clicked** -> Whether the main button of the mouse is pressed.
+- **rightClicked** -> Whether the secondary button of the mouse is pressed.
+- **scrollClicked** -> Whether the scroll button of the mouse is pressed.
+- **extraForwardClicked** -> Whether the extra forward button of the mouse is pressed.
+- **extraBackClicked** -> Whether the extra back button of the mouse is pressed.
+- **holdValue** -> A custom value to set manually. Ex: can be used to reference an object the mouse is holding more easily.
+- **listeners** -> The list of all current listeners grouped by type.
 
 ### **To set the mouse event listeners,** use the following prebuilt functions:
 ###### - setMouseMove(cb, global), setMouseLeave(cb, global), setMouseDown(cb, global), setMouseUp(cb, global)
@@ -1669,6 +1670,26 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
     CVS.setMouseUp((mouse, e)=>{
         console.log("Other custom callback: ", mouse, e)
     }, true)
+```
+
+### **To manage custom listeners,** use the following functions:
+###### - addListener(obj, type, callback, forceStaticPositions)
+###### - updateListener(type, id, newObj, newCallback, forceStaticPositions), 
+###### - removeListener(type, id)
+```js
+
+    // Adding a mouse down to a canvas object
+    const listenerId = CVS.mouse.addListener(someShape, Mouse.LISTENER_TYPES.DOWN, (obj, mousePos)=>{
+        console.log("The shape was clicked!")
+    })
+
+    // Updating the previous listener's callback. (Setting newObj/newCallback to null doesn't update it)
+    CVS.mouse.updateListener(Mouse.LISTENER_TYPES.DOWN, listenerId, null, (obj, mousePos)=>{
+        console.log("This is the new click callback!")
+    })
+
+    // Removing the aforementioned listener
+    CVS.mouse.removeListener(Mouse.LISTENER_TYPES.DOWN, listenerId)
 ```
 
 #### Example use 1:
@@ -1709,7 +1730,68 @@ const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null,
 CVS.add(throwableDot)
 ```
 
- 
+#### Example use 2:
+###### - Creating a custom button
+```js
+// Creates a custom button
+function createButton(text="Test yo man big button", pos=[500, 100], onClickCallback, backgroundColor="aliceblue", textColor="red", padding=[20, 30]) {
+
+    // Creating the button's text
+    const textDisplay = new TextDisplay(text, [0,0], textColor, null, null, null, (self)=>{// setupCB
+        // Creating and adding to the canvas the button's box/background according to the text's size
+        const [width, height] = self.trueSize, w = width/2+padding[1]/2, h = height/2+padding[0]/2,
+              button = CVS.add(new FilledShape(backgroundColor, true, pos, [new Dot([-w,-h]),new Dot([w,-h]),new Dot([w,h]),new Dot([-w,h])], 0, backgroundColor))
+
+
+        // Button visual changes
+        const opacity = {default:1, hover: 0.75, click:0.5},
+        hoverHandler=(hover)=>{
+            // Updating the button's opacity and cursor style when mouse is
+            button.fillColorObject.a = hover ? opacity.hover : opacity.default
+            CVS.setCursorStyle(hover ? Canvas.CURSOR_STYLES.POINTER : Canvas.CURSOR_STYLES.DEFAULT)
+        },
+        clickHandler=(click)=>{
+            // Updating the button's opacity and calling the custom click callback
+            button.fillColorObject.a = click ? opacity.click : opacity.hover
+            if (click && CDEUtils.isFunction(onClickCallback)) onClickCallback(button, self)
+        }
+
+        // Button listeners
+        CVS.mouse.addListener(button, Mouse.LISTENER_TYPES.DOWN, ()=>clickHandler(true))
+        CVS.mouse.addListener(button, Mouse.LISTENER_TYPES.UP, ()=>clickHandler(false))
+        CVS.mouse.addListener(button, Mouse.LISTENER_TYPES.ENTER, ()=>hoverHandler(true))
+        CVS.mouse.addListener(button, Mouse.LISTENER_TYPES.LEAVE, ()=>hoverHandler(false))
+
+        // making the button available in the text's setupResults
+        return button
+    }, null, self=>self.setupResults)
+    
+    // Adding the text to the canvas
+    CVS.add(textDisplay)
+   
+    // Returning the button and text objects
+    return [textDisplay.setupResults, textDisplay]
+}
+ 
+// Creating a custom button!
+createButton("My custom button", CVS.getCenter(), (button, text)=>{// onClick
+
+    // Playing a rotation animation
+    button.playAnim(new Anim((prog)=>{
+        button.rotateAt(360*prog)
+        text.rotateAt(360*prog)
+    }, 5000, null, ()=>{// anim's endCallback
+        
+        // Enabling back the listeners optimization
+        CVS.mouseMoveListenersOptimizationEnabled=true
+    }), true, true)
+
+    
+    // Disabling the listeners optimization, this makes the mouse enter/exit event accurate when the object is moving
+    CVS.mouseMoveListenersOptimizationEnabled=false
+    console.log("Custom button clicked!")
+})
+```
 
 # [Utilities](#table-of-contents)
 
