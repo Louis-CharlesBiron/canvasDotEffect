@@ -196,10 +196,14 @@ class Canvas {
     #loopCore(time) {
         this.#calcDeltaTime(time)
 
-        const deltaTime = this._deltaTime, delay = Math.abs((time-this.#timeStamp)-deltaTime*1000)
+        const deltaTime = this._deltaTime, delay = Math.abs((time-this.#timeStamp)-deltaTime*1000), mouse = this._mouse
         if (this._fixedTimeStamp==0) this._fixedTimeStamp = time-this.#frameSkipsOffset
         if (time && this._fixedTimeStamp && delay < this.#maxTime) {
-            this._mouse.calcSpeed(deltaTime)
+            mouse.calcSpeed(deltaTime)
+            if (!mouse._moveListenersOptimizationEnabled) {
+                mouse.checkListeners(10) // enter
+                mouse.checkListeners(11) // leave
+            }
 
             this.clear()
             this.draw()
@@ -405,6 +409,7 @@ class Canvas {
 
         }
         this.updateCachedAllEls()
+        return objs
     }
 
     // removes any element from the canvas by id
@@ -641,6 +646,7 @@ class Canvas {
     get render() {return this._render}
     get speedModifier() {return this._speedModifier}
     get anims() {return this._anims}
+    get mouseMoveListenersOptimizationEnabled() {return this._mouse._moveListenersOptimizationEnabled}
 
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
 	set width(w) {this.setSize(w, null)}
@@ -657,4 +663,5 @@ class Canvas {
         }
     }
     set speedModifier(speedModifier) {this._speedModifier = speedModifier}
+    set mouseMoveListenersOptimizationEnabled(enabled) {this._mouse._moveListenersOptimizationEnabled = enabled}
 }

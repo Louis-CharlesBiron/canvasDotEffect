@@ -32,11 +32,11 @@ class _DynamicColor {
             positions = [[cx-w2, cy-h2], [cx+w2, cy+h2]]
         } else if (obj instanceof AudioDisplay) {
             const size = AudioDisplay.DEFAULT_MICROPHONE_SAMPLE_SIZE
-            return [[obj.x-size,obj.y-size], [obj.x+size,obj.y+size]]
+            positions = [[obj.x-size,obj.y-size], [obj.x+size,obj.y+size]]
         } else if (obj instanceof ImageDisplay) {
             const [sx, sy] = obj.trueSize
-            return [[obj.x,obj.y], [obj.x+sx,obj.y+sy]]
-        }
+           positions = [[obj.x,obj.y], [obj.x+sx,obj.y+sy]]
+        } else if (Array.isArray(obj)) positions = obj
 
         positions[0][0] -= pL
         positions[0][1] -= pT
