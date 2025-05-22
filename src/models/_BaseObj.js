@@ -41,7 +41,7 @@ class _BaseObj extends _HasColor {
     draw(time, deltaTime) {
         this.setAnchoredPos()
         const loopCB = this._loopCB
-        if (loopCB) loopCB(this)
+        if (loopCB) loopCB(this, deltaTime)
 
         let anims = this._anims.currents
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]

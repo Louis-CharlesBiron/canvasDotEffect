@@ -195,18 +195,19 @@ class Shape extends _Obj {
 
     // Scales the dots by a specified amount [scaleX, scaleY] from a specified center point
     scaleBy(scale, centerPos=this.getCenter()) {
-        const [scaleX, scaleY] = scale, [cx, cy] = centerPos
-        this._dots.forEach(dot=>{
+        const [scaleX, scaleY] = scale, [cx, cy] = centerPos, dots = this._dots, dots_ll = dots.length
+        for (let i=0;i<dots_ll;i++) {
+            const dot = dots[i]
             dot.x = (dot.x-cx)*scaleX+cx
             dot.y = (dot.y-cy)*scaleY+cy
-        })
+        }
         this._scale = [this._scale[0]*scaleX, this._scale[1]*scaleY]
     }
 
     // Scales the dots to a specified amount [scaleX, scaleY] from a specified center point
     scaleAt(scale, centerPos=this.getCenter()) {
         const dsX = scale[0]/this._scale[0], dsY = scale[1]/this._scale[1]
-        this.scaleBy([dsX, dsY], centerPos)
+        this.scaleBy([dsX||1, dsY||1], centerPos)
     }
 
     // Smoothly scales the dots by a specified amount [scaleX, scaleY] from a specified center point
@@ -220,12 +221,12 @@ class Shape extends _Obj {
 
     // returns whether the provided pos is inside the area delimited by the dots permimeter
     isWithin(pos) {
-        const d_ll = this.dots.length
+        const dots = this._dots, d_ll = dots.length
         if (d_ll > 2) {
-            const permimeter = new Path2D(), firstDotPos = this._dots[0].pos
+            const permimeter = new Path2D(), firstDotPos = dots[0].pos
             permimeter.moveTo(firstDotPos[0], firstDotPos[1])
             for (let i=1;i<d_ll;i++) {
-                const dotPos = this._dots[i].pos
+                const dotPos = dots[i].pos
                 permimeter.lineTo(dotPos[0], dotPos[1])
             }
             permimeter.closePath()
@@ -236,8 +237,13 @@ class Shape extends _Obj {
 
     // returns the approximated center of the shape, based on its dots pos
     getCenter() {
-        const rangeX = CDEUtils.getMinMax(this.dots, "x"), rangeY = CDEUtils.getMinMax(this.dots, "y")
+        const [rangeX, rangeY] = this.getBounds()
         return [rangeX[0]+(rangeX[1]-rangeX[0])/2, rangeY[0]+(rangeY[1]-rangeY[0])/2]
+    }
+
+    // returns the max and min x/y dot values
+    getBounds() {
+        return [CDEUtils.getMinMax(this._dots, "x"), CDEUtils.getMinMax(this._dots, "y")]
     }
 
     // Empties the shapes of all its dots
