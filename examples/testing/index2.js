@@ -77,13 +77,12 @@ const tester = new FilledShape("red", true, CVS.getCenter(), [new Dot([-sizeX,-s
     tester.playAnim(new Anim((prog, i)=>{
         if (i%2) tester.scaleAt([3*prog, 3*prog])
         else tester.scaleAt([3*(1-prog), 3*(1-prog)])
-
-    }, -750))
+        tester.fillColorObject.rgba[i%3] = prog*255
+    }, -750, Anim.easeInOutQuad))
 
     tester.playAnim(new Anim((prog)=>{
         tester.rotateAt(prog*360)
-
-    }, -3500))
+    }, -3500, Anim.easeInOutSine))
 
     return {area:[[0,0],CVS.size], dir:0}
 }, (shape, deltaTime)=>{// loopCB
@@ -98,7 +97,7 @@ const tester = new FilledShape("red", true, CVS.getCenter(), [new Dot([-sizeX,-s
     else if (res.dir==1) shape.pos = [ix+speed*deltaTime, iy-speed*deltaTime]//(→↑)
     else if (res.dir==2) shape.pos = [ix-speed*deltaTime, iy-speed*deltaTime]//(←↑)
     else if (res.dir==3) shape.pos = [ix-speed*deltaTime, iy+speed*deltaTime]//(←↓)
-})
+}, _, true)
 CVS.add(tester)
 
 
