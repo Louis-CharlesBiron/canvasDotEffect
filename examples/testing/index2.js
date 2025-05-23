@@ -74,19 +74,20 @@ const sizeX = 25, sizeY = 50
 
 const tester = new FilledShape("red", true, CVS.getCenter(), [new Dot([-sizeX,-sizeY]),new Dot([sizeX,-sizeY]),new Dot([sizeX,sizeY]),new Dot([-sizeX,sizeY])], 3, _, _, _, _, shape=>{// setupCB
 
-    tester.playAnim(new Anim((prog, i)=>{
-        if (i%2) tester.scaleAt([3*prog, 3*prog])
-        else tester.scaleAt([3*(1-prog), 3*(1-prog)])
-        tester.fillColorObject.rgba[i%3] = prog*255
-    }, -750, Anim.easeInOutQuad))
+    //tester.playAnim(new Anim((prog, i)=>{
+    //    if (i%2) tester.scaleAt([3*prog, 3*prog])
+    //    else tester.scaleAt([3*(1-prog), 3*(1-prog)])
+    //    tester.fillColorObject.rgba[i%3] = prog*255
+    //}, -750))
 
-    tester.playAnim(new Anim((prog)=>{
-        tester.rotateAt(prog*360)
-    }, -3500, Anim.easeInOutSine))
+    tester.playAnim(new Anim((prog, i)=>{
+        tester.rotateAt(prog*360*4)
+        tester.fillColorObject.rgba[i%3] = prog*255
+    }, -3500, Anim.easeInOutBounce))
 
     return {area:[[0,0],CVS.size], dir:0}
 }, (shape, deltaTime)=>{// loopCB
-    const [ix, iy] = shape.pos, speed = 500, [boundsX, boundsY] = shape.getBounds(), res = shape.setupResults, {area:[areaMin, areaMax]} = res
+    const [ix, iy] = shape.pos, speed = 600, [boundsX, boundsY] = shape.getBounds(), res = shape.setupResults, {area:[areaMin, areaMax]} = res
     
     if (boundsX[0] <= areaMin[0] && (res.dir==2||res.dir==3)) res.dir = res.dir==3?0:1 //left
     else if (boundsY[0] <= areaMin[1] && (res.dir==1||res.dir==2)) res.dir = res.dir==1?0:3 //top
@@ -100,7 +101,7 @@ const tester = new FilledShape("red", true, CVS.getCenter(), [new Dot([-sizeX,-s
 }, _, true)
 CVS.add(tester)
 
-
+CVS.fpsLimit = 240
 
 
 
