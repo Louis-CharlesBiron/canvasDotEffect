@@ -2197,7 +2197,6 @@ export class Canvas {
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)"}
-
     static STATIC_MODE = 0
     static #ON_LOAD_CALLBACKS = []
     static #ON_FIRST_INTERACT_CALLBACKS = []
@@ -2210,7 +2209,6 @@ export class Canvas {
     #cachedEls = []          // cached canvas elements to draw
     #cachedEls_ll = null     // cached canvas elements count/length
     #lastScrollValues = [window.scrollX, window.screenY]
-
     constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                               // html canvas element
         this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
@@ -2227,7 +2225,7 @@ export class Canvas {
         this.#maxTime = this.#getMaxTime(fpsLimit)                    // max time between frames
         this._deltaTime = null                                        // useable delta time in seconds
         this._fixedTimeStamp = null                                   // fixed (offsets lag spikes) requestanimationframe timestamp in ms
-        this._windowListeners = this.#initWindowListeners()           // [onresize, onvisibilitychange]
+        this._windowListeners = this.#initWindowListeners()           // [onresize, onvisibilitychange, onscroll, onload]
         this._viewPos = [0,0]                                         // context view offset
         const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
         this.setSize(frameCBR.width, frameCBR.height)                 // init size
@@ -2255,21 +2253,22 @@ export class Canvas {
             this._ctx.strokeStyle = this._ctx.fillStyle = Color.getColorValue(color)
             RenderStyles.apply(render, null, filter, compositeOperation, alpha, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
             TextStyles.apply(this._ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
+            this.moveViewAt(this._viewPos)
         },
-              onvisibilitychange=e=>this._visibilityChangeCB(!document.hidden, this, e),
-              onscroll=()=>{
-                const scrollX = window.scrollX, scrollY = window.scrollY
-                this.updateOffset()
-                this._mouse.updatePos({x:this._mouse.x+(scrollX-this.#lastScrollValues[0]), y:this._mouse.y+(scrollY-this.#lastScrollValues[1])}, {x:0, y:0})
-                this.#mouseMovements()
-                this.#lastScrollValues[0] = scrollX
-                this.#lastScrollValues[1] = scrollY
-              },
-              onLoad=e=>{
-                const callbacks = Canvas.#ON_LOAD_CALLBACKS, cb_ll = callbacks?.length
-                if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
-                Canvas.#ON_LOAD_CALLBACKS = null
-              }
+        onvisibilitychange=e=>this._visibilityChangeCB(!document.hidden, this, e),
+        onscroll=()=>{
+          const scrollX = window.scrollX, scrollY = window.scrollY
+          this.updateOffset()
+          this._mouse.updatePos({x:this._mouse.x+(scrollX-this.#lastScrollValues[0]), y:this._mouse.y+(scrollY-this.#lastScrollValues[1])}, {x:0, y:0})
+          this.#mouseMovements()
+          this.#lastScrollValues[0] = scrollX
+          this.#lastScrollValues[1] = scrollY
+        },
+        onLoad=e=>{
+          const callbacks = Canvas.#ON_LOAD_CALLBACKS, cb_ll = callbacks?.length
+          if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
+          Canvas.#ON_LOAD_CALLBACKS = null
+        }
 
         window.addEventListener("resize", onresize)
         window.addEventListener("visibilitychange", onvisibilitychange)
