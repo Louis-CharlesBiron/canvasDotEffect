@@ -214,7 +214,7 @@ The _Obj class is the template class of any canvas object. **It should not be di
 - **color** -> Either a Color instance `new Color("red")`, a string `"red"`, a hex value `#FF0000` or a RGBA array `[255, 0, 0, 1]`
 - **setupCB** -> Custom callback called on the object's initialization `(this, parent?)=>{}`s
 - ***setupResults*** -> The value returned by the `setupCB` call.
-- **loopCB** -> Custom callback called each frame for the object (obj)=>
+- **loopCB** -> Custom callback called each frame for the object (obj, deltaTime)=>
 - **anchorPos** -> The reference point from which the object's pos will be set. Can either be a pos `[x,y]`, another canvas object instance, or a callback `(obj, Canvas or parent)=>{... return [x,y]}` (Defaults to the parent's pos, or `[0, 0]` if the object has no parent). If your *anchorPos* references another object, make sure it is defined and initialized when used as the *anchorPos* value.
 - **alwaysActive** -> Whether the object stays active when outside the canvas bounds.
 - ***initialized*** -> Whether the object has been initialized.
@@ -225,20 +225,17 @@ The _Obj class is the template class of any canvas object. **It should not be di
 
 **This class also defines other useful base functions**, such as:
 - Movements functions (`moveBy`, `addForce`, `follow`, ...)
-- Informative functions (`isWithin`, `getInitPos`, ...)
-- Access to the object's animation play (`playAnim`)
-
- 
-
+- Informative functions (`isWithin`, `getInitPos`, `getBounds`, ...)
+- Access to the object's animations (`playAnim`, `clearAnims`, ...)
 
 **The follow function:** use `follow()` to make an object follow a custom path:
 ###### - `follow(duration, easing, action, progressSeparations)`
 ```js
    /**
      * Used to make an object follow a custom path
-     * @param {Number} duration: duration of the animation in ms
-     * @param {Function} easing: easing function 
-     * @param {Function?} action: a custom callback that can be called in addition to the movement                                                        //newProg is 'prog' - the progress delimiter of the range
+     * @param {Number} duration: The duration of the animation in miliseconds
+     * @param {Function} easing: The easing function 
+     * @param {Function?} action: A custom callback that can be called in addition to the movement                                                        //newProg is 'prog' - the progress delimiter of the range
      * @param {[[Number, Function], ...]} progressSeparations: list of callback paired with a progress range, the callback must return a position (prog, newProg, initX, initY)=>return [x,y]
      * progressSeparations example: [0:(prog)=>[x1, y1]], [0.5:(prog, newProg)=>[x2, y2]] -> from 0% to 49% the pos from 1st callback is applied, from 50%-100% the pos from 2nd callback is applied  
      */
@@ -247,9 +244,6 @@ The _Obj class is the template class of any canvas object. **It should not be di
     let dx=400, dy=200
     dot.follow(3000, Anim.easeOutQuad, null, [[0,(prog)=>[dx*prog, 0]], [0.5,(prog, newProg)=>[dx*0.5, dy*newProg]]])
 ```
-
-
- 
 
 # [Dot](#table-of-contents)
 
@@ -988,6 +982,7 @@ The AudioDisplay class allows the visualization of audio from song, videos, live
 - **disableAudio** -> Whether this AudioDisplay actually output outputs sounds/audio. *Note: (This value does not affect the visual display, only whether you can hear what is playing or not).*
 - **offsetPourcent** -> A number between 0 and 1 representing the offset pourcent in the order of the bins when calling binCB. 
 - **errorCB** -> A callback called when the source produces an error `(errorType, e?)=>`.
+- **transformable** -> If above 0, allows transformations with non batched canvas operations. (Mostly managed automatically)
 
 **Its other attributes are the following audio context / analyser / modifier nodes:**
 
@@ -1100,7 +1095,7 @@ audioDisplay.loadImpulseResponse("./audio/IR.wav")
 CVS.add(audioDisplay)
 ```
 
-**Note:** Due to the high customizability of the display, the `getAutomaticPosition` function of Pattern/Gradient classes is not available, therefore the positions need to be entered manually.
+**Note:** Due to the high customizability of the display, the `getAutomaticPosition` / `getBounds` functions are not always reliable, therefore the positions are recommended to be entered manually.
 
  
 
@@ -1238,24 +1233,6 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 - **frameRate** -> The update frequency of the current source. (Controls the frequency of video/canvas sources updates, as well as the frequency of any other sources when a visible property gets updated: e.g *when the rotation gets changed*)
 - **repeatMode** -> Whether the pattern repeats horizontally/vertically. One of `Pattern.REPETITION_MODES`.
 
-
-### **To manually get the rectangular area containing all of a specific object,** use the _DynamicColor.getAutomaticPositions() function:
-###### - getAutomaticPositions(obj)
-```js
-    // Creating a dummy shape
-    const dummyShape = new Shape([0, 0], [new Dot([50,50]), new Dot([100, 0])])
-
-
-    // Adding the shape to the canvas first, because it needs to be initialized before looking at its pos
-    CVS.add(dummyShape)
-
-    // Getting the area (see example use 4 for real use of this function)
-    const area = _DynamicColor.getAutomaticPositions(dummyShape)
-    console.log("My Dummy Shape fits perfectly into this area! -> ", area)
-```
-
-
-
 #### Example use 1:
 ###### - Coloring some dots with a custom image 
 ```js
@@ -1315,7 +1292,7 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
     CVS.add(shape2)
 
     // Creating a pattern that will get duplicated for each dot of shape1 (set the "positions" (↓) parameter to the area containing all the dots)
-    const sharedPattern = new Pattern(CVS.render, Pattern.loadCamera(), _DynamicColor.getAutomaticPositions(shape2), null, null, null, null, null,
+    const sharedPattern = new Pattern(CVS.render, Pattern.loadCamera(), shape2.getBounds(), null, null, null, null, null,
         (pattern)=>{// readyCB
             // once the camera is loaded, set the shape2's color to the value of the pattern
             shape2.setColor(pattern)
@@ -1327,33 +1304,35 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 ###### - Using a pattern to color non-objects (In this case, lines)
 ```js
     // Creating a variable containing the color of the grid's symbol lines
-    let gridLineColor = [255,0,0,1]
+    let gridLineColor = [255,0,0,1],
+        lineWidth = 3
 
     // Creating a simple grid displaying a couple of letters
-    const grid = new Grid("abc\nDEF\nghi", [5, 5], 50, null, [50,50], 2, null, null, 
+    const grid = new Grid("abc\nDEF\nghi", [15, 15], 75, null, [50,50], 2, null, null, 
         (render, dot, ratio, res, m, dist, shape, isActive)=>{// drawEffectCB
             // simple effect to change the dot's radius
-            dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS, ratio, _Obj.DEFAULT_RADIUS)
+            dot.radius = CDEUtils.mod(_Obj.DEFAULT_RADIUS*2, ratio, _Obj.DEFAULT_RADIUS)
 
             // drawing the grid's lines (connections) using the previous variable (↓). Note: the variable could also have been defined in the setupCB
-            CanvasUtils.drawDotConnections(dot, render.profile1.update(gridLineColor, null, null, null, 2, [0]))
+            CanvasUtils.drawDotConnections(dot, render.profile1.update(gridLineColor, null, null, null, lineWidth, [0]))
         }
     )
 
-    // Adding the grid to the canvas. (This initializes it, which is needed to properly run getAutomaticPositions() on it)
+    // Adding the grid to the canvas. (This initializes it, which is needed to correct bounds using "getBounds()")
     CVS.add(grid)
 
     // Assigning a pattern to the gridLineColor variable so it displays the camera as the color
-    gridLineColor = new Pattern(CVS.render, Pattern.loadCamera(), _DynamicColor.getAutomaticPositions(grid), null, null, null, null, null, 
+    const padding = (grid.radius+lineWidth)*2
+    gridLineColor = new Pattern(CVS.render, Pattern.loadCamera(), grid.getBounds(padding), null, null, null, null, null, 
         (pattern)=>{// readyCB
             // (Optional): You can also set the dot's color to be this pattern. 
-            // once the camera is loaded, we're also setting the grid's color to the value of the pattern
+            // once the camera is loaded, we're setting the grid's dots color to the value of the pattern
             grid.setColor(pattern)
         }
     )
 ```
 
- 
+ **Note:** Camera/screen share will not be available when using insecure origins. *(http://)* 
 
 # [Render](#table-of-contents)
 
@@ -1802,9 +1781,9 @@ The CanvasUtils class provides generic functions for common effects.
 This function is used to draw a ring around a dot.
 ###### drawOuterRing(dot, color, radiusMultiplier, forceBatching)
 ```js
-// (Running in the drawEffectCB() function of some shape...)
-{
-    ...
+
+{// (Running in the drawEffectCB() function of some shape...)
+    //...
     // Draws a ring around the dot, 3x bigger than the dot's radius and of the same color
     CanvasUtils.drawOuterRing(dot, dot.colorObject, 3)   
 }
@@ -1817,7 +1796,7 @@ This function is used to rotate the gradient of an object.
     // (Running in dummyFilledShape' setupCB)
     // rotateGradient should only be called once, as it starts an infinite animation
     {
-        ...
+        //...
         // Rotates the shape's gradient filling. Completes a revolution in 3 seconds
         CanvasUtils.rotateGradient(dummyFilledShape, 3000, 1, true)
     }
@@ -1834,7 +1813,7 @@ This function is used to make a dot throwable.
 // Provides the callback to make the dot throwable. 
 const dragAnimCallback = CanvasUtils.getDraggableDotCB()
 
-...
+//...
 
 // (Running in the drawEffectCB() function of some shape...)
 {
@@ -1899,9 +1878,8 @@ CVS.add(trailingDot)
 This function is used to draw a connection between a Dot and another pos/object.
 ###### drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType, spread, forceBatching)
 ```js
-// (Running in the drawEffectCB() function of some shape...)
-{
-    ...
+{// (Running in the drawEffectCB() function of some shape...)
+    //...
     // Only if the distance with the ratioPos is lower than the shape's limit
     if (dist < shape.limit) {
         // Draws a line between the dot and the dot's ratioPos, adjusting the opacity of the line via the distance ratio
@@ -1920,14 +1898,23 @@ This function is used to draw a connection between a Dot and another pos/object.
 This function is used to draw the connections between a Dot and the ones in its `connections` attribute. **(Especially useful when using a Grid!)**
 ###### drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType, spread, forceBatching)
 ```js
-// (Running in the drawEffectCB() function of some shape...)
-{
-    ...
+{// (Running in the drawEffectCB() function of some shape...)
+    //...
     // Draws lines between the dot and its connections, using the shape's color, and with a start padding of 2.5x the radius
     CanvasUtils.drawDotConnections(dot, shape.colorObject, 2.5)
 }
 ```
 
+### drawOutline
+This function is used to draw a rectangular outline of the minimal area containing all of the provided object
+###### drawOutline(render, obj, color=[255,0,0,1])
+```js
+{// (Running in the loopCB() function of some object...)
+    //...
+    // Draws a red box containing all of the obj
+    CanvasUtils.drawOutline(CVS.render, obj, [255,0,0,1])
+}
+```
  
 
 **Note:** Functions in this class only accept RGBA arrays or a Color instance for the *color* parameter.

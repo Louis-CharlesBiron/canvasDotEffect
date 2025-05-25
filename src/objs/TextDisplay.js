@@ -5,44 +5,50 @@
 
 // Displays text as an object
 class TextDisplay extends _BaseObj {
-    static MEASUREMENT_CTX = new OffscreenCanvas(1,1).getContext("2d") 
+    static MEASUREMENT_CTX = new OffscreenCanvas(1,1).getContext("2d")
+    static DEFAULT_LINE_HEIGHT_PADDING = 10
 
-    #lineCount = 1
+    #lineCount = null
     constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
         this._text = text??""                // displayed text
         this._textStyles = textStyles        // current object's textStyles
         this._drawMethod = drawMethod?.toUpperCase()??Render.DRAW_METHODS.FILL // text draw method, either "fill" or "stroke"
         this._maxWidth = maxWidth??undefined // maximal width of the displayed text in px
-        this._lineHeigth = null              // lineHeight in px of the text for multi-line display
+        this._lineHeight = null              // lineHeight in px of the text for multi-line display
         this._size = null                    // the text's default size [width, height]
     }
     
     initialize() {
         this._textStyles = CDEUtils.isFunction(this._textStyles) ? this._textStyles(this.render, this) : this._textStyles??this.render.defaultTextProfile
-        this._size = this.getSize()
-        this._lineHeigth ??= this.trueSize[1]/this.#lineCount
+        this.#resize()
         super.initialize()
+    }
+
+    #resize(lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING) {
+        this._size = this.getSize()
+        this.#lineCount = this.getTextValue().split("\n").filter(l=>l).length
+        if (this.#lineCount-1) this._size[1] -= lineHeightPadding
+        this._lineHeight = this.trueSize[1]/this.#lineCount
     }
 
     draw(render, time, deltaTime) {
         if (this.initialized) {
             if (this.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-                const ctx = render.ctx, x = this._pos[0], y = this._pos[1], hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation || hasScaling, textValue = this.getTextValue()
+                const ctx = render.ctx, hasScaling = this._scale[0]!=1||this._scale[1]!=1, hasTransforms = this._rotation||hasScaling, textValue = this.getTextValue()
 
                 let viewPos
                 if (hasTransforms) {
+                    const cx = this._pos[0], cy = this._pos[1]
                     viewPos = this.parent.viewPos
-
-                    ctx.translate(x, y)
+                    ctx.translate(cx, cy)
                     if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                     if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
-                    ctx.translate(-x, -y)
-                    
+                    ctx.translate(-cx, -cy)
                 }
 
-                if (this._drawMethod=="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
-                else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
+                if (this._drawMethod=="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeight, this.visualEffects)
+                else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeight, this.visualEffects)
                 
                 if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
             }
@@ -52,16 +58,16 @@ class TextDisplay extends _BaseObj {
     }
 
     // Returns the width and height of the text, according to the textStyles, excluding the scale or rotation
-    getSize(textStyles=this._textStyles, text=this.getTextValue()) {
-        return TextDisplay.getSize(textStyles, text, this.#lineCount, this._maxWidth)
+    getSize(textStyles=this._textStyles, text=this.getTextValue(), lineHeightPadding) {
+        return TextDisplay.getSize(textStyles, text, this.#lineCount, lineHeightPadding, this._maxWidth)
     }
 
     // Returns the width and height of the given text, according to the textStyles, including potential scaling
-    static getSize(textStyles, text, lineCount, maxWidth, scale=[1,1]) {
+    static getSize(textStyles, text, lineCount, lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING, maxWidth, scale=[1,1]) {
         TextStyles.apply(TextDisplay.MEASUREMENT_CTX, ...textStyles.getStyles())
-        const lines = text.split("\n"), l_ll = lineCount = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
+        const lines = text.split("\n").filter(l=>l), l_ll = lineCount = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
               {width, actualBoundingBoxAscent, actualBoundingBoxDescent} = TextDisplay.MEASUREMENT_CTX.measureText(longestText)
-        return [CDEUtils.round(maxWidth||width, 2)*scale[0], (actualBoundingBoxAscent+actualBoundingBoxDescent)*l_ll*scale[1]]
+        return [CDEUtils.round(maxWidth||width, 2)*scale[0], (actualBoundingBoxAscent+actualBoundingBoxDescent)*l_ll*scale[1]+(l_ll*lineHeightPadding)]
     }
 
     // Returns the current text value
@@ -90,28 +96,49 @@ class TextDisplay extends _BaseObj {
         return this.initialized ? textDisplay : null
     }
 
+    // returns whether the provided pos is in the text
+    isWithin(pos, padding, rotation, scale) {
+        return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
+    }
+    
+    // returns the raw a minimal rectangular area containing all of the text (no scale/rotation)
+    #getRectBounds() {
+        const size = this._size, pos = this._pos, halfLine = (TextDisplay.DEFAULT_LINE_HEIGHT_PADDING/2)+this._lineHeight/2
+        return [[pos[0]-size[0]/2, pos[1]-halfLine/2-3], [pos[0]+size[0]/2, pos[1]+size[1]-halfLine]]
+    }
+
+    // returns the center of the text
+    getCenter() {
+        return super.getCenter(this.#getRectBounds())
+    }
+
+    // returns the minimal rectangular area containing the text according to default text placements/parameters
+    getBounds(padding, rotation=this._rotation, scale=this._scale) {
+        return super.getBounds(this.#getRectBounds(), padding, rotation, scale, this._pos)
+    }
+
 	get text() {return this._text}
 	get textStyles() {return this._textStyles}
 	get drawMethod() {return this._drawMethod}
 	get maxWidth() {return this._maxWidth}
     get size() {return this._size}
-    get lineHeigth() {return this._lineHeigth}
+    get lineHeight() {return this._lineHeight}
     get trueSize() {return [Math.abs(this._size[0]*this._scale[0]), Math.abs(this._size[1]*this._scale[1])]}
     get render() {return this._parent.render}
     get lineCount() {return this.#lineCount}
 
 	set text(_text) {
-        this._text = _text
-        this._size = this.getSize()
+        this._text = _text||""
+        this.#resize()
     }
 	set textStyles(_textStyles) {
         this._textStyles = _textStyles??this.render.defaultTextProfile
-        this._size = this.getSize()
+        this.#resize()
     }
 	set drawMethod(_drawMethod) {this._drawMethod = _drawMethod.toUpperCase()}
 	set maxWidth(_maxWidth) {
         this._maxWidth = _maxWidth??undefined
-        this._size = this.getSize()
+        this.#resize()
     }
-    set lineHeigth(lineHeigth) {this._lineHeigth = lineHeigth}
+    set lineHeight(lineHeight) {this._lineHeight = lineHeight}
 }

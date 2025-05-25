@@ -60,6 +60,23 @@ class CDEUtils {
         return isArray(arr) ? [isArray(o1)?unlinkArr2(o1):o1, isArray(o2)?unlinkArr2(o2):o2] : arr
     }
 
+    // returns the rotated position 
+    static rotatePos(pos=[0,0], deg=0, centerPos=[0,0]) {
+        const rad = CDEUtils.toRad(deg), cos=Math.cos(rad), sin=Math.sin(rad), sx = pos[0]-centerPos[0], sy = pos[1]-centerPos[1]
+        return [sx*cos-sy*sin+centerPos[0], sx*sin+sy*cos+centerPos[1]]
+    }
+
+    // returns the rotated position 
+    static scalePos(pos=[0,0], scale=[1,1], centerPos=[0,0]) {
+        const sx = pos[0]-centerPos[0], sy = pos[1]-centerPos[1]
+        return [sx*scale[0]+centerPos[0], sy*scale[1]+centerPos[1]]
+    }
+
+    // returns the center pos of the provided positions
+    static getPositionsCenter(positions) {
+        return [(positions[0][0]+positions[1][0])/2, (positions[0][1]+positions[1][1])/2]
+    }
+
     // Returns the pythagorian distance between 2 points
     static getDist(x1, y1, x2, y2) {
         return Math.sqrt((x1-x2)**2 + (y1-y2)**2)
@@ -139,12 +156,12 @@ class CDEUtils {
     static getMinMax(arr, propPath=null) {
        let min = Infinity, max = -Infinity, ll = arr.length
        for (let i=0;i<ll;i++) {
-           const v = propPath ? +arr[i][propPath] : arr[i]
-         if (v < min) min = v
-         if (v > max) max = v
+            const v = propPath ? +arr[i][propPath] : arr[i]
+            if (v < min) min = v
+            if (v > max) max = v
        }
        return [min, max]
-   }
+    }
 
     /**
     * Calls a function repeatedly with a delay between calls

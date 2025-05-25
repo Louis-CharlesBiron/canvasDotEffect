@@ -26,7 +26,9 @@ class ImageDisplay extends _BaseObj {
     static DEFAULT_CAPTURE_CURSOR = "always"
     static DEFAULT_CAPTURE_SETTINGS = ImageDisplay.loadCapture()
     static DEFAULT_CAPTURES = {CAPTURE_SD:ImageDisplay.loadCapture(ImageDisplay.RESOLUTIONS.SD), CAPTURE_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.HD), CAPTURE_FULL_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FULL_HD), CAPTURE_4k:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FOURK), CAPTURE:ImageDisplay.DEFAULT_CAPTURE_SETTINGS}
-    static ERROR_TYPES = {NO_PERMISSION:0, DEVICE_IN_USE:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3}
+    static ERROR_TYPES = {NO_PERMISSION:0, DEVICE_IN_USE:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3, NOT_AVAILABLE:4}
+    static IS_CAMERA_SUPPORTED = ()=>!!navigator?.mediaDevices?.getUserMedia
+    static IS_SCREEN_RECORD_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
 
     constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, null, setupCB, loopCB, anchorPos, alwaysActive)
@@ -54,15 +56,16 @@ class ImageDisplay extends _BaseObj {
         if (this.initialized) {
             if (this._source instanceof HTMLVideoElement && (!this._source.src && !this._source.srcObject?.active)) return;
 
-            const ctx = render.ctx, x = this.centerX, y = this.centerY, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
+            const ctx = render.ctx, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
 
             let viewPos
             if (hasTransforms) {
+                const cx = this.centerX, cy = this.centerY
                 viewPos = this.parent.viewPos
-                ctx.translate(x, y)
+                ctx.translate(cx, cy)
                 if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                 if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
-                ctx.translate(-x, -y)
+                ctx.translate(-cx, -cy)
             }
 
             if (this._source instanceof HTMLCanvasElement) render.drawLateImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
@@ -119,12 +122,14 @@ class ImageDisplay extends _BaseObj {
 
     // Initializes a camera capture data source
     static #initCameraDataSource(settings=true, loadCallback, errorCB) {
-        navigator.mediaDevices.getUserMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e.toString().includes("NotReadableError")?ImageDisplay.ERROR_TYPES.DEVICE_IN_USE:ImageDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        if (ImageDisplay.IS_CAMERA_SUPPORTED()) navigator.mediaDevices.getUserMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e.toString().includes("NotReadableError")?ImageDisplay.ERROR_TYPES.DEVICE_IN_USE:ImageDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE)
     }
 
     // Initializes a screen capture data source
     static #initCaptureDataSource(settings=true, loadCallback, errorCB) {
-        navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        if (ImageDisplay.IS_SCREEN_RECORD_SUPPORTED()) navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE)
     }
 
     // Returns a usable image source
@@ -216,11 +221,35 @@ class ImageDisplay extends _BaseObj {
         return this.initialized ? imageDisplay : null
     }
 
+    // returns whether the provided pos is in the image
+    isWithin(pos, padding, rotation=0, scale) {
+        return super.isWithin(pos, this.getBounds(padding, rotation&&this._rotation, scale), padding)
+    }
 
-	get size() {return this._size}
+    // returns the raw a minimal rectangular area containing all of the image (no scale/rotation)
+    #getRectBounds() {
+        const size = this._size, pos = this._pos
+        return [pos, [pos[0]+size[0], pos[1]+size[1]]]
+    }
+
+    // returns the center pos of the image
+    getCenter() {
+        return super.getCenter(this.#getRectBounds())
+    }
+
+    // returns the minimal rectangular area containing all of the image
+    getBounds(padding, rotation=this._rotation, scale=this._scale) {
+        const positions = this.#getRectBounds()
+        return super.getBounds(positions, padding, rotation, scale, super.getCenter(positions))
+    }
+
+	get size() {return this._size||[0,0]}
     get width() {return this._size[0]}
     get height() {return this._size[1]}
-    get trueSize() {return [Math.abs(this._size[0]*this._scale[0]), Math.abs(this._size[1]*this._scale[1])]}
+    get trueSize() {
+        const size = this.size
+        return [Math.abs(size[0]*this._scale[0]), Math.abs(size[1]*this._scale[1])]
+    }
     get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
     get centerX() {return this._pos[0]+this._size[0]/2}
     get centerY() {return this._pos[1]+this._size[1]/2}

@@ -60,6 +60,23 @@ export class CDEUtils {
         return isArray(arr) ? [isArray(o1)?unlinkArr2(o1):o1, isArray(o2)?unlinkArr2(o2):o2] : arr
     }
 
+    // returns the rotated position 
+    static rotatePos(pos=[0,0], deg=0, centerPos=[0,0]) {
+        const rad = CDEUtils.toRad(deg), cos=Math.cos(rad), sin=Math.sin(rad), sx = pos[0]-centerPos[0], sy = pos[1]-centerPos[1]
+        return [sx*cos-sy*sin+centerPos[0], sx*sin+sy*cos+centerPos[1]]
+    }
+
+    // returns the rotated position 
+    static scalePos(pos=[0,0], scale=[1,1], centerPos=[0,0]) {
+        const sx = pos[0]-centerPos[0], sy = pos[1]-centerPos[1]
+        return [sx*scale[0]+centerPos[0], sy*scale[1]+centerPos[1]]
+    }
+
+    // returns the center pos of the provided positions
+    static getPositionsCenter(positions) {
+        return [(positions[0][0]+positions[1][0])/2, (positions[0][1]+positions[1][1])/2]
+    }
+
     // Returns the pythagorian distance between 2 points
     static getDist(x1, y1, x2, y2) {
         return Math.sqrt((x1-x2)**2 + (y1-y2)**2)
@@ -139,12 +156,12 @@ export class CDEUtils {
     static getMinMax(arr, propPath=null) {
        let min = Infinity, max = -Infinity, ll = arr.length
        for (let i=0;i<ll;i++) {
-           const v = propPath ? +arr[i][propPath] : arr[i]
-         if (v < min) min = v
-         if (v > max) max = v
+            const v = propPath ? +arr[i][propPath] : arr[i]
+            if (v < min) min = v
+            if (v > max) max = v
        }
        return [min, max]
-   }
+    }
 
     /**
     * Calls a function repeatedly with a delay between calls
@@ -330,8 +347,13 @@ export class CanvasUtils {
 
     // Rotates the provided obj for it to face the target. Offsets: top:90, right:0, bottom:270, left:180
     static lookAt(obj, target, offset=0) {
-        const [sx, sy] = obj.pos, [tx, ty] = target?.pos??target
-        obj.rotation = offset-CDEUtils.toDeg(Math.atan2(sy-ty, -(sx-tx)))
+        const t = target?.pos??target
+        obj.rotation = offset-CDEUtils.toDeg(Math.atan2(obj.pos[1]-t[1], -(obj.pos[0]-t[0])))
+    }
+
+    static drawOutline(render, obj, color=[255,0,0,1]) {
+        const bounds = obj.getBounds()
+        render.batchStroke(Render.getPositionsRect(bounds[0], bounds[1]), color)
     }
 
     // Provides quick generic shape declarations
@@ -1450,7 +1472,7 @@ export class Mouse {
      * @returns The listener id
      */
     addListener(obj, type, callback, forceStaticPositions) {
-        const listener = [forceStaticPositions?_DynamicColor.getAutomaticPositions(obj):obj, callback, Mouse.#LISTENER_ID_GIVER++]
+        const listener = [forceStaticPositions?obj.getBounds():obj, callback, Mouse.#LISTENER_ID_GIVER++]
         if (!this._listeners[type]) this._listeners[type] = []
         this._listeners[type].push(listener)
         return listener[2]
@@ -1505,7 +1527,7 @@ export class Mouse {
      */
     updateListener(type, id, newObj, newCallback, forceStaticPositions) {
         const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[2]==(id?.[2]??id))]
-        if (newObj) listener[0] = forceStaticPositions?_DynamicColor.getAutomaticPositions(newObj):newObj
+        if (newObj) listener[0] = forceStaticPositions?newObj.getBounds():newObj
         if (newCallback) listener[1] = newCallback
     }
 
@@ -1571,7 +1593,7 @@ export class Render {
     static DEFAULT_COMPOSITE_OPERATION = Render.COMPOSITE_OPERATIONS.SOURCE_OVER
     static DEFAULT_FILTER = "none"
     static DEFAULT_ALPHA = 1
-    static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
+    static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, POSITIONS_RECT:Render.getPositionsRect, ROUND_RECT:Render.getRoundRect, POSITIONS_ROUND_RECT:Render.getPositionsRoundRect}
     static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve}
     static DRAW_METHODS = {FILL:"FILL", STROKE:"STROKE"}
 
@@ -1673,10 +1695,25 @@ export class Render {
         return path
     }
 
+    // instanciates and returns a path containing an rectangle
+    static getPositionsRect(pos, pos2) {
+        const path = new Path2D(), x1 = pos[0], y1 = pos[1]
+        path.rect(x1, y1, pos2[0]-x1, pos2[1]-y1)
+        return path
+    }
+
+
     // instanciates and returns a path containing an rounded rectangle
     static getRoundRect(pos, width, height, radius) {
         const path = new Path2D()
         path.roundRect(pos[0], pos[1], width, height, radius)
+        return path
+    }
+
+    // instanciates and returns a path containing an rounded rectangle
+    static getPositionsRoundRect(pos, pos2, radius=5) {
+        const path = new Path2D(), x1 = pos[0], y1 = pos[1]
+        path.roundRect(x1, y1, pos2[0]-x1, pos2[1]-y1, radius)
         return path
     }
 
@@ -1772,7 +1809,7 @@ export class Render {
     }
 
     // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=12, visualEffects=[]) {
+    strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=TextDisplay.DEFAULT_LINE_HEIGHT, visualEffects=[]) {
         if (text) {
             const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, hasVisualEffects = visualEffects?.length
             if (textStyles instanceof TextStyles) textStyles.apply()
@@ -1791,7 +1828,7 @@ export class Render {
     }
 
     // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=12, visualEffects=[]) {
+    fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=TextDisplay.DEFAULT_LINE_HEIGHT, visualEffects=[]) {
         if (text) {
             const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, hasVisualEffects = visualEffects?.length
             if (textStyles instanceof TextStyles) textStyles.apply()
@@ -2149,7 +2186,7 @@ export class Canvas {
     static DEFAULT_MAX_DELTATIME_MS = 130
     static DEFAULT_MAX_DELTATIME = Canvas.DEFAULT_MAX_DELTATIME_MS/1000
     static DEFAULT_MAXDELAY_MULTIPLIER = 0.44
-    static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 20
+    static DEFAULT_CANVAS_ACTIVE_AREA_PADDING = 25
     static DEFAULT_CVSDE_ATTR = "_CVSDE"
     static DEFAULT_CVSFRAMEDE_ATTR = "_CVSDE_F"
     static DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX = "CDE_FE_"
@@ -2957,7 +2994,7 @@ export class _BaseObj extends _HasColor {
     draw(time, deltaTime) {
         this.setAnchoredPos()
         const loopCB = this._loopCB
-        if (loopCB) loopCB(this)
+        if (loopCB && this.initialized) loopCB(this, deltaTime)
 
         let anims = this._anims.currents
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
@@ -3017,12 +3054,12 @@ export class _BaseObj extends _HasColor {
 
     // Rotates the object clock-wise by a specified degree increment around its pos
     rotateBy(deg) {
-        this._rotation = (this._rotation+deg)%360
+        this.rotation = (this._rotation+deg)%360
     }
 
     // Rotates the object to a specified degree around its pos
     rotateAt(deg) {
-        this._rotation = deg%360
+        this.rotation = deg%360
     }
 
     // Smoothly rotates the object to a specified degree around its pos
@@ -3036,8 +3073,8 @@ export class _BaseObj extends _HasColor {
         let [scaleX, scaleY] = scale
         if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
         if (!CDEUtils.isDefined(scaleY)) scaleY = this._scale[1]
-        this._scale[0] *= scaleX
-        this._scale[1] *= scaleY
+        this.scale[0] *= scaleX
+        this.scale[1] *= scaleY
     }
 
     // Scales the object to a specified amount [scaleX, scaleY] from its pos
@@ -3125,14 +3162,53 @@ export class _BaseObj extends _HasColor {
         this._parent.remove(this._id)
     }
 
-    // returns whether the provided pos is inside the obj
-    isWithin(pos) {
-        const [x,y]=pos
-        if (this._initialized) {
-           const positions = _DynamicColor.getAutomaticPositions(this)
-           return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
+    // returns whether the provided pos is in the provided positions
+    isWithin(pos, positions) {
+        return pos[0] >= positions[0][0] && pos[0] <= positions[1][0] && pos[1] >= positions[0][1] && pos[1] <= positions[1][1]
+    }
+
+    // returns the center pos of the provided positions
+    getCenter(positions) {
+        return CDEUtils.getPositionsCenter(positions)
+    }
+
+    // returns the minimal rectangular area defined by the provided positions
+    getBounds(positions, padding, rotation, scale, centerPos=this.getCenter(positions)) {
+        const rotatePos = CDEUtils.rotatePos, scalePos = CDEUtils.scalePos
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+
+        if (scale || rotation) {
+            positions[2] = [positions[1][0], positions[0][1]]
+            positions[3] = [positions[0][0], positions[1][1]]
         }
-        return false
+        
+        if (scale) {
+            positions[0] = scalePos(positions[0], scale, centerPos)
+            positions[1] = scalePos(positions[1], scale, centerPos)
+            positions[2] = scalePos(positions[2], scale, centerPos)
+            positions[3] = scalePos(positions[3], scale, centerPos)
+        }
+
+        if (rotation) {
+            positions[0] = rotatePos(positions[0], rotation, centerPos)
+            positions[1] = rotatePos(positions[1], rotation, centerPos)
+            positions[2] = rotatePos(positions[2], rotation, centerPos)
+            positions[3] = rotatePos(positions[3], rotation, centerPos)
+        }
+
+        const p_ll = positions.length
+        for (let i=0;i<p_ll; i++) {
+            let [x, y] = positions[i]
+            if (x < minX) minX = x
+            if (x > maxX) maxX = x
+            if (y < minY) minY = y
+            if (y > maxY) maxY = y
+        }   
+        
+        padding??=0
+        padding = typeof padding=="number" ? [padding, padding, padding, padding] : [padding[0],padding[1]??padding[0], padding[2]??padding[0], padding[3]??padding[1]]
+
+        return [[minX-padding[3], minY-padding[0]],[maxX+padding[1], maxY+padding[2]]]
     }
 
 	get id() {return this._id}
@@ -3179,6 +3255,7 @@ export class _BaseObj extends _HasColor {
     get filter() {return this._visualEffects?.[0]??Render.DEFAULT_FILTER}
     get compositeOperation() {return this._visualEffects?.[1]??Render.DEFAULT_COMPOSITE_OPERATION}
     get opacity() {return this._visualEffects?.[2]??Render.DEFAULT_ALPHA}
+    get safeColorObject() {return this.initialized&&this._color}
 
 
     set x(x) {this._pos[0] = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)}
@@ -3204,8 +3281,8 @@ export class _BaseObj extends _HasColor {
     set anchorPosRaw(anchorPos) {this._anchorPos = anchorPos}
     set lastAnchorPos(lastAnchorPos) {this.#lastAnchorPos = lastAnchorPos}
     set rotation(_rotation) {this._rotation = _rotation%360}
-    set scale(_scale) {
-        let [scaleX, scaleY] = _scale
+    set scale(scale) {
+        let [scaleX, scaleY] = scale
         if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
         if (!CDEUtils.isDefined(scaleY)) scaleY = this._scale[1]
         this._scale[0] = scaleX
@@ -3247,6 +3324,12 @@ export class AudioDisplay extends _BaseObj {
         pos[0] += spacing
         return [pos]
     }
+    static DEFAULT_BINCB_TRANSFORMABLE = (render, bin, pos, audioDisplay)=>{
+        const barWidth = 2, barHeight = 100*bin, spacing = 5
+        render.fill(Render.getRect(pos, barWidth, barHeight), audioDisplay._color, audioDisplay.visualEffects)
+        pos[0] += spacing
+        return [pos]
+    }
     static BIN_CALLBACKS = {DEFAULT:AudioDisplay.DEFAULT_BINCB, CIRCLE:AudioDisplay.CIRCLE(), BARS:AudioDisplay.BARS(), TOP_WAVE:AudioDisplay.TOP_WAVE()}
     static MICROPHONE_CHANNELS = {MONO:1, STEREO:2}
     static DEFAULT_MICROPHONE_DELAY = 1
@@ -3260,8 +3343,10 @@ export class AudioDisplay extends _BaseObj {
     static DEFAULT_SCREEN_AUDIO_SETTINGS = AudioDisplay.loadScreenAudio()
     static MAX_NORMALISED_DATA_VALUE = 255/128
     static MAX_DELAY_TIME = 179
-    static ERROR_TYPES = {NO_PERMISSION:0, NO_AUDIO_TRACK:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3}
+    static ERROR_TYPES = {NO_PERMISSION:0, NO_AUDIO_TRACK:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3, NOT_AVAILABLE:4}
     static BIQUAD_FILTER_TYPES = {DEFAULT:"allpass", ALLPASS:"allpass", BANDPASS:"bandpass", HIGHPASS:"highpass", HIGHSHELF:"highshelf", LOWPASS:"lowpass", LOWSHELF:"lowshelf", NOTCH:"notch", PEAKING:"peaking"}
+    static IS_MICROPHONE_SUPPORTED = ()=>!!navigator?.mediaDevices?.getUserMedia
+    static IS_SCREEN_ADUIO_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
 
     #buffer_ll = null // the length of data
     #data = null      // the fft data values (raw bins)
@@ -3274,6 +3359,7 @@ export class AudioDisplay extends _BaseObj {
         this._disableAudio = disableAudio??false                          // whether the audio output is disabled or not (does not affect the visual display) 
         this._offsetPourcent = offsetPourcent??0                          // the offset pourcent (0..1) in the bins when calling binCB. 
         this._errorCB = errorCB                                           // a callback called if there is an error with the source (errorType, e?)=>
+        this._transformable = 0                                           // if above 0, allows transformations with non batched canvas operations
 
         // audio stuff
         this._audioCtx = new AudioContext()
@@ -3296,21 +3382,26 @@ export class AudioDisplay extends _BaseObj {
         this.initializeSource()
         this._pos = this.getInitPos()||_BaseObj.DEFAULT_POS
         this.setAnchoredPos()
+        super.initialize()
     }
 
     draw(render, time, deltaTime) {
         if (this.initialized) {
-            const ctx = render.ctx, x = this.x, y = this.y, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling, data = this.#data
-            if (hasTransforms) {
-                ctx.save()
-                ctx.translate(x, y)
-                if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
-                if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
-                ctx.translate(-x, -y)
-            }
+            const ctx = render.ctx, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling, data = this.#data
 
+            let viewPos
+            if (this._transformable) {
+                if (hasTransforms) {
+                    const cx = this._pos[0], cy = this._pos[1]
+                    viewPos = this.parent.viewPos
+                    ctx.translate(cx, cy)
+                    if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
+                    if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
+                    ctx.translate(-cx, -cy)
+                }
+            }
+   
             this._audioAnalyser.getByteFrequencyData(data)
-            
             let atPos = this.pos_, accumulator = null, offset = (this._offsetPourcent%1)*(this.#fft/2), adjusted_ll = Math.round(0.49+this._sampleCount)-offset, ii=-offset, i=offset>>0
             for (;ii<adjusted_ll;ii++,i=(i+1)%this._sampleCount) {
                 const bin = data[i], res = this._binCB(render, bin/128, atPos, this, accumulator, i, this._sampleCount, bin), newPos = res?.[0], newAcc = res?.[1]
@@ -3318,9 +3409,38 @@ export class AudioDisplay extends _BaseObj {
                 if (newAcc) accumulator = newAcc
             }
 
-            if (hasTransforms) ctx.restore()
+            if (this._transformable && hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
         }
         super.draw(time, deltaTime)
+    }
+
+    // updates the "transformable" attribute according to whether any rotation/scale are setted
+    #updateTransformable() {
+        const hasTransforms = this._rotation || this._scale[0]!=1 || this._scale[0]!=1
+        if (hasTransforms && this._transformable < 2) this._transformable = 2
+        else if (!hasTransforms && this._transformable) this._transformable--
+    }
+
+    // (NOT ALWAYS RELIABLE) returns whether the provided pos is in the audio display
+    isWithin(pos, padding, rotation, scale) {
+        return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
+    }
+
+    // (NOT ALWAYS RELIABLE) returns the raw a minimal rectangular area containing all of the audio display (no scale/rotation)
+    #getRectBounds(binWidth=2, binHeight=100, binSpacing=5) {
+        const pos = this._pos, sizeX = this._sampleCount*(binWidth*binSpacing)/2
+        return [[pos[0],pos[1]], [pos[0]+sizeX,pos[1]+binHeight*2]]
+    }
+
+    // (NOT ALWAYS RELIABLE) returns the center pos of the audio display
+    getCenter() {
+        return super.getCenter(this.#getRectBounds())
+    }
+
+    // (NOT ALWAYS RELIABLE) returns the minimal rectangular area containing all of the audio display
+    getBounds(padding, rotation=this._rotation, scale=this._scale) {
+        const positions = this.#getRectBounds()
+        return super.getBounds(positions, padding, rotation, scale, this._pos)
     }
 
     // Final source initializes step
@@ -3374,18 +3494,20 @@ export class AudioDisplay extends _BaseObj {
 
     // Initializes a camera audio capture data source
     static #initMicrophoneDataSource(settings=true, loadCallback, errorCB) {
-        navigator.mediaDevices.getUserMedia({audio:settings}).then(src=>{
+        if (AudioDisplay.IS_MICROPHONE_SUPPORTED()) navigator.mediaDevices.getUserMedia({audio:settings}).then(src=>{
             if (src.getAudioTracks().length && CDEUtils.isFunction(loadCallback)) loadCallback(src, true)
             else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
         }).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NOT_AVAILABLE)
     }
 
     // Initializes a screen audio capture data source
     static #initScreenAudioDataSource(settings=true, loadCallback, errorCB) {
-        navigator.mediaDevices.getDisplayMedia({audio:settings}).then(src=>{
+        if (AudioDisplay.IS_MICROPHONE_SUPPORTED()) navigator.mediaDevices.getDisplayMedia({audio:settings}).then(src=>{
             if (src.getAudioTracks().length && CDEUtils.isFunction(loadCallback)) loadCallback(src, true)
             else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
         }).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NOT_AVAILABLE)
     }
 
     // Returns a usable video source
@@ -3550,7 +3672,7 @@ export class AudioDisplay extends _BaseObj {
 
     // GENERIC DISPLAYS
     // generic binCB for waveform display
-    static BARS(maxHeight, minHeight, spacing, barWidth) {
+    static BARS(maxHeight, minHeight, spacing, barWidth, transformable) {
         maxHeight??=100
         minHeight??=0
         spacing??=1
@@ -3558,29 +3680,46 @@ export class AudioDisplay extends _BaseObj {
         
         maxHeight = maxHeight/AudioDisplay.MAX_NORMALISED_DATA_VALUE
         minHeight = minHeight/AudioDisplay.MAX_NORMALISED_DATA_VALUE
-        return (render, bin, pos, audioDisplay)=>{
-            const barHeight = minHeight+maxHeight*bin
-            render.batchFill(Render.getRect(pos, barWidth, barHeight), audioDisplay._color, audioDisplay.visualEffects)
-            pos[0] += spacing
-            return [pos]
+
+        if (transformable) {
+            return (render, bin, pos, audioDisplay)=>{
+                const barHeight = minHeight+maxHeight*bin
+                render.fill(Render.getRect(pos, barWidth, barHeight), audioDisplay._color, audioDisplay.visualEffects)
+                pos[0] += spacing
+                return [pos]
+            }
+        } else {
+            return (render, bin, pos, audioDisplay)=>{
+                const barHeight = minHeight+maxHeight*bin
+                render.batchFill(Render.getRect(pos, barWidth, barHeight), audioDisplay._color, audioDisplay.visualEffects)
+                pos[0] += spacing
+                return [pos]
+            }
         }
     }
 
     // generic binCB for circular display
-    static CIRCLE(maxRadius, minRadius, precision) {
+    static CIRCLE(maxRadius, minRadius, transformable, precision) {
         maxRadius??=100
         minRadius??=0
         precision??=2
 
         maxRadius = maxRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
         minRadius = minRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
-        return (render, bin, pos, audioDisplay, accumulator, i)=>{
-            if (i%precision==0) render.batchStroke(Render.getArc(pos, minRadius+maxRadius*bin), audioDisplay._color, audioDisplay.visualEffects)
+
+        if (transformable) {
+            return (render, bin, pos, audioDisplay, accumulator, i)=>{
+                if (i%precision==0) render.stroke(Render.getArc(pos, minRadius+maxRadius*bin), audioDisplay._color, audioDisplay.visualEffects)
+            }
+        } else {
+            return (render, bin, pos, audioDisplay, accumulator, i)=>{
+                if (i%precision==0) render.batchStroke(Render.getArc(pos, minRadius+maxRadius*bin), audioDisplay._color, audioDisplay.visualEffects)
+            }
         }
     }
 
     // generic binCB for sin-ish wave display
-    static TOP_WAVE(maxHeight, minHeight, spacing, precision) {
+    static TOP_WAVE(maxHeight, minHeight, spacing, transformable, precision) {
         maxHeight??=100
         minHeight??=0
         spacing??=1
@@ -3588,22 +3727,38 @@ export class AudioDisplay extends _BaseObj {
 
         maxHeight = maxHeight/AudioDisplay.MAX_NORMALISED_DATA_VALUE
         minHeight = minHeight/AudioDisplay.MAX_NORMALISED_DATA_VALUE
-        return (render, bin, pos, audioDisplay, accumulator, i, sampleCount)=>{
-            const barHeight = minHeight+maxHeight*bin
-            if (!i) {
-                accumulator = new Path2D()
-                accumulator.moveTo(pos[0], pos[1]+barHeight)
-            } else if (i%precision==0) accumulator.lineTo(pos[0], pos[1]+barHeight)
-            
-            if (i==sampleCount-1) render.batchStroke(accumulator, audioDisplay._color, audioDisplay.visualEffects)
-            pos[0] += spacing
+
+        if (transformable) {
+            return (render, bin, pos, audioDisplay, accumulator, i, sampleCount)=>{
+                const barHeight = minHeight+maxHeight*bin
+                if (!i) {
+                    accumulator = new Path2D()
+                    accumulator.moveTo(pos[0], pos[1]+barHeight)
+                } else if (i%precision==0) accumulator.lineTo(pos[0], pos[1]+barHeight)
                 
-            return [pos, accumulator]
+                if (i==sampleCount-1) render.stroke(accumulator, audioDisplay._color, audioDisplay.visualEffects)
+                pos[0] += spacing
+                    
+                return [pos, accumulator]
+            }
+        } else {
+            return (render, bin, pos, audioDisplay, accumulator, i, sampleCount)=>{
+                const barHeight = minHeight+maxHeight*bin
+                if (!i) {
+                    accumulator = new Path2D()
+                    accumulator.moveTo(pos[0], pos[1]+barHeight)
+                } else if (i%precision==0) accumulator.lineTo(pos[0], pos[1]+barHeight)
+                
+                if (i==sampleCount-1) render.batchStroke(accumulator, audioDisplay._color, audioDisplay.visualEffects)
+                pos[0] += spacing
+                    
+                return [pos, accumulator]
+            }
         }
     }
 
     // generic binCB for spiral particle cloud display
-    static CLOUD(maxRadius, minRadius, particleRadius, precision, angleStep) {
+    static CLOUD(maxRadius, minRadius, particleRadius, transformable, precision, angleStep) {
         maxRadius??=100
         minRadius??=0
         particleRadius??=2
@@ -3612,10 +3767,19 @@ export class AudioDisplay extends _BaseObj {
     
         maxRadius = maxRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
         minRadius = minRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
-        return (render, bin, pos, audioDisplay, accumulator, i) => {
-            const radius = minRadius+maxRadius*bin, angle = angleStep*i
-            if (!(i%precision)) render.batchFill(Render.getArc([pos[0]+radius*Math.cos(angle), pos[1]+radius*Math.sin(angle)], particleRadius), audioDisplay._color, audioDisplay.visualEffects)
-            return [pos]
+
+        if (transformable) {
+            return (render, bin, pos, audioDisplay, accumulator, i) => {
+                const radius = minRadius+maxRadius*bin, angle = angleStep*i
+                if (!(i%precision)) render.fill(Render.getArc([pos[0]+radius*Math.cos(angle), pos[1]+radius*Math.sin(angle)], particleRadius), audioDisplay._color, audioDisplay.visualEffects)
+                return [pos]
+            }
+        } else {
+            return (render, bin, pos, audioDisplay, accumulator, i) => {
+                const radius = minRadius+maxRadius*bin, angle = angleStep*i
+                if (!(i%precision)) render.batchFill(Render.getArc([pos[0]+radius*Math.cos(angle), pos[1]+radius*Math.sin(angle)], particleRadius), audioDisplay._color, audioDisplay.visualEffects)
+                return [pos]
+            }
         }
     }
 
@@ -3637,6 +3801,7 @@ export class AudioDisplay extends _BaseObj {
     get data() {return this.#data}
     get fft() {return this.#fft}
     get bufferLength() {return this.#buffer_ll}
+    get transformable() {return this._transformable}
 
     get video() {return this._source}
     get image() {return this._source}
@@ -3675,6 +3840,15 @@ export class AudioDisplay extends _BaseObj {
     }
 	set offsetPourcent(_offsetPourcent) {this._offsetPourcent = _offsetPourcent}
 	set errorCB(_errorCB) {this._errorCB = _errorCB}
+    set transformable(transformable) {this._transformable = transformable}
+    set rotation(rotation) {
+        super.rotation = rotation
+        this.#updateTransformable()
+    }
+    set scale(scale) {
+        super.scale = scale
+        this.#updateTransformable()
+    }
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -3704,7 +3878,9 @@ export class ImageDisplay extends _BaseObj {
     static DEFAULT_CAPTURE_CURSOR = "always"
     static DEFAULT_CAPTURE_SETTINGS = ImageDisplay.loadCapture()
     static DEFAULT_CAPTURES = {CAPTURE_SD:ImageDisplay.loadCapture(ImageDisplay.RESOLUTIONS.SD), CAPTURE_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.HD), CAPTURE_FULL_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FULL_HD), CAPTURE_4k:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FOURK), CAPTURE:ImageDisplay.DEFAULT_CAPTURE_SETTINGS}
-    static ERROR_TYPES = {NO_PERMISSION:0, DEVICE_IN_USE:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3}
+    static ERROR_TYPES = {NO_PERMISSION:0, DEVICE_IN_USE:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3, NOT_AVAILABLE:4}
+    static IS_CAMERA_SUPPORTED = ()=>!!navigator?.mediaDevices?.getUserMedia
+    static IS_SCREEN_RECORD_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
 
     constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, null, setupCB, loopCB, anchorPos, alwaysActive)
@@ -3732,15 +3908,16 @@ export class ImageDisplay extends _BaseObj {
         if (this.initialized) {
             if (this._source instanceof HTMLVideoElement && (!this._source.src && !this._source.srcObject?.active)) return;
 
-            const ctx = render.ctx, x = this.centerX, y = this.centerY, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
+            const ctx = render.ctx, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
 
             let viewPos
             if (hasTransforms) {
+                const cx = this.centerX, cy = this.centerY
                 viewPos = this.parent.viewPos
-                ctx.translate(x, y)
+                ctx.translate(cx, cy)
                 if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                 if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
-                ctx.translate(-x, -y)
+                ctx.translate(-cx, -cy)
             }
 
             if (this._source instanceof HTMLCanvasElement) render.drawLateImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
@@ -3797,12 +3974,14 @@ export class ImageDisplay extends _BaseObj {
 
     // Initializes a camera capture data source
     static #initCameraDataSource(settings=true, loadCallback, errorCB) {
-        navigator.mediaDevices.getUserMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e.toString().includes("NotReadableError")?ImageDisplay.ERROR_TYPES.DEVICE_IN_USE:ImageDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        if (ImageDisplay.IS_CAMERA_SUPPORTED()) navigator.mediaDevices.getUserMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e.toString().includes("NotReadableError")?ImageDisplay.ERROR_TYPES.DEVICE_IN_USE:ImageDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE)
     }
 
     // Initializes a screen capture data source
     static #initCaptureDataSource(settings=true, loadCallback, errorCB) {
-        navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        if (ImageDisplay.IS_SCREEN_RECORD_SUPPORTED()) navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE)
     }
 
     // Returns a usable image source
@@ -3894,11 +4073,35 @@ export class ImageDisplay extends _BaseObj {
         return this.initialized ? imageDisplay : null
     }
 
+    // returns whether the provided pos is in the image
+    isWithin(pos, padding, rotation=0, scale) {
+        return super.isWithin(pos, this.getBounds(padding, rotation&&this._rotation, scale), padding)
+    }
 
-	get size() {return this._size}
+    // returns the raw a minimal rectangular area containing all of the image (no scale/rotation)
+    #getRectBounds() {
+        const size = this._size, pos = this._pos
+        return [pos, [pos[0]+size[0], pos[1]+size[1]]]
+    }
+
+    // returns the center pos of the image
+    getCenter() {
+        return super.getCenter(this.#getRectBounds())
+    }
+
+    // returns the minimal rectangular area containing all of the image
+    getBounds(padding, rotation=this._rotation, scale=this._scale) {
+        const positions = this.#getRectBounds()
+        return super.getBounds(positions, padding, rotation, scale, super.getCenter(positions))
+    }
+
+	get size() {return this._size||[0,0]}
     get width() {return this._size[0]}
     get height() {return this._size[1]}
-    get trueSize() {return [Math.abs(this._size[0]*this._scale[0]), Math.abs(this._size[1]*this._scale[1])]}
+    get trueSize() {
+        const size = this.size
+        return [Math.abs(size[0]*this._scale[0]), Math.abs(size[1]*this._scale[1])]
+    }
     get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
     get centerX() {return this._pos[0]+this._size[0]/2}
     get centerY() {return this._pos[1]+this._size[1]/2}
@@ -3948,44 +4151,50 @@ export class ImageDisplay extends _BaseObj {
 
 // Displays text as an object
 export class TextDisplay extends _BaseObj {
-    static MEASUREMENT_CTX = new OffscreenCanvas(1,1).getContext("2d") 
+    static MEASUREMENT_CTX = new OffscreenCanvas(1,1).getContext("2d")
+    static DEFAULT_LINE_HEIGHT_PADDING = 10
 
-    #lineCount = 1
+    #lineCount = null
     constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
         this._text = text??""                // displayed text
         this._textStyles = textStyles        // current object's textStyles
         this._drawMethod = drawMethod?.toUpperCase()??Render.DRAW_METHODS.FILL // text draw method, either "fill" or "stroke"
         this._maxWidth = maxWidth??undefined // maximal width of the displayed text in px
-        this._lineHeigth = null              // lineHeight in px of the text for multi-line display
+        this._lineHeight = null              // lineHeight in px of the text for multi-line display
         this._size = null                    // the text's default size [width, height]
     }
     
     initialize() {
         this._textStyles = CDEUtils.isFunction(this._textStyles) ? this._textStyles(this.render, this) : this._textStyles??this.render.defaultTextProfile
-        this._size = this.getSize()
-        this._lineHeigth ??= this.trueSize[1]/this.#lineCount
+        this.#resize()
         super.initialize()
+    }
+
+    #resize(lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING) {
+        this._size = this.getSize()
+        this.#lineCount = this.getTextValue().split("\n").filter(l=>l).length
+        if (this.#lineCount-1) this._size[1] -= lineHeightPadding
+        this._lineHeight = this.trueSize[1]/this.#lineCount
     }
 
     draw(render, time, deltaTime) {
         if (this.initialized) {
             if (this.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-                const ctx = render.ctx, x = this._pos[0], y = this._pos[1], hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation || hasScaling, textValue = this.getTextValue()
+                const ctx = render.ctx, hasScaling = this._scale[0]!=1||this._scale[1]!=1, hasTransforms = this._rotation||hasScaling, textValue = this.getTextValue()
 
                 let viewPos
                 if (hasTransforms) {
+                    const cx = this._pos[0], cy = this._pos[1]
                     viewPos = this.parent.viewPos
-
-                    ctx.translate(x, y)
+                    ctx.translate(cx, cy)
                     if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                     if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
-                    ctx.translate(-x, -y)
-                    
+                    ctx.translate(-cx, -cy)
                 }
 
-                if (this._drawMethod=="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
-                else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeigth, this.visualEffects)
+                if (this._drawMethod=="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeight, this.visualEffects)
+                else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeight, this.visualEffects)
                 
                 if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
             }
@@ -3995,16 +4204,16 @@ export class TextDisplay extends _BaseObj {
     }
 
     // Returns the width and height of the text, according to the textStyles, excluding the scale or rotation
-    getSize(textStyles=this._textStyles, text=this.getTextValue()) {
-        return TextDisplay.getSize(textStyles, text, this.#lineCount, this._maxWidth)
+    getSize(textStyles=this._textStyles, text=this.getTextValue(), lineHeightPadding) {
+        return TextDisplay.getSize(textStyles, text, this.#lineCount, lineHeightPadding, this._maxWidth)
     }
 
     // Returns the width and height of the given text, according to the textStyles, including potential scaling
-    static getSize(textStyles, text, lineCount, maxWidth, scale=[1,1]) {
+    static getSize(textStyles, text, lineCount, lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING, maxWidth, scale=[1,1]) {
         TextStyles.apply(TextDisplay.MEASUREMENT_CTX, ...textStyles.getStyles())
-        const lines = text.split("\n"), l_ll = lineCount = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
+        const lines = text.split("\n").filter(l=>l), l_ll = lineCount = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
               {width, actualBoundingBoxAscent, actualBoundingBoxDescent} = TextDisplay.MEASUREMENT_CTX.measureText(longestText)
-        return [CDEUtils.round(maxWidth||width, 2)*scale[0], (actualBoundingBoxAscent+actualBoundingBoxDescent)*l_ll*scale[1]]
+        return [CDEUtils.round(maxWidth||width, 2)*scale[0], (actualBoundingBoxAscent+actualBoundingBoxDescent)*l_ll*scale[1]+(l_ll*lineHeightPadding)]
     }
 
     // Returns the current text value
@@ -4033,30 +4242,51 @@ export class TextDisplay extends _BaseObj {
         return this.initialized ? textDisplay : null
     }
 
+    // returns whether the provided pos is in the text
+    isWithin(pos, padding, rotation, scale) {
+        return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
+    }
+    
+    // returns the raw a minimal rectangular area containing all of the text (no scale/rotation)
+    #getRectBounds() {
+        const size = this._size, pos = this._pos, halfLine = (TextDisplay.DEFAULT_LINE_HEIGHT_PADDING/2)+this._lineHeight/2
+        return [[pos[0]-size[0]/2, pos[1]-halfLine/2-3], [pos[0]+size[0]/2, pos[1]+size[1]-halfLine]]
+    }
+
+    // returns the center of the text
+    getCenter() {
+        return super.getCenter(this.#getRectBounds())
+    }
+
+    // returns the minimal rectangular area containing the text according to default text placements/parameters
+    getBounds(padding, rotation=this._rotation, scale=this._scale) {
+        return super.getBounds(this.#getRectBounds(), padding, rotation, scale, this._pos)
+    }
+
 	get text() {return this._text}
 	get textStyles() {return this._textStyles}
 	get drawMethod() {return this._drawMethod}
 	get maxWidth() {return this._maxWidth}
     get size() {return this._size}
-    get lineHeigth() {return this._lineHeigth}
+    get lineHeight() {return this._lineHeight}
     get trueSize() {return [Math.abs(this._size[0]*this._scale[0]), Math.abs(this._size[1]*this._scale[1])]}
     get render() {return this._parent.render}
     get lineCount() {return this.#lineCount}
 
 	set text(_text) {
-        this._text = _text
-        this._size = this.getSize()
+        this._text = _text||""
+        this.#resize()
     }
 	set textStyles(_textStyles) {
         this._textStyles = _textStyles??this.render.defaultTextProfile
-        this._size = this.getSize()
+        this.#resize()
     }
 	set drawMethod(_drawMethod) {this._drawMethod = _drawMethod.toUpperCase()}
 	set maxWidth(_maxWidth) {
         this._maxWidth = _maxWidth??undefined
-        this._size = this.getSize()
+        this.#resize()
     }
-    set lineHeigth(lineHeigth) {this._lineHeigth = lineHeigth}
+    set lineHeight(lineHeight) {this._lineHeight = lineHeight}
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -4074,35 +4304,6 @@ export class _DynamicColor {
         this._rotation = rotation??0    // current rotation
         this._lastChangeValue = null    // used for optimization purposes
         this._value = null              // usable value as a fill/stroke style
-    }
-
-    // returns the minimal rectangular area containing all of the provided shape. can be adjusted with the padding parameter
-    static getAutomaticPositions(obj, padding=[0,0,0,0]) {
-        let positions = null, [pT, pR, pB, pL] = padding
-        if (pR == null) pR = pT
-        if (pB == null) pB = pT
-        if (pL == null) pL = pR
-
-        if (obj instanceof Shape) {
-            const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"), radius = obj.radius
-            positions = [[rangeX[0]-radius, rangeY[0]-radius], [rangeX[1]+radius, rangeY[1]+radius]]
-        } else if (obj instanceof Dot) positions = [[obj.left, obj.top], [obj.right, obj.bottom]]
-        else if (obj instanceof TextDisplay) {
-            const [width, height] = obj.trueSize, [cx, cy] = obj.pos, w2 = width/2, h2 = height/2
-            positions = [[cx-w2, cy-h2], [cx+w2, cy+h2]]
-        } else if (obj instanceof AudioDisplay) {
-            const size = AudioDisplay.DEFAULT_MICROPHONE_SAMPLE_SIZE
-            positions = [[obj.x-size,obj.y-size], [obj.x+size,obj.y+size]]
-        } else if (obj instanceof ImageDisplay) {
-            const [sx, sy] = obj.trueSize
-           positions = [[obj.x,obj.y], [obj.x+sx,obj.y+sy]]
-        } else if (Array.isArray(obj)) positions = obj
-
-        positions[0][0] -= pL
-        positions[0][1] -= pT
-        positions[1][0] += pR
-        positions[1][1] += pB
-        return positions
     }
 
     get initPositions() {return this._initPositions}
@@ -4181,20 +4382,10 @@ export class Pattern extends _DynamicColor {
      * @returns the new calculated positions or the current value of this._positions if the parameter 'obj' isn't an instance of a canvas object
      */
     getAutomaticPositions(obj=this._initPositions) {
-        if (obj instanceof Shape) {
-            if (this.#hasShapeChanged(obj)) {
-                const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"), radius = obj.radius
-                return [[rangeX[0]-radius, rangeY[0]-radius], [rangeX[1]+radius, rangeY[1]+radius]]
-            } else return this._positions
-        } else if (obj instanceof Dot) {
-            if (this.#hasDotChanged(obj)) return [[obj.left, obj.top], [obj.right, obj.bottom]]
-            return this._positions
-        } else if (obj instanceof TextDisplay) {
-            if (this.#hasTextDisplayChanged(obj)) {
-                const width = obj.size[0], lh = obj.lineHeigth, w2 = width/2, cx = obj.x, topY = obj.y-lh/1.8
-                return [[cx-w2, topY], [cx+w2, topY+lh*obj.lineCount]]
-            } return this._positions
-        } else if (obj instanceof AudioDisplay) return _DynamicColor.getAutomaticPositions(obj)
+        if (obj instanceof Shape) return this.#hasShapeChanged(obj) ? obj.getBounds(0, 0, 0) : this._positions
+        else if (obj instanceof Dot) return this.#hasDotChanged(obj) ? obj.getBounds(0, 0, 0) : this._positions
+        else if (obj instanceof TextDisplay) return this.#hasTextDisplayChanged(obj) ? obj.getBounds(0, 0, 0) : this._positions
+        else if (obj instanceof AudioDisplay) return obj.getBounds(0, 0, 0)
         else return this._positions
     }
     
@@ -4409,9 +4600,18 @@ export class _Obj extends _BaseObj {
     }
 
     // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the radius)
-    isWithin(pos, circularDetection) {
-        const [x,y]=pos
-        return (CDEUtils.isDefined(x)&&CDEUtils.isDefined(y)) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= (this.radius||1)*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
+    isWithin(pos, positions, circularDetection) {
+        return (circularDetection ? CDEUtils.getDist(pos[0], pos[1], this.x, this.y) <= (this.radius||1)*(+circularDetection==1?1.025:+circularDetection) : super.isWithin(pos, positions))
+    }
+
+    // returns the center pos of the provided positions
+    getCenter(positions) {
+        return super.getCenter(positions)
+    }
+
+    // returns the minimal rectangular area defined by the provided positions
+    getBounds(positions, padding, rotation, scale, centerPos) {
+        return super.getBounds(positions, padding, rotation, scale, centerPos)
     }
 
     get radius() {return this._radius}
@@ -4617,18 +4817,19 @@ export class Shape extends _Obj {
 
     // Scales the dots by a specified amount [scaleX, scaleY] from a specified center point
     scaleBy(scale, centerPos=this.getCenter()) {
-        const [scaleX, scaleY] = scale, [cx, cy] = centerPos
-        this._dots.forEach(dot=>{
+        const [scaleX, scaleY] = scale, [cx, cy] = centerPos, dots = this._dots, dots_ll = dots.length
+        for (let i=0;i<dots_ll;i++) {
+            const dot = dots[i]
             dot.x = (dot.x-cx)*scaleX+cx
             dot.y = (dot.y-cy)*scaleY+cy
-        })
+        }
         this._scale = [this._scale[0]*scaleX, this._scale[1]*scaleY]
     }
 
     // Scales the dots to a specified amount [scaleX, scaleY] from a specified center point
     scaleAt(scale, centerPos=this.getCenter()) {
         const dsX = scale[0]/this._scale[0], dsY = scale[1]/this._scale[1]
-        this.scaleBy([dsX, dsY], centerPos)
+        this.scaleBy([dsX||1, dsY||1], centerPos)
     }
 
     // Smoothly scales the dots by a specified amount [scaleX, scaleY] from a specified center point
@@ -4642,12 +4843,12 @@ export class Shape extends _Obj {
 
     // returns whether the provided pos is inside the area delimited by the dots permimeter
     isWithin(pos) {
-        const d_ll = this.dots.length
+        const dots = this._dots, d_ll = dots.length
         if (d_ll > 2) {
-            const permimeter = new Path2D(), firstDotPos = this._dots[0].pos
+            const permimeter = new Path2D(), firstDotPos = dots[0].pos
             permimeter.moveTo(firstDotPos[0], firstDotPos[1])
             for (let i=1;i<d_ll;i++) {
-                const dotPos = this._dots[i].pos
+                const dotPos = dots[i].pos
                 permimeter.lineTo(dotPos[0], dotPos[1])
             }
             permimeter.closePath()
@@ -4656,10 +4857,21 @@ export class Shape extends _Obj {
         return false
     }
 
-    // returns the approximated center of the shape, based on its dots pos
+    // returns the raw a minimal rectangular area containing all of the shape (no scale/rotation)
+    #getRectBounds() {
+        const rangeX = CDEUtils.getMinMax(this._dots, "x"), rangeY = CDEUtils.getMinMax(this._dots, "y")
+        return [[rangeX[0],rangeY[0]], [rangeX[1],rangeY[1]]]
+    }
+
+    // returns the center pos of the shape
     getCenter() {
-        const rangeX = CDEUtils.getMinMax(this.dots, "x"), rangeY = CDEUtils.getMinMax(this.dots, "y")
-        return [rangeX[0]+(rangeX[1]-rangeX[0])/2, rangeY[0]+(rangeY[1]-rangeY[0])/2]
+        return super.getCenter(this.#getRectBounds())
+    }
+
+    // returns the minimal rectangular area containing all of the shape
+    getBounds(padding=this._radius) {
+        const positions = this.#getRectBounds()
+        return super.getBounds(positions, padding)
     }
 
     // Empties the shapes of all its dots
@@ -4780,8 +4992,9 @@ export class Gradient extends _DynamicColor {
             } else return this._positions
         } else if (obj instanceof Dot) {
             if (this.#hasFoundamentalsChanged() || this.#hasDotChanged(obj)) {
-                if (this._type==Gradient.TYPES.LINEAR) return this.#getLinearPositions(obj.left-obj.x, obj.top-obj.y, obj.right-obj.x, obj.bottom-obj.y, obj.x, obj.y)
-                else if (this._type==Gradient.TYPES.RADIAL) return this.#getRadialPositions(obj.x, obj.y, obj.radius)
+                const x = obj.pos[0], y = obj.pos[1]
+                if (this._type==Gradient.TYPES.LINEAR) return this.#getLinearPositions(obj.left-x, obj.top-y, obj.right-x, obj.bottom-y,x, y)
+                else if (this._type==Gradient.TYPES.RADIAL) return this.#getRadialPositions(x, y, obj.radius)
                 else return obj.pos_
             } return this._positions
         } else if (obj instanceof TextDisplay) {
@@ -4791,7 +5004,7 @@ export class Gradient extends _DynamicColor {
                 else if (this._type==Gradient.TYPES.RADIAL) return this.#getRadialPositions(cx, cy, Math.max(right-left, bottom-top))
                 else return obj.pos_
             } return this._positions
-        } else if (obj instanceof AudioDisplay) return _DynamicColor.getAutomaticPositions(obj) 
+        } else if (obj instanceof AudioDisplay) return obj.getBounds()
         else if (this._type==Gradient.TYPES.LINEAR) {
             const [[x, y], [x2, y2]] = obj, cx = x+(x2-x)/2, cy = y+(y2-y)/2
             return this.#getLinearPositions(x-cx, y-cy, x2-cx, y2-cy, cx, cy)
@@ -5045,12 +5258,11 @@ export class Grid extends Shape {
 
     // Creates the dot based symbol at given pos, based on given source
     createSymbol(key, pos=super.relativePos, source=this._source) {
-        let dotGroup = [], [gx, gy] = this._gaps, xi=[0,0], yi=0, s = source[key],
-        sourceRadius = Math.sqrt(source.width*source.height)
+        let dotGroup = [], xi=[0,0], yi=0, s = source[key], sourceRadius = Math.sqrt(source.width*source.height)
 
         if (key===Grid.DELETION_VALUE || key===Grid.SAME_VALUE) return key
 
-        if (s) s.map((d,i)=>[new Dot([pos[0]+(xi[0]=d[0]??xi[0]+1,isNaN(Math.abs(d[0]))?xi[0]:Math.abs(d[0]))*gx, pos[1]+(yi+=(xi[0]<=xi[1]||!i)||Math.sign(1/xi[0])==-1)*gy]), d[1], yi*sourceRadius+(xi[1]=Math.abs(xi[0]))]).forEach(([dot, c, p],_,a)=>{
+        if (s) s.map((d,i)=>[new Dot([pos[0]+(xi[0]=d[0]??xi[0]+1,isNaN(Math.abs(d[0]))?xi[0]:Math.abs(d[0]))*this._gaps[0], pos[1]+(yi+=(xi[0]<=xi[1]||!i)||Math.sign(1/xi[0])==-1)*this._gaps[1]]), d[1], yi*sourceRadius+(xi[1]=Math.abs(xi[0]))]).forEach(([dot, c, p],_,a)=>{
             if (isFinite(p)) {
                 GridAssets.D.places.forEach(dir=>c&dir[0]&&dot.addConnection(a.find(n=>n[2]==p+dir[1](sourceRadius))?.[0])) 
                 dotGroup.push(dot)
@@ -5180,15 +5392,16 @@ export class Dot extends _Obj {
             }
 
             if (this._radius) {
-                const ctx = render.ctx, x = this._pos[0], y = this._pos[1], scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")!==-1)||this._rotation
+                const ctx = render.ctx, scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")!==-1)||this._rotation
 
                 if (hasTransforms) {
                     let viewPos
                     if (hasScaling) {
+                        const x = this._pos[0], y = this._pos[1]
                         viewPos = this.cvs.viewPos
                         ctx.translate(x, y)
-                        ctx.scale(scaleX, scaleY)
                         if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
+                        ctx.scale(scaleX, scaleY)
                         ctx.translate(-x, -y)
                     }
 
@@ -5198,7 +5411,7 @@ export class Dot extends _Obj {
             }
         } else {
             this.initialized = true
-            if (this._cachedPath)this.updateCachedPath()
+            if (this._cachedPath) this.updateCachedPath()
         }
         super.draw(time, deltaTime)
     }
@@ -5213,12 +5426,12 @@ export class Dot extends _Obj {
         return dist / this.limit
     }
 
-    // adds a Dot to the connection array
+    // adds a dot to the connection array
     addConnection(dot) {
         if (dot instanceof Dot) this._connections.push(dot)
     }
 
-    // removes a Dot from the connection array
+    // removes a dot from the connection array
     removeConnection(dotOrId) {
         this._connections = this._connections.filter(d=>typeof dotOrId=="number"?d.id!==dotOrId:d.id!==dotOrId.id)
     }
@@ -5280,6 +5493,28 @@ export class Dot extends _Obj {
         return dot
     }
 
+    // returns whether the provided pos is in the dot pos, positions, padding, circularDetection
+    isWithin(pos, circularDetection, padding, rotation, scale) {
+        return super.isWithin(pos, this.getBounds(padding, rotation, scale), circularDetection)
+    }
+
+    // returns the raw a minimal rectangular area containing all of the dot (no scale/rotation)
+    #getRectBounds() {
+        const pos = this._pos, radius = this._radius
+        return [[pos[0]-radius, pos[1]-radius], [pos[0]+radius, pos[1]+radius]]
+    }
+
+    // returns the center pos of the image
+    getCenter() {
+        return this._pos
+    }
+
+    // returns the minimal rectangular area containing all of the dot
+    getBounds(padding, rotation=this._rotation, scale=this._scale) {
+        const positions = this.#getRectBounds()
+        return super.getBounds(positions, padding, (scale[0]!=scale[1]&&(scale[0]!=1||scale[1]!=1))?rotation:0, scale, super.getCenter(positions))
+    }
+
     get ctx() {return this._parent.parent.ctx}
     get cvs() {return this._parent.parent||this._parent}
     get render() {return this.cvs.render}
@@ -5289,19 +5524,19 @@ export class Dot extends _Obj {
     get ratioPos() {return this._parent.ratioPos}
     get connections() {return this._connections}
     get parentSetupResults() {return this._parent?.setupResults}
-    get top() {return this.y-this._radius}
-    get bottom() {return this.y+this._radius}
-    get right() {return this.x+this._radius}
-    get left() {return this.x-this._radius}
-    get width() {return this._radius*2}
-    get height() {return this._radius*2}
+    get top() {return this.y-this._radius*this._scale[1]}
+    get bottom() {return this.y+this._radius*this._scale[1]}
+    get right() {return this.x+this._radius*this._scale[0]}
+    get left() {return this.x-this._radius*this._scale[0]}
+    get width() {return this._radius*2*this._scale[0]}
+    get height() {return this._radius*2*this._scale[1]}
     get x() {return super.x}
     get y() {return super.y}
     get pos() {return this._pos}
     get relativeX() {return super.relativeX}
     get relativeY() {return super.relativeY}
     get relativePos() {return super.relativePos}
-    get radius() {return super.radius}
+    get radius() {return this._radius}
     get cachedPath() {return this._cachedPath}
 
 

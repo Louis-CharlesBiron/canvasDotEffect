@@ -41,7 +41,7 @@ class _BaseObj extends _HasColor {
     draw(time, deltaTime) {
         this.setAnchoredPos()
         const loopCB = this._loopCB
-        if (loopCB) loopCB(this, deltaTime)
+        if (loopCB && this.initialized) loopCB(this, deltaTime)
 
         let anims = this._anims.currents
         if (this._anims.backlog[0]) anims = [...anims, this._anims.backlog[0]]
@@ -101,12 +101,12 @@ class _BaseObj extends _HasColor {
 
     // Rotates the object clock-wise by a specified degree increment around its pos
     rotateBy(deg) {
-        this._rotation = (this._rotation+deg)%360
+        this.rotation = (this._rotation+deg)%360
     }
 
     // Rotates the object to a specified degree around its pos
     rotateAt(deg) {
-        this._rotation = deg%360
+        this.rotation = deg%360
     }
 
     // Smoothly rotates the object to a specified degree around its pos
@@ -120,8 +120,8 @@ class _BaseObj extends _HasColor {
         let [scaleX, scaleY] = scale
         if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
         if (!CDEUtils.isDefined(scaleY)) scaleY = this._scale[1]
-        this._scale[0] *= scaleX
-        this._scale[1] *= scaleY
+        this.scale[0] *= scaleX
+        this.scale[1] *= scaleY
     }
 
     // Scales the object to a specified amount [scaleX, scaleY] from its pos
@@ -209,14 +209,53 @@ class _BaseObj extends _HasColor {
         this._parent.remove(this._id)
     }
 
-    // returns whether the provided pos is inside the obj
-    isWithin(pos) {
-        const [x,y]=pos
-        if (this._initialized) {
-           const positions = _DynamicColor.getAutomaticPositions(this)
-           return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
+    // returns whether the provided pos is in the provided positions
+    isWithin(pos, positions) {
+        return pos[0] >= positions[0][0] && pos[0] <= positions[1][0] && pos[1] >= positions[0][1] && pos[1] <= positions[1][1]
+    }
+
+    // returns the center pos of the provided positions
+    getCenter(positions) {
+        return CDEUtils.getPositionsCenter(positions)
+    }
+
+    // returns the minimal rectangular area defined by the provided positions
+    getBounds(positions, padding, rotation, scale, centerPos=this.getCenter(positions)) {
+        const rotatePos = CDEUtils.rotatePos, scalePos = CDEUtils.scalePos
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+
+        if (scale || rotation) {
+            positions[2] = [positions[1][0], positions[0][1]]
+            positions[3] = [positions[0][0], positions[1][1]]
         }
-        return false
+        
+        if (scale) {
+            positions[0] = scalePos(positions[0], scale, centerPos)
+            positions[1] = scalePos(positions[1], scale, centerPos)
+            positions[2] = scalePos(positions[2], scale, centerPos)
+            positions[3] = scalePos(positions[3], scale, centerPos)
+        }
+
+        if (rotation) {
+            positions[0] = rotatePos(positions[0], rotation, centerPos)
+            positions[1] = rotatePos(positions[1], rotation, centerPos)
+            positions[2] = rotatePos(positions[2], rotation, centerPos)
+            positions[3] = rotatePos(positions[3], rotation, centerPos)
+        }
+
+        const p_ll = positions.length
+        for (let i=0;i<p_ll; i++) {
+            let [x, y] = positions[i]
+            if (x < minX) minX = x
+            if (x > maxX) maxX = x
+            if (y < minY) minY = y
+            if (y > maxY) maxY = y
+        }   
+        
+        padding??=0
+        padding = typeof padding=="number" ? [padding, padding, padding, padding] : [padding[0],padding[1]??padding[0], padding[2]??padding[0], padding[3]??padding[1]]
+
+        return [[minX-padding[3], minY-padding[0]],[maxX+padding[1], maxY+padding[2]]]
     }
 
 	get id() {return this._id}
@@ -263,6 +302,7 @@ class _BaseObj extends _HasColor {
     get filter() {return this._visualEffects?.[0]??Render.DEFAULT_FILTER}
     get compositeOperation() {return this._visualEffects?.[1]??Render.DEFAULT_COMPOSITE_OPERATION}
     get opacity() {return this._visualEffects?.[2]??Render.DEFAULT_ALPHA}
+    get safeColorObject() {return this.initialized&&this._color}
 
 
     set x(x) {this._pos[0] = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)}
@@ -288,8 +328,8 @@ class _BaseObj extends _HasColor {
     set anchorPosRaw(anchorPos) {this._anchorPos = anchorPos}
     set lastAnchorPos(lastAnchorPos) {this.#lastAnchorPos = lastAnchorPos}
     set rotation(_rotation) {this._rotation = _rotation%360}
-    set scale(_scale) {
-        let [scaleX, scaleY] = _scale
+    set scale(scale) {
+        let [scaleX, scaleY] = scale
         if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
         if (!CDEUtils.isDefined(scaleY)) scaleY = this._scale[1]
         this._scale[0] = scaleX

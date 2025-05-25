@@ -133,8 +133,13 @@ class CanvasUtils {
 
     // Rotates the provided obj for it to face the target. Offsets: top:90, right:0, bottom:270, left:180
     static lookAt(obj, target, offset=0) {
-        const [sx, sy] = obj.pos, [tx, ty] = target?.pos??target
-        obj.rotation = offset-CDEUtils.toDeg(Math.atan2(sy-ty, -(sx-tx)))
+        const t = target?.pos??target
+        obj.rotation = offset-CDEUtils.toDeg(Math.atan2(obj.pos[1]-t[1], -(obj.pos[0]-t[0])))
+    }
+
+    static drawOutline(render, obj, color=[255,0,0,1]) {
+        const bounds = obj.getBounds()
+        render.batchStroke(Render.getPositionsRect(bounds[0], bounds[1]), color)
     }
 
     // Provides quick generic shape declarations

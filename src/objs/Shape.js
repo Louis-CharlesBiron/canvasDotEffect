@@ -235,15 +235,21 @@ class Shape extends _Obj {
         return false
     }
 
-    // returns the approximated center of the shape, based on its dots pos
-    getCenter() {
-        const [rangeX, rangeY] = this.getBounds()
-        return [rangeX[0]+(rangeX[1]-rangeX[0])/2, rangeY[0]+(rangeY[1]-rangeY[0])/2]
+    // returns the raw a minimal rectangular area containing all of the shape (no scale/rotation)
+    #getRectBounds() {
+        const rangeX = CDEUtils.getMinMax(this._dots, "x"), rangeY = CDEUtils.getMinMax(this._dots, "y")
+        return [[rangeX[0],rangeY[0]], [rangeX[1],rangeY[1]]]
     }
 
-    // returns the max and min x/y dot values
-    getBounds() {
-        return [CDEUtils.getMinMax(this._dots, "x"), CDEUtils.getMinMax(this._dots, "y")]
+    // returns the center pos of the shape
+    getCenter() {
+        return super.getCenter(this.#getRectBounds())
+    }
+
+    // returns the minimal rectangular area containing all of the shape
+    getBounds(padding=this._radius) {
+        const positions = this.#getRectBounds()
+        return super.getBounds(positions, padding)
     }
 
     // Empties the shapes of all its dots

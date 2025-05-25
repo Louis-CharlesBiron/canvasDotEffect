@@ -55,20 +55,10 @@ class Pattern extends _DynamicColor {
      * @returns the new calculated positions or the current value of this._positions if the parameter 'obj' isn't an instance of a canvas object
      */
     getAutomaticPositions(obj=this._initPositions) {
-        if (obj instanceof Shape) {
-            if (this.#hasShapeChanged(obj)) {
-                const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"), radius = obj.radius
-                return [[rangeX[0]-radius, rangeY[0]-radius], [rangeX[1]+radius, rangeY[1]+radius]]
-            } else return this._positions
-        } else if (obj instanceof Dot) {
-            if (this.#hasDotChanged(obj)) return [[obj.left, obj.top], [obj.right, obj.bottom]]
-            return this._positions
-        } else if (obj instanceof TextDisplay) {
-            if (this.#hasTextDisplayChanged(obj)) {
-                const width = obj.size[0], lh = obj.lineHeigth, w2 = width/2, cx = obj.x, topY = obj.y-lh/1.8
-                return [[cx-w2, topY], [cx+w2, topY+lh*obj.lineCount]]
-            } return this._positions
-        } else if (obj instanceof AudioDisplay) return _DynamicColor.getAutomaticPositions(obj)
+        if (obj instanceof Shape) return this.#hasShapeChanged(obj) ? obj.getBounds(0, 0, 0) : this._positions
+        else if (obj instanceof Dot) return this.#hasDotChanged(obj) ? obj.getBounds(0, 0, 0) : this._positions
+        else if (obj instanceof TextDisplay) return this.#hasTextDisplayChanged(obj) ? obj.getBounds(0, 0, 0) : this._positions
+        else if (obj instanceof AudioDisplay) return obj.getBounds(0, 0, 0)
         else return this._positions
     }
     

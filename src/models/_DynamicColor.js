@@ -16,35 +16,6 @@ class _DynamicColor {
         this._value = null              // usable value as a fill/stroke style
     }
 
-    // returns the minimal rectangular area containing all of the provided shape. can be adjusted with the padding parameter
-    static getAutomaticPositions(obj, padding=[0,0,0,0]) {
-        let positions = null, [pT, pR, pB, pL] = padding
-        if (pR == null) pR = pT
-        if (pB == null) pB = pT
-        if (pL == null) pL = pR
-
-        if (obj instanceof Shape) {
-            const rangeX = CDEUtils.getMinMax(obj.dots, "x"), rangeY = CDEUtils.getMinMax(obj.dots, "y"), radius = obj.radius
-            positions = [[rangeX[0]-radius, rangeY[0]-radius], [rangeX[1]+radius, rangeY[1]+radius]]
-        } else if (obj instanceof Dot) positions = [[obj.left, obj.top], [obj.right, obj.bottom]]
-        else if (obj instanceof TextDisplay) {
-            const [width, height] = obj.trueSize, [cx, cy] = obj.pos, w2 = width/2, h2 = height/2
-            positions = [[cx-w2, cy-h2], [cx+w2, cy+h2]]
-        } else if (obj instanceof AudioDisplay) {
-            const size = AudioDisplay.DEFAULT_MICROPHONE_SAMPLE_SIZE
-            positions = [[obj.x-size,obj.y-size], [obj.x+size,obj.y+size]]
-        } else if (obj instanceof ImageDisplay) {
-            const [sx, sy] = obj.trueSize
-           positions = [[obj.x,obj.y], [obj.x+sx,obj.y+sy]]
-        } else if (Array.isArray(obj)) positions = obj
-
-        positions[0][0] -= pL
-        positions[0][1] -= pT
-        positions[1][0] += pR
-        positions[1][1] += pB
-        return positions
-    }
-
     get initPositions() {return this._initPositions}
     get positions() {return this._positions}
 	get rotation() {return this._rotation}

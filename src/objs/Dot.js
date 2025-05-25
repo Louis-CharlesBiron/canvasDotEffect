@@ -21,15 +21,16 @@ class Dot extends _Obj {
             }
 
             if (this._radius) {
-                const ctx = render.ctx, x = this._pos[0], y = this._pos[1], scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")!==-1)||this._rotation
+                const ctx = render.ctx, scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")!==-1)||this._rotation
 
                 if (hasTransforms) {
                     let viewPos
                     if (hasScaling) {
+                        const x = this._pos[0], y = this._pos[1]
                         viewPos = this.cvs.viewPos
                         ctx.translate(x, y)
-                        ctx.scale(scaleX, scaleY)
                         if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
+                        ctx.scale(scaleX, scaleY)
                         ctx.translate(-x, -y)
                     }
 
@@ -39,7 +40,7 @@ class Dot extends _Obj {
             }
         } else {
             this.initialized = true
-            if (this._cachedPath)this.updateCachedPath()
+            if (this._cachedPath) this.updateCachedPath()
         }
         super.draw(time, deltaTime)
     }
@@ -54,12 +55,12 @@ class Dot extends _Obj {
         return dist / this.limit
     }
 
-    // adds a Dot to the connection array
+    // adds a dot to the connection array
     addConnection(dot) {
         if (dot instanceof Dot) this._connections.push(dot)
     }
 
-    // removes a Dot from the connection array
+    // removes a dot from the connection array
     removeConnection(dotOrId) {
         this._connections = this._connections.filter(d=>typeof dotOrId=="number"?d.id!==dotOrId:d.id!==dotOrId.id)
     }
@@ -121,6 +122,28 @@ class Dot extends _Obj {
         return dot
     }
 
+    // returns whether the provided pos is in the dot pos, positions, padding, circularDetection
+    isWithin(pos, circularDetection, padding, rotation, scale) {
+        return super.isWithin(pos, this.getBounds(padding, rotation, scale), circularDetection)
+    }
+
+    // returns the raw a minimal rectangular area containing all of the dot (no scale/rotation)
+    #getRectBounds() {
+        const pos = this._pos, radius = this._radius
+        return [[pos[0]-radius, pos[1]-radius], [pos[0]+radius, pos[1]+radius]]
+    }
+
+    // returns the center pos of the image
+    getCenter() {
+        return this._pos
+    }
+
+    // returns the minimal rectangular area containing all of the dot
+    getBounds(padding, rotation=this._rotation, scale=this._scale) {
+        const positions = this.#getRectBounds()
+        return super.getBounds(positions, padding, (scale[0]!=scale[1]&&(scale[0]!=1||scale[1]!=1))?rotation:0, scale, super.getCenter(positions))
+    }
+
     get ctx() {return this._parent.parent.ctx}
     get cvs() {return this._parent.parent||this._parent}
     get render() {return this.cvs.render}
@@ -130,19 +153,19 @@ class Dot extends _Obj {
     get ratioPos() {return this._parent.ratioPos}
     get connections() {return this._connections}
     get parentSetupResults() {return this._parent?.setupResults}
-    get top() {return this.y-this._radius}
-    get bottom() {return this.y+this._radius}
-    get right() {return this.x+this._radius}
-    get left() {return this.x-this._radius}
-    get width() {return this._radius*2}
-    get height() {return this._radius*2}
+    get top() {return this.y-this._radius*this._scale[1]}
+    get bottom() {return this.y+this._radius*this._scale[1]}
+    get right() {return this.x+this._radius*this._scale[0]}
+    get left() {return this.x-this._radius*this._scale[0]}
+    get width() {return this._radius*2*this._scale[0]}
+    get height() {return this._radius*2*this._scale[1]}
     get x() {return super.x}
     get y() {return super.y}
     get pos() {return this._pos}
     get relativeX() {return super.relativeX}
     get relativeY() {return super.relativeY}
     get relativePos() {return super.relativePos}
-    get radius() {return super.radius}
+    get radius() {return this._radius}
     get cachedPath() {return this._cachedPath}
 
 

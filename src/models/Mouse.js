@@ -122,7 +122,7 @@ class Mouse {
      * @returns The listener id
      */
     addListener(obj, type, callback, forceStaticPositions) {
-        const listener = [forceStaticPositions?_DynamicColor.getAutomaticPositions(obj):obj, callback, Mouse.#LISTENER_ID_GIVER++]
+        const listener = [forceStaticPositions?obj.getBounds():obj, callback, Mouse.#LISTENER_ID_GIVER++]
         if (!this._listeners[type]) this._listeners[type] = []
         this._listeners[type].push(listener)
         return listener[2]
@@ -177,7 +177,7 @@ class Mouse {
      */
     updateListener(type, id, newObj, newCallback, forceStaticPositions) {
         const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[2]==(id?.[2]??id))]
-        if (newObj) listener[0] = forceStaticPositions?_DynamicColor.getAutomaticPositions(newObj):newObj
+        if (newObj) listener[0] = forceStaticPositions?newObj.getBounds():newObj
         if (newCallback) listener[1] = newCallback
     }
 

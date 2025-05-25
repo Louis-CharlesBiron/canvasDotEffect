@@ -31,6 +31,9 @@ CVS.add(aasdasd)
 let asd = aasdasd.duplicate()
 CVS2.add(asd)
 
+
+
+
 let textInputTest = new Grid("a", [5, 5], 50, _, [10,200], 0, _, _, (render, dot, ratio)=>{
     CanvasUtils.drawDotConnections(dot, render.profile1.update([255,0,0,1],  _, _, _, 2, [0], _, RenderStyles.JOIN_TYPES.BEVEL, RenderStyles.CAP_TYPES.SQUARE))
 })

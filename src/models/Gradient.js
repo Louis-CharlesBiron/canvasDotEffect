@@ -40,8 +40,9 @@ class Gradient extends _DynamicColor {
             } else return this._positions
         } else if (obj instanceof Dot) {
             if (this.#hasFoundamentalsChanged() || this.#hasDotChanged(obj)) {
-                if (this._type==Gradient.TYPES.LINEAR) return this.#getLinearPositions(obj.left-obj.x, obj.top-obj.y, obj.right-obj.x, obj.bottom-obj.y, obj.x, obj.y)
-                else if (this._type==Gradient.TYPES.RADIAL) return this.#getRadialPositions(obj.x, obj.y, obj.radius)
+                const x = obj.pos[0], y = obj.pos[1]
+                if (this._type==Gradient.TYPES.LINEAR) return this.#getLinearPositions(obj.left-x, obj.top-y, obj.right-x, obj.bottom-y,x, y)
+                else if (this._type==Gradient.TYPES.RADIAL) return this.#getRadialPositions(x, y, obj.radius)
                 else return obj.pos_
             } return this._positions
         } else if (obj instanceof TextDisplay) {
@@ -51,7 +52,7 @@ class Gradient extends _DynamicColor {
                 else if (this._type==Gradient.TYPES.RADIAL) return this.#getRadialPositions(cx, cy, Math.max(right-left, bottom-top))
                 else return obj.pos_
             } return this._positions
-        } else if (obj instanceof AudioDisplay) return _DynamicColor.getAutomaticPositions(obj) 
+        } else if (obj instanceof AudioDisplay) return obj.getBounds()
         else if (this._type==Gradient.TYPES.LINEAR) {
             const [[x, y], [x2, y2]] = obj, cx = x+(x2-x)/2, cy = y+(y2-y)/2
             return this.#getLinearPositions(x-cx, y-cy, x2-cx, y2-cy, cx, cy)

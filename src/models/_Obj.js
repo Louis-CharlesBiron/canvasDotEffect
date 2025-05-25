@@ -26,9 +26,18 @@ class _Obj extends _BaseObj {
     }
 
     // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the radius)
-    isWithin(pos, circularDetection) {
-        const [x,y]=pos
-        return (CDEUtils.isDefined(x)&&CDEUtils.isDefined(y)) && (circularDetection ? CDEUtils.getDist(x, y, this.x, this.y) <= (this.radius||1)*(+circularDetection==1?1.025:+circularDetection) : x >= this.left && x <= this.right && y >= this.top && y <= this.bottom)
+    isWithin(pos, positions, circularDetection) {
+        return (circularDetection ? CDEUtils.getDist(pos[0], pos[1], this.x, this.y) <= (this.radius||1)*(+circularDetection==1?1.025:+circularDetection) : super.isWithin(pos, positions))
+    }
+
+    // returns the center pos of the provided positions
+    getCenter(positions) {
+        return super.getCenter(positions)
+    }
+
+    // returns the minimal rectangular area defined by the provided positions
+    getBounds(positions, padding, rotation, scale, centerPos) {
+        return super.getBounds(positions, padding, rotation, scale, centerPos)
     }
 
     get radius() {return this._radius}

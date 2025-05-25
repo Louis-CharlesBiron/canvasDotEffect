@@ -17,6 +17,12 @@ class AudioDisplay extends _BaseObj {
         pos[0] += spacing
         return [pos]
     }
+    static DEFAULT_BINCB_TRANSFORMABLE = (render, bin, pos, audioDisplay)=>{
+        const barWidth = 2, barHeight = 100*bin, spacing = 5
+        render.fill(Render.getRect(pos, barWidth, barHeight), audioDisplay._color, audioDisplay.visualEffects)
+        pos[0] += spacing
+        return [pos]
+    }
     static BIN_CALLBACKS = {DEFAULT:AudioDisplay.DEFAULT_BINCB, CIRCLE:AudioDisplay.CIRCLE(), BARS:AudioDisplay.BARS(), TOP_WAVE:AudioDisplay.TOP_WAVE()}
     static MICROPHONE_CHANNELS = {MONO:1, STEREO:2}
     static DEFAULT_MICROPHONE_DELAY = 1
@@ -30,8 +36,10 @@ class AudioDisplay extends _BaseObj {
     static DEFAULT_SCREEN_AUDIO_SETTINGS = AudioDisplay.loadScreenAudio()
     static MAX_NORMALISED_DATA_VALUE = 255/128
     static MAX_DELAY_TIME = 179
-    static ERROR_TYPES = {NO_PERMISSION:0, NO_AUDIO_TRACK:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3}
+    static ERROR_TYPES = {NO_PERMISSION:0, NO_AUDIO_TRACK:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3, NOT_AVAILABLE:4}
     static BIQUAD_FILTER_TYPES = {DEFAULT:"allpass", ALLPASS:"allpass", BANDPASS:"bandpass", HIGHPASS:"highpass", HIGHSHELF:"highshelf", LOWPASS:"lowpass", LOWSHELF:"lowshelf", NOTCH:"notch", PEAKING:"peaking"}
+    static IS_MICROPHONE_SUPPORTED = ()=>!!navigator?.mediaDevices?.getUserMedia
+    static IS_SCREEN_ADUIO_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
 
     #buffer_ll = null // the length of data
     #data = null      // the fft data values (raw bins)
@@ -44,6 +52,7 @@ class AudioDisplay extends _BaseObj {
         this._disableAudio = disableAudio??false                          // whether the audio output is disabled or not (does not affect the visual display) 
         this._offsetPourcent = offsetPourcent??0                          // the offset pourcent (0..1) in the bins when calling binCB. 
         this._errorCB = errorCB                                           // a callback called if there is an error with the source (errorType, e?)=>
+        this._transformable = 0                                           // if above 0, allows transformations with non batched canvas operations
 
         // audio stuff
         this._audioCtx = new AudioContext()
@@ -66,21 +75,26 @@ class AudioDisplay extends _BaseObj {
         this.initializeSource()
         this._pos = this.getInitPos()||_BaseObj.DEFAULT_POS
         this.setAnchoredPos()
+        super.initialize()
     }
 
     draw(render, time, deltaTime) {
         if (this.initialized) {
-            const ctx = render.ctx, x = this.x, y = this.y, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling, data = this.#data
-            if (hasTransforms) {
-                ctx.save()
-                ctx.translate(x, y)
-                if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
-                if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
-                ctx.translate(-x, -y)
-            }
+            const ctx = render.ctx, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling, data = this.#data
 
+            let viewPos
+            if (this._transformable) {
+                if (hasTransforms) {
+                    const cx = this._pos[0], cy = this._pos[1]
+                    viewPos = this.parent.viewPos
+                    ctx.translate(cx, cy)
+                    if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
+                    if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
+                    ctx.translate(-cx, -cy)
+                }
+            }
+   
             this._audioAnalyser.getByteFrequencyData(data)
-            
             let atPos = this.pos_, accumulator = null, offset = (this._offsetPourcent%1)*(this.#fft/2), adjusted_ll = Math.round(0.49+this._sampleCount)-offset, ii=-offset, i=offset>>0
             for (;ii<adjusted_ll;ii++,i=(i+1)%this._sampleCount) {
                 const bin = data[i], res = this._binCB(render, bin/128, atPos, this, accumulator, i, this._sampleCount, bin), newPos = res?.[0], newAcc = res?.[1]
@@ -88,9 +102,38 @@ class AudioDisplay extends _BaseObj {
                 if (newAcc) accumulator = newAcc
             }
 
-            if (hasTransforms) ctx.restore()
+            if (this._transformable && hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
         }
         super.draw(time, deltaTime)
+    }
+
+    // updates the "transformable" attribute according to whether any rotation/scale are setted
+    #updateTransformable() {
+        const hasTransforms = this._rotation || this._scale[0]!=1 || this._scale[0]!=1
+        if (hasTransforms && this._transformable < 2) this._transformable = 2
+        else if (!hasTransforms && this._transformable) this._transformable--
+    }
+
+    // (NOT ALWAYS RELIABLE) returns whether the provided pos is in the audio display
+    isWithin(pos, padding, rotation, scale) {
+        return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
+    }
+
+    // (NOT ALWAYS RELIABLE) returns the raw a minimal rectangular area containing all of the audio display (no scale/rotation)
+    #getRectBounds(binWidth=2, binHeight=100, binSpacing=5) {
+        const pos = this._pos, sizeX = this._sampleCount*(binWidth*binSpacing)/2
+        return [[pos[0],pos[1]], [pos[0]+sizeX,pos[1]+binHeight*2]]
+    }
+
+    // (NOT ALWAYS RELIABLE) returns the center pos of the audio display
+    getCenter() {
+        return super.getCenter(this.#getRectBounds())
+    }
+
+    // (NOT ALWAYS RELIABLE) returns the minimal rectangular area containing all of the audio display
+    getBounds(padding, rotation=this._rotation, scale=this._scale) {
+        const positions = this.#getRectBounds()
+        return super.getBounds(positions, padding, rotation, scale, this._pos)
     }
 
     // Final source initializes step
@@ -144,18 +187,20 @@ class AudioDisplay extends _BaseObj {
 
     // Initializes a camera audio capture data source
     static #initMicrophoneDataSource(settings=true, loadCallback, errorCB) {
-        navigator.mediaDevices.getUserMedia({audio:settings}).then(src=>{
+        if (AudioDisplay.IS_MICROPHONE_SUPPORTED()) navigator.mediaDevices.getUserMedia({audio:settings}).then(src=>{
             if (src.getAudioTracks().length && CDEUtils.isFunction(loadCallback)) loadCallback(src, true)
             else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
         }).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NOT_AVAILABLE)
     }
 
     // Initializes a screen audio capture data source
     static #initScreenAudioDataSource(settings=true, loadCallback, errorCB) {
-        navigator.mediaDevices.getDisplayMedia({audio:settings}).then(src=>{
+        if (AudioDisplay.IS_MICROPHONE_SUPPORTED()) navigator.mediaDevices.getDisplayMedia({audio:settings}).then(src=>{
             if (src.getAudioTracks().length && CDEUtils.isFunction(loadCallback)) loadCallback(src, true)
             else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
         }).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NOT_AVAILABLE)
     }
 
     // Returns a usable video source
@@ -320,7 +365,7 @@ class AudioDisplay extends _BaseObj {
 
     // GENERIC DISPLAYS
     // generic binCB for waveform display
-    static BARS(maxHeight, minHeight, spacing, barWidth) {
+    static BARS(maxHeight, minHeight, spacing, barWidth, transformable) {
         maxHeight??=100
         minHeight??=0
         spacing??=1
@@ -328,29 +373,46 @@ class AudioDisplay extends _BaseObj {
         
         maxHeight = maxHeight/AudioDisplay.MAX_NORMALISED_DATA_VALUE
         minHeight = minHeight/AudioDisplay.MAX_NORMALISED_DATA_VALUE
-        return (render, bin, pos, audioDisplay)=>{
-            const barHeight = minHeight+maxHeight*bin
-            render.batchFill(Render.getRect(pos, barWidth, barHeight), audioDisplay._color, audioDisplay.visualEffects)
-            pos[0] += spacing
-            return [pos]
+
+        if (transformable) {
+            return (render, bin, pos, audioDisplay)=>{
+                const barHeight = minHeight+maxHeight*bin
+                render.fill(Render.getRect(pos, barWidth, barHeight), audioDisplay._color, audioDisplay.visualEffects)
+                pos[0] += spacing
+                return [pos]
+            }
+        } else {
+            return (render, bin, pos, audioDisplay)=>{
+                const barHeight = minHeight+maxHeight*bin
+                render.batchFill(Render.getRect(pos, barWidth, barHeight), audioDisplay._color, audioDisplay.visualEffects)
+                pos[0] += spacing
+                return [pos]
+            }
         }
     }
 
     // generic binCB for circular display
-    static CIRCLE(maxRadius, minRadius, precision) {
+    static CIRCLE(maxRadius, minRadius, transformable, precision) {
         maxRadius??=100
         minRadius??=0
         precision??=2
 
         maxRadius = maxRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
         minRadius = minRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
-        return (render, bin, pos, audioDisplay, accumulator, i)=>{
-            if (i%precision==0) render.batchStroke(Render.getArc(pos, minRadius+maxRadius*bin), audioDisplay._color, audioDisplay.visualEffects)
+
+        if (transformable) {
+            return (render, bin, pos, audioDisplay, accumulator, i)=>{
+                if (i%precision==0) render.stroke(Render.getArc(pos, minRadius+maxRadius*bin), audioDisplay._color, audioDisplay.visualEffects)
+            }
+        } else {
+            return (render, bin, pos, audioDisplay, accumulator, i)=>{
+                if (i%precision==0) render.batchStroke(Render.getArc(pos, minRadius+maxRadius*bin), audioDisplay._color, audioDisplay.visualEffects)
+            }
         }
     }
 
     // generic binCB for sin-ish wave display
-    static TOP_WAVE(maxHeight, minHeight, spacing, precision) {
+    static TOP_WAVE(maxHeight, minHeight, spacing, transformable, precision) {
         maxHeight??=100
         minHeight??=0
         spacing??=1
@@ -358,22 +420,38 @@ class AudioDisplay extends _BaseObj {
 
         maxHeight = maxHeight/AudioDisplay.MAX_NORMALISED_DATA_VALUE
         minHeight = minHeight/AudioDisplay.MAX_NORMALISED_DATA_VALUE
-        return (render, bin, pos, audioDisplay, accumulator, i, sampleCount)=>{
-            const barHeight = minHeight+maxHeight*bin
-            if (!i) {
-                accumulator = new Path2D()
-                accumulator.moveTo(pos[0], pos[1]+barHeight)
-            } else if (i%precision==0) accumulator.lineTo(pos[0], pos[1]+barHeight)
-            
-            if (i==sampleCount-1) render.batchStroke(accumulator, audioDisplay._color, audioDisplay.visualEffects)
-            pos[0] += spacing
+
+        if (transformable) {
+            return (render, bin, pos, audioDisplay, accumulator, i, sampleCount)=>{
+                const barHeight = minHeight+maxHeight*bin
+                if (!i) {
+                    accumulator = new Path2D()
+                    accumulator.moveTo(pos[0], pos[1]+barHeight)
+                } else if (i%precision==0) accumulator.lineTo(pos[0], pos[1]+barHeight)
                 
-            return [pos, accumulator]
+                if (i==sampleCount-1) render.stroke(accumulator, audioDisplay._color, audioDisplay.visualEffects)
+                pos[0] += spacing
+                    
+                return [pos, accumulator]
+            }
+        } else {
+            return (render, bin, pos, audioDisplay, accumulator, i, sampleCount)=>{
+                const barHeight = minHeight+maxHeight*bin
+                if (!i) {
+                    accumulator = new Path2D()
+                    accumulator.moveTo(pos[0], pos[1]+barHeight)
+                } else if (i%precision==0) accumulator.lineTo(pos[0], pos[1]+barHeight)
+                
+                if (i==sampleCount-1) render.batchStroke(accumulator, audioDisplay._color, audioDisplay.visualEffects)
+                pos[0] += spacing
+                    
+                return [pos, accumulator]
+            }
         }
     }
 
     // generic binCB for spiral particle cloud display
-    static CLOUD(maxRadius, minRadius, particleRadius, precision, angleStep) {
+    static CLOUD(maxRadius, minRadius, particleRadius, transformable, precision, angleStep) {
         maxRadius??=100
         minRadius??=0
         particleRadius??=2
@@ -382,10 +460,19 @@ class AudioDisplay extends _BaseObj {
     
         maxRadius = maxRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
         minRadius = minRadius/AudioDisplay.MAX_NORMALISED_DATA_VALUE
-        return (render, bin, pos, audioDisplay, accumulator, i) => {
-            const radius = minRadius+maxRadius*bin, angle = angleStep*i
-            if (!(i%precision)) render.batchFill(Render.getArc([pos[0]+radius*Math.cos(angle), pos[1]+radius*Math.sin(angle)], particleRadius), audioDisplay._color, audioDisplay.visualEffects)
-            return [pos]
+
+        if (transformable) {
+            return (render, bin, pos, audioDisplay, accumulator, i) => {
+                const radius = minRadius+maxRadius*bin, angle = angleStep*i
+                if (!(i%precision)) render.fill(Render.getArc([pos[0]+radius*Math.cos(angle), pos[1]+radius*Math.sin(angle)], particleRadius), audioDisplay._color, audioDisplay.visualEffects)
+                return [pos]
+            }
+        } else {
+            return (render, bin, pos, audioDisplay, accumulator, i) => {
+                const radius = minRadius+maxRadius*bin, angle = angleStep*i
+                if (!(i%precision)) render.batchFill(Render.getArc([pos[0]+radius*Math.cos(angle), pos[1]+radius*Math.sin(angle)], particleRadius), audioDisplay._color, audioDisplay.visualEffects)
+                return [pos]
+            }
         }
     }
 
@@ -407,6 +494,7 @@ class AudioDisplay extends _BaseObj {
     get data() {return this.#data}
     get fft() {return this.#fft}
     get bufferLength() {return this.#buffer_ll}
+    get transformable() {return this._transformable}
 
     get video() {return this._source}
     get image() {return this._source}
@@ -445,4 +533,13 @@ class AudioDisplay extends _BaseObj {
     }
 	set offsetPourcent(_offsetPourcent) {this._offsetPourcent = _offsetPourcent}
 	set errorCB(_errorCB) {this._errorCB = _errorCB}
+    set transformable(transformable) {this._transformable = transformable}
+    set rotation(rotation) {
+        super.rotation = rotation
+        this.#updateTransformable()
+    }
+    set scale(scale) {
+        super.scale = scale
+        this.#updateTransformable()
+    }
 }

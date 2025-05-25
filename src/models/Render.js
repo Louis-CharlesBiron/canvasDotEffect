@@ -12,7 +12,7 @@ class Render {
     static DEFAULT_COMPOSITE_OPERATION = Render.COMPOSITE_OPERATIONS.SOURCE_OVER
     static DEFAULT_FILTER = "none"
     static DEFAULT_ALPHA = 1
-    static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, ROUND_RECT:Render.getRoundRect}
+    static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, POSITIONS_RECT:Render.getPositionsRect, ROUND_RECT:Render.getRoundRect, POSITIONS_ROUND_RECT:Render.getPositionsRoundRect}
     static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve}
     static DRAW_METHODS = {FILL:"FILL", STROKE:"STROKE"}
 
@@ -114,10 +114,25 @@ class Render {
         return path
     }
 
+    // instanciates and returns a path containing an rectangle
+    static getPositionsRect(pos, pos2) {
+        const path = new Path2D(), x1 = pos[0], y1 = pos[1]
+        path.rect(x1, y1, pos2[0]-x1, pos2[1]-y1)
+        return path
+    }
+
+
     // instanciates and returns a path containing an rounded rectangle
     static getRoundRect(pos, width, height, radius) {
         const path = new Path2D()
         path.roundRect(pos[0], pos[1], width, height, radius)
+        return path
+    }
+
+    // instanciates and returns a path containing an rounded rectangle
+    static getPositionsRoundRect(pos, pos2, radius=5) {
+        const path = new Path2D(), x1 = pos[0], y1 = pos[1]
+        path.roundRect(x1, y1, pos2[0]-x1, pos2[1]-y1, radius)
         return path
     }
 
@@ -213,7 +228,7 @@ class Render {
     }
 
     // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=12, visualEffects=[]) {
+    strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=TextDisplay.DEFAULT_LINE_HEIGHT, visualEffects=[]) {
         if (text) {
             const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, hasVisualEffects = visualEffects?.length
             if (textStyles instanceof TextStyles) textStyles.apply()
@@ -232,7 +247,7 @@ class Render {
     }
 
     // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
-    fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=12, visualEffects=[]) {
+    fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=TextDisplay.DEFAULT_LINE_HEIGHT, visualEffects=[]) {
         if (text) {
             const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, hasVisualEffects = visualEffects?.length
             if (textStyles instanceof TextStyles) textStyles.apply()

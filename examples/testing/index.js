@@ -191,7 +191,7 @@ for (let i = 0;i<20;i++) {
 }
 
 
-const testText2 = new TextDisplay("Test § ->", [100, 550], (render, text)=>new Pattern(render, ImageDisplay.loadVideo("./img/vidTest.mp4",true,true), text), null, null, null, null, (text)=>{
+const testText2 = new TextDisplay("Test § ->", [100, 550], (render, text)=>new Pattern(render, ImageDisplay.loadVideo("./img/vidTest.mp4",true,true), text), null, null, null, null, (obj)=>{
     CanvasUtils.lookAt(testText2, filledShapeTester.firstDot)
 })
 CVS.add(testText2)
