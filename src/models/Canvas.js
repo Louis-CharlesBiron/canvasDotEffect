@@ -525,6 +525,9 @@ class Canvas {
                 e.x = CDEUtils.round(touches[0].clientX, 1)
                 e.y = CDEUtils.round(touches[0].clientY, 1)
                 e.button = 0
+                this._mouse.updatePos(e, this._offset)
+                this._mouse.calcAngle()            
+                this.#mouseMovements(cb, e)
                 this.#mouseClicks(cb, e)
             }
         }, onmousedown=e=>{
