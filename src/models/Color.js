@@ -118,7 +118,6 @@ class Color {
 
     // returns the format of the provided color
     static getFormat(color) {
-        if (!color)CDEUtils.stackTraceLog(color)
         return Array.isArray(color) ?
             (color.length == 4 ? Color.FORMATS.RGBA : Color.FORMATS.HSV) :
         color instanceof Color ? Color.FORMATS.COLOR :
