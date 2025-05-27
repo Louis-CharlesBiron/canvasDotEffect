@@ -184,7 +184,7 @@ class Dot extends _Obj {
         }
     }
     set pos(pos) {
-        if (!CDEUtils.arr2Equals(pos, this._pos)) {
+        if (!CDEUtils.posEquals(pos, this._pos)) {
             this.x = pos[0]
             this.y = pos[1]
             if (this._cachedPath) this.updateCachedPath()

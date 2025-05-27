@@ -55,7 +55,7 @@ class CDEUtils {
     }
 
     // creates a copy of the provided array. (input format: [ [x, y], [x, y] ], or [x, y])
-    static unlinkArr22(arr) {
+    static unlinkPositions(arr) {
         const isArray = Array.isArray, unlinkArr2 = CDEUtils.unlinkArr2,  o1 = arr?.[0], o2 = arr?.[1]
         return isArray(arr) ? [isArray(o1)?unlinkArr2(o1):o1, isArray(o2)?unlinkArr2(o2):o2] : arr
     }
@@ -105,13 +105,33 @@ class CDEUtils {
         return arr1.every((v, i)=>v==arr2[i])
     }
     
+    // adds a pos to another
+    static addPos(pos1, pos2) {
+        return [pos1[0]+pos2[0], pos1[1]+pos2[1]]
+    }
+    
+    // substracts a pos to another
+    static subPos(pos1, pos2) {
+        return [pos1[0]-pos2[0], pos1[1]-pos2[1]]
+    }
+
+    // substracts a pos to another
+    static mulPos(pos1, pos2) {
+        return [pos1[0]*pos2[0], pos1[1]*pos2[1]]
+    }
+
+    // substracts a pos to another
+    static divPos(pos1, pos2) {
+        return [pos1[0]/pos2[0], pos1[1]/pos2[1]]
+    }
+
     // pos array equals
-    static arr2Equals(arr1, arr2) {
-        return arr1 && arr2 && arr1[0]==arr2[0] && arr1[1]==arr2[1]
+    static posEquals(arr1, arr2) {
+        return arr2 && arr1 && arr1[0]==arr2[0] && arr1[1]==arr2[1]
     }
 
     // positions array equals
-    static arr22Equals(arr1, arr2) {
+    static positionsEquals(arr1, arr2) {
         return arr1 && arr2 && arr1[0][0]==arr2[0][0] && arr1[0][1]==arr2[0][1] && arr1[1][0]==arr2[1][0] && arr1[1][1]==arr2[1][1]
     }
 

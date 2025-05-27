@@ -289,7 +289,7 @@ class _BaseObj extends _HasColor {
     get lastAnchorPos() {return this.#lastAnchorPos}
     get hasAnchorPosChanged() {
         const anchorPos = this.anchorPos
-        return !CDEUtils.arr2Equals(this.#lastAnchorPos, anchorPos)&&anchorPos
+        return !CDEUtils.posEquals(this.#lastAnchorPos, anchorPos)&&anchorPos
     }
     get parent() {return this._parent}
     get rotation() {return this._rotation}

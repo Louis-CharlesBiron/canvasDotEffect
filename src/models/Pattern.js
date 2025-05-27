@@ -25,7 +25,7 @@ class Pattern extends _DynamicColor {
     #initialized = false
     constructor(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, errorCB, readyCB, frameRate, repeatMode) {
         super(
-            positions, // [ [x1, y1], [x2, y2] ] | _Obj~
+            positions, // [ [x1, y1], [x2, y2] ] | instance of _Obj
             rotation   // rotation of the pattern
         )
         this._id = Pattern.#ID_GIVER++                                         // instance id
@@ -98,7 +98,7 @@ class Pattern extends _DynamicColor {
             }
 
             const positions = this.getAutomaticPositions()
-            if ((!source.currentTime || source.paused) && Array.isArray(this._positions) && CDEUtils.arr22Equals(positions, this._positions)) return;
+            if ((!source.currentTime || source.paused) && Array.isArray(this._positions) && CDEUtils.positionsEquals(positions, this._positions)) return;
             this._positions = positions
             
             if (isCanvas) this._render._bactchedStandalones.push(()=>this._value = this.#getPattern(ctx, source))
@@ -157,7 +157,7 @@ class Pattern extends _DynamicColor {
             source = source.cloneNode()
             source.setAttribute("fakeload", "1")
         }
-        return new Pattern(render, source, CDEUtils.unlinkArr22(positions), CDEUtils.unlinkArr22(sourceCroppingPositions), keepAspectRatio, forcedUpdates, rotation, errorCB, null, frameRate, repeatMode)
+        return new Pattern(render, source, CDEUtils.unlinkPositions(positions), CDEUtils.unlinkPositions(sourceCroppingPositions), keepAspectRatio, forcedUpdates, rotation, errorCB, null, frameRate, repeatMode)
     }
 
     // Returns a usable image source

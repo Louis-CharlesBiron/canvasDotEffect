@@ -34,7 +34,8 @@ class Canvas {
     #timeStamp = null        // requestanimationframe timestamp in ms
     #cachedEls = []          // cached canvas elements to draw
     #cachedEls_ll = null     // cached canvas elements count/length
-    #lastScrollValues = [window.scrollX, window.screenY]
+    #lastScrollValues = [window.scrollX, window.screenY] // last window scroll x/y values
+    #mouseMoveCB = null      // the custom mouseMoveCB. Use for mobile adjustments
     constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                               // html canvas element
         this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
@@ -471,6 +472,7 @@ class Canvas {
 
     // defines the onmousemove listener
     setMouseMove(cb, global) {
+        this.#mouseMoveCB = cb
         const onmousemove=e=>{
             // update pos and direction angle
             this._mouse.updatePos(e, this._offset)
@@ -527,7 +529,7 @@ class Canvas {
                 e.button = 0
                 this._mouse.updatePos(e, this._offset)
                 this._mouse.calcAngle()            
-                this.#mouseMovements(cb, e)
+                this.#mouseMovements(this.#mouseMoveCB, e)
                 this.#mouseClicks(cb, e)
             }
         }, onmousedown=e=>{

@@ -14,7 +14,7 @@ class Gradient extends _DynamicColor {
     #lastType = null
     constructor(ctx, positions, colorStops, type, rotation) {
         super(
-            positions, // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
+            positions, // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | instance of _Obj
             rotation   // rotation of the gradient, not applicable for radial type
         ) 
         this._ctx = ctx.ctx??ctx                 // canvas context
@@ -105,14 +105,14 @@ class Gradient extends _DynamicColor {
         if (this._initPositions != _DynamicColor.PLACEHOLDER) {
             const positions = this.getAutomaticPositions()
 
-            if (!force && Array.isArray(this._positions) && CDEUtils.arr22Equals(positions, this._positions)) return;
+            if (!force && Array.isArray(this._positions) && CDEUtils.positionsEquals(positions, this._positions)) return;
             return this._value = Gradient.getCanvasGradient(this._ctx, this._positions = positions, this._colorStops, this._type, this._rotation)
         }
     }
 
     // returns a separate copy of the Gradient
     duplicate(positions=this._positions, ctx=this._ctx, colorStops=this._colorStops, type=this._type, rotation=this._rotation) {
-        return new Gradient(ctx, CDEUtils.unlinkArr22(positions), [...colorStops], type, rotation)
+        return new Gradient(ctx, CDEUtils.unlinkPositions(positions), [...colorStops], type, rotation)
     }
 
     toString() {

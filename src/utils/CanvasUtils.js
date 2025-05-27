@@ -104,7 +104,7 @@ class CanvasUtils {
 
     // Returns a callback allowing a dot to have a custom trail effect
     static getTrailEffectCB(canvas, obj, length=8, moveEffectCB=null, disableDefaultMovements=false) {
-        let trail = [], trailPos = new Array(length).fill(obj.pos), lastPos = null, equals = CDEUtils.arr2Equals, isDefaultMovements = !disableDefaultMovements
+        let trail = [], trailPos = new Array(length).fill(obj.pos), lastPos = null, equals = CDEUtils.posEquals, isDefaultMovements = !disableDefaultMovements
         for (let i=0;i<length;i++) {
             const trailObj = obj.duplicate()
             trail.push(trailObj)

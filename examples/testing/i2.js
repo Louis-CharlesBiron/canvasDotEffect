@@ -10,7 +10,7 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
 const _ = null
 
 
-let a = new ImageDisplay("./img/logo.png", CVS.getCenter(), [250], (e,a)=>console.log(e,a))
+let a = new ImageDisplay("./img/logo.png", CVS.getCenter(), ["50%", "50%"], (e,a)=>console.log(e,a))
 
 // new TextDisplay("test\n11231", CVS.getCenter())
 // new Dot(CVS.getCenter(), 50)

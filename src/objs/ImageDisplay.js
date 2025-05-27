@@ -30,6 +30,7 @@ class ImageDisplay extends _BaseObj {
     static IS_CAMERA_SUPPORTED = ()=>!!navigator?.mediaDevices?.getUserMedia
     static IS_SCREEN_RECORD_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
 
+    #naturalSize = null
     constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
         super(pos, null, setupCB, loopCB, anchorPos, alwaysActive)
         this._source = source               // the data source
@@ -39,11 +40,10 @@ class ImageDisplay extends _BaseObj {
     }
 
     initialize() {
-        ImageDisplay.initializeDataSource(this._source, (data, size)=>{
+        ImageDisplay.initializeDataSource(this._source, (data, naturalSize)=>{
             this._source = data
-            if (!this._size) this._size = size
-            if (!CDEUtils.isDefined(this._size[0])) this._size = [size[0], this._size[1]]
-            if (!CDEUtils.isDefined(this._size[1])) this._size = [this._size[0], size[1]]
+            this.#naturalSize = naturalSize
+            this.size = this._size
             this._initialized = true
             if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this._parent, this._source)
         }, this._errorCB)
@@ -204,7 +204,7 @@ class ImageDisplay extends _BaseObj {
     }
 
     // returns a separate copy of this ImageDisplay instance
-    duplicate(source=this._source, pos=this.pos_, size=this._size, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
+    duplicate(source=this._source, pos=this.pos_, size=this.size_, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
         const imageDisplay = new ImageDisplay(
             source instanceof MediaStreamAudioSourceNode ? source.mediaStream.clone() : source.cloneNode(), 
             pos,
@@ -244,13 +244,14 @@ class ImageDisplay extends _BaseObj {
     }
 
 	get size() {return this._size||[0,0]}
+	get size_() {return this._size?CDEUtils.unlinkArr2(this._size):[0,0]}
     get width() {return this._size[0]}
     get height() {return this._size[1]}
     get trueSize() {
         const size = this.size
         return [Math.abs(size[0]*this._scale[0]), Math.abs(size[1]*this._scale[1])]
     }
-    get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
+    get naturalSize() {return this.#naturalSize||ImageDisplay.getNaturalSize(this._source)}
     get centerX() {return this._pos[0]+this._size[0]/2}
     get centerY() {return this._pos[1]+this._size[1]/2}
     get centerPos() {return [this.centerX, this.centerY]}
@@ -267,9 +268,12 @@ class ImageDisplay extends _BaseObj {
     get loop() {return this._source?.loop}
     get isLooping() {return this.loop}
 
-	set size(_size) {this._size = _size}
-	set width(width) {this._size[0] = width}
-	set height(height) {this._size[1] = height}
+	set size(size) {
+        this.width = size[0]
+        this.height = size[1]
+    }
+	set width(width) {this._size[0] = typeof width=="string" ? (+width.replace("%","").trim()/100)*this.#naturalSize[0] : width==null ? this.#naturalSize[0] : width}
+	set height(height) {this._size[1] = typeof height=="string" ? (+height.replace("%","").trim()/100)*this.#naturalSize[1] : height==null ? this.#naturalSize[1] : height}
     set paused(paused) {
         try {
             if (paused) this._source.pause()
