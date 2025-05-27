@@ -121,7 +121,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.0.17"
+    "cdejs": "^1.1.0"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -216,7 +216,7 @@ The _Obj class is the template class of any canvas object. **It should not be di
 - ***setupResults*** -> The value returned by the `setupCB` call.
 - **loopCB** -> Custom callback called each frame for the object (obj, deltaTime)=>
 - **anchorPos** -> The reference point from which the object's pos will be set. Can either be a pos `[x,y]`, another canvas object instance, or a callback `(obj, Canvas or parent)=>{... return [x,y]}` (Defaults to the parent's pos, or `[0, 0]` if the object has no parent). If your *anchorPos* references another object, make sure it is defined and initialized when used as the *anchorPos* value.
-- **alwaysActive** -> Whether the object stays active when outside the canvas bounds.
+- **activationMargin** -> Defines the px margin where the object remains active when outside the canvas' visible bounds. If `true`, the object will always remain active.
 - ***initialized*** -> Whether the object has been initialized.
 - ***parent*** -> The parent of the object. (Shape, Canvas, ...)
 - ***rotation*** -> The object's rotation in degrees. Use the `rotateAt`, `rotateBy` and `rotateTo` functions to modify.
@@ -250,8 +250,8 @@ The _Obj class is the template class of any canvas object. **It should not be di
 The dot class is **meant** to be the *core* of most effects. It appears as a circular dot on the canvas by default.
 
 #### **The Dot constructor takes the following parameters:**
-###### - `new Dot(pos, radius, color, setupCB, anchorPos, alwaysActive, disablePathCaching)`
-- *pos, radius, color, setupCB, anchorPos, alwaysActive* -> See the _Obj class.
+###### - `new Dot(pos, radius, color, setupCB, anchorPos, activationMargin, disablePathCaching)`
+- *pos, radius, color, setupCB, anchorPos, activationMargin* -> See the _Obj class.
 
 Its other attribute is:
 - **connections** -> a list referencing other dots, primarily to draw a connection between them. 
@@ -329,8 +329,8 @@ One of the main features is the ***drawEffectCB***. This callback allows the cre
 Effects are often ratio-based, meaning the *intensity* of the effect is based on the distance between the dot and the *ratioPos*. You can control the affected distance with the *limit* parameter, and the the object to which the distance\ratio is calculated with the *ratioPosCB* parameter.
 
 #### **The Shape constructor takes the following parameters:**
-###### - `new Shape(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)`
-- *pos, radius, color, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj class.
+###### - `new Shape(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile)`
+- *pos, radius, color, setupCB, loopCB, anchorPos, activationMargin* -> See the _Obj class.
 - **initDots** -> Initial dots declaration. Can either be: an array of dots `[new Dot(...), existingDot, ...]`, a **String** (this will automatically call the shape's createFromString() function), or a callback `(Shape, Canvas)=>{... return anArrayOfDots}` 
 - ***dots*** -> Array of all the current dots contained by the shape. 
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
@@ -356,7 +356,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 1. Sets the dots' the dots' color to the one of shape, if not previously defined.
 2. Sets the dots' radius to the one of the shape, if not previously defined.
 3. Sets the dots' anchorPos to the shape's pos, if not previously defined.
-4. Sets the dots' alwaysActive property to that of the shape, if not previously defined.
+4. Sets the dots' activationMargin property to that of the shape, if not previously defined.
 5. Sets the dots' parent attribute to reference the shape.
 
 
@@ -557,17 +557,13 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
     CVS.add(backAndForthDotShape)
 
 ```
-
- 
-
 # [Filled Shape](#table-of-contents)
 
 The FilledShape class is a derivative of the Shape class. It allows to fill the area delimited by the shape's dots.
 
-
 #### **The FilledShape constructor takes the following parameters:**
-###### - `new FilledShape(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)`
-- *pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
+###### - `new FilledShape(fillColor, dynamicUpdates, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile)`
+- *pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile* -> See the Shape class.
 - **fillColor** -> Defines the color of the shape's filling. Either a color value, a Gradient instance, or a callback returning any of the previous two `(render, shape)=>{... return [r, g, b, a]}`.
 - **dynamicUpdates** -> Whether the shape's fill area checks for updates every frame
 
@@ -612,8 +608,8 @@ The FilledShape class is a derivative of the Shape class. It allows to fill the 
 The Grid class is a derivative of the Shape class. It allows the creation of dot-based symbols / text. To create your own set of symbols (source), see the *Grid Assets* section.
 
 #### **The Grid constructor takes the following parameters:**
-###### - `new Grid(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)`
-- *pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile* -> See the Shape class.
+###### - `new Grid(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile)`
+- *pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile* -> See the Shape class.
 - **keys** -> A string containing the characters to create.
 - **gaps** -> The `[x, y]` distances within the dots.
 - **source** -> The source containing the symbol's definitions. See the *Grid Assets* section.
@@ -845,8 +841,8 @@ A symbol has this structure: `[...[index, directions]]`. It is composed of a mai
 The TextDisplay class allows the drawing of text as a canvas object.
 
 #### **The TextDisplay constructor takes the following parameters:**
-###### - `new TextDisplay(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, alwaysActive)`
-- *pos, color, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
+###### - `new TextDisplay(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, activationMargin)`
+- *pos, color, setupCB, loopCB, anchorPos, activationMargin* -> See the _Obj / *_BaseObj* class.
 - **text** -> The text to be displayed. Either a `String` or a callback `(parent, this)=>{... return "textToDisplay"}`.
 - **textStyles** -> The style profile to be used for styling the text. Either a `TextStyles` or  a callback `(render)=>{... return TextStyles}`.
 - **drawMethod** -> The draw method used when drawing the text, Either `"FILL"` or `"STROKE"`.
@@ -886,8 +882,8 @@ CVS.add(helloWorldText)
 The ImageDisplay class allows the drawing of images, videos and live camera/screen feeds.
 
 #### **The ImageDisplay constructor takes the following parameters:**
-###### - `new ImageDisplay(source, pos, size, errorCB, setupCB, loopCB, anchorPos, alwaysActive)`
-- *pos, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
+###### - `new ImageDisplay(source, pos, size, errorCB, setupCB, loopCB, anchorPos, activationMargin)`
+- *pos, setupCB, loopCB, anchorPos, activationMargin* -> See the _Obj / *_BaseObj* class.
 - **source** -> The source of the image. One of `ImageDisplay.SOURCE_TYPES`.
 - **size** -> The display size of the image `[width, height]`. (Resizes the image)
 - **errorCB** -> A callback called when the source produces an error `(errorType, e?)=>`.
@@ -974,8 +970,8 @@ CVS.add(screenFeed)
 The AudioDisplay class allows the visualization of audio from song, videos, live microphone / computer audio, etc, in cutomizable forms.
 
 #### **The AudioDisplay constructor takes the following parameters:**
-###### - `new AudioDisplay(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, loadErrorCB, setupCB, loopCB, anchorPos, alwaysActive)`
-- *pos, color, setupCB, loopCB, anchorPos, alwaysActive* -> See the _Obj / *_BaseObj* class.
+###### - `new AudioDisplay(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, loadErrorCB, setupCB, loopCB, anchorPos, activationMargin)`
+- *pos, color, setupCB, loopCB, anchorPos, activationMargin* -> See the _Obj / *_BaseObj* class.
 - **source** -> The source of the audio. One of `AudioDisplay.SOURCE_TYPES`.
 - **binCB** -> A custom callback called for each bin of the FFT data array. Used to draw the audio. `(render, bin, atPos, accumulator audioDisplay, i, sampleCount, rawBin)=>{... return? [ [newX, newY], newAccumulatorValue ]}`
 - **sampleCount** -> The count of bins to use / display. Ex: if sampleCount is "32" and the display style is `BARS`, 32 bars will be displayed. *Note: (fftSize is calculated by selecting the nearest valid value based on twice the provided sampleCount).*

@@ -13,8 +13,8 @@ class Grid extends Shape {
     static SAME_VALUE = undefined
 
     #symbolsReferences = []
-    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
-        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)
+    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile) {
+        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile)
 
         this._keys = keys+""||Grid.DEFAULT_KEYS             // keys to convert to source's values as a string
         this._gaps = gaps??Grid.DEFAULT_GAPS                // [x, y] gap length within the dots

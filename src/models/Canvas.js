@@ -34,6 +34,7 @@ class Canvas {
     #timeStamp = null        // requestanimationframe timestamp in ms
     #cachedEls = []          // cached canvas elements to draw
     #cachedEls_ll = null     // cached canvas elements count/length
+    #cachedSize = null       // cached canvas size
     #lastScrollValues = [window.scrollX, window.screenY] // last window scroll x/y values
     #mouseMoveCB = null      // the custom mouseMoveCB. Use for mobile adjustments
     constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
@@ -248,10 +249,10 @@ class Canvas {
 
     // calls the draw function on all canvas objects
     draw() {
-        const els = this.#cachedEls, els_ll = this.#cachedEls_ll, render = this._render, deltaTime = this._deltaTime, timeStamp = this.timeStamp*this._speedModifier, activeAreaPadding = Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING
+        const els = this.#cachedEls, els_ll = this.#cachedEls_ll, render = this._render, deltaTime = this._deltaTime, timeStamp = this.timeStamp*this._speedModifier
         for (let i=0;i<els_ll;i++) {
-            const el = els[i]
-            if ((!el.alwaysActive && el.initialized && !this.isWithin(el.pos, activeAreaPadding)) || !el.draw) continue
+            const el = els[i], margin = el.activationMargin
+            if (!(margin===true) && el.initialized && !this.isWithin(el.pos, margin) || !el.draw) continue
             el.draw(render, timeStamp, deltaTime)
         }
     }
@@ -388,6 +389,8 @@ class Canvas {
             this.updateSettings()
             this.updateOffset()
         }
+
+        this.#cachedSize = [this._cvs.width, this._cvs.height]
     }
 
     // updates current canvas settings
@@ -603,8 +606,8 @@ class Canvas {
 
     // returns whether the provided position is within the canvas bounds
     isWithin(pos, padding=0) {
-        const [x,y] = pos, [ox, oy] = this._viewPos
-        return x >= -padding-ox && x <= this.width+padding-ox && y >= -padding-oy && y <= this.height+padding-oy
+        const viewPos = this._viewPos
+        return pos[0] >= -padding-viewPos[0] && pos[0] <= this.#cachedSize[0]+padding-viewPos[0] && pos[1] >= -padding-viewPos[1] && pos[1] <= this.#cachedSize[1]+padding-viewPos[1]
     }
 
     // returns the px value of the provided pourcent value. PourcentileValue should be a number between 0 and 1. UseWidth determines whether the width or height should be used.
@@ -620,9 +623,9 @@ class Canvas {
 	get cvs() {return this._cvs}
 	get frame() {return this._frame}
 	get ctx() {return this._ctx}
-	get width() {return this._cvs.width}
-	get height() {return this._cvs.height}
-	get size() {return [this.width, this.height]}
+	get width() {return this.#cachedSize?.[0]}
+	get height() {return this.#cachedSize?.[1]}
+	get size() {return this.#cachedSize}
 	get settings() {return this._settings}
 	get loopingCB() {return this._loopingCB}
 	get looping() {return this._looping}

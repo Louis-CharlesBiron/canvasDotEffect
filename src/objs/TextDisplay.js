@@ -9,8 +9,8 @@ class TextDisplay extends _BaseObj {
     static DEFAULT_LINE_HEIGHT_PADDING = 10
 
     #lineCount = null
-    constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, alwaysActive) {
-        super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
+    constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, activationMargin) {
+        super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
         this._text = text??""                // displayed text
         this._textStyles = textStyles        // current object's textStyles
         this._drawMethod = drawMethod?.toUpperCase()??Render.DRAW_METHODS.FILL // text draw method, either "fill" or "stroke"
@@ -76,7 +76,7 @@ class TextDisplay extends _BaseObj {
     }
 
     // returns a separate copy of this textDisplay instance
-    duplicate(text=this._text, pos=this.pos_, color=this._color, textStyles=this._textStyles, drawMethod=this._drawMethod, maxWidth=this._maxWidth, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
+    duplicate(text=this._text, pos=this.pos_, color=this._color, textStyles=this._textStyles, drawMethod=this._drawMethod, maxWidth=this._maxWidth, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const colorObject = color, colorRaw = colorObject.colorRaw, textDisplay = new TextDisplay(
             text,
             pos,
@@ -87,7 +87,7 @@ class TextDisplay extends _BaseObj {
             setupCB,
             loopCB,
             anchorPos,
-            alwaysActive
+            activationMargin
         )
         textDisplay._scale = CDEUtils.unlinkArr2(this._scale)
         textDisplay._rotation = this._rotation

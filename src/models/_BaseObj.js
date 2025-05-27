@@ -7,10 +7,10 @@
 class _BaseObj extends _HasColor {
     static DEFAULT_POS = [0,0]
     static ABSOLUTE_ANCHOR = [0,0]
-    static POSITION_PRECISION = 4
+    static POSITION_PRECISION = 6
 
     #lastAnchorPos = [0,0]
-    constructor(pos, color, setupCB, loopCB, anchorPos, alwaysActive) {
+    constructor(pos, color, setupCB, loopCB, anchorPos, activationMargin) {
         super(color)
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
         this._initPos = pos||[0,0]               // initial position : [x,y] || (Canvas)=>{return [x,y]}
@@ -19,7 +19,7 @@ class _BaseObj extends _HasColor {
         this._loopCB = loopCB                    // called each frame for this object (this)=>
         this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
-        this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
+        this._activationMargin = activationMargin??Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING // the px margin amount where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
         
         this._parent = null                      // the object's parent
         this._rotation = 0                       // the object's rotation in degrees 
@@ -275,7 +275,7 @@ class _BaseObj extends _HasColor {
     get loopingCB() {return this._loopCB}
     get setupResults() {return this._setupResults}
     get initialized() {return this._initialized}
-    get alwaysActive() {return this._alwaysActive}
+    get activationMargin() {return this._activationMargin}
     get anchorPosRaw() {return this._anchorPos}
     get anchorPos() {// returns the anchorPos value
         if (Array.isArray(this._anchorPos)) return this._anchorPos
@@ -323,7 +323,7 @@ class _BaseObj extends _HasColor {
     set loopingCB(cb) {this._loopCB = cb}
     set setupResults(value) {this._setupResults = value}
     set initialized(init) {this._initialized = init}
-    set alwaysActive(alwaysActive) {this._alwaysActive = alwaysActive}
+    set activationMargin(activationMargin) {this._activationMargin = activationMargin}
     set anchorPos(anchorPos) {this.anchorPosRaw = anchorPos}
     set anchorPosRaw(anchorPos) {this._anchorPos = anchorPos}
     set lastAnchorPos(lastAnchorPos) {this.#lastAnchorPos = lastAnchorPos}

@@ -5,8 +5,8 @@
 
 // The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
 class Dot extends _Obj {
-    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive, disablePathCaching=false) {
-        super(pos, radius, color, setupCB, null, anchorPos, alwaysActive)
+    constructor(pos, radius, color, setupCB, anchorPos, activationMargin, disablePathCaching=false) {
+        super(pos, radius, color, setupCB, null, anchorPos, activationMargin)
         this._connections = []  // array of Dot to eventually draw a connecting line to
         this._cachedPath = !disablePathCaching // the cached path2d object or null if path caching is disabled
     }
@@ -105,14 +105,14 @@ class Dot extends _Obj {
     }
 
     // returns a separate copy of this Dot
-    duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, disablePathCaching=!this._cachedPath) {
+    duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color, setupCB=this._setupCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, disablePathCaching=!this._cachedPath) {
         const colorObject = color, colorRaw = colorObject.colorRaw, dot = new Dot(
             pos,
             radius,
             (colorRaw instanceof Gradient||colorRaw instanceof Pattern) && colorRaw._initPositions.id != null && this._parent.id != null && colorRaw._initPositions.id == this._parent.id ? null:(_,dot)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:dot):colorObject.duplicate(),
             setupCB,
             anchorPos,
-            alwaysActive,
+            activationMargin,
             disablePathCaching
         )
 

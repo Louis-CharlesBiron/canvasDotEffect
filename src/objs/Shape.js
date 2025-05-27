@@ -7,8 +7,8 @@
 class Shape extends _Obj {
     static DEFAULT_LIMIT = 100
 
-    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
-        super(pos, radius??_Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, loopCB, anchorPos, alwaysActive)
+    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile) {
+        super(pos, radius??_Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, loopCB, anchorPos, activationMargin)
         this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                    // initial dots declaration
         this._dots = []                          // array containing current dots in the shape
@@ -46,7 +46,7 @@ class Shape extends _Obj {
         this._dots.push(...[dot].flat().filter(dot=>dot).map(dot=>{
             if (dot.initColor==null) dot.initColor = this.colorRaw
             if (dot.initRadius==null) dot.initRadius = this._radius
-            if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
+            if (dot.activationMargin==Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING) dot.activationMargin = this._activationMargin
             if (dot.visualEffect==null) dot.visualEffect = this.visualEffects_
             dot._parent = this
             dot.initialize()
@@ -279,7 +279,7 @@ class Shape extends _Obj {
     }
 
     // returns a separate copy of this Shape (only initialized for objects)
-    duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, fragile=this._fragile) {
+    duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, fragile=this._fragile) {
         const colorObject = color, colorRaw = colorObject.colorRaw, shape = new Shape(
             pos,
             dots,
@@ -291,7 +291,7 @@ class Shape extends _Obj {
             setupCB,
             loopCB,
             anchorPos,
-            alwaysActive,
+            activationMargin,
             fragile
         )
         shape._scale = CDEUtils.unlinkArr2(this._scale)

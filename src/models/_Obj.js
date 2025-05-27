@@ -8,8 +8,8 @@ class _Obj extends _BaseObj {
     static DEFAULT_RADIUS = 5
     static RADIUS_PRECISION = 4
 
-    constructor(pos, radius, color, setupCB, loopCB, anchorPos, alwaysActive) {
-        super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
+    constructor(pos, radius, color, setupCB, loopCB, anchorPos, activationMargin) {
+        super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
         this._initRadius = radius       // initial object's radius delcaration
         this._radius = this._initRadius // current object's radius
     }

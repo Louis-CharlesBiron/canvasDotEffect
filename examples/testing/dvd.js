@@ -85,7 +85,7 @@ const tester = new FilledShape("red", true, CVS.getCenter(), [new Dot([-sizeX,-s
 
     return {area:[[0,0],CVS.size], dir:0}
 }, (obj, deltaTime)=>{// loopCB
-    const [ix, iy] = obj.pos, speed = 600, [cornerTL, cornerBR] = obj.getBounds([0,0,0,0]), res = obj.setupResults, {area:[areaMin, areaMax]} = res, 
+    const [ix, iy] = obj.pos, speed = 700, [cornerTL, cornerBR] = obj.getBounds([0,0,0,0]), res = obj.setupResults, {area:[areaMin, areaMax]} = res, 
           d = speed*deltaTime
 
     CanvasUtils.drawOutline(CVS.render, obj)
@@ -119,7 +119,7 @@ function DvDfy(TARGET) {
         return {area:[[0,0],CVS.size], dir:0}
     }
     TARGET.loopCB = (obj, deltaTime)=>{// loopCB
-        const [ix, iy] = obj.pos, speed = 300, [cornerTL, cornerBR] = obj.getBounds([0,0,0,0]), res = obj.setupResults, {area:[areaMin, areaMax]} = res, 
+        const [ix, iy] = obj.pos, speed = 500, [cornerTL, cornerBR] = obj.getBounds([0,0,0,0]), res = obj.setupResults, {area:[areaMin, areaMax]} = res, 
             d = speed*deltaTime
 
         CanvasUtils.drawOutline(CVS.render, obj)
@@ -134,7 +134,7 @@ function DvDfy(TARGET) {
         else if (res.dir==2) obj.pos = [ix-d, iy-d] //(←↑)
         else if (res.dir==3) obj.pos = [ix-d, iy+d] //(←↓)
     }
-    TARGET.alwaysActive = true
+    TARGET.activationMargin = true
     CVS.add(TARGET)
 }
 
@@ -152,8 +152,6 @@ DvDfy(YO3)
 DvDfy(YO4)
 DvDfy(YO5)
 DvDfy(YO6)
-
-
 
 
 

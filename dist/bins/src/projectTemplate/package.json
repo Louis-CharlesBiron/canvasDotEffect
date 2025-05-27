@@ -8,7 +8,7 @@
       "build": "vite build && node ./bin/build.js"
     },
     "dependencies": {
-      "cdejs": "^1.0.17"
+      "cdejs": "^1.1.0"
     },
     "devDependencies": {
       "vite": "^6.2.2"

@@ -55,7 +55,7 @@ export class CDEUtils {
     }
 
     // creates a copy of the provided array. (input format: [ [x, y], [x, y] ], or [x, y])
-    static unlinkArr22(arr) {
+    static unlinkPositions(arr) {
         const isArray = Array.isArray, unlinkArr2 = CDEUtils.unlinkArr2,  o1 = arr?.[0], o2 = arr?.[1]
         return isArray(arr) ? [isArray(o1)?unlinkArr2(o1):o1, isArray(o2)?unlinkArr2(o2):o2] : arr
     }
@@ -105,13 +105,33 @@ export class CDEUtils {
         return arr1.every((v, i)=>v==arr2[i])
     }
     
+    // adds a pos to another
+    static addPos(pos1, pos2) {
+        return [pos1[0]+pos2[0], pos1[1]+pos2[1]]
+    }
+    
+    // substracts a pos to another
+    static subPos(pos1, pos2) {
+        return [pos1[0]-pos2[0], pos1[1]-pos2[1]]
+    }
+
+    // substracts a pos to another
+    static mulPos(pos1, pos2) {
+        return [pos1[0]*pos2[0], pos1[1]*pos2[1]]
+    }
+
+    // substracts a pos to another
+    static divPos(pos1, pos2) {
+        return [pos1[0]/pos2[0], pos1[1]/pos2[1]]
+    }
+
     // pos array equals
-    static arr2Equals(arr1, arr2) {
-        return arr1 && arr2 && arr1[0]==arr2[0] && arr1[1]==arr2[1]
+    static posEquals(arr1, arr2) {
+        return arr2 && arr1 && arr1[0]==arr2[0] && arr1[1]==arr2[1]
     }
 
     // positions array equals
-    static arr22Equals(arr1, arr2) {
+    static positionsEquals(arr1, arr2) {
         return arr1 && arr2 && arr1[0][0]==arr2[0][0] && arr1[0][1]==arr2[0][1] && arr1[1][0]==arr2[1][0] && arr1[1][1]==arr2[1][1]
     }
 
@@ -318,7 +338,7 @@ export class CanvasUtils {
 
     // Returns a callback allowing a dot to have a custom trail effect
     static getTrailEffectCB(canvas, obj, length=8, moveEffectCB=null, disableDefaultMovements=false) {
-        let trail = [], trailPos = new Array(length).fill(obj.pos), lastPos = null, equals = CDEUtils.arr2Equals, isDefaultMovements = !disableDefaultMovements
+        let trail = [], trailPos = new Array(length).fill(obj.pos), lastPos = null, equals = CDEUtils.posEquals, isDefaultMovements = !disableDefaultMovements
         for (let i=0;i<length;i++) {
             const trailObj = obj.duplicate()
             trail.push(trailObj)
@@ -570,7 +590,6 @@ export class Color {
 
     // returns the format of the provided color
     static getFormat(color) {
-        if (!color)CDEUtils.stackTraceLog(color)
         return Array.isArray(color) ?
             (color.length == 4 ? Color.FORMATS.RGBA : Color.FORMATS.HSV) :
         color instanceof Color ? Color.FORMATS.COLOR :
@@ -2208,7 +2227,9 @@ export class Canvas {
     #timeStamp = null        // requestanimationframe timestamp in ms
     #cachedEls = []          // cached canvas elements to draw
     #cachedEls_ll = null     // cached canvas elements count/length
-    #lastScrollValues = [window.scrollX, window.screenY]
+    #cachedSize = null       // cached canvas size
+    #lastScrollValues = [window.scrollX, window.screenY] // last window scroll x/y values
+    #mouseMoveCB = null      // the custom mouseMoveCB. Use for mobile adjustments
     constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._cvs = cvs                                               // html canvas element
         this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
@@ -2421,10 +2442,10 @@ export class Canvas {
 
     // calls the draw function on all canvas objects
     draw() {
-        const els = this.#cachedEls, els_ll = this.#cachedEls_ll, render = this._render, deltaTime = this._deltaTime, timeStamp = this.timeStamp*this._speedModifier, activeAreaPadding = Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING
+        const els = this.#cachedEls, els_ll = this.#cachedEls_ll, render = this._render, deltaTime = this._deltaTime, timeStamp = this.timeStamp*this._speedModifier
         for (let i=0;i<els_ll;i++) {
-            const el = els[i]
-            if ((!el.alwaysActive && el.initialized && !this.isWithin(el.pos, activeAreaPadding)) || !el.draw) continue
+            const el = els[i], margin = el.activationMargin
+            if (!(margin===true) && el.initialized && !this.isWithin(el.pos, margin) || !el.draw) continue
             el.draw(render, timeStamp, deltaTime)
         }
     }
@@ -2561,6 +2582,8 @@ export class Canvas {
             this.updateSettings()
             this.updateOffset()
         }
+
+        this.#cachedSize = [this._cvs.width, this._cvs.height]
     }
 
     // updates current canvas settings
@@ -2645,6 +2668,7 @@ export class Canvas {
 
     // defines the onmousemove listener
     setMouseMove(cb, global) {
+        this.#mouseMoveCB = cb
         const onmousemove=e=>{
             // update pos and direction angle
             this._mouse.updatePos(e, this._offset)
@@ -2699,6 +2723,9 @@ export class Canvas {
                 e.x = CDEUtils.round(touches[0].clientX, 1)
                 e.y = CDEUtils.round(touches[0].clientY, 1)
                 e.button = 0
+                this._mouse.updatePos(e, this._offset)
+                this._mouse.calcAngle()            
+                this.#mouseMovements(this.#mouseMoveCB, e)
                 this.#mouseClicks(cb, e)
             }
         }, onmousedown=e=>{
@@ -2772,8 +2799,8 @@ export class Canvas {
 
     // returns whether the provided position is within the canvas bounds
     isWithin(pos, padding=0) {
-        const [x,y] = pos, [ox, oy] = this._viewPos
-        return x >= -padding-ox && x <= this.width+padding-ox && y >= -padding-oy && y <= this.height+padding-oy
+        const viewPos = this._viewPos
+        return pos[0] >= -padding-viewPos[0] && pos[0] <= this.#cachedSize[0]+padding-viewPos[0] && pos[1] >= -padding-viewPos[1] && pos[1] <= this.#cachedSize[1]+padding-viewPos[1]
     }
 
     // returns the px value of the provided pourcent value. PourcentileValue should be a number between 0 and 1. UseWidth determines whether the width or height should be used.
@@ -2789,9 +2816,9 @@ export class Canvas {
 	get cvs() {return this._cvs}
 	get frame() {return this._frame}
 	get ctx() {return this._ctx}
-	get width() {return this._cvs.width}
-	get height() {return this._cvs.height}
-	get size() {return [this.width, this.height]}
+	get width() {return this.#cachedSize?.[0]}
+	get height() {return this.#cachedSize?.[1]}
+	get size() {return this.#cachedSize}
 	get settings() {return this._settings}
 	get loopingCB() {return this._loopingCB}
 	get looping() {return this._looping}
@@ -2959,10 +2986,10 @@ export class Anim {
 export class _BaseObj extends _HasColor {
     static DEFAULT_POS = [0,0]
     static ABSOLUTE_ANCHOR = [0,0]
-    static POSITION_PRECISION = 4
+    static POSITION_PRECISION = 6
 
     #lastAnchorPos = [0,0]
-    constructor(pos, color, setupCB, loopCB, anchorPos, alwaysActive) {
+    constructor(pos, color, setupCB, loopCB, anchorPos, activationMargin) {
         super(color)
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
         this._initPos = pos||[0,0]               // initial position : [x,y] || (Canvas)=>{return [x,y]}
@@ -2971,7 +2998,7 @@ export class _BaseObj extends _HasColor {
         this._loopCB = loopCB                    // called each frame for this object (this)=>
         this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
-        this._alwaysActive = alwaysActive??null  // whether the object stays active when outside the canvas bounds
+        this._activationMargin = activationMargin??Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING // the px margin amount where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
         
         this._parent = null                      // the object's parent
         this._rotation = 0                       // the object's rotation in degrees 
@@ -3227,7 +3254,7 @@ export class _BaseObj extends _HasColor {
     get loopingCB() {return this._loopCB}
     get setupResults() {return this._setupResults}
     get initialized() {return this._initialized}
-    get alwaysActive() {return this._alwaysActive}
+    get activationMargin() {return this._activationMargin}
     get anchorPosRaw() {return this._anchorPos}
     get anchorPos() {// returns the anchorPos value
         if (Array.isArray(this._anchorPos)) return this._anchorPos
@@ -3241,7 +3268,7 @@ export class _BaseObj extends _HasColor {
     get lastAnchorPos() {return this.#lastAnchorPos}
     get hasAnchorPosChanged() {
         const anchorPos = this.anchorPos
-        return !CDEUtils.arr2Equals(this.#lastAnchorPos, anchorPos)&&anchorPos
+        return !CDEUtils.posEquals(this.#lastAnchorPos, anchorPos)&&anchorPos
     }
     get parent() {return this._parent}
     get rotation() {return this._rotation}
@@ -3275,7 +3302,7 @@ export class _BaseObj extends _HasColor {
     set loopingCB(cb) {this._loopCB = cb}
     set setupResults(value) {this._setupResults = value}
     set initialized(init) {this._initialized = init}
-    set alwaysActive(alwaysActive) {this._alwaysActive = alwaysActive}
+    set activationMargin(activationMargin) {this._activationMargin = activationMargin}
     set anchorPos(anchorPos) {this.anchorPosRaw = anchorPos}
     set anchorPosRaw(anchorPos) {this._anchorPos = anchorPos}
     set lastAnchorPos(lastAnchorPos) {this.#lastAnchorPos = lastAnchorPos}
@@ -3350,8 +3377,8 @@ export class AudioDisplay extends _BaseObj {
     #buffer_ll = null // the length of data
     #data = null      // the fft data values (raw bins)
     #fft = null       // the fftSize
-    constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
-        super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
+    constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
+        super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source??""                                         // the source of the audio
         this._binCB = binCB??AudioDisplay.DEFAULT_BINCB                   // callback called for each bin of the audio, use this to create the display (render, bin, atPos, audioDisplay, accumulator, i, sampleCount, rawBin)=>{... return? [ [newX, newY], newAccumulatorValue ]}
         this._sampleCount = sampleCount??AudioDisplay.DEFAULT_SAMPLE_COUNT// the max count of bins, (fftSize is calculated by the nearest valid value). Ex: if sampleCount is "32" and the display style is "BARS", 32 bars will be displayed
@@ -3647,7 +3674,7 @@ export class AudioDisplay extends _BaseObj {
     static isAudioFormatSupported(extension) {return new Audio().canPlayType("audio/"+extension.replaceAll(".",""))||"Hell nah"}
 
     // returns a separate copy of this AudioDisplay instance
-    duplicate(source=this._source, pos=this.pos_, color=this._color, binCB=this._binCB, sampleCount=this._sampleCount, disableAudio=this._disableAudio, offsetPourcent=this._offsetPourcent, errorCB=this._errorCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
+    duplicate(source=this._source, pos=this.pos_, color=this._color, binCB=this._binCB, sampleCount=this._sampleCount, disableAudio=this._disableAudio, offsetPourcent=this._offsetPourcent, errorCB=this._errorCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const colorObject = color, colorRaw = colorObject.colorRaw, audioDisplay = new AudioDisplay(
             source instanceof MediaStreamAudioSourceNode ? source.mediaStream.clone() : source.cloneNode(), 
             pos,
@@ -3660,7 +3687,7 @@ export class AudioDisplay extends _BaseObj {
             setupCB,
             loopCB,
             anchorPos,
-            alwaysActive
+            activationMargin
         )
         audioDisplay._scale = CDEUtils.unlinkArr2(this._scale)
         audioDisplay._rotation = this._rotation
@@ -3881,8 +3908,9 @@ export class ImageDisplay extends _BaseObj {
     static IS_CAMERA_SUPPORTED = ()=>!!navigator?.mediaDevices?.getUserMedia
     static IS_SCREEN_RECORD_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
 
-    constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
-        super(pos, null, setupCB, loopCB, anchorPos, alwaysActive)
+    #naturalSize = null
+    constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
+        super(pos, null, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source               // the data source
         this._size = size                   // the display size of the image (resizes)
         this._errorCB = errorCB             // a callback called if there is an error with the source (errorType, e?)=>
@@ -3890,11 +3918,10 @@ export class ImageDisplay extends _BaseObj {
     }
 
     initialize() {
-        ImageDisplay.initializeDataSource(this._source, (data, size)=>{
+        ImageDisplay.initializeDataSource(this._source, (data, naturalSize)=>{
             this._source = data
-            if (!this._size) this._size = size
-            if (!CDEUtils.isDefined(this._size[0])) this._size = [size[0], this._size[1]]
-            if (!CDEUtils.isDefined(this._size[1])) this._size = [this._size[0], size[1]]
+            this.#naturalSize = naturalSize
+            this.size = this._size
             this._initialized = true
             if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this._parent, this._source)
         }, this._errorCB)
@@ -4055,7 +4082,7 @@ export class ImageDisplay extends _BaseObj {
     }
 
     // returns a separate copy of this ImageDisplay instance
-    duplicate(source=this._source, pos=this.pos_, size=this._size, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
+    duplicate(source=this._source, pos=this.pos_, size=this.size_, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const imageDisplay = new ImageDisplay(
             source instanceof MediaStreamAudioSourceNode ? source.mediaStream.clone() : source.cloneNode(), 
             pos,
@@ -4063,7 +4090,7 @@ export class ImageDisplay extends _BaseObj {
             setupCB,
             loopCB,
             anchorPos,
-            alwaysActive
+            activationMargin
         )
         imageDisplay._scale = CDEUtils.unlinkArr2(this._scale)
         imageDisplay._rotation = this._rotation
@@ -4095,13 +4122,14 @@ export class ImageDisplay extends _BaseObj {
     }
 
 	get size() {return this._size||[0,0]}
+	get size_() {return this._size?CDEUtils.unlinkArr2(this._size):[0,0]}
     get width() {return this._size[0]}
     get height() {return this._size[1]}
     get trueSize() {
         const size = this.size
         return [Math.abs(size[0]*this._scale[0]), Math.abs(size[1]*this._scale[1])]
     }
-    get naturalSize() {return ImageDisplay.getNaturalSize(this._source)}
+    get naturalSize() {return this.#naturalSize||ImageDisplay.getNaturalSize(this._source)}
     get centerX() {return this._pos[0]+this._size[0]/2}
     get centerY() {return this._pos[1]+this._size[1]/2}
     get centerPos() {return [this.centerX, this.centerY]}
@@ -4118,9 +4146,12 @@ export class ImageDisplay extends _BaseObj {
     get loop() {return this._source?.loop}
     get isLooping() {return this.loop}
 
-	set size(_size) {this._size = _size}
-	set width(width) {this._size[0] = width}
-	set height(height) {this._size[1] = height}
+	set size(size) {
+        this.width = size[0]
+        this.height = size[1]
+    }
+	set width(width) {this._size[0] = typeof width=="string" ? (+width.replace("%","").trim()/100)*this.#naturalSize[0] : width==null ? this.#naturalSize[0] : width}
+	set height(height) {this._size[1] = typeof height=="string" ? (+height.replace("%","").trim()/100)*this.#naturalSize[1] : height==null ? this.#naturalSize[1] : height}
     set paused(paused) {
         try {
             if (paused) this._source.pause()
@@ -4154,8 +4185,8 @@ export class TextDisplay extends _BaseObj {
     static DEFAULT_LINE_HEIGHT_PADDING = 10
 
     #lineCount = null
-    constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, alwaysActive) {
-        super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
+    constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, activationMargin) {
+        super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
         this._text = text??""                // displayed text
         this._textStyles = textStyles        // current object's textStyles
         this._drawMethod = drawMethod?.toUpperCase()??Render.DRAW_METHODS.FILL // text draw method, either "fill" or "stroke"
@@ -4221,7 +4252,7 @@ export class TextDisplay extends _BaseObj {
     }
 
     // returns a separate copy of this textDisplay instance
-    duplicate(text=this._text, pos=this.pos_, color=this._color, textStyles=this._textStyles, drawMethod=this._drawMethod, maxWidth=this._maxWidth, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
+    duplicate(text=this._text, pos=this.pos_, color=this._color, textStyles=this._textStyles, drawMethod=this._drawMethod, maxWidth=this._maxWidth, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const colorObject = color, colorRaw = colorObject.colorRaw, textDisplay = new TextDisplay(
             text,
             pos,
@@ -4232,7 +4263,7 @@ export class TextDisplay extends _BaseObj {
             setupCB,
             loopCB,
             anchorPos,
-            alwaysActive
+            activationMargin
         )
         textDisplay._scale = CDEUtils.unlinkArr2(this._scale)
         textDisplay._rotation = this._rotation
@@ -4351,7 +4382,7 @@ export class Pattern extends _DynamicColor {
     #initialized = false
     constructor(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, errorCB, readyCB, frameRate, repeatMode) {
         super(
-            positions, // [ [x1, y1], [x2, y2] ] | _Obj~
+            positions, // [ [x1, y1], [x2, y2] ] | instance of _Obj
             rotation   // rotation of the pattern
         )
         this._id = Pattern.#ID_GIVER++                                         // instance id
@@ -4424,7 +4455,7 @@ export class Pattern extends _DynamicColor {
             }
 
             const positions = this.getAutomaticPositions()
-            if ((!source.currentTime || source.paused) && Array.isArray(this._positions) && CDEUtils.arr22Equals(positions, this._positions)) return;
+            if ((!source.currentTime || source.paused) && Array.isArray(this._positions) && CDEUtils.positionsEquals(positions, this._positions)) return;
             this._positions = positions
             
             if (isCanvas) this._render._bactchedStandalones.push(()=>this._value = this.#getPattern(ctx, source))
@@ -4483,7 +4514,7 @@ export class Pattern extends _DynamicColor {
             source = source.cloneNode()
             source.setAttribute("fakeload", "1")
         }
-        return new Pattern(render, source, CDEUtils.unlinkArr22(positions), CDEUtils.unlinkArr22(sourceCroppingPositions), keepAspectRatio, forcedUpdates, rotation, errorCB, null, frameRate, repeatMode)
+        return new Pattern(render, source, CDEUtils.unlinkPositions(positions), CDEUtils.unlinkPositions(sourceCroppingPositions), keepAspectRatio, forcedUpdates, rotation, errorCB, null, frameRate, repeatMode)
     }
 
     // Returns a usable image source
@@ -4581,8 +4612,8 @@ export class _Obj extends _BaseObj {
     static DEFAULT_RADIUS = 5
     static RADIUS_PRECISION = 4
 
-    constructor(pos, radius, color, setupCB, loopCB, anchorPos, alwaysActive) {
-        super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
+    constructor(pos, radius, color, setupCB, loopCB, anchorPos, activationMargin) {
+        super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
         this._initRadius = radius       // initial object's radius delcaration
         this._radius = this._initRadius // current object's radius
     }
@@ -4628,8 +4659,8 @@ export class _Obj extends _BaseObj {
 export class Shape extends _Obj {
     static DEFAULT_LIMIT = 100
 
-    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
-        super(pos, radius??_Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, loopCB, anchorPos, alwaysActive)
+    constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile) {
+        super(pos, radius??_Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, loopCB, anchorPos, activationMargin)
         this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
         this._initDots = dots                    // initial dots declaration
         this._dots = []                          // array containing current dots in the shape
@@ -4667,7 +4698,7 @@ export class Shape extends _Obj {
         this._dots.push(...[dot].flat().filter(dot=>dot).map(dot=>{
             if (dot.initColor==null) dot.initColor = this.colorRaw
             if (dot.initRadius==null) dot.initRadius = this._radius
-            if (dot.alwaysActive==null) dot.alwaysActive = this._alwaysActive
+            if (dot.activationMargin==Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING) dot.activationMargin = this._activationMargin
             if (dot.visualEffect==null) dot.visualEffect = this.visualEffects_
             dot._parent = this
             dot.initialize()
@@ -4900,7 +4931,7 @@ export class Shape extends _Obj {
     }
 
     // returns a separate copy of this Shape (only initialized for objects)
-    duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, fragile=this._fragile) {
+    duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, fragile=this._fragile) {
         const colorObject = color, colorRaw = colorObject.colorRaw, shape = new Shape(
             pos,
             dots,
@@ -4912,7 +4943,7 @@ export class Shape extends _Obj {
             setupCB,
             loopCB,
             anchorPos,
-            alwaysActive,
+            activationMargin,
             fragile
         )
         shape._scale = CDEUtils.unlinkArr2(this._scale)
@@ -4965,7 +4996,7 @@ export class Gradient extends _DynamicColor {
     #lastType = null
     constructor(ctx, positions, colorStops, type, rotation) {
         super(
-            positions, // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | Shape | Dot
+            positions, // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | instance of _Obj
             rotation   // rotation of the gradient, not applicable for radial type
         ) 
         this._ctx = ctx.ctx??ctx                 // canvas context
@@ -5056,14 +5087,14 @@ export class Gradient extends _DynamicColor {
         if (this._initPositions != _DynamicColor.PLACEHOLDER) {
             const positions = this.getAutomaticPositions()
 
-            if (!force && Array.isArray(this._positions) && CDEUtils.arr22Equals(positions, this._positions)) return;
+            if (!force && Array.isArray(this._positions) && CDEUtils.positionsEquals(positions, this._positions)) return;
             return this._value = Gradient.getCanvasGradient(this._ctx, this._positions = positions, this._colorStops, this._type, this._rotation)
         }
     }
 
     // returns a separate copy of the Gradient
     duplicate(positions=this._positions, ctx=this._ctx, colorStops=this._colorStops, type=this._type, rotation=this._rotation) {
-        return new Gradient(ctx, CDEUtils.unlinkArr22(positions), [...colorStops], type, rotation)
+        return new Gradient(ctx, CDEUtils.unlinkPositions(positions), [...colorStops], type, rotation)
     }
 
     toString() {
@@ -5110,8 +5141,8 @@ export class Gradient extends _DynamicColor {
 // Regular shape with a filled area defined by its dots
 export class FilledShape extends Shape {
     #lastDotsPos = null
-    constructor(fillColor, dynamicUpdates=false, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
-        super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)
+    constructor(fillColor, dynamicUpdates=false, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile) {
+        super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile)
         this._initFillColor = fillColor       // declaration color fill value
         this._fillColor = this._initFillColor // the current color or gradient of the filled shape
         this._path = null                     // path perimeter delimiting the surface to fill
@@ -5217,8 +5248,8 @@ export class Grid extends Shape {
     static SAME_VALUE = undefined
 
     #symbolsReferences = []
-    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile) {
-        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, alwaysActive, fragile)
+    constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile) {
+        super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile)
 
         this._keys = keys+""||Grid.DEFAULT_KEYS             // keys to convert to source's values as a string
         this._gaps = gaps??Grid.DEFAULT_GAPS                // [x, y] gap length within the dots
@@ -5375,8 +5406,8 @@ export class Grid extends Shape {
 
 // The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
 export class Dot extends _Obj {
-    constructor(pos, radius, color, setupCB, anchorPos, alwaysActive, disablePathCaching=false) {
-        super(pos, radius, color, setupCB, null, anchorPos, alwaysActive)
+    constructor(pos, radius, color, setupCB, anchorPos, activationMargin, disablePathCaching=false) {
+        super(pos, radius, color, setupCB, null, anchorPos, activationMargin)
         this._connections = []  // array of Dot to eventually draw a connecting line to
         this._cachedPath = !disablePathCaching // the cached path2d object or null if path caching is disabled
     }
@@ -5475,14 +5506,14 @@ export class Dot extends _Obj {
     }
 
     // returns a separate copy of this Dot
-    duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color, setupCB=this._setupCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive, disablePathCaching=!this._cachedPath) {
+    duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color, setupCB=this._setupCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, disablePathCaching=!this._cachedPath) {
         const colorObject = color, colorRaw = colorObject.colorRaw, dot = new Dot(
             pos,
             radius,
             (colorRaw instanceof Gradient||colorRaw instanceof Pattern) && colorRaw._initPositions.id != null && this._parent.id != null && colorRaw._initPositions.id == this._parent.id ? null:(_,dot)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:dot):colorObject.duplicate(),
             setupCB,
             anchorPos,
-            alwaysActive,
+            activationMargin,
             disablePathCaching
         )
 
@@ -5554,7 +5585,7 @@ export class Dot extends _Obj {
         }
     }
     set pos(pos) {
-        if (!CDEUtils.arr2Equals(pos, this._pos)) {
+        if (!CDEUtils.posEquals(pos, this._pos)) {
             this.x = pos[0]
             this.y = pos[1]
             if (this._cachedPath) this.updateCachedPath()

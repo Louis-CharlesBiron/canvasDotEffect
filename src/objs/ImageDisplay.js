@@ -31,8 +31,8 @@ class ImageDisplay extends _BaseObj {
     static IS_SCREEN_RECORD_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
 
     #naturalSize = null
-    constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
-        super(pos, null, setupCB, loopCB, anchorPos, alwaysActive)
+    constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
+        super(pos, null, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source               // the data source
         this._size = size                   // the display size of the image (resizes)
         this._errorCB = errorCB             // a callback called if there is an error with the source (errorType, e?)=>
@@ -204,7 +204,7 @@ class ImageDisplay extends _BaseObj {
     }
 
     // returns a separate copy of this ImageDisplay instance
-    duplicate(source=this._source, pos=this.pos_, size=this.size_, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
+    duplicate(source=this._source, pos=this.pos_, size=this.size_, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const imageDisplay = new ImageDisplay(
             source instanceof MediaStreamAudioSourceNode ? source.mediaStream.clone() : source.cloneNode(), 
             pos,
@@ -212,7 +212,7 @@ class ImageDisplay extends _BaseObj {
             setupCB,
             loopCB,
             anchorPos,
-            alwaysActive
+            activationMargin
         )
         imageDisplay._scale = CDEUtils.unlinkArr2(this._scale)
         imageDisplay._rotation = this._rotation

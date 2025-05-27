@@ -44,8 +44,8 @@ class AudioDisplay extends _BaseObj {
     #buffer_ll = null // the length of data
     #data = null      // the fft data values (raw bins)
     #fft = null       // the fftSize
-    constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, errorCB, setupCB, loopCB, anchorPos, alwaysActive) {
-        super(pos, color, setupCB, loopCB, anchorPos, alwaysActive)
+    constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
+        super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source??""                                         // the source of the audio
         this._binCB = binCB??AudioDisplay.DEFAULT_BINCB                   // callback called for each bin of the audio, use this to create the display (render, bin, atPos, audioDisplay, accumulator, i, sampleCount, rawBin)=>{... return? [ [newX, newY], newAccumulatorValue ]}
         this._sampleCount = sampleCount??AudioDisplay.DEFAULT_SAMPLE_COUNT// the max count of bins, (fftSize is calculated by the nearest valid value). Ex: if sampleCount is "32" and the display style is "BARS", 32 bars will be displayed
@@ -341,7 +341,7 @@ class AudioDisplay extends _BaseObj {
     static isAudioFormatSupported(extension) {return new Audio().canPlayType("audio/"+extension.replaceAll(".",""))||"Hell nah"}
 
     // returns a separate copy of this AudioDisplay instance
-    duplicate(source=this._source, pos=this.pos_, color=this._color, binCB=this._binCB, sampleCount=this._sampleCount, disableAudio=this._disableAudio, offsetPourcent=this._offsetPourcent, errorCB=this._errorCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, alwaysActive=this._alwaysActive) {
+    duplicate(source=this._source, pos=this.pos_, color=this._color, binCB=this._binCB, sampleCount=this._sampleCount, disableAudio=this._disableAudio, offsetPourcent=this._offsetPourcent, errorCB=this._errorCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const colorObject = color, colorRaw = colorObject.colorRaw, audioDisplay = new AudioDisplay(
             source instanceof MediaStreamAudioSourceNode ? source.mediaStream.clone() : source.cloneNode(), 
             pos,
@@ -354,7 +354,7 @@ class AudioDisplay extends _BaseObj {
             setupCB,
             loopCB,
             anchorPos,
-            alwaysActive
+            activationMargin
         )
         audioDisplay._scale = CDEUtils.unlinkArr2(this._scale)
         audioDisplay._rotation = this._rotation
