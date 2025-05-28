@@ -2215,7 +2215,7 @@ class Canvas {
     static DEFAULT_CTX_SETTINGS = {"imageSmoothingEnabled":false, "willReadFrequently":false, "font":TextStyles.DEFAULT_FONT, "letterSpacing":TextStyles.DEFAULT_LETTER_SPACING, "wordSpacing":TextStyles.DEFAULT_WORD_SPACING, "fontVariantCaps":TextStyles.DEFAULT_FONT_VARIANT_CAPS, "direction":TextStyles.DEFAULT_DIRECTION, "fontSretch":TextStyles.DEFAULT_FONT_STRETCH, "fontKerning":TextStyles.DEFAULT_FONT_KERNING, "textAlign":TextStyles.DEFAULT_TEXT_ALIGN, "textBaseline":TextStyles.DEFAULT_TEXT_BASELINE, "textRendering":TextStyles.DEFAULT_TEXT_RENDERING, "lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
-    static DEFAULT_CANVAS_STYLES = {position:"absolute",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)"}
+    static DEFAULT_CANVAS_STYLES = {position:"absolute",top:"0",left:"0",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)"}
     static STATIC_MODE = 0
     static #ON_LOAD_CALLBACKS = []
     static #ON_FIRST_INTERACT_CALLBACKS = []
@@ -4164,14 +4164,18 @@ class ImageDisplay extends _BaseObj {
     set currentTime(currentTime) {this._source.currentTime = currentTime}
     set loop(loop) {this._source.loop = loop}
     set isLooping(isLooping) {this.loop = isLooping}
-	set sourceCroppingPositions(_sourceCroppingPositions) {this._sourceCroppingPositions = _sourceCroppingPositions}
-	set sourceCroppingStartPos(startPos) {
-        if (Array.isArray(this._sourceCroppingPositions)) this._sourceCroppingPositions[0] = startPos
-        else this._sourceCroppingPositions = [startPos, [startPos[0]+ImageDisplay.DEFAULT_WIDTH, startPos[1]+ImageDisplay.DEFAULT_HEIGHT]]
-    }
-    set sourceCroppingEndPos(endPos) {
-        if (Array.isArray(this._sourceCroppingPositions)) this._sourceCroppingPositions[1] = endPos
-        else this._sourceCroppingPositions = [[0,0], endPos]
+	set sourceCroppingPositions(sourceCroppingPositions) {
+        if (sourceCroppingPositions) {
+            const pos1 = sourceCroppingPositions[0], pos2 = sourceCroppingPositions[1], naturalSize = this.#naturalSize
+            
+            this._sourceCroppingPositions = [[
+                typeof pos1[0]=="string" ? (+pos1[0].replace("%","").trim()/100)*naturalSize[0] : pos1[0]==null ? 0 : pos1[0],
+                typeof pos1[1]=="string" ? (+pos1[1].replace("%","").trim()/100)*naturalSize[1] : pos1[1]==null ? 0 : pos1[1]
+            ], [
+                typeof pos2[0]=="string" ? (+pos2[0].replace("%","").trim()/100)*naturalSize[0] : pos2[0]==null ? naturalSize[0] : pos2[0],
+                typeof pos2[1]=="string" ? (+pos2[1].replace("%","").trim()/100)*naturalSize[1] : pos2[1]==null ? naturalSize[1] : pos2[1]
+            ]]
+        } else this._sourceCroppingPositions = null
     }
 }
 // JS
@@ -4388,7 +4392,7 @@ class Pattern extends _DynamicColor {
         this._id = Pattern.#ID_GIVER++                                         // instance id
         this._render = render                                                  // canvas Render instance
         this._source = source                                                  // the data source
-        this._sourceCroppingPositions = sourceCroppingPositions??null          // source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
+        this.sourceCroppingPositions = sourceCroppingPositions??null           // source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
         this._keepAspectRatio = keepAspectRatio??false                         // whether the source keeps the same aspect ratio when resizing
         this._forcedUpdates = forcedUpdates??Pattern.DEFAULT_FORCE_UPDATE_LEVEL// whether/how the pattern forces updates
         const rawFrameRate = frameRate??Pattern.DEFAULT_FRAME_RATE
@@ -4447,15 +4451,15 @@ class Pattern extends _DynamicColor {
     update(forceLevel=this._forcedUpdates) {
         if (this.#initialized) {
             const source = this._source, ctx = this._render.ctx, isCanvas = source instanceof HTMLCanvasElement, forceLevels = Pattern.FORCE_UPDATE_LEVELS, time = (isCanvas||forceLevel==forceLevels.RESPECT_FRAME_RATE)?performance.now()/1000:source.currentTime
-        
-            if (time != null && forceLevel !== forceLevels.OVERRIDE) {
+
+            if (time != null && forceLevel != forceLevels.OVERRIDE) {
                 if (this.#lastUpdateTime > time) this.#lastUpdateTime = time
                 if (time-this.#lastUpdateTime >= this._frameRate) this.#lastUpdateTime = time
                 else return;
             }
 
             const positions = this.getAutomaticPositions()
-            if ((!source.currentTime || source.paused) && Array.isArray(this._positions) && CDEUtils.positionsEquals(positions, this._positions)) return;
+            if (forceLevel != forceLevels.OVERRIDE && (!source.currentTime || source.paused) && Array.isArray(this._positions) && CDEUtils.positionsEquals(positions, this._positions) && this._value) return;
             this._positions = positions
             
             if (isCanvas) this._render._bactchedStandalones.push(()=>this._value = this.#getPattern(ctx, source))
@@ -4565,41 +4569,41 @@ class Pattern extends _DynamicColor {
 	set source(source) {
         ImageDisplay.initializeDataSource(source, (data)=>{
             this._source = data
-            this.update(true)
+            this.update(2)
         })
     }
-    set sourceCroppingPositions(_sourceCroppingPositions) {
-        this._sourceCroppingPositions = _sourceCroppingPositions
-        this.update(true)
-    }
-	set sourceCroppingStartPos(startPos) {
-        if (Array.isArray(this._sourceCroppingPositions)) this._sourceCroppingPositions[0] = startPos
-        else this._sourceCroppingPositions = [startPos, [startPos[0]+ImageDisplay.DEFAULT_WIDTH, startPos[1]+ImageDisplay.DEFAULT_HEIGHT]]
-        this.update(true)
-    }
-    set sourceCroppingEndPos(endPos) {
-        if (Array.isArray(this._sourceCroppingPositions)) this._sourceCroppingPositions[1] = endPos
-        else this._sourceCroppingPositions = [[0,0], endPos]
-        this.update(true)
+    set sourceCroppingPositions(sourceCroppingPositions) {
+        if (sourceCroppingPositions) {
+            const pos1 = sourceCroppingPositions[0], pos2 = sourceCroppingPositions[1], naturalSize = this.naturalSize
+            
+            this._sourceCroppingPositions = [[
+                typeof pos1[0]=="string" ? (+pos1[0].replace("%","").trim()/100)*naturalSize[0] : pos1[0]==null ? 0 : pos1[0],
+                typeof pos1[1]=="string" ? (+pos1[1].replace("%","").trim()/100)*naturalSize[1] : pos1[1]==null ? 0 : pos1[1]
+            ], [
+                typeof pos2[0]=="string" ? (+pos2[0].replace("%","").trim()/100)*naturalSize[0] : pos2[0]==null ? naturalSize[0] : pos2[0],
+                typeof pos2[1]=="string" ? (+pos2[1].replace("%","").trim()/100)*naturalSize[1] : pos2[1]==null ? naturalSize[1] : pos2[1]
+            ]]
+            this.update(2)
+        } else this._sourceCroppingPositions = null
     }
 	set keepAspectRatio(_keepAspectRatio) {
         this._keepAspectRatio = _keepAspectRatio
-        this.update(true)
+        this.update(2)
     }
 	set forcedUpdates(_forcedUpdates) {
         this._forcedUpdates = _forcedUpdates
-        this.update(true)
+        this.update(2)
     }
 	set repeatMode(_repeatMode) {
         this._repeatMode = _repeatMode
-        this.update(true)
+        this.update(2)
     }
     set frameRate(frameRate) {
         this._frameRate = 1/Math.max(frameRate, 0)
     }
     set rotation(deg) {
         this._rotation = CDEUtils.round(deg, 2)%360
-        this.update(true)
+        this.update(2)
     }
 }
 // JS
