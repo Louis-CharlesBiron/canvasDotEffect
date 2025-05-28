@@ -286,13 +286,17 @@ class ImageDisplay extends _BaseObj {
     set currentTime(currentTime) {this._source.currentTime = currentTime}
     set loop(loop) {this._source.loop = loop}
     set isLooping(isLooping) {this.loop = isLooping}
-	set sourceCroppingPositions(_sourceCroppingPositions) {this._sourceCroppingPositions = _sourceCroppingPositions}
-	set sourceCroppingStartPos(startPos) {
-        if (Array.isArray(this._sourceCroppingPositions)) this._sourceCroppingPositions[0] = startPos
-        else this._sourceCroppingPositions = [startPos, [startPos[0]+ImageDisplay.DEFAULT_WIDTH, startPos[1]+ImageDisplay.DEFAULT_HEIGHT]]
-    }
-    set sourceCroppingEndPos(endPos) {
-        if (Array.isArray(this._sourceCroppingPositions)) this._sourceCroppingPositions[1] = endPos
-        else this._sourceCroppingPositions = [[0,0], endPos]
+	set sourceCroppingPositions(sourceCroppingPositions) {
+        if (sourceCroppingPositions) {
+            const pos1 = sourceCroppingPositions[0], pos2 = sourceCroppingPositions[1], naturalSize = this.#naturalSize
+            
+            this._sourceCroppingPositions = [[
+                typeof pos1[0]=="string" ? (+pos1[0].replace("%","").trim()/100)*naturalSize[0] : pos1[0]==null ? 0 : pos1[0],
+                typeof pos1[1]=="string" ? (+pos1[1].replace("%","").trim()/100)*naturalSize[1] : pos1[1]==null ? 0 : pos1[1]
+            ], [
+                typeof pos2[0]=="string" ? (+pos2[0].replace("%","").trim()/100)*naturalSize[0] : pos2[0]==null ? naturalSize[0] : pos2[0],
+                typeof pos2[1]=="string" ? (+pos2[1].replace("%","").trim()/100)*naturalSize[1] : pos2[1]==null ? naturalSize[1] : pos2[1]
+            ]]
+        } else this._sourceCroppingPositions = null
     }
 }
