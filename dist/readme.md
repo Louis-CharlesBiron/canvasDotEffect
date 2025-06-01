@@ -121,7 +121,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.1.0"
+    "cdejs": "^1.1.1"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -202,7 +202,7 @@ The Canvas class is the core of the project. It manages the main loop, the windo
 
 # [_Obj](#table-of-contents)
 
-The _Obj class is the template class of any canvas object. **It should not be directly instantiated.**
+The _Obj class is the template class of most canvas object. **It should not be directly instantiated.**
 
 #### **All canvas objects will have at least these attributes:**
 - ***id*** -> Id of the object.
@@ -500,7 +500,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
     const draggableDotShape = new Shape([0,0], new Dot([10,10]), null, null, null, (render, dot, ratio, setupResults, mouse, dist, shape)=>{
         
         // Checking if the mouse is over the dot and clicked, and changing the color according to the state
-        const mouseOn = dot.isWithin(mouse.pos, true)
+        const mouseOn = dot.isWithin(mouse.pos)
         if (mouseOn && mouse.clicked) dot.color = [255, 0, 0, 1]
         else if (mouseOn) dot.color = [0, 255, 0, 1]
         else dot.color = [255, 255, 255, 1]
@@ -599,6 +599,41 @@ The FilledShape class is a derivative of the Shape class. It allows to fill the 
 
     // Adding it to the canvas
     CVS.add(myFilledShape)
+```
+
+#### Example use 2:
+###### - Comparing default bounds vs accurate bounds
+```js
+    // Creating a FilledShape with a complex shape
+    const someObj = new FilledShape([75,75,75,1], true, CVS.getCenter(), [new Dot([0,0]),new Dot([100,-50]),new Dot([300,50]),new Dot([100,80]),new Dot([270,-90]),new Dot([-70,-90]),new Dot([-150,190])], 3, [100,100,100,1])
+
+    // Setting a slow rotation / scaling animation, repeating every 60 seconds
+    someObj.setupCB = (obj)=>{
+        obj.playAnim(new Anim(prog=>obj.rotateAt(prog*360), -60000))
+        obj.playAnim(new Anim((prog, i)=>obj.scaleAt([0.25+(i%2?prog:(1-prog)), 0.25+(i%2?prog:(1-prog))]), -60000))
+    }
+
+    // drawing the both the raw outline and accurate outline
+    someObj.loopCB = (obj)=>{
+        CanvasUtils.drawOutline(CVS.render, obj)
+        CanvasUtils.drawOutlineAccurate(CVS.render, obj)
+    }
+
+    // Enabling accurate move listeners mode, this makes the mouse enter/exit events accurate when the object is moving
+    CVS.enableAccurateMouseMoveListenersMode()
+
+    // Listeners for enter/exit/click on the object, using the default bounds (red rectangle)
+    CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.ENTER, ()=>console.log("FAST - enter"))
+    CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.EXIT , ()=>console.log("FAST - exit"))
+    CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.DOWN , ()=>console.log("FAST - click"))
+
+    // Listeners for enter/exit/click on the object, using the accurate bounds (blue outline)
+    CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.ENTER, ()=>console.log("ACCURATE - enter"), true)
+    CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.EXIT , ()=>console.log("ACCURATE - exit") , true)
+    CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.DOWN , ()=>console.log("ACCURATE - click"), true)
+
+    // Adding the object to the canvas
+    CVS.add(someObj)
 ```
 
  
@@ -1648,8 +1683,8 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 ```
 
 ### **To manage custom listeners,** use the following functions:
-###### - addListener(obj, type, callback, forceStaticPositions)
-###### - updateListener(type, id, newObj, newCallback, forceStaticPositions), 
+###### - addListener(obj, type, callback, useAccurateBounds, forceStaticPositions)
+###### - updateListener(type, id, newObj, newCallback, useAccurateBounds, forceStaticPositions), 
 ###### - removeListener(type, id)
 ```js
 
@@ -1681,7 +1716,7 @@ const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null,
         dot.radius = CDEUtils.mod(shape.radius*2, ratio, shape.radius*2*0.5)
         
         // Checking if the mouse is hovering the dot
-        const isMouseOver = dot.isWithin(m.pos, true)
+        const isMouseOver = dot.isWithin(m.pos)
         
         // if the mouse is over and clicked, set the dot's color to red
         if (isMouseOver && m.clicked) {
@@ -1756,14 +1791,13 @@ createButton("My custom button", CVS.getCenter(), (button, text)=>{// onClick
         button.rotateAt(360*prog)
         text.rotateAt(360*prog)
     }, 5000, null, ()=>{// anim's endCallback
-        
-        // Enabling back the listeners optimization
-        CVS.mouseMoveListenersOptimizationEnabled=true
+        // Disabling the accurate mouse move listeners mode once the rotation animation is finished (better for performance)
+        CVS.disableAccurateMouseMoveListenersMode()
     }), true, true)
 
     
-    // Disabling the listeners optimization, this makes the mouse enter/exit event accurate when the object is moving
-    CVS.mouseMoveListenersOptimizationEnabled=false
+    // Enabling accurate move listeners mode, this makes the mouse enter/exit events accurate when the object is moving
+    CVS.enableAccurateMouseMoveListenersMode()
     console.log("Custom button clicked!")
 })
 ```
@@ -2267,7 +2301,7 @@ const badDrawEffectCB = (render, dot, ratio, dragAnim, mouse, dist, shape)=>{
     dragAnim(shape.dots[0], mouse, dist, ratio)
     
     // Updating the first dot's color on mouse hover/click
-    const mouseOn = shape.dots[0].isWithin(mouse.pos, true)
+    const mouseOn = shape.dots[0].isWithin(mouse.pos)
     if (mouseOn && mouse.clicked) shape.dots[0].color = [255, 0, 0, 1]
     else if (mouseOn) shape.dots[0].color = [0, 254, 0, 1]
     else shape.dots[0].color = [255, 255, 255, 1]
@@ -2297,7 +2331,7 @@ const optimizedDrawEffectCB = (render, dot, ratio, dragAnim, mouse, dist, shape,
         // Again, the effect is only for the first dot
         // Here we use the provided "isActive" variable to make sure the mouse checks are only running when necessary
         if (isActive) {// (isActive is only true if ratio < 1)
-            const mouseOn = firstDot.isWithin(mouse.pos, true)
+            const mouseOn = firstDot.isWithin(mouse.pos)
             if (mouseOn && mouse.clicked) firstDot.color = [255, 0, 0, 1]
             else if (mouseOn) firstDot.color = [0, 254, 0, 1]
             else firstDot.color = [255, 255, 255, 1]

@@ -25,9 +25,9 @@ class _Obj extends _BaseObj {
         return CDEUtils.isFunction(this._initRadius) ? this._initRadius(this._parent instanceof Canvas?this:this._parent, this) : this._initRadius??null
     }
 
-    // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the radius)
-    isWithin(pos, positions, circularDetection) {
-        return (circularDetection ? CDEUtils.getDist(pos[0], pos[1], this.x, this.y) <= (this.radius||1)*(+circularDetection==1?1.025:+circularDetection) : super.isWithin(pos, positions))
+    // returns whether the provided pos is inside the obj
+    isWithin(pos, positions) {
+        return super.isWithin(pos, positions)
     }
 
     // returns the center pos of the provided positions

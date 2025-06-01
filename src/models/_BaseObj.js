@@ -219,15 +219,12 @@ class _BaseObj extends _HasColor {
         return CDEUtils.getPositionsCenter(positions)
     }
 
-    // returns the minimal rectangular area defined by the provided positions
-    getBounds(positions, padding, rotation, scale, centerPos=this.getCenter(positions)) {
+    // returns the 4 corners of the provided positions accounting for rotation and scale. corners -> [TOP-LEFT, BOTTOM-RIGHT, TOP-RIGHT, BOTTOM-LEFT]
+    getCorners(positions, padding=0, rotation, scale, centerPos=this.getCenter(positions)) {
         const rotatePos = CDEUtils.rotatePos, scalePos = CDEUtils.scalePos
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
 
-        if (scale || rotation) {
-            positions[2] = [positions[1][0], positions[0][1]]
-            positions[3] = [positions[0][0], positions[1][1]]
-        }
+        positions[2] = [positions[1][0], positions[0][1]]
+        positions[3] = [positions[0][0], positions[1][1]]
         
         if (scale) {
             positions[0] = scalePos(positions[0], scale, centerPos)
@@ -235,13 +232,35 @@ class _BaseObj extends _HasColor {
             positions[2] = scalePos(positions[2], scale, centerPos)
             positions[3] = scalePos(positions[3], scale, centerPos)
         }
-
         if (rotation) {
             positions[0] = rotatePos(positions[0], rotation, centerPos)
             positions[1] = rotatePos(positions[1], rotation, centerPos)
             positions[2] = rotatePos(positions[2], rotation, centerPos)
             positions[3] = rotatePos(positions[3], rotation, centerPos)
         }
+
+        padding??=0
+        if (padding) {
+            padding = typeof padding=="number" ? [padding, padding, padding, padding] : [padding[0],padding[1]??padding[0], padding[2]??padding[0], padding[3]??padding[1]]
+
+            positions[0][0] -= padding[3]
+            positions[0][1] -= padding[0]
+            positions[2][0] += padding[1]
+            positions[2][1] -= padding[0]
+            positions[1][0] += padding[1]
+            positions[1][1] += padding[2]
+            positions[3][0] -= padding[3]
+            positions[3][1] += padding[2]
+        }
+
+        return positions
+    }
+
+    // returns the minimal rectangular area defined by the provided positions
+    getBounds(positions, padding, rotation, scale, centerPos=this.getCenter(positions)) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+
+        positions = this.getCorners(positions, 0, rotation, scale, centerPos)
 
         const p_ll = positions.length
         for (let i=0;i<p_ll; i++) {

@@ -101,9 +101,9 @@ class Render {
     }
 
     // instanciates and returns a path containing an ellipse
-    static getEllispe(centerPos, radiusX, radiusY, startRadian=0, endRadian=CDEUtils.CIRC, counterclockwise=false) {
+    static getEllispe(centerPos, radiusX, radiusY, rotationRadian=0, startRadian=0, endRadian=CDEUtils.CIRC, counterclockwise=false) {
         const path = new Path2D()
-        path.ellipse(centerPos[0], centerPos[1], radiusX, radiusY, startRadian, endRadian, counterclockwise)
+        path.ellipse(centerPos[0], centerPos[1], radiusX, radiusY, rotationRadian, startRadian, endRadian, counterclockwise)
         return path
     }
 

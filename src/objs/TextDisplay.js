@@ -27,7 +27,7 @@ class TextDisplay extends _BaseObj {
 
     #resize(lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING) {
         this._size = this.getSize()
-        this.#lineCount = this.getTextValue().split("\n").filter(l=>l).length
+        this.#lineCount = this.getTextValue().split("\n").length
         if (this.#lineCount-1) this._size[1] -= lineHeightPadding
         this._lineHeight = this.trueSize[1]/this.#lineCount
     }
@@ -59,20 +59,32 @@ class TextDisplay extends _BaseObj {
 
     // Returns the width and height of the text, according to the textStyles, excluding the scale or rotation
     getSize(textStyles=this._textStyles, text=this.getTextValue(), lineHeightPadding) {
-        return TextDisplay.getSize(textStyles, text, this.#lineCount, lineHeightPadding, this._maxWidth)
+        return TextDisplay.getSize(textStyles, text, lineHeightPadding, this._maxWidth)
     }
 
     // Returns the width and height of the given text, according to the textStyles, including potential scaling
-    static getSize(textStyles, text, lineCount, lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING, maxWidth, scale=[1,1]) {
+    static getSize(textStyles, text, lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING, maxWidth, scale=[1,1]) {
         TextStyles.apply(TextDisplay.MEASUREMENT_CTX, ...textStyles.getStyles())
-        const lines = text.split("\n").filter(l=>l), l_ll = lineCount = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
+        const lines = text.replace(/./g,1).split("\n"), l_ll = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
               {width, actualBoundingBoxAscent, actualBoundingBoxDescent} = TextDisplay.MEASUREMENT_CTX.measureText(longestText)
-        return [CDEUtils.round(maxWidth||width, 2)*scale[0], (actualBoundingBoxAscent+actualBoundingBoxDescent)*l_ll*scale[1]+(l_ll*lineHeightPadding)]
+        return [CDEUtils.round(maxWidth||width, 4)*scale[0], (actualBoundingBoxAscent+actualBoundingBoxDescent)*l_ll*scale[1]+(l_ll*lineHeightPadding)]
+    }
+
+    // Returns the width and height of every line of the given text, according to the textStyles, excluding scaling/rotation
+    #getAllSizes(lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING) {
+        const measureCtx = TextDisplay.MEASUREMENT_CTX, maxWidth = this._maxWidth, lines = this.getTextValue().split("\n"), l_ll = lines.length, resultasda = new Array(l_ll)
+        TextStyles.apply(measureCtx, ...this._textStyles.getStyles())
+
+        for (let i=0;i<l_ll;i++) {
+            const lineRects = measureCtx.measureText("1".repeat(lines[i].length)), width = lineRects.width
+            resultasda[i] = [maxWidth&&width>maxWidth?maxWidth:width, lineRects.actualBoundingBoxAscent+lineRects.actualBoundingBoxDescent+lineHeightPadding]
+        }
+        return resultasda
     }
 
     // Returns the current text value
     getTextValue() {
-        return CDEUtils.isFunction(this._text) ? this._text(this._parent, this) : this._text
+        return (CDEUtils.isFunction(this._text) ? this._text(this._parent, this) : this._text).trim()
     }
 
     // returns a separate copy of this textDisplay instance
@@ -100,11 +112,47 @@ class TextDisplay extends _BaseObj {
     isWithin(pos, padding, rotation, scale) {
         return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
     }
+
+    // returns whether the provided pos is in the text
+    isWithinAccurate(pos, paddingX, rotation, scale) {
+        return this.ctx.isPointInPath(this.getBoundsAccurate(paddingX, rotation, scale), pos[0], pos[1])
+    }
     
     // returns the raw a minimal rectangular area containing all of the text (no scale/rotation)
     #getRectBounds() {
         const size = this._size, pos = this._pos, halfLine = (TextDisplay.DEFAULT_LINE_HEIGHT_PADDING/2)+this._lineHeight/2
         return [[pos[0]-size[0]/2, pos[1]-halfLine/2-3], [pos[0]+size[0]/2, pos[1]+size[1]-halfLine]]
+    }
+
+    // returns the accurate area containing all of the text
+    getBoundsAccurate(paddingX, rotation=this._rotation, scale=this._scale, lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING, lineWidthOffset=this.render.currentCtxStyles[0]) {
+        const path = new Path2D(), sizes = this.#getAllSizes(), s_ll = sizes.length, top = this._pos[1]-(lineHeightPadding/4+this._lineHeight/4)-lineWidthOffset, cx = this._pos[0]-lineWidthOffset/2
+        
+        if (paddingX) for (let i=0;i<s_ll;i++) sizes[i][0] += paddingX
+
+        let height = (sizes[0][1]-((s_ll-1)?lineHeightPadding/s_ll:lineHeightPadding/4)), startHalfSize = sizes[0][0]/2, finalSize = sizes[s_ll-1][0], lastX = cx+startHalfSize, points = [[cx-startHalfSize, top], [lastX, top]]
+
+        for (let i=1;i<s_ll;i++) {
+            const newY = top+height*i
+            points.push([lastX, newY], [lastX=cx+(sizes[i][0]/2), newY])
+        }
+
+        points.push([lastX, top+height*s_ll-lineHeightPadding/2])
+        points.push([lastX-finalSize, top+height*s_ll-lineHeightPadding/2])
+        points.push([lastX=lastX-finalSize, top+height*(s_ll-1)])
+
+        for (let i=s_ll-1;i>0;i--) points.push([cx-sizes[i-1][0]/2, top+height*i], [cx-sizes[i-1][0]/2, top+height*(i-1)])
+
+        for (let i=0;i<points.length;i++) {
+            let pos = points[i]
+            if (scale[0]!=1||scale[1]!=1) pos = CDEUtils.scalePos(pos, scale, this._pos)
+            if (rotation) pos = CDEUtils.rotatePos(pos, rotation, this._pos)
+
+            if (i) path.lineTo(pos[0], pos[1])
+            else path.moveTo(pos[0], pos[1])
+        }
+
+        return path
     }
 
     // returns the center of the text
@@ -116,8 +164,9 @@ class TextDisplay extends _BaseObj {
     getBounds(padding, rotation=this._rotation, scale=this._scale) {
         return super.getBounds(this.#getRectBounds(), padding, rotation, scale, this._pos)
     }
-
-	get text() {return this._text}
+    get ctx() {return this._parent.ctx}
+    get render() {return this._parent.render}
+	get text() {return this._text+""}
 	get textStyles() {return this._textStyles}
 	get drawMethod() {return this._drawMethod}
 	get maxWidth() {return this._maxWidth}
@@ -127,9 +176,12 @@ class TextDisplay extends _BaseObj {
     get render() {return this._parent.render}
     get lineCount() {return this.#lineCount}
 
-	set text(_text) {
-        this._text = _text||""
+	set text(text) {
+        const lastYScale = this._scale[1]
+        this._text = ""+text||""
+        this._scale[1] = 1
         this.#resize()
+        this._scale[1] = lastYScale
     }
 	set textStyles(_textStyles) {
         this._textStyles = _textStyles??this.render.defaultTextProfile

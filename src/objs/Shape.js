@@ -219,19 +219,15 @@ class Shape extends _Obj {
         }, time, easing), isUnique, force)
     }
 
-    // returns whether the provided pos is inside the area delimited by the dots permimeter
-    isWithin(pos) {
+    // returns whether the provided pos is inside the minimal rectangular area containing all of the shape's dots
+    isWithin(pos, padding) {
+        return super.isWithin(pos, this.getBounds(padding), padding)
+    }
+
+    // returns whether the provided pos is inside the area delimited by the dots perimeter
+    isWithinAccurate(pos) {
         const dots = this._dots, d_ll = dots.length
-        if (d_ll > 2) {
-            const permimeter = new Path2D(), firstDotPos = dots[0].pos
-            permimeter.moveTo(firstDotPos[0], firstDotPos[1])
-            for (let i=1;i<d_ll;i++) {
-                const dotPos = dots[i].pos
-                permimeter.lineTo(dotPos[0], dotPos[1])
-            }
-            permimeter.closePath()
-            return this.ctx.isPointInPath(permimeter, pos[0], pos[1])
-        }
+        if (d_ll > 2) return this.ctx.isPointInPath(this.getBoundsAccurate(), pos[0], pos[1])
         return false
     }
 
@@ -239,6 +235,18 @@ class Shape extends _Obj {
     #getRectBounds() {
         const rangeX = CDEUtils.getMinMax(this._dots, "x"), rangeY = CDEUtils.getMinMax(this._dots, "y")
         return [[rangeX[0],rangeY[0]], [rangeX[1],rangeY[1]]]
+    }
+
+    // returns the accurate area delimited by the dots perimeter
+    getBoundsAccurate() {
+        const dots = this._dots, d_ll = dots.length, perimeter = new Path2D(), firstDotPos = dots[0].pos
+        perimeter.moveTo(firstDotPos[0], firstDotPos[1])
+        for (let i=1;i<d_ll;i++) {
+            const dotPos = dots[i].pos
+            perimeter.lineTo(dotPos[0], dotPos[1])
+        }
+        perimeter.closePath()
+        return perimeter
     }
 
     // returns the center pos of the shape

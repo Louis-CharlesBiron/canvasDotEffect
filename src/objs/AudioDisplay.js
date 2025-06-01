@@ -109,7 +109,7 @@ class AudioDisplay extends _BaseObj {
 
     // updates the "transformable" attribute according to whether any rotation/scale are setted
     #updateTransformable() {
-        const hasTransforms = this._rotation || this._scale[0]!=1 || this._scale[0]!=1
+        const hasTransforms = this._rotation || this._scale[0]!=1 || this._scale[1]!=1
         if (hasTransforms && this._transformable < 2) this._transformable = 2
         else if (!hasTransforms && this._transformable) this._transformable--
     }

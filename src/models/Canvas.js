@@ -59,7 +59,7 @@ class Canvas {
         this.setSize(frameCBR.width, frameCBR.height)                 // init size
         this.#initStyles()                                            // init styles
         this._typingDevice = new TypingDevice()                       // keyboard info
-        this._mouse = new Mouse()                                     // mouse info
+        this._mouse = new Mouse(this._ctx)                            // mouse info
         this._offset = this.updateOffset()                            // cvs page offset
         this._render = new Render(this._ctx)                          // render instance
         this._anims = []                                              // current animations
@@ -618,6 +618,16 @@ class Canvas {
     // Returns the px values of the provided pourcent values. PourcentilePos should be an array(2) of numbers between 0 and 1. ReferenceDims is the reference dimensions used to calculate the values
     getResponsivePos(pourcentilePos, referenceDims=this.size) {
         return [pourcentilePos[0]*referenceDims[0], pourcentilePos[1]*referenceDims[1]]
+    }
+
+    // Enables checks for mouse enter/leave listeners every frame
+    enableAccurateMouseMoveListenersMode() {
+        this.mouseMoveListenersOptimizationEnabled = false
+    }
+
+    // Disables checks for mouse enter/leave listeners every frame (only checks on mouse movements)
+    disableAccurateMouseMoveListenersMode() {
+        this.mouseMoveListenersOptimizationEnabled = true
     }
     
 	get cvs() {return this._cvs}

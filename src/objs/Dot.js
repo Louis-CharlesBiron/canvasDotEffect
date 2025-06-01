@@ -122,15 +122,28 @@ class Dot extends _Obj {
         return dot
     }
 
-    // returns whether the provided pos is in the dot pos, positions, padding, circularDetection
-    isWithin(pos, circularDetection, padding, rotation, scale) {
-        return super.isWithin(pos, this.getBounds(padding, rotation, scale), circularDetection)
+    // returns whether the provided pos is in the dot pos, positions, padding,
+    isWithin(pos, padding, rotation, scale) {
+        return super.isWithin(pos, this.getBounds(padding, rotation, scale))
+    }
+
+    // returns whether the provided pos is in the image
+    isWithinAccurate(pos, axisPadding, rotation, scale) {
+        return this.ctx.isPointInPath(this.getBoundsAccurate(axisPadding, rotation, scale), pos[0], pos[1])
     }
 
     // returns the raw a minimal rectangular area containing all of the dot (no scale/rotation)
     #getRectBounds() {
         const pos = this._pos, radius = this._radius
         return [[pos[0]-radius, pos[1]-radius], [pos[0]+radius, pos[1]+radius]]
+    }
+
+    // returns the accurate area containing all of the dot
+    getBoundsAccurate(axisPadding, rotation=this._rotation, scale=this._scale) {
+        const radius = this._radius
+        axisPadding??=0
+        axisPadding = typeof axisPadding=="number" ? [axisPadding, axisPadding] : [axisPadding[0], axisPadding[1]??axisPadding[0]]
+        return Render.getEllispe(this._pos, radius*scale[0]+axisPadding[0], radius*scale[1]+axisPadding[1], CDEUtils.toRad(rotation))
     }
 
     // returns the center pos of the image
@@ -144,7 +157,7 @@ class Dot extends _Obj {
         return super.getBounds(positions, padding, (scale[0]!=scale[1]&&(scale[0]!=1||scale[1]!=1))?rotation:0, scale, super.getCenter(positions))
     }
 
-    get ctx() {return this._parent.parent.ctx}
+    get ctx() {return this.cvs.ctx}
     get cvs() {return this._parent.parent||this._parent}
     get render() {return this.cvs.render}
     get limit() {return this._parent.limit}

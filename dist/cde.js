@@ -371,9 +371,21 @@ export class CanvasUtils {
         obj.rotation = offset-CDEUtils.toDeg(Math.atan2(obj.pos[1]-t[1], -(obj.pos[0]-t[0])))
     }
 
+    // Draws the minimal rectangular area fitting the provided object
     static drawOutline(render, obj, color=[255,0,0,1]) {
         const bounds = obj.getBounds()
         render.batchStroke(Render.getPositionsRect(bounds[0], bounds[1]), color)
+    }
+
+    
+    // Draws the minimal rectangular area fitting the provided object
+    static drawOutlineAccurate(render, obj, color=[0,50,255,1]) {
+        render.batchStroke(obj.getBoundsAccurate(), color)
+    }
+
+    // Draws a dot at the provided pos
+    static drawPos(render, pos, color=[255,0,0,1], radius) {
+        render.batchStroke(Render.getArc(pos, radius), color)
     }
 
     // Provides quick generic shape declarations
@@ -1381,8 +1393,9 @@ export class Mouse {
     static LISTENER_TYPES = {CLICK:0, DOWN:0, UP:1, MAIN_DOWN:0, MAIN_UP:1, MIDDLE_DOWN:2, MIDDLE_UP:3, RIGHT_DOWN:4, RIGHT_UP:5, EXTRA_FOWARD_DOWN:6, EXTRA_FOWARD_UP:7, EXTRA_BACK_DOWN:8, EXTRA_BACK_UP:9, ENTER:10, LEAVE:11, EXIT:11}
     
     #fixedLastPos = [0,0]
-    #wasWithin = false
-    constructor() {
+    #wasWithin = []
+    constructor(ctx) {
+        this._ctx = ctx                   // canvas 2d context
         this._valid = false               // whether the mouse pos is valid (is inside the canvas and initialized)
         this._x = null                    // current x value of the mouse on the canvas
         this._y = null                    // current y value of the mouse on the canvas
@@ -1487,11 +1500,12 @@ export class Mouse {
      * @param {canvas object - [[x1,y1],[x2,y2]]} obj: Either a canvas object or a positions array 
      * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
      * @param {Function} callback: a custom function called upon event trigger. (obj, mousePos)=> 
+     * @param {Boolean} useAccurateBounds: If true, uses the obj's accurate bounds calculation
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
      * @returns The listener id
      */
-    addListener(obj, type, callback, forceStaticPositions) {
-        const listener = [forceStaticPositions?obj.getBounds():obj, callback, Mouse.#LISTENER_ID_GIVER++]
+    addListener(obj, type, callback, useAccurateBounds=false, forceStaticPositions=false) {
+        const hasAccurateBounds = useAccurateBounds&&obj.getBoundsAccurate, listener = [forceStaticPositions?(hasAccurateBounds?obj.getBoundsAccurate():obj.getBounds()):obj, callback, hasAccurateBounds, Mouse.#LISTENER_ID_GIVER++]
         if (!this._listeners[type]) this._listeners[type] = []
         this._listeners[type].push(listener)
         return listener[2]
@@ -1509,18 +1523,19 @@ export class Mouse {
                 if (type==TYPES.LEAVE) validation = 1
 
                 for (let i=0;i<typedListeners_ll;i++) {
-                    const [obj, callback] = typedListeners[i], isPositionsArray = Array.isArray(obj), nowWithin = ((!isPositionsArray && obj.isWithin(mousePos)) || (isPositionsArray && this.isWithin(mousePos, obj)))
+                    const typedListener = typedListeners[i], obj = typedListener[0], callback = typedListener[1], hasAccurateBounds = typedListener[2], isPath2D = obj instanceof Path2D, isStaticBounds = Array.isArray(obj)||isPath2D,
+                           nowWithin = ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))
                     
                     if (this._moveListenersOptimizationEnabled) {
-                        if ((nowWithin*2)+((!isPositionsArray && obj.isWithin(this.#fixedLastPos)) || (isPositionsArray && this.isWithin(this.#fixedLastPos, obj)))==validation) callback(obj, mousePos)
+                        if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this.#fixedLastPos):obj.isWithin(this.#fixedLastPos))) || (isStaticBounds && this.isWithin(this.#fixedLastPos, obj, isPath2D)))==validation) callback(obj, mousePos)
                     } else {
-                        if (!this.#wasWithin && nowWithin && validation==2) {
-                            this.#wasWithin = true
-                            callback(obj, mousePos)
-                        }
-                        else if (!nowWithin && this.#wasWithin && validation==1) {
-                            this.#wasWithin = false
-                            callback(obj, mousePos)
+                        const wasWithin = this.#wasWithin[typedListener[3]]
+                        if (!wasWithin && nowWithin) {
+                            this.#wasWithin[typedListener[3]] = true
+                            if (validation==2) callback(obj, mousePos)
+                        } else if (!nowWithin && wasWithin) {
+                            this.#wasWithin[typedListener[3]] = false
+                            if (validation==1) callback(obj, mousePos)
                         }
                     }
                 }
@@ -1529,8 +1544,8 @@ export class Mouse {
                 else if (type==TYPES.MAIN_UP||type==TYPES.RIGHT_UP||type==TYPES.MIDDLE_UP||type==TYPES.EXTRA_BACK_UP||type==TYPES.EXTRA_FOWARD_UP) validation = !this._clicked
 
                 for (let i=0;i<typedListeners_ll;i++) {
-                    const [obj, callback] = typedListeners[i], isPositionsArray = Array.isArray(obj)
-                    if (validation && ((!isPositionsArray && obj.isWithin(mousePos)) || (isPositionsArray && this.isWithin(mousePos, obj)))) callback(obj, mousePos)
+                    const [obj, callback, hasAccurateBounds] = typedListeners[i], isPath2D = obj instanceof Path2D, isStaticBounds = Array.isArray(obj)||isPath2D
+                    if (validation && ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))) callback(obj, mousePos)
                 }
             }
         }
@@ -1542,12 +1557,14 @@ export class Mouse {
      * @param {Number} id: listener's id 
      * @param {canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
      * @param {Function?} newCallback: if provided, updates the listeners's callback to this value
+     * @param {Boolean} useAccurateBounds: If true, uses the obj's accurate bounds calculation
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
      */
-    updateListener(type, id, newObj, newCallback, forceStaticPositions) {
-        const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[2]==(id?.[2]??id))]
-        if (newObj) listener[0] = forceStaticPositions?newObj.getBounds():newObj
+    updateListener(type, id, newObj, newCallback, useAccurateBounds, forceStaticPositions=false) {
+        const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[3]==(id?.[3]??id))]
+        if (newObj) listener[0] = forceStaticPositions?((useAccurateBounds && obj.getBoundsAccurate) ? obj.getBoundsAccurate() : obj.getBounds()) : obj
         if (newCallback) listener[1] = newCallback
+        if (CDEUtils.isDefined(useAccurateBounds)) listener[2] = useAccurateBounds
     }
 
     /**
@@ -1556,15 +1573,17 @@ export class Mouse {
      * @param {Number | String} id: Either the listener's id or * to remove all listeners of this type 
      */
     removeListener(type, id) {
-        this._listeners[type] = id=="*"?[]:this._listeners[type].filter(l=>l[2]!==(id?.[2]??id))
+        this._listeners[type] = id=="*"?[]:this._listeners[type].filter(l=>l[3]!==(id?.[3]??id))
     }
 
     // returns whether the provided pos is inside the provided positions
-    isWithin(pos, positions) {
+    isWithin(pos, positions, isPath2D) {
         const [x,y]=pos
-        return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
+        if (isPath2D) return this._ctx.isPointInPath(positions, pos[0], pos[1])
+        else return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
     }
 
+    get ctx() {return this._ctx}
 	get valid() {return this._valid}
 	get x() {return this._x}
 	get y() {return this._y}
@@ -1586,6 +1605,7 @@ export class Mouse {
 	get listeners() {return this._listeners}
     get moveListenersOptimizationEnabled() {return this._moveListenersOptimizationEnabled}
 
+    set ctx(ctx) {this._ctx = ctx}
 	set valid(valid) {this._valid = valid}
 	set lastX(_lastX) {this._lastX = _lastX}
 	set lastY(_lastY) {this._lastY = _lastY}
@@ -1701,9 +1721,9 @@ export class Render {
     }
 
     // instanciates and returns a path containing an ellipse
-    static getEllispe(centerPos, radiusX, radiusY, startRadian=0, endRadian=CDEUtils.CIRC, counterclockwise=false) {
+    static getEllispe(centerPos, radiusX, radiusY, rotationRadian=0, startRadian=0, endRadian=CDEUtils.CIRC, counterclockwise=false) {
         const path = new Path2D()
-        path.ellipse(centerPos[0], centerPos[1], radiusX, radiusY, startRadian, endRadian, counterclockwise)
+        path.ellipse(centerPos[0], centerPos[1], radiusX, radiusY, rotationRadian, startRadian, endRadian, counterclockwise)
         return path
     }
 
@@ -2252,7 +2272,7 @@ export class Canvas {
         this.setSize(frameCBR.width, frameCBR.height)                 // init size
         this.#initStyles()                                            // init styles
         this._typingDevice = new TypingDevice()                       // keyboard info
-        this._mouse = new Mouse()                                     // mouse info
+        this._mouse = new Mouse(this._ctx)                            // mouse info
         this._offset = this.updateOffset()                            // cvs page offset
         this._render = new Render(this._ctx)                          // render instance
         this._anims = []                                              // current animations
@@ -2812,6 +2832,16 @@ export class Canvas {
     getResponsivePos(pourcentilePos, referenceDims=this.size) {
         return [pourcentilePos[0]*referenceDims[0], pourcentilePos[1]*referenceDims[1]]
     }
+
+    // Enables checks for mouse enter/leave listeners every frame
+    enableAccurateMouseMoveListenersMode() {
+        this.mouseMoveListenersOptimizationEnabled = false
+    }
+
+    // Disables checks for mouse enter/leave listeners every frame (only checks on mouse movements)
+    disableAccurateMouseMoveListenersMode() {
+        this.mouseMoveListenersOptimizationEnabled = true
+    }
     
 	get cvs() {return this._cvs}
 	get frame() {return this._frame}
@@ -3198,15 +3228,12 @@ export class _BaseObj extends _HasColor {
         return CDEUtils.getPositionsCenter(positions)
     }
 
-    // returns the minimal rectangular area defined by the provided positions
-    getBounds(positions, padding, rotation, scale, centerPos=this.getCenter(positions)) {
+    // returns the 4 corners of the provided positions accounting for rotation and scale. corners -> [TOP-LEFT, BOTTOM-RIGHT, TOP-RIGHT, BOTTOM-LEFT]
+    getCorners(positions, padding=0, rotation, scale, centerPos=this.getCenter(positions)) {
         const rotatePos = CDEUtils.rotatePos, scalePos = CDEUtils.scalePos
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
 
-        if (scale || rotation) {
-            positions[2] = [positions[1][0], positions[0][1]]
-            positions[3] = [positions[0][0], positions[1][1]]
-        }
+        positions[2] = [positions[1][0], positions[0][1]]
+        positions[3] = [positions[0][0], positions[1][1]]
         
         if (scale) {
             positions[0] = scalePos(positions[0], scale, centerPos)
@@ -3214,13 +3241,35 @@ export class _BaseObj extends _HasColor {
             positions[2] = scalePos(positions[2], scale, centerPos)
             positions[3] = scalePos(positions[3], scale, centerPos)
         }
-
         if (rotation) {
             positions[0] = rotatePos(positions[0], rotation, centerPos)
             positions[1] = rotatePos(positions[1], rotation, centerPos)
             positions[2] = rotatePos(positions[2], rotation, centerPos)
             positions[3] = rotatePos(positions[3], rotation, centerPos)
         }
+
+        padding??=0
+        if (padding) {
+            padding = typeof padding=="number" ? [padding, padding, padding, padding] : [padding[0],padding[1]??padding[0], padding[2]??padding[0], padding[3]??padding[1]]
+
+            positions[0][0] -= padding[3]
+            positions[0][1] -= padding[0]
+            positions[2][0] += padding[1]
+            positions[2][1] -= padding[0]
+            positions[1][0] += padding[1]
+            positions[1][1] += padding[2]
+            positions[3][0] -= padding[3]
+            positions[3][1] += padding[2]
+        }
+
+        return positions
+    }
+
+    // returns the minimal rectangular area defined by the provided positions
+    getBounds(positions, padding, rotation, scale, centerPos=this.getCenter(positions)) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+
+        positions = this.getCorners(positions, 0, rotation, scale, centerPos)
 
         const p_ll = positions.length
         for (let i=0;i<p_ll; i++) {
@@ -3442,7 +3491,7 @@ export class AudioDisplay extends _BaseObj {
 
     // updates the "transformable" attribute according to whether any rotation/scale are setted
     #updateTransformable() {
-        const hasTransforms = this._rotation || this._scale[0]!=1 || this._scale[0]!=1
+        const hasTransforms = this._rotation || this._scale[0]!=1 || this._scale[1]!=1
         if (hasTransforms && this._transformable < 2) this._transformable = 2
         else if (!hasTransforms && this._transformable) this._transformable--
     }
@@ -4100,14 +4149,32 @@ export class ImageDisplay extends _BaseObj {
     }
 
     // returns whether the provided pos is in the image
-    isWithin(pos, padding, rotation=0, scale) {
-        return super.isWithin(pos, this.getBounds(padding, rotation&&this._rotation, scale), padding)
+    isWithin(pos, padding, rotation, scale) {
+        return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
+    }
+
+    // returns whether the provided pos is in the image
+    isWithinAccurate(pos, padding, rotation, scale) {
+        return this.ctx.isPointInPath(this.getBoundsAccurate(padding, rotation, scale), pos[0], pos[1])
     }
 
     // returns the raw a minimal rectangular area containing all of the image (no scale/rotation)
     #getRectBounds() {
         const size = this._size, pos = this._pos
         return [pos, [pos[0]+size[0], pos[1]+size[1]]]
+    }
+
+    // returns the accurate area containing all of the image
+    getBoundsAccurate(padding, rotation=this._rotation, scale=this._scale) {
+        const path = new Path2D(), positions = this.#getRectBounds(), corners = super.getCorners(positions, padding, rotation, scale, super.getCenter(positions))
+
+        path.moveTo(corners[0][0], corners[0][1])
+        path.lineTo(corners[2][0], corners[2][1])
+        path.lineTo(corners[1][0], corners[1][1])
+        path.lineTo(corners[3][0], corners[3][1])
+        path.lineTo(corners[0][0], corners[0][1])
+
+        return path
     }
 
     // returns the center pos of the image
@@ -4121,6 +4188,7 @@ export class ImageDisplay extends _BaseObj {
         return super.getBounds(positions, padding, rotation, scale, super.getCenter(positions))
     }
 
+	get ctx() {return this._parent._ctx}
 	get size() {return this._size||[0,0]}
 	get size_() {return this._size?CDEUtils.unlinkArr2(this._size):[0,0]}
     get width() {return this._size[0]}
@@ -4207,7 +4275,7 @@ export class TextDisplay extends _BaseObj {
 
     #resize(lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING) {
         this._size = this.getSize()
-        this.#lineCount = this.getTextValue().split("\n").filter(l=>l).length
+        this.#lineCount = this.getTextValue().split("\n").length
         if (this.#lineCount-1) this._size[1] -= lineHeightPadding
         this._lineHeight = this.trueSize[1]/this.#lineCount
     }
@@ -4239,20 +4307,32 @@ export class TextDisplay extends _BaseObj {
 
     // Returns the width and height of the text, according to the textStyles, excluding the scale or rotation
     getSize(textStyles=this._textStyles, text=this.getTextValue(), lineHeightPadding) {
-        return TextDisplay.getSize(textStyles, text, this.#lineCount, lineHeightPadding, this._maxWidth)
+        return TextDisplay.getSize(textStyles, text, lineHeightPadding, this._maxWidth)
     }
 
     // Returns the width and height of the given text, according to the textStyles, including potential scaling
-    static getSize(textStyles, text, lineCount, lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING, maxWidth, scale=[1,1]) {
+    static getSize(textStyles, text, lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING, maxWidth, scale=[1,1]) {
         TextStyles.apply(TextDisplay.MEASUREMENT_CTX, ...textStyles.getStyles())
-        const lines = text.split("\n").filter(l=>l), l_ll = lineCount = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
+        const lines = text.replace(/./g,1).split("\n"), l_ll = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
               {width, actualBoundingBoxAscent, actualBoundingBoxDescent} = TextDisplay.MEASUREMENT_CTX.measureText(longestText)
-        return [CDEUtils.round(maxWidth||width, 2)*scale[0], (actualBoundingBoxAscent+actualBoundingBoxDescent)*l_ll*scale[1]+(l_ll*lineHeightPadding)]
+        return [CDEUtils.round(maxWidth||width, 4)*scale[0], (actualBoundingBoxAscent+actualBoundingBoxDescent)*l_ll*scale[1]+(l_ll*lineHeightPadding)]
+    }
+
+    // Returns the width and height of every line of the given text, according to the textStyles, excluding scaling/rotation
+    #getAllSizes(lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING) {
+        const measureCtx = TextDisplay.MEASUREMENT_CTX, maxWidth = this._maxWidth, lines = this.getTextValue().split("\n"), l_ll = lines.length, resultasda = new Array(l_ll)
+        TextStyles.apply(measureCtx, ...this._textStyles.getStyles())
+
+        for (let i=0;i<l_ll;i++) {
+            const lineRects = measureCtx.measureText("1".repeat(lines[i].length)), width = lineRects.width
+            resultasda[i] = [maxWidth&&width>maxWidth?maxWidth:width, lineRects.actualBoundingBoxAscent+lineRects.actualBoundingBoxDescent+lineHeightPadding]
+        }
+        return resultasda
     }
 
     // Returns the current text value
     getTextValue() {
-        return CDEUtils.isFunction(this._text) ? this._text(this._parent, this) : this._text
+        return (CDEUtils.isFunction(this._text) ? this._text(this._parent, this) : this._text).trim()
     }
 
     // returns a separate copy of this textDisplay instance
@@ -4280,11 +4360,47 @@ export class TextDisplay extends _BaseObj {
     isWithin(pos, padding, rotation, scale) {
         return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
     }
+
+    // returns whether the provided pos is in the text
+    isWithinAccurate(pos, paddingX, rotation, scale) {
+        return this.ctx.isPointInPath(this.getBoundsAccurate(paddingX, rotation, scale), pos[0], pos[1])
+    }
     
     // returns the raw a minimal rectangular area containing all of the text (no scale/rotation)
     #getRectBounds() {
         const size = this._size, pos = this._pos, halfLine = (TextDisplay.DEFAULT_LINE_HEIGHT_PADDING/2)+this._lineHeight/2
         return [[pos[0]-size[0]/2, pos[1]-halfLine/2-3], [pos[0]+size[0]/2, pos[1]+size[1]-halfLine]]
+    }
+
+    // returns the accurate area containing all of the text
+    getBoundsAccurate(paddingX, rotation=this._rotation, scale=this._scale, lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING, lineWidthOffset=this.render.currentCtxStyles[0]) {
+        const path = new Path2D(), sizes = this.#getAllSizes(), s_ll = sizes.length, top = this._pos[1]-(lineHeightPadding/4+this._lineHeight/4)-lineWidthOffset, cx = this._pos[0]-lineWidthOffset/2
+        
+        if (paddingX) for (let i=0;i<s_ll;i++) sizes[i][0] += paddingX
+
+        let height = (sizes[0][1]-((s_ll-1)?lineHeightPadding/s_ll:lineHeightPadding/4)), startHalfSize = sizes[0][0]/2, finalSize = sizes[s_ll-1][0], lastX = cx+startHalfSize, points = [[cx-startHalfSize, top], [lastX, top]]
+
+        for (let i=1;i<s_ll;i++) {
+            const newY = top+height*i
+            points.push([lastX, newY], [lastX=cx+(sizes[i][0]/2), newY])
+        }
+
+        points.push([lastX, top+height*s_ll-lineHeightPadding/2])
+        points.push([lastX-finalSize, top+height*s_ll-lineHeightPadding/2])
+        points.push([lastX=lastX-finalSize, top+height*(s_ll-1)])
+
+        for (let i=s_ll-1;i>0;i--) points.push([cx-sizes[i-1][0]/2, top+height*i], [cx-sizes[i-1][0]/2, top+height*(i-1)])
+
+        for (let i=0;i<points.length;i++) {
+            let pos = points[i]
+            if (scale[0]!=1||scale[1]!=1) pos = CDEUtils.scalePos(pos, scale, this._pos)
+            if (rotation) pos = CDEUtils.rotatePos(pos, rotation, this._pos)
+
+            if (i) path.lineTo(pos[0], pos[1])
+            else path.moveTo(pos[0], pos[1])
+        }
+
+        return path
     }
 
     // returns the center of the text
@@ -4296,8 +4412,9 @@ export class TextDisplay extends _BaseObj {
     getBounds(padding, rotation=this._rotation, scale=this._scale) {
         return super.getBounds(this.#getRectBounds(), padding, rotation, scale, this._pos)
     }
-
-	get text() {return this._text}
+    get ctx() {return this._parent.ctx}
+    get render() {return this._parent.render}
+	get text() {return this._text+""}
 	get textStyles() {return this._textStyles}
 	get drawMethod() {return this._drawMethod}
 	get maxWidth() {return this._maxWidth}
@@ -4307,9 +4424,12 @@ export class TextDisplay extends _BaseObj {
     get render() {return this._parent.render}
     get lineCount() {return this.#lineCount}
 
-	set text(_text) {
-        this._text = _text||""
+	set text(text) {
+        const lastYScale = this._scale[1]
+        this._text = ""+text||""
+        this._scale[1] = 1
         this.#resize()
+        this._scale[1] = lastYScale
     }
 	set textStyles(_textStyles) {
         this._textStyles = _textStyles??this.render.defaultTextProfile
@@ -4633,9 +4753,9 @@ export class _Obj extends _BaseObj {
         return CDEUtils.isFunction(this._initRadius) ? this._initRadius(this._parent instanceof Canvas?this:this._parent, this) : this._initRadius??null
     }
 
-    // returns whether the provided pos is inside the obj (if "circularDetection" is a number, it acts as a multiplier of the radius)
-    isWithin(pos, positions, circularDetection) {
-        return (circularDetection ? CDEUtils.getDist(pos[0], pos[1], this.x, this.y) <= (this.radius||1)*(+circularDetection==1?1.025:+circularDetection) : super.isWithin(pos, positions))
+    // returns whether the provided pos is inside the obj
+    isWithin(pos, positions) {
+        return super.isWithin(pos, positions)
     }
 
     // returns the center pos of the provided positions
@@ -4875,19 +4995,15 @@ export class Shape extends _Obj {
         }, time, easing), isUnique, force)
     }
 
-    // returns whether the provided pos is inside the area delimited by the dots permimeter
-    isWithin(pos) {
+    // returns whether the provided pos is inside the minimal rectangular area containing all of the shape's dots
+    isWithin(pos, padding) {
+        return super.isWithin(pos, this.getBounds(padding), padding)
+    }
+
+    // returns whether the provided pos is inside the area delimited by the dots perimeter
+    isWithinAccurate(pos) {
         const dots = this._dots, d_ll = dots.length
-        if (d_ll > 2) {
-            const permimeter = new Path2D(), firstDotPos = dots[0].pos
-            permimeter.moveTo(firstDotPos[0], firstDotPos[1])
-            for (let i=1;i<d_ll;i++) {
-                const dotPos = dots[i].pos
-                permimeter.lineTo(dotPos[0], dotPos[1])
-            }
-            permimeter.closePath()
-            return this.ctx.isPointInPath(permimeter, pos[0], pos[1])
-        }
+        if (d_ll > 2) return this.ctx.isPointInPath(this.getBoundsAccurate(), pos[0], pos[1])
         return false
     }
 
@@ -4895,6 +5011,18 @@ export class Shape extends _Obj {
     #getRectBounds() {
         const rangeX = CDEUtils.getMinMax(this._dots, "x"), rangeY = CDEUtils.getMinMax(this._dots, "y")
         return [[rangeX[0],rangeY[0]], [rangeX[1],rangeY[1]]]
+    }
+
+    // returns the accurate area delimited by the dots perimeter
+    getBoundsAccurate() {
+        const dots = this._dots, d_ll = dots.length, perimeter = new Path2D(), firstDotPos = dots[0].pos
+        perimeter.moveTo(firstDotPos[0], firstDotPos[1])
+        for (let i=1;i<d_ll;i++) {
+            const dotPos = dots[i].pos
+            perimeter.lineTo(dotPos[0], dotPos[1])
+        }
+        perimeter.closePath()
+        return perimeter
     }
 
     // returns the center pos of the shape
@@ -5527,15 +5655,28 @@ export class Dot extends _Obj {
         return dot
     }
 
-    // returns whether the provided pos is in the dot pos, positions, padding, circularDetection
-    isWithin(pos, circularDetection, padding, rotation, scale) {
-        return super.isWithin(pos, this.getBounds(padding, rotation, scale), circularDetection)
+    // returns whether the provided pos is in the dot pos, positions, padding,
+    isWithin(pos, padding, rotation, scale) {
+        return super.isWithin(pos, this.getBounds(padding, rotation, scale))
+    }
+
+    // returns whether the provided pos is in the image
+    isWithinAccurate(pos, axisPadding, rotation, scale) {
+        return this.ctx.isPointInPath(this.getBoundsAccurate(axisPadding, rotation, scale), pos[0], pos[1])
     }
 
     // returns the raw a minimal rectangular area containing all of the dot (no scale/rotation)
     #getRectBounds() {
         const pos = this._pos, radius = this._radius
         return [[pos[0]-radius, pos[1]-radius], [pos[0]+radius, pos[1]+radius]]
+    }
+
+    // returns the accurate area containing all of the dot
+    getBoundsAccurate(axisPadding, rotation=this._rotation, scale=this._scale) {
+        const radius = this._radius
+        axisPadding??=0
+        axisPadding = typeof axisPadding=="number" ? [axisPadding, axisPadding] : [axisPadding[0], axisPadding[1]??axisPadding[0]]
+        return Render.getEllispe(this._pos, radius*scale[0]+axisPadding[0], radius*scale[1]+axisPadding[1], CDEUtils.toRad(rotation))
     }
 
     // returns the center pos of the image
@@ -5549,7 +5690,7 @@ export class Dot extends _Obj {
         return super.getBounds(positions, padding, (scale[0]!=scale[1]&&(scale[0]!=1||scale[1]!=1))?rotation:0, scale, super.getCenter(positions))
     }
 
-    get ctx() {return this._parent.parent.ctx}
+    get ctx() {return this.cvs.ctx}
     get cvs() {return this._parent.parent||this._parent}
     get render() {return this.cvs.render}
     get limit() {return this._parent.limit}

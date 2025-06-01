@@ -222,14 +222,32 @@ class ImageDisplay extends _BaseObj {
     }
 
     // returns whether the provided pos is in the image
-    isWithin(pos, padding, rotation=0, scale) {
-        return super.isWithin(pos, this.getBounds(padding, rotation&&this._rotation, scale), padding)
+    isWithin(pos, padding, rotation, scale) {
+        return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
+    }
+
+    // returns whether the provided pos is in the image
+    isWithinAccurate(pos, padding, rotation, scale) {
+        return this.ctx.isPointInPath(this.getBoundsAccurate(padding, rotation, scale), pos[0], pos[1])
     }
 
     // returns the raw a minimal rectangular area containing all of the image (no scale/rotation)
     #getRectBounds() {
         const size = this._size, pos = this._pos
         return [pos, [pos[0]+size[0], pos[1]+size[1]]]
+    }
+
+    // returns the accurate area containing all of the image
+    getBoundsAccurate(padding, rotation=this._rotation, scale=this._scale) {
+        const path = new Path2D(), positions = this.#getRectBounds(), corners = super.getCorners(positions, padding, rotation, scale, super.getCenter(positions))
+
+        path.moveTo(corners[0][0], corners[0][1])
+        path.lineTo(corners[2][0], corners[2][1])
+        path.lineTo(corners[1][0], corners[1][1])
+        path.lineTo(corners[3][0], corners[3][1])
+        path.lineTo(corners[0][0], corners[0][1])
+
+        return path
     }
 
     // returns the center pos of the image
@@ -243,6 +261,7 @@ class ImageDisplay extends _BaseObj {
         return super.getBounds(positions, padding, rotation, scale, super.getCenter(positions))
     }
 
+	get ctx() {return this._parent._ctx}
 	get size() {return this._size||[0,0]}
 	get size_() {return this._size?CDEUtils.unlinkArr2(this._size):[0,0]}
     get width() {return this._size[0]}

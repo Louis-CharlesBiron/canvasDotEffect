@@ -137,9 +137,21 @@ class CanvasUtils {
         obj.rotation = offset-CDEUtils.toDeg(Math.atan2(obj.pos[1]-t[1], -(obj.pos[0]-t[0])))
     }
 
+    // Draws the minimal rectangular area fitting the provided object
     static drawOutline(render, obj, color=[255,0,0,1]) {
         const bounds = obj.getBounds()
         render.batchStroke(Render.getPositionsRect(bounds[0], bounds[1]), color)
+    }
+
+    
+    // Draws the minimal rectangular area fitting the provided object
+    static drawOutlineAccurate(render, obj, color=[0,50,255,1]) {
+        render.batchStroke(obj.getBoundsAccurate(), color)
+    }
+
+    // Draws a dot at the provided pos
+    static drawPos(render, pos, color=[255,0,0,1], radius) {
+        render.batchStroke(Render.getArc(pos, radius), color)
     }
 
     // Provides quick generic shape declarations

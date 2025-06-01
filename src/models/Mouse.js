@@ -12,8 +12,9 @@ class Mouse {
     static LISTENER_TYPES = {CLICK:0, DOWN:0, UP:1, MAIN_DOWN:0, MAIN_UP:1, MIDDLE_DOWN:2, MIDDLE_UP:3, RIGHT_DOWN:4, RIGHT_UP:5, EXTRA_FOWARD_DOWN:6, EXTRA_FOWARD_UP:7, EXTRA_BACK_DOWN:8, EXTRA_BACK_UP:9, ENTER:10, LEAVE:11, EXIT:11}
     
     #fixedLastPos = [0,0]
-    #wasWithin = false
-    constructor() {
+    #wasWithin = []
+    constructor(ctx) {
+        this._ctx = ctx                   // canvas 2d context
         this._valid = false               // whether the mouse pos is valid (is inside the canvas and initialized)
         this._x = null                    // current x value of the mouse on the canvas
         this._y = null                    // current y value of the mouse on the canvas
@@ -118,11 +119,12 @@ class Mouse {
      * @param {canvas object - [[x1,y1],[x2,y2]]} obj: Either a canvas object or a positions array 
      * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
      * @param {Function} callback: a custom function called upon event trigger. (obj, mousePos)=> 
+     * @param {Boolean} useAccurateBounds: If true, uses the obj's accurate bounds calculation
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
      * @returns The listener id
      */
-    addListener(obj, type, callback, forceStaticPositions) {
-        const listener = [forceStaticPositions?obj.getBounds():obj, callback, Mouse.#LISTENER_ID_GIVER++]
+    addListener(obj, type, callback, useAccurateBounds=false, forceStaticPositions=false) {
+        const hasAccurateBounds = useAccurateBounds&&obj.getBoundsAccurate, listener = [forceStaticPositions?(hasAccurateBounds?obj.getBoundsAccurate():obj.getBounds()):obj, callback, hasAccurateBounds, Mouse.#LISTENER_ID_GIVER++]
         if (!this._listeners[type]) this._listeners[type] = []
         this._listeners[type].push(listener)
         return listener[2]
@@ -140,18 +142,19 @@ class Mouse {
                 if (type==TYPES.LEAVE) validation = 1
 
                 for (let i=0;i<typedListeners_ll;i++) {
-                    const [obj, callback] = typedListeners[i], isPositionsArray = Array.isArray(obj), nowWithin = ((!isPositionsArray && obj.isWithin(mousePos)) || (isPositionsArray && this.isWithin(mousePos, obj)))
+                    const typedListener = typedListeners[i], obj = typedListener[0], callback = typedListener[1], hasAccurateBounds = typedListener[2], isPath2D = obj instanceof Path2D, isStaticBounds = Array.isArray(obj)||isPath2D,
+                           nowWithin = ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))
                     
                     if (this._moveListenersOptimizationEnabled) {
-                        if ((nowWithin*2)+((!isPositionsArray && obj.isWithin(this.#fixedLastPos)) || (isPositionsArray && this.isWithin(this.#fixedLastPos, obj)))==validation) callback(obj, mousePos)
+                        if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this.#fixedLastPos):obj.isWithin(this.#fixedLastPos))) || (isStaticBounds && this.isWithin(this.#fixedLastPos, obj, isPath2D)))==validation) callback(obj, mousePos)
                     } else {
-                        if (!this.#wasWithin && nowWithin && validation==2) {
-                            this.#wasWithin = true
-                            callback(obj, mousePos)
-                        }
-                        else if (!nowWithin && this.#wasWithin && validation==1) {
-                            this.#wasWithin = false
-                            callback(obj, mousePos)
+                        const wasWithin = this.#wasWithin[typedListener[3]]
+                        if (!wasWithin && nowWithin) {
+                            this.#wasWithin[typedListener[3]] = true
+                            if (validation==2) callback(obj, mousePos)
+                        } else if (!nowWithin && wasWithin) {
+                            this.#wasWithin[typedListener[3]] = false
+                            if (validation==1) callback(obj, mousePos)
                         }
                     }
                 }
@@ -160,8 +163,8 @@ class Mouse {
                 else if (type==TYPES.MAIN_UP||type==TYPES.RIGHT_UP||type==TYPES.MIDDLE_UP||type==TYPES.EXTRA_BACK_UP||type==TYPES.EXTRA_FOWARD_UP) validation = !this._clicked
 
                 for (let i=0;i<typedListeners_ll;i++) {
-                    const [obj, callback] = typedListeners[i], isPositionsArray = Array.isArray(obj)
-                    if (validation && ((!isPositionsArray && obj.isWithin(mousePos)) || (isPositionsArray && this.isWithin(mousePos, obj)))) callback(obj, mousePos)
+                    const [obj, callback, hasAccurateBounds] = typedListeners[i], isPath2D = obj instanceof Path2D, isStaticBounds = Array.isArray(obj)||isPath2D
+                    if (validation && ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))) callback(obj, mousePos)
                 }
             }
         }
@@ -173,12 +176,14 @@ class Mouse {
      * @param {Number} id: listener's id 
      * @param {canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
      * @param {Function?} newCallback: if provided, updates the listeners's callback to this value
+     * @param {Boolean} useAccurateBounds: If true, uses the obj's accurate bounds calculation
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
      */
-    updateListener(type, id, newObj, newCallback, forceStaticPositions) {
-        const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[2]==(id?.[2]??id))]
-        if (newObj) listener[0] = forceStaticPositions?newObj.getBounds():newObj
+    updateListener(type, id, newObj, newCallback, useAccurateBounds, forceStaticPositions=false) {
+        const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[3]==(id?.[3]??id))]
+        if (newObj) listener[0] = forceStaticPositions?((useAccurateBounds && obj.getBoundsAccurate) ? obj.getBoundsAccurate() : obj.getBounds()) : obj
         if (newCallback) listener[1] = newCallback
+        if (CDEUtils.isDefined(useAccurateBounds)) listener[2] = useAccurateBounds
     }
 
     /**
@@ -187,15 +192,17 @@ class Mouse {
      * @param {Number | String} id: Either the listener's id or * to remove all listeners of this type 
      */
     removeListener(type, id) {
-        this._listeners[type] = id=="*"?[]:this._listeners[type].filter(l=>l[2]!==(id?.[2]??id))
+        this._listeners[type] = id=="*"?[]:this._listeners[type].filter(l=>l[3]!==(id?.[3]??id))
     }
 
     // returns whether the provided pos is inside the provided positions
-    isWithin(pos, positions) {
+    isWithin(pos, positions, isPath2D) {
         const [x,y]=pos
-        return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
+        if (isPath2D) return this._ctx.isPointInPath(positions, pos[0], pos[1])
+        else return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
     }
 
+    get ctx() {return this._ctx}
 	get valid() {return this._valid}
 	get x() {return this._x}
 	get y() {return this._y}
@@ -217,6 +224,7 @@ class Mouse {
 	get listeners() {return this._listeners}
     get moveListenersOptimizationEnabled() {return this._moveListenersOptimizationEnabled}
 
+    set ctx(ctx) {this._ctx = ctx}
 	set valid(valid) {this._valid = valid}
 	set lastX(_lastX) {this._lastX = _lastX}
 	set lastY(_lastY) {this._lastY = _lastY}
