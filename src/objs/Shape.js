@@ -255,9 +255,9 @@ class Shape extends _Obj {
     }
 
     // returns the minimal rectangular area containing all of the shape
-    getBounds(padding=this._radius) {
+    getBounds(padding=this._radius, rotation, scale, centerPos) {
         const positions = this.#getRectBounds()
-        return super.getBounds(positions, padding)
+        return super.getBounds(positions, padding, rotation, scale, centerPos)
     }
 
     // Empties the shapes of all its dots

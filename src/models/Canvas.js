@@ -22,7 +22,7 @@ class Canvas {
     static DEFAULT_CTX_SETTINGS = {"imageSmoothingEnabled":false, "willReadFrequently":false, "font":TextStyles.DEFAULT_FONT, "letterSpacing":TextStyles.DEFAULT_LETTER_SPACING, "wordSpacing":TextStyles.DEFAULT_WORD_SPACING, "fontVariantCaps":TextStyles.DEFAULT_FONT_VARIANT_CAPS, "direction":TextStyles.DEFAULT_DIRECTION, "fontSretch":TextStyles.DEFAULT_FONT_STRETCH, "fontKerning":TextStyles.DEFAULT_FONT_KERNING, "textAlign":TextStyles.DEFAULT_TEXT_ALIGN, "textBaseline":TextStyles.DEFAULT_TEXT_BASELINE, "textRendering":TextStyles.DEFAULT_TEXT_RENDERING, "lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
-    static DEFAULT_CANVAS_STYLES = {position:"absolute",top:"0",left:"0",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)"}
+    static DEFAULT_CANVAS_STYLES = {position:"absolute",top:"0",left:"0",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)","touch-action":"none","-webkit-user-select":"none","user-select":"none"}
     static STATIC_MODE = 0
     static #ON_LOAD_CALLBACKS = []
     static #ON_FIRST_INTERACT_CALLBACKS = []
@@ -71,6 +71,7 @@ class Canvas {
         style.appendChild(document.createTextNode(`[${Canvas.DEFAULT_CVSFRAMEDE_ATTR}]{position:relative !important;outline: none;}canvas[${Canvas.DEFAULT_CVSDE_ATTR}]{${Object.entries(Canvas.DEFAULT_CANVAS_STYLES).reduce((a,b)=>a+=`${b[0]}:${b[1]};`,"")}}`))
         this._cvs.appendChild(style)
         this._frame.setAttribute("tabindex", 0)
+        this._cvs.setAttribute("draggable", "false")
     }
 
     // sets resize and visibility change listeners on the window
@@ -513,10 +514,10 @@ class Canvas {
     }
 
     // called on any mouse clicks
-    #mouseClicks(cb, e) {
+    #mouseClicks(cb, e, preventOnFirstInteractionTrigger) {
         this._mouse.updateMouseClicks(e)
         if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
-        if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
+        if (!preventOnFirstInteractionTrigger && Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
     }
 
     // defines the onmousedown listener
@@ -533,7 +534,7 @@ class Canvas {
                 this._mouse.updatePos(e, this._offset)
                 this._mouse.calcAngle()            
                 this.#mouseMovements(this.#mouseMoveCB, e)
-                this.#mouseClicks(cb, e)
+                this.#mouseClicks(cb, e, true)
             }
         }, onmousedown=e=>{
             if (!isTouch) this.#mouseClicks(cb, e)
@@ -560,7 +561,12 @@ class Canvas {
                 e.y = CDEUtils.round(changedTouches[0].clientY, 1)
                 e.button = 0
                 this.#mouseClicks(cb, e)
-            }
+
+                this._mouse.invalidate()
+                e.x = Infinity
+                e.y = Infinity
+                this.#mouseMovements(cb, e)
+            }     
         }, onmouseup=e=>{
             if (!isTouch) this.#mouseClicks(cb, e)
             isTouch = false

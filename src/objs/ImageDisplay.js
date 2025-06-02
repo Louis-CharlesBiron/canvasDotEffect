@@ -192,10 +192,10 @@ class ImageDisplay extends _BaseObj {
         const source = this._source
         if (source instanceof HTMLVideoElement) source.pause()
     }
-    
+
     // Plays the source
     static playMedia(source, errorCB) {
-        if (source instanceof HTMLVideoElement || source instanceof HTMLAudioElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>{source.play().catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e, source)})}))
+        if (source instanceof HTMLVideoElement || source instanceof HTMLAudioElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>source.play().catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e, source)})))
     }
     
     // returns the natural size of the source

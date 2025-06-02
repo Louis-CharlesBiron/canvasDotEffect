@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-import {readdirSync, statSync, mkdirSync, copyFileSync, writeFileSync, readFileSync} from "fs"
+import {exec} from "child_process"
+import {readdirSync, statSync, mkdirSync, copyFileSync, writeFileSync} from "fs"
 import {join, dirname} from "path"
+import {createInterface} from "readline"
 import {fileURLToPath} from "url"
 
 function copyFolder(src, dest) {
@@ -47,14 +49,22 @@ dist-ssr
 *.sw?
 .env*`)
 
+
+
 console.log("\nCDEJS project template successfully created at '"+destination+"'!\n")
 
 const cli = createInterface({input:process.stdin, output:process.stdout})
-cli.question("Open in explorer? (Y/N)   ", value=>{
-    if (!value || ["y", "yes", "ye", "ok", "for sure"].includes(value?.toLowerCase()?.trim())) exec("explorer "+destination)
+function close(cli) {
     cli.close()
+    console.log("")
+}
+
+cli.question("Open in explorer? (Y/N)\n", value=>{
+    if (!value || ["y", "yes", "ye", "ok", "for sure"].includes(value?.toLowerCase()?.trim())) exec("explorer "+destination)
+    close(cli)
 })
 
 process.stdin.on("keypress", (_, key) => {
-    if (key.name == "escape") cli.close()
+    if (key.name == "escape") close(cli)
 })
+

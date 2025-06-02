@@ -2235,7 +2235,7 @@ export class Canvas {
     static DEFAULT_CTX_SETTINGS = {"imageSmoothingEnabled":false, "willReadFrequently":false, "font":TextStyles.DEFAULT_FONT, "letterSpacing":TextStyles.DEFAULT_LETTER_SPACING, "wordSpacing":TextStyles.DEFAULT_WORD_SPACING, "fontVariantCaps":TextStyles.DEFAULT_FONT_VARIANT_CAPS, "direction":TextStyles.DEFAULT_DIRECTION, "fontSretch":TextStyles.DEFAULT_FONT_STRETCH, "fontKerning":TextStyles.DEFAULT_FONT_KERNING, "textAlign":TextStyles.DEFAULT_TEXT_ALIGN, "textBaseline":TextStyles.DEFAULT_TEXT_BASELINE, "textRendering":TextStyles.DEFAULT_TEXT_RENDERING, "lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
-    static DEFAULT_CANVAS_STYLES = {position:"absolute",top:"0",left:"0",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)"}
+    static DEFAULT_CANVAS_STYLES = {position:"absolute",top:"0",left:"0",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)","touch-action":"none","-webkit-user-select":"none","user-select":"none"}
     static STATIC_MODE = 0
     static #ON_LOAD_CALLBACKS = []
     static #ON_FIRST_INTERACT_CALLBACKS = []
@@ -2284,6 +2284,7 @@ export class Canvas {
         style.appendChild(document.createTextNode(`[${Canvas.DEFAULT_CVSFRAMEDE_ATTR}]{position:relative !important;outline: none;}canvas[${Canvas.DEFAULT_CVSDE_ATTR}]{${Object.entries(Canvas.DEFAULT_CANVAS_STYLES).reduce((a,b)=>a+=`${b[0]}:${b[1]};`,"")}}`))
         this._cvs.appendChild(style)
         this._frame.setAttribute("tabindex", 0)
+        this._cvs.setAttribute("draggable", "false")
     }
 
     // sets resize and visibility change listeners on the window
@@ -2726,10 +2727,10 @@ export class Canvas {
     }
 
     // called on any mouse clicks
-    #mouseClicks(cb, e) {
+    #mouseClicks(cb, e, preventOnFirstInteractionTrigger) {
         this._mouse.updateMouseClicks(e)
         if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
-        if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
+        if (!preventOnFirstInteractionTrigger && Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
     }
 
     // defines the onmousedown listener
@@ -2746,7 +2747,7 @@ export class Canvas {
                 this._mouse.updatePos(e, this._offset)
                 this._mouse.calcAngle()            
                 this.#mouseMovements(this.#mouseMoveCB, e)
-                this.#mouseClicks(cb, e)
+                this.#mouseClicks(cb, e, true)
             }
         }, onmousedown=e=>{
             if (!isTouch) this.#mouseClicks(cb, e)
@@ -2773,7 +2774,12 @@ export class Canvas {
                 e.y = CDEUtils.round(changedTouches[0].clientY, 1)
                 e.button = 0
                 this.#mouseClicks(cb, e)
-            }
+
+                this._mouse.invalidate()
+                e.x = Infinity
+                e.y = Infinity
+                this.#mouseMovements(cb, e)
+            }     
         }, onmouseup=e=>{
             if (!isTouch) this.#mouseClicks(cb, e)
             isTouch = false
@@ -4119,10 +4125,10 @@ export class ImageDisplay extends _BaseObj {
         const source = this._source
         if (source instanceof HTMLVideoElement) source.pause()
     }
-    
+
     // Plays the source
     static playMedia(source, errorCB) {
-        if (source instanceof HTMLVideoElement || source instanceof HTMLAudioElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>{source.play().catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e, source)})}))
+        if (source instanceof HTMLVideoElement || source instanceof HTMLAudioElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>source.play().catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e, source)})))
     }
     
     // returns the natural size of the source
@@ -4512,7 +4518,7 @@ export class Pattern extends _DynamicColor {
         this._id = Pattern.#ID_GIVER++                                         // instance id
         this._render = render                                                  // canvas Render instance
         this._source = source                                                  // the data source
-        this.sourceCroppingPositions = sourceCroppingPositions??null           // source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
+        this._sourceCroppingPositions = sourceCroppingPositions                // source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
         this._keepAspectRatio = keepAspectRatio??false                         // whether the source keeps the same aspect ratio when resizing
         this._forcedUpdates = forcedUpdates??Pattern.DEFAULT_FORCE_UPDATE_LEVEL// whether/how the pattern forces updates
         const rawFrameRate = frameRate??Pattern.DEFAULT_FRAME_RATE
@@ -4524,6 +4530,7 @@ export class Pattern extends _DynamicColor {
         Pattern.LOADED_PATTERN_SOURCES[this._id] = this
         ImageDisplay.initializeDataSource(source, (data)=>{
             this._source = data
+            this.sourceCroppingPositions = this._sourceCroppingPositions||null
             this.#initialized = true
             if (CDEUtils.isFunction(this._readyCB)) this._readyCB(this)
             this.update(Pattern.FORCE_UPDATE_LEVELS.OVERRIDE)
@@ -4686,6 +4693,18 @@ export class Pattern extends _DynamicColor {
     get loop() {return this._source?.loop}
     get isLooping() {return this.loop}
 
+    set paused(paused) {
+        try {
+            if (paused) this._source.pause()
+            else ImageDisplay.playMedia(this._source)
+        }catch(e){}
+    }
+    set isPaused(isPaused) {this.paused = isPaused}
+    set playbackRate(playbackRate) {this._source.playbackRate = playbackRate}
+    set speed(speed) {this.playbackRate = speed}
+    set currentTime(currentTime) {this._source.currentTime = currentTime}
+    set loop(loop) {this._source.loop = loop}
+    set isLooping(isLooping) {this.loop = isLooping}
 	set source(source) {
         ImageDisplay.initializeDataSource(source, (data)=>{
             this._source = data
@@ -4695,7 +4714,7 @@ export class Pattern extends _DynamicColor {
     set sourceCroppingPositions(sourceCroppingPositions) {
         if (sourceCroppingPositions) {
             const pos1 = sourceCroppingPositions[0], pos2 = sourceCroppingPositions[1], naturalSize = this.naturalSize
-            
+
             this._sourceCroppingPositions = [[
                 typeof pos1[0]=="string" ? (+pos1[0].replace("%","").trim()/100)*naturalSize[0] : pos1[0]==null ? 0 : pos1[0],
                 typeof pos1[1]=="string" ? (+pos1[1].replace("%","").trim()/100)*naturalSize[1] : pos1[1]==null ? 0 : pos1[1]
@@ -5031,9 +5050,9 @@ export class Shape extends _Obj {
     }
 
     // returns the minimal rectangular area containing all of the shape
-    getBounds(padding=this._radius) {
+    getBounds(padding=this._radius, rotation, scale, centerPos) {
         const positions = this.#getRectBounds()
-        return super.getBounds(positions, padding)
+        return super.getBounds(positions, padding, rotation, scale, centerPos)
     }
 
     // Empties the shapes of all its dots

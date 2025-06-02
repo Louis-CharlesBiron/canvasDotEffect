@@ -7,7 +7,7 @@
 
 # CanvasDotEffect
 
-**CanvasDotEffect is a lightweight JS library that helps create customizable and interactive dot-based effects using the Canvas API.**
+**CanvasDotEffect is a lightweight, fully native, JS library that helps create customizable and interactive dot-based effects using the Canvas API.**
 
 # Table of Contents
 
@@ -475,7 +475,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
          new Dot([50, -50]),
          new Dot([50, 0]),
          new Dot([50, 50]),
-     ], null, normalColorTester, 100, (render, dot, ratio, setupResults, mouse)=>{
+     ], null, null, 100, (render, dot, ratio)=>{
      
          // Changes the opacity and color according to mouse distance
          dot.a = CDEUtils.mod(1, ratio, 0.8)

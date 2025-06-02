@@ -1,17 +1,24 @@
 #!/usr/bin/env node
-import {mkdirSync, copyFileSync, writeFileSync} from "fs"
+import {mkdirSync, copyFileSync, writeFileSync, readdirSync} from "fs"
 import {join, dirname} from "path"
 import {fileURLToPath} from "url"
 import {createInterface} from "readline"
 import {exec} from "child_process"
 
-const destination = join(process.cwd(), process.argv[2]||""), libPath = join(dirname(fileURLToPath(import.meta.url)), "../canvasDotEffect.min.js")
-mkdirSync(destination, {recursive:true})
+const destination = join(process.cwd(), process.argv[2]||""),
+      mediaDest = join(destination, "medias"),
+      libPath = join(dirname(fileURLToPath(import.meta.url)), "../canvasDotEffect.min.js")
 
-// Add canvasDotEffect.min.js
+// Create folders
+try {
+    mkdirSync(destination, {recursive:true})
+    mkdirSync(mediaDest)
+} catch {}
+
+// Create canvasDotEffect.min.js
 copyFileSync(libPath, join(destination, "canvasDotEffect.min.js"))
 
-// Add index.html
+// Create index.html
 writeFileSync(join(destination, "index.html"), `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,12 +40,12 @@ writeFileSync(join(destination, "index.html"), `<!DOCTYPE html>
         <span id="mouseAngle"></span>
     </div>
     
-    <script async src="canvasDotEffect.min.js"></script>
+    <script src="canvasDotEffect.min.js"></script>
     <script async src="index.js"></script>
 </body>
 </html>`)
 
-// Add index.css
+// Create index.css
 writeFileSync(join(destination, "index.css"), `html, body {
     background-color: black;
     overflow: hidden;
@@ -55,14 +62,14 @@ writeFileSync(join(destination, "index.css"), `html, body {
     user-select: none;
 }`)
 
-// Add index.js
+// Create index.js
 writeFileSync(join(destination, "index.js"), `const {CDEUtils,FPSCounter,CanvasUtils,Color,_HasColor,GridAssets,TypingDevice,Mouse,Render,TextStyles,RenderStyles,Canvas,Anim,_BaseObj,AudioDisplay,ImageDisplay,TextDisplay,_DynamicColor,Pattern,_Obj,Shape,Gradient,FilledShape,Grid,Dot} = CDE
 
 const _ = null, fpsCounter = new FPSCounter(), CVS = new Canvas(document.getElementById("canvasId"), 
     ()=>{// loopingCB
 
         // Debug infos
-        const fpsValue = fpsCounter.getFps()+"\n"+fpsCounter.fpsRaw
+        const fpsValue = fpsCounter.getFps()+" "+fpsCounter.fpsRaw
         if (fpsDisplay.textContent !== fpsValue) fpsDisplay.textContent = fpsValue
         mouseSpeed.textContent = CVS.mouse.speed?.toFixed(2)+" px/sec"
         mouseAngle.textContent = CVS.mouse.dir?.toFixed(2)+" deg"
@@ -70,12 +77,48 @@ const _ = null, fpsCounter = new FPSCounter(), CVS = new Canvas(document.getElem
 )
 
 // Canvas objects declarations 
+const demoShape = new Shape(CVS.getCenter(), [new Dot([-50, -50]),new Dot([-50, 0]),new Dot([-50, 50]),new Dot([0, -50]),new Dot([0, 50]),new Dot([50, -50]),new Dot([50, 0]),new Dot([50, 50])], _, _, 100,
+    (render, dot, ratio)=>{// drawEffectCB
+    
+        // Changing the dot's radius from 50px down to 80% of 50px (range of 50px..10px), according to the mouse distance
+        dot.radius = CDEUtils.mod(50, ratio, 50*0.8)
+        
+        // Drawing a ring around the dot
+        CanvasUtils.drawOuterRing(dot, [255,255,255,0.25], 1)
 
-// TODO
+    }, _, (shape)=>{// setupCB
+
+    // Adding a rotation and scale animation
+    shape.playAnim(new Anim((prog, i)=>{
+        const adjustedProgress = i%2 ? prog : 1-prog
+        
+        shape.rotateAt(360*prog)
+        shape.scaleAt([1+adjustedProgress*2, 1+adjustedProgress*2])
+    }, -7500, Anim.easeInOutQuad))
+
+    // Creating a pattern that will get duplicated for each dot of demoShape ((↓) set the "positions" parameter to the area containing all the dots)
+    new Pattern(CVS.render, "./medias/coolBackground.mp4", demoShape.getBounds(50, 0, [3, 3]), _, true, true, _, 
+        ()=>{// errorCB
+            // If there is an error loading the file, set color to grey
+            demoShape.setColor([255,255,255,0.25])
+        },
+        (pattern)=>{// readyCB
+            // Once the video is loaded, set the shape2's color to the value of the pattern
+            demoShape.setColor(pattern)
+            
+            // Speed up the video to 3x speed
+            pattern.playbackRate = 3
+        }
+    )
+ })
+
+CVS.add(demoShape)
+
 
 // Event listeners
-CVS.setMouseMove()
-CVS.setMouseLeave()
+let mouseMoveEvent=(mouse)=>mouseInfo.textContent = "("+mouse.x+", "+mouse.y+")" // debug info
+CVS.setMouseMove(mouseMoveEvent)
+CVS.setMouseLeave(mouseMoveEvent)
 CVS.setMouseDown()
 CVS.setMouseUp()
 CVS.setKeyDown(_, true)
@@ -84,15 +127,26 @@ CVS.setKeyUp(_, true)
 // Start drawing loop
 CVS.startLoop()`)
 
+// Create coolBackground.mp4
+fetch("https://file-examples.com/storage/fe32c8d6966839f839df247/2017/04/file_example_MP4_480_1_5MG.mp4").then(res=>{
+    if (!res.ok) return;
+    return res.arrayBuffer()
+}).then(buffer=>{if (buffer) writeFileSync(join(mediaDest, "coolBackground.mp4"), Buffer.from(buffer))})
+
 
 console.log("\nCDEJS browser project template successfully created at '"+destination+"'!\n")
 
 const cli = createInterface({input:process.stdin, output:process.stdout})
-cli.question("Open in explorer? (Y/N)   ", value=>{
-    if (!value || ["y", "yes", "ye", "ok", "for sure"].includes(value?.toLowerCase()?.trim())) exec("explorer "+destination)
+function close(cli) {
     cli.close()
+    console.log("")
+}
+
+cli.question("Open in explorer? (Y/N)\n", value=>{
+    if (!value || ["y", "yes", "ye", "ok", "for sure"].includes(value?.toLowerCase()?.trim())) exec("explorer "+destination)
+    close(cli)
 })
 
 process.stdin.on("keypress", (_, key) => {
-    if (key.name == "escape") cli.close()
+    if (key.name == "escape") close(cli)
 })
