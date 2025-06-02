@@ -47,4 +47,5 @@ dist-ssr
 *.sw?
 .env*`)
 
-console.log("Template project created at '"+destination+"'!")
+console.log("\nCDEJS project template successfully created at '"+destination+"'!\n")
+// console.log("Open in explorer? Y/N...") TODO

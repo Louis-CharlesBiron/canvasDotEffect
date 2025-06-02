@@ -7,7 +7,7 @@
 
 # CanvasDotEffect
 
-**CanvasDotEffect is a lightweight JS library that helps create customizable and interactive dot-based effects using the Canvas API.**
+**CanvasDotEffect is a lightweight, fully native, JS library that helps create customizable and interactive dot-based effects using the Canvas API.**
 
 # Table of Contents
 
