@@ -48,4 +48,13 @@ dist-ssr
 .env*`)
 
 console.log("\nCDEJS project template successfully created at '"+destination+"'!\n")
-// console.log("Open in explorer? Y/N...") TODO
+
+const cli = createInterface({input:process.stdin, output:process.stdout})
+cli.question("Open in explorer? (Y/N)   ", value=>{
+    if (!value || ["y", "yes", "ye", "ok", "for sure"].includes(value?.toLowerCase()?.trim())) exec("explorer "+destination)
+    cli.close()
+})
+
+process.stdin.on("keypress", (_, key) => {
+    if (key.name == "escape") cli.close()
+})

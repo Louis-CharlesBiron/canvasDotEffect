@@ -16,21 +16,15 @@ const _ = null, fpsCounter = new FPSCounter(), CVS = new Canvas(document.getElem
 /*
      TODO
 
-    - simple demo obj in this file
-
-    - make canvasDotEffect.min.js integration automatic (like when running wrapper.exe -> udpate the canvasDotEffect.min.js here)
-
-    - figure out how to dynamically integrate medias (or scrap it, how just don't do it dynamic for this one)
-
+    - minimize the npx command files (in wrapper.exe)
     - add npx command cdejs-browser-template
-
     - add more npx command shortcuts, cdejs-t1, cdejs-t2, etc...
 
-    - make the npx template commands open the explorer when done
+    - simple demo obj in this file
 
-    - minimize the npx command files (in wrapper.exe)
+    - figure out how to dynamically integrate medias (maybe)
 
-
+    - update documentation
 */
 
 
