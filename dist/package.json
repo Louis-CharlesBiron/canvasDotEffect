@@ -1,6 +1,6 @@
 {
     "name": "cdejs",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "description": "CanvasDotEffect is a lightweight JS library that helps create customizable and interactive dot-based effects using the Canvas API",
     "author": "Louis-Charles Biron",
     "license": "MIT",
@@ -13,23 +13,32 @@
     "files": [
         "cde.min.js",
         "canvasDotEffect.min.js",
-        "bins/"
+        "bins/createBrowserProjectTemplate.min.js",
+        "bins/createDefaultReactComponent.min.js",
+        "bins/createProjectTemplate.min.js",
+        "bins/getSignature.min.js",
+        "bins/openDocumentation.min.js"
     ],
     "exports": {
         "import": "./cde.min.js"
     },
     "bin": {
-        "cdejs-template": "./bins/createProjectTemplate.js",
-        "cdejs-react": "./bins/createDefaultReactComponent.js",
-        "cdejs-doc": "./bins/openDocumentation.js",
-        "cdejs-documentation": "./bins/openDocumentation.js",
-        "cdejs-signature": "./bins/getSignature.js",
-        "cdejs-sig": "./bins/getSignature.js"
+        "cdejs-template": "./bins/createProjectTemplate.min.js",
+        "cdejs-t": "./bins/createProjectTemplate.min.js",
+        "cdejs-browser-template": "./bins/createBrowserProjectTemplate.min.js",
+        "cdejs-bt": "./bins/createBrowserProjectTemplate.min.js",
+        "cdejs-react": "./bins/createDefaultReactComponent.min.js",
+        "cdejs-doc": "./bins/openDocumentation.min.js",
+        "cdejs-documentation": "./bins/openDocumentation.min.js",
+        "cdejs-signature": "./bins/getSignature.min.js",
+        "cdejs-sig": "./bins/getSignature.min.js",
+        "cdejs-s": "./bins/getSignature.min.js"
     },
     "keywords": [
         "canvas",
         "library",
         "cde",
+        "cdejs",
         "canvasDotEffect",
         "effects",
         "dot",

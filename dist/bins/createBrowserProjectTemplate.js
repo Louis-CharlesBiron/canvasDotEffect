@@ -128,10 +128,7 @@ CVS.setKeyUp(_, true)
 CVS.startLoop()`)
 
 // Create coolBackground.mp4
-fetch("https://file-examples.com/storage/fe32c8d6966839f839df247/2017/04/file_example_MP4_480_1_5MG.mp4").then(res=>{
-    if (!res.ok) return;
-    return res.arrayBuffer()
-}).then(buffer=>{if (buffer) writeFileSync(join(mediaDest, "coolBackground.mp4"), Buffer.from(buffer))})
+fetch("https://file-examples.com/storage/fe32c8d6966839f839df247/2017/04/file_example_MP4_480_1_5MG.mp4").then(res=>res.ok&&res.arrayBuffer()).then(buffer=>buffer&&writeFileSync(join(mediaDest, "coolBackground.mp4"), Buffer.from(buffer)))
 
 
 console.log("\nCDEJS browser project template successfully created at '"+destination+"'!\n")
@@ -143,7 +140,9 @@ function close(cli) {
 }
 
 cli.question("Open in explorer? (Y/N)\n", value=>{
-    if (!value || ["y", "yes", "ye", "ok", "for sure"].includes(value?.toLowerCase()?.trim())) exec("explorer "+destination)
+    const v = value?.toLowerCase()?.trim()
+    if (v=="code") exec("code --new-window "+destination)
+    else if (!value || ["y", "yes", "ye", "ok", "for sure"].includes(v)) exec("explorer "+destination)
     close(cli)
 })
 

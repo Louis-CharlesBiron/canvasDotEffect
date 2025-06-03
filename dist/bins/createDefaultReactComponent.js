@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {exec} from "child_process"
+import {writeFileSync} from "fs"
 import {join} from "path"
 import {createInterface} from "readline"
 
@@ -61,7 +62,9 @@ function close(cli) {
 }
 
 cli.question("Open in explorer? (Y/N)\n", value=>{
-    if (!value || ["y", "yes", "ye", "ok", "for sure"].includes(value?.toLowerCase()?.trim())) exec("explorer "+destination)
+    const v = value?.toLowerCase()?.trim()
+    if (v=="code") exec("code --new-window "+destination)
+    else if (!value || ["y", "yes", "ye", "ok", "for sure"].includes(v)) exec("explorer "+destination)
     close(cli)
 })
 
