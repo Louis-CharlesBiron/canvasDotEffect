@@ -1,19 +1,22 @@
 #!/usr/bin/env node
-import {exec, spawn} from "child_process"
-import {mkdirSync, writeFileSync} from "fs"
-import {join} from "path"
+import {mkdirSync, copyFileSync, writeFileSync, readdirSync} from "fs"
+import {join, dirname} from "path"
+import {fileURLToPath} from "url"
 import {createInterface} from "readline"
+import {exec} from "child_process"
 
 const destination = join(process.cwd(), process.argv[2]||""),
       mediaDest = join(destination, "medias"),
-      binDest = join(destination, "bin")
+      libPath = join(dirname(fileURLToPath(import.meta.url)), "../canvasDotEffect.min.js")
 
 // Create folders
 try {
     mkdirSync(destination, {recursive:true})
     mkdirSync(mediaDest)
-    mkdirSync(binDest)
 } catch {}
+
+// Create canvasDotEffect.min.js
+copyFileSync(libPath, join(destination, "canvasDotEffect.min.js"))
 
 // Create index.html
 writeFileSync(join(destination, "index.html"), `<!DOCTYPE html>
@@ -36,8 +39,9 @@ writeFileSync(join(destination, "index.html"), `<!DOCTYPE html>
         <span id="mouseSpeed"></span>
         <span id="mouseAngle"></span>
     </div>
-
-    <script type="module" src="index.js"></script>
+    
+    <script src="canvasDotEffect.min.js"></script>
+    <script async src="index.js"></script>
 </body>
 </html>`)
 
@@ -59,7 +63,7 @@ writeFileSync(join(destination, "index.css"), `html, body {
 }`)
 
 // Create index.js
-writeFileSync(join(destination, "index.js"), `import {FPSCounter, Canvas, Shape, Dot, CDEUtils, CanvasUtils, Anim, Pattern} from "cdejs"
+writeFileSync(join(destination, "index.js"), `const {CDEUtils,FPSCounter,CanvasUtils,Color,_HasColor,GridAssets,TypingDevice,Mouse,Render,TextStyles,RenderStyles,Canvas,Anim,_BaseObj,AudioDisplay,ImageDisplay,TextDisplay,_DynamicColor,Pattern,_Obj,Shape,Gradient,FilledShape,Grid,Dot} = CDE
 
 const _ = null, fpsCounter = new FPSCounter(), CVS = new Canvas(document.getElementById("canvasId"), 
     ()=>{// loopingCB
@@ -123,91 +127,11 @@ CVS.setKeyUp(_, true)
 // Start drawing loop
 CVS.startLoop()`)
 
-// Create .gitignore
-writeFileSync(join(destination, ".gitignore"), `# Logs
-logs
-*.log
-npm-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.env*`)
-
-// Create package.json
-writeFileSync(join(destination, "package.json"), `{
-    "name": "project_template",
-    "version": "1.0.0",
-    "main": "index.js",
-    "type": "module",
-    "scripts": {
-      "dev": "vite",
-      "build": "vite build && node ./bin/build.js"
-    },
-    "dependencies": {
-      "cdejs": "^1.1.2"
-    },
-    "devDependencies": {
-      "vite": "^6.2.2"
-    }
-  }`)
-
-// Create build.js
-writeFileSync(join(binDest, "build.js"), `#!/usr/bin/env node
-import {copyFileSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync} from "fs"
-import {extname, join} from "path"
-import {cwd} from "process"
-
-function copyFolder(src, dest) {
-    const filepaths = readdirSync(src, {recursive:true}), f_ll = filepaths.length
-    for (let i=0;i<f_ll;i++) {
-        const filepath = join(src, filepaths[i]), destPath = join(dest, filepaths[i])
-        if (statSync(filepath).isDirectory()) {
-            mkdirSync(destPath, {recursive:true})
-            copyFolder(filepath, destPath)
-        } else copyFileSync(filepath, destPath)
-    }
-}
-
-// Add async attribute to main script
-const indexHtmlPath = join(cwd(), "dist/index.html")
-writeFileSync(indexHtmlPath, readFileSync(indexHtmlPath, "utf8").replace('type="module" crossorigin', 'type="module" async crossorigin'))
-
-// Define user medias / assets
-const defaultFolders = ["dist", "bin", "node_modules"],
-      userMediasExtensions = ["mp3","wav","ogg","aac","m4a","opus","flac","jpg","jpeg","png","gif","svg","webp","bmp","tiff","ico","heif","heic","mp4","webm","ogv","mov","avi","mkv","flv","wmv","3gp","m4v"], 
-      source = process.cwd()
-
-// Add user medias / assets
-readdirSync(source).filter(filepath=>{
-    const fullPath = join(source, filepath)
-    return statSync(fullPath).isDirectory() && !defaultFolders.includes(filepath) && readdirSync(fullPath).some(file=>userMediasExtensions.includes(extname(file).replace(".","")))
-}).forEach(folder=>{
-    const destination = join(source, "dist", folder)
-    mkdirSync(destination, {recursive:true})
-    copyFolder(join(source, folder), destination)
-})
-
-console.log("Build completed!\n")`)
-
 // Create coolBackground.mp4
 fetch("https://file-examples.com/storage/fe32c8d6966839f839df247/2017/04/file_example_MP4_480_1_5MG.mp4").then(res=>res.ok&&res.arrayBuffer()).then(buffer=>buffer&&writeFileSync(join(mediaDest, "coolBackground.mp4"), Buffer.from(buffer)))
 
-spawn("npm", ["i"], {cwd:destination, shell:true})
 
-console.log("\nCDEJS project template successfully created at '"+destination+"'!\n")
+console.log("\nCDEJS browser project template successfully created at '"+destination+"'!\n")
 
 const cli = createInterface({input:process.stdin, output:process.stdout})
 function close(cli) {

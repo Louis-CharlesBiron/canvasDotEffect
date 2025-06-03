@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 const signatures = [
     ["_BaseObj"     , `constructor(pos, color, setupCB, loopCB, anchorPos, activationMargin)`, `constructor(pos=[0,0], color="aliceblue", setupCB=null, loopCB=null, anchorPos=null, activationMargin=null)`],
     ["_DynamicColor", `constructor(positions, rotation)`, `constructor(positions, rotation=0)`],

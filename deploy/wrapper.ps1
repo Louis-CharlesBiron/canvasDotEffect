@@ -7,7 +7,8 @@ function getAt() {$inv=$global:MyInvocation.MyCommand;if($inv.CommandType -eq "E
 $at = getAt
 $root = Split-Path -Path $at -Parent
 $dist = "$root\dist"
-$verisonedFiles = @("$root\readme.md", "$dist\bins\src\projectTemplate\package.json")
+$bins = "$root\dist\bins"
+$verisonedFiles = @("$root\readme.md", "$bins\createProjectTemplate.js")
 $deploy = "$root\deploy"
 $terser = "$deploy\node_modules\.bin\terser"
 $cdeVersion = (Get-Content "$dist\package.json" | ConvertFrom-Json).version
@@ -56,6 +57,7 @@ if (-not (Test-Path $terser)) {
     Set-Location $at
 }
 
+#MINIFY LIBRARY FILES
 $minifiedCodePathUMD = "$dist\canvasDotEffect.min.js"
 Start-Process -FilePath $terser -ArgumentList "$toMinifyPathESM -o $dist\cde.min.js --compress"
 Start-Process -FilePath $terser -ArgumentList "$toMinifyPath -o $minifiedCodePathUMD --compress" -wait
@@ -65,3 +67,9 @@ $minifiedCode = Get-Content -Path $minifiedCodePathUMD -Raw
 Set-Content -Path $minifiedCodePathUMD -Value @"
 (function(factory){typeof define=="function"&&define.amd?define(factory):factory()})((function(){"use strict";$minifiedCode;const classes={$UMDCJSClasses};if(typeof window!=="undefined"){window.CDE=classes}else if(typeof module!=="undefined"&&module.exports)module.exports=classes}))
 "@
+
+#MINIFY BINS FILES
+$binFiles = @("$bins\createBrowserProjectTemplate.js", "$bins\createDefaultReactComponent.js", "$bins\createProjectTemplate.js", "$bins\getSignature.js", "$bins\openDocumentation.js")
+foreach ($filepath in $binFiles) {
+    Start-Process -FilePath $terser -ArgumentList "$filepath -o $bins\$((Get-Item $filepath).BaseName).min.js --compress --mangle"
+}

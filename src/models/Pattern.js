@@ -31,7 +31,7 @@ class Pattern extends _DynamicColor {
         this._id = Pattern.#ID_GIVER++                                         // instance id
         this._render = render                                                  // canvas Render instance
         this._source = source                                                  // the data source
-        this.sourceCroppingPositions = sourceCroppingPositions??null           // source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
+        this._sourceCroppingPositions = sourceCroppingPositions                // source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
         this._keepAspectRatio = keepAspectRatio??false                         // whether the source keeps the same aspect ratio when resizing
         this._forcedUpdates = forcedUpdates??Pattern.DEFAULT_FORCE_UPDATE_LEVEL// whether/how the pattern forces updates
         const rawFrameRate = frameRate??Pattern.DEFAULT_FRAME_RATE
@@ -43,6 +43,7 @@ class Pattern extends _DynamicColor {
         Pattern.LOADED_PATTERN_SOURCES[this._id] = this
         ImageDisplay.initializeDataSource(source, (data)=>{
             this._source = data
+            this.sourceCroppingPositions = this._sourceCroppingPositions||null
             this.#initialized = true
             if (CDEUtils.isFunction(this._readyCB)) this._readyCB(this)
             this.update(Pattern.FORCE_UPDATE_LEVELS.OVERRIDE)
@@ -205,6 +206,18 @@ class Pattern extends _DynamicColor {
     get loop() {return this._source?.loop}
     get isLooping() {return this.loop}
 
+    set paused(paused) {
+        try {
+            if (paused) this._source.pause()
+            else ImageDisplay.playMedia(this._source)
+        }catch(e){}
+    }
+    set isPaused(isPaused) {this.paused = isPaused}
+    set playbackRate(playbackRate) {this._source.playbackRate = playbackRate}
+    set speed(speed) {this.playbackRate = speed}
+    set currentTime(currentTime) {this._source.currentTime = currentTime}
+    set loop(loop) {this._source.loop = loop}
+    set isLooping(isLooping) {this.loop = isLooping}
 	set source(source) {
         ImageDisplay.initializeDataSource(source, (data)=>{
             this._source = data
@@ -214,7 +227,7 @@ class Pattern extends _DynamicColor {
     set sourceCroppingPositions(sourceCroppingPositions) {
         if (sourceCroppingPositions) {
             const pos1 = sourceCroppingPositions[0], pos2 = sourceCroppingPositions[1], naturalSize = this.naturalSize
-            
+
             this._sourceCroppingPositions = [[
                 typeof pos1[0]=="string" ? (+pos1[0].replace("%","").trim()/100)*naturalSize[0] : pos1[0]==null ? 0 : pos1[0],
                 typeof pos1[1]=="string" ? (+pos1[1].replace("%","").trim()/100)*naturalSize[1] : pos1[1]==null ? 0 : pos1[1]

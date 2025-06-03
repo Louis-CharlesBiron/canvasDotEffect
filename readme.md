@@ -7,7 +7,7 @@
 
 # CanvasDotEffect
 
-**CanvasDotEffect is a lightweight JS library that helps create customizable and interactive dot-based effects using the Canvas API.**
+**CanvasDotEffect is a lightweight, fully native, JS library that helps create customizable and interactive dot-based effects using the Canvas API.**
 
 # Table of Contents
 
@@ -121,7 +121,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.1.1"
+    "cdejs": "^1.1.2"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -475,7 +475,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
          new Dot([50, -50]),
          new Dot([50, 0]),
          new Dot([50, 50]),
-     ], null, normalColorTester, 100, (render, dot, ratio, setupResults, mouse)=>{
+     ], null, null, 100, (render, dot, ratio)=>{
      
          // Changes the opacity and color according to mouse distance
          dot.a = CDEUtils.mod(1, ratio, 0.8)
@@ -2091,9 +2091,15 @@ Here is the list of available npx commands:
 
 ### To create a project template
 
-#### `npx cdejs-template <projectName?>`
+#### `npx cdejs-template <projectName?>` | *`npx cdejs-t <projectName?>`*
 
-This command creates a modular CanvasDotEffect project template. It accepts an optional project name as parameter.
+This command creates a **modular** CanvasDotEffect project template. It accepts an optional project name as parameter.
+
+### To create a browser project template
+
+#### `npx cdejs-browser-template <projectName?>` | *`npx cdejs-bt <projectName?>`*
+
+This command creates a **non modular** CanvasDotEffect project template. It accepts an optional project name as parameter.
 
 ### To create the CDECanvas React component
 
@@ -2103,13 +2109,13 @@ This command creates the proposed CDECanvas React component, for usage of this l
 
 ### To open the documentation
 
-#### `npx cdejs-documentation` | `npx cdejs-doc`
+#### `npx cdejs-documentation` | *`npx cdejs-doc`*
 
 This command opens the library documentation in the default browser.
 
 ### To view classes / common callbacks signatures
 
-#### `npx cdejs-signature <filter?> <withDefaultValues?>` | `npx cdejs-sig <filter?> <withDefaultValues?>`
+#### `npx cdejs-signature <filter?> <withDefaultValues?>` | *`npx cdejs-sig <filter?> <withDefaultValues?>`*
 
 This command shows the signature of classes and common available callbacks. It accepts an optional filter as its first parameter. 
 
