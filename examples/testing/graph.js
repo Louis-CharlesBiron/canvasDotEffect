@@ -113,6 +113,10 @@ CVS.add(aasdasd)
 let text = new TextDisplay("yoman test", [200, 600], "lime")
 CVS.add(text)
 
+let img = new ImageDisplay("./img/img2.jpg", [700, 200], ["50%", "50%"], (e,a)=>console.log(e,a))
+CVS.add(img)
+
+
 // USER ACTIONS
 let mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"
 CVS.setMouseMove(mMove)

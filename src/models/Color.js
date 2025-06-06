@@ -11,6 +11,7 @@ class Color {
     static CSS_COLOR_TO_RGBA_CONVERTIONS = {transparent:[0,0,0,0],aliceblue:[240,248,255,1],antiquewhite:[250,235,215,1],aqua:[0,255,255,1],aquamarine:[127,255,212,1],azure:[240,255,255,1],beige:[245,245,220,1],bisque:[255,228,196,1],black:[0,0,0,1],blanchedalmond:[255,235,205,1],blue:[0,0,255,1],blueviolet:[138,43,226,1],brown:[165,42,42,1],burlywood:[222,184,135,1],cadetblue:[95,158,160,1],chartreuse:[127,255,0,1],chocolate:[210,105,30,1],coral:[255,127,80,1],cornflowerblue:[100,149,237,1],cornsilk:[255,248,220,1],crimson:[220,20,60,1],cyan:[0,255,255,1],darkblue:[0,0,139,1],darkcyan:[0,139,139,1],darkgoldenrod:[184,134,11,1],darkgray:[169,169,169,1],darkgreen:[0,100,0,1],darkkhaki:[189,183,107,1],darkmagenta:[139,0,139,1],darkolivegreen:[85,107,47,1],darkorange:[255,140,0,1],darkorchid:[153,50,204,1],darkred:[139,0,0,1],darksalmon:[233,150,122,1],darkseagreen:[143,188,143,1],darkslateblue:[72,61,139,1],darkslategray:[47,79,79,1],darkturquoise:[0,206,209,1],darkviolet:[148,0,211,1],deeppink:[255,20,147,1],deepskyblue:[0,191,255,1],dimgray:[105,105,105,1],dodgerblue:[30,144,255,1],firebrick:[178,34,34,1],floralwhite:[255,250,240,1],forestgreen:[34,139,34,1],fuchsia:[255,0,255,1],gainsboro:[220,220,220,1],ghostwhite:[248,248,255,1],gold:[255,215,0,1],goldenrod:[218,165,32,1],gray:[128,128,128,1],green:[0,128,0,1],greenyellow:[173,255,47,1],honeydew:[240,255,240,1],hotpink:[255,105,180,1],indianred:[205,92,92,1],indigo:[75,0,130,1],ivory:[255,255,240,1],khaki:[240,230,140,1],lavender:[230,230,250,1],lavenderblush:[255,240,245,1],lawngreen:[124,252,0,1],lemonchiffon:[255,250,205,1],lightblue:[173,216,230,1],lightcoral:[240,128,128,1],lightcyan:[224,255,255,1],lightgoldenrodyellow:[250,250,210,1],lightgray:[211,211,211,1],lightgreen:[144,238,144,1],lightpink:[255,182,193,1],lightsalmon:[255,160,122,1],lightseagreen:[32,178,170,1],lightskyblue:[135,206,250,1],lightslategray:[119,136,153,1],lightsteelblue:[176,224,230,1],lightyellow:[255,255,224,1],lime:[0,255,0,1],limegreen:[50,205,50,1],linen:[250,240,230,1],magenta:[255,0,255,1],maroon:[128,0,0,1],mediumaquamarine:[102,205,170,1],mediumblue:[0,0,205,1],mediumorchid:[186,85,211,1],mediumpurple:[147,112,219,1],mediumseagreen:[60,179,113,1],mediumslateblue:[123,104,238,1],mediumspringgreen:[0,250,154,1],mediumturquoise:[72,209,204,1],mediumvioletred:[199,21,133,1],midnightblue:[25,25,112,1],mintcream:[245,255,250,1],mistyrose:[255,228,225,1],moccasin:[255,228,181,1],navajowhite:[255,222,173,1],navy:[0,0,128,1],oldlace:[253,245,230,1],olive:[128,128,0,1],olivedrab:[107,142,35,1],orange:[255,165,0,1],orangered:[255,69,0,1],orchid:[218,112,214,1],palegoldenrod:[238,232,170,1],palegreen:[152,251,152,1],paleturquoise:[175,238,238,1],palevioletred:[219,112,147,1],papayawhip:[255,239,213,1],peachpuff:[255,218,185,1],peru:[205,133,63,1],pink:[255,192,203,1],plum:[221,160,221,1],powderblue:[176,224,230,1],purple:[128,0,128,1],rebeccapurple:[102,51,153,1],red:[255,0,0,1],rosybrown:[188,143,143,1],royalblue:[65,105,225,1],saddlebrown:[139,69,19,1],salmon:[250,128,114,1],sandybrown:[244,164,96,1],seagreen:[46,139,87,1],seashell:[255,245,238,1],sienna:[160,82,45,1],silver:[192,192,192,1],skyblue:[135,206,235,1],slateblue:[106,90,205,1],slategray:[112,128,144,1],snow:[255,250,250,1],springgreen:[0,255,127,1],steelblue:[70,130,180,1],tan:[210,180,140,1],teal:[0,128,128,1],thistle:[216,191,216,1],tomato:[255,99,71,1],turquoise:[64,224,208,1],violet:[238,130,238,1],wheat:[245,222,179,1],white:[255,255,255,1],whitesmoke:[245,245,245,1],yellow:[255,255,0,1],yellowgreen:[154,205,50,1]}
     static RGBA_TO_CSS_COLOR_CONVERTIONS = {"0,0,0,0":"transparent","240,248,255,1":"aliceblue","250,235,215,1":"antiquewhite","0,255,255,1":"aqua","127,255,212,1":"aquamarine","240,255,255,1":"azure","245,245,220,1":"beige","255,228,196,1":"bisque","0,0,0,1":"black","255,235,205,1":"blanchedalmond","0,0,255,1":"blue","138,43,226,1":"blueviolet","165,42,42,1":"brown","222,184,135,1":"burlywood","95,158,160,1":"cadetblue","127,255,0,1":"chartreuse","210,105,30,1":"chocolate","255,127,80,1":"coral","100,149,237,1":"cornflowerblue","255,248,220,1":"cornsilk","220,20,60,1":"crimson","0,0,139,1":"darkblue","0,139,139,1":"darkcyan","184,134,11,1":"darkgoldenrod","169,169,169,1":"darkgray","0,100,0,1":"darkgreen","189,183,107,1":"darkkhaki","139,0,139,1":"darkmagenta","85,107,47,1":"darkolivegreen","255,140,0,1":"darkorange","153,50,204,1":"darkorchid","139,0,0,1":"darkred","233,150,122,1":"darksalmon","143,188,143,1":"darkseagreen","72,61,139,1":"darkslateblue","47,79,79,1":"darkslategray","0,206,209,1":"darkturquoise","148,0,211,1":"darkviolet","255,20,147,1":"deeppink","0,191,255,1":"deepskyblue","105,105,105,1":"dimgray","30,144,255,1":"dodgerblue","178,34,34,1":"firebrick","255,250,240,1":"floralwhite","34,139,34,1":"forestgreen","220,220,220,1":"gainsboro","248,248,255,1":"ghostwhite","255,215,0,1":"gold","218,165,32,1":"goldenrod","128,128,128,1":"gray","0,128,0,1":"green","173,255,47,1":"greenyellow","240,255,240,1":"honeydew","255,105,180,1":"hotpink","205,92,92,1":"indianred","75,0,130,1":"indigo","255,255,240,1":"ivory","240,230,140,1":"khaki","230,230,250,1":"lavender","255,240,245,1":"lavenderblush","124,252,0,1":"lawngreen","255,250,205,1":"lemonchiffon","173,216,230,1":"lightblue","240,128,128,1":"lightcoral","224,255,255,1":"lightcyan","250,250,210,1":"lightgoldenrodyellow","211,211,211,1":"lightgray","144,238,144,1":"lightgreen","255,182,193,1":"lightpink","255,160,122,1":"lightsalmon","32,178,170,1":"lightseagreen","135,206,250,1":"lightskyblue","119,136,153,1":"lightslategray","176,224,230,1":"lightsteelblue","255,255,224,1":"lightyellow","0,255,0,1":"lime","50,205,50,1":"limegreen","250,240,230,1":"linen","255,0,255,1":"magenta","128,0,0,1":"maroon","102,205,170,1":"mediumaquamarine","0,0,205,1":"mediumblue","186,85,211,1":"mediumorchid","147,112,219,1":"mediumpurple","60,179,113,1":"mediumseagreen","123,104,238,1":"mediumslateblue","0,250,154,1":"mediumspringgreen","72,209,204,1":"mediumturquoise","199,21,133,1":"mediumvioletred","25,25,112,1":"midnightblue","245,255,250,1":"mintcream","255,228,225,1":"mistyrose","255,228,181,1":"moccasin","255,222,173,1":"navajowhite","0,0,128,1":"navy","253,245,230,1":"oldlace","128,128,0,1":"olive","107,142,35,1":"olivedrab","255,165,0,1":"orange","255,69,0,1":"orangered","218,112,214,1":"orchid","238,232,170,1":"palegoldenrod","152,251,152,1":"palegreen","175,238,238,1":"paleturquoise","219,112,147,1":"palevioletred","255,239,213,1":"papayawhip","255,218,185,1":"peachpuff","205,133,63,1":"peru","255,192,203,1":"pink","221,160,221,1":"plum","128,0,128,1":"purple","102,51,153,1":"rebeccapurple","255,0,0,1":"red","188,143,143,1":"rosybrown","65,105,225,1":"royalblue","139,69,19,1":"saddlebrown","250,128,114,1":"salmon","244,164,96,1":"sandybrown","46,139,87,1":"seagreen","255,245,238,1":"seashell","160,82,45,1":"sienna","192,192,192,1":"silver","135,206,235,1":"skyblue","106,90,205,1":"slateblue","112,128,144,1":"slategray","255,250,250,1":"snow","0,255,127,1":"springgreen","70,130,180,1":"steelblue","210,180,140,1":"tan","0,128,128,1":"teal","216,191,216,1":"thistle","255,99,71,1":"tomato","64,224,208,1":"turquoise","238,130,238,1":"violet","245,222,179,1":"wheat","255,255,255,1":"white","245,245,245,1":"whitesmoke","255,255,0,1":"yellow","154,205,50,1":"yellowgreen"}
     static FORMATS = {RGBA:"RGBA", TEXT:"TEXT", HEX:"HEX", GRADIENT:"GRADIENT", PATTERN:"PATTERN", COLOR:"COLOR", HSV:"HSVA"}
+    static CONVERTABLE_FORMATS = {RGBA:"RGBA", TEXT:"TEXT", HEX:"HEX", HSV:"HSVA"}
     static STRICT_FORMATS = {RGBA:"RGBA", COLOR:"COLOR"}
     static DEFAULT_TEMPERANCE = 0
     static SEARCH_STARTS = {TOP_LEFT:"TOP_LEFT", BOTTOM_RIGHT:"BOTTOM_RIGHT"}
@@ -30,21 +31,21 @@ class Color {
 
     // updates the cached rgba value
     #updateCache() {
-        if (this._format == Color.FORMATS.GRADIENT ||this._format == Color.FORMATS.PATTERN) this.#rgba = this.#hsv = []
+        if (this._format == Color.FORMATS.GRADIENT || this._format == Color.FORMATS.PATTERN) this.#rgba = this.#hsv = []
         else {
-            this.#rgba = this._format !== Color.FORMATS.RGBA ? this.convertTo(Color.FORMATS.RGBA) : Color.#unlinkRGBA(this._color)
+            this.#rgba = this._format !== Color.FORMATS.RGBA ? this.convertTo() : Color.#unlinkRGBA(this._color)
             const rgba = this.#rgba, DDRP = Color.DEFAULT_DECIMAL_ROUNDING_POINT
             rgba[0] = CDEUtils.round(rgba[0], DDRP)
             rgba[1] = CDEUtils.round(rgba[1], DDRP)
             rgba[2] = CDEUtils.round(rgba[2], DDRP)
             rgba[3] = CDEUtils.round(rgba[3], DDRP)
-            this.#hsv = Color.convertTo(Color.FORMATS.HSV, this.#rgba)
+            this.#hsv = Color.convertTo(this.#rgba, Color.FORMATS.HSV)
         }
     }
 
     // converts a color to another color format
-    static convertTo(format=Color.FORMATS.RGBA, color) {
-        let inputFormat = Color.getFormat(color), convertedColor = color, RGBA=Color.FORMATS.RGBA, HEX=Color.FORMATS.HEX, TEXT=Color.FORMATS.TEXT, HSV=Color.FORMATS.HSV
+    static convertTo(color, format=Color.CONVERTABLE_FORMATS.RGBA) {
+        let inputFormat = Color.getFormat(color), convertedColor = color, formats = Color.CONVERTABLE_FORMATS, RGBA=formats.RGBA, HEX=formats.HEX, TEXT=formats.TEXT, HSV=formats.HSV
 
         if (format==RGBA) {
             if (inputFormat==HEX) convertedColor = Color.#hexToRgba(color)
@@ -52,20 +53,37 @@ class Color {
             else if (inputFormat==HSV) convertedColor = Color.#hsvToRgba(color)
         } else if (format==HEX) {
             if (inputFormat==RGBA) convertedColor = Color.#rgbaToHex(color)
-            else Color.#rgbaToHex(Color.convertTo(RGBA, color))
+            else Color.#rgbaToHex(Color.convertTo(color, RGBA))
         } else if (format==TEXT) {
             if (inputFormat==RGBA) convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[color.toString()] ?? color
-            else convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[Color.convertTo(RGBA, color).toString()] ?? color
+            else convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[Color.convertTo(color, RGBA).toString()] ?? color
         } else if (format==HSV) {
             if (inputFormat==RGBA) convertedColor = Color.#rgbaToHsv(color)
-            else convertedColor = Color.#rgbaToHsv(Color.convertTo(RGBA, color))
+            else convertedColor = Color.#rgbaToHsv(Color.convertTo(color, RGBA))
         }
 
         return convertedColor
     }
     // instance version
-    convertTo(format=Color.FORMATS.RGBA, color=this._color) {
-        return Color.convertTo(format, color)
+    convertTo(color=this._color, format=Color.CONVERTABLE_FORMATS.RGBA) {
+        return Color.convertTo(color, format)
+    }
+
+    /**
+     * Returns a random color value
+     * @param {Color.CONVERTABLE_FORMATS} outputFormat: the result's ouput format, one of CONVERTABLE_FORMATS
+     * @param {Boolean} randomizeAlpha: whether the alpha is also randomized, if false, alpha defaults to 1
+     * @param {Array} rRange: if defined, defines the min/max range to chose the r value from
+     * @param {Array} gRange: if defined, defines the min/max range to chose the g value from
+     * @param {Array} bRange: if defined, defines the min/max range to chose the b value from
+     * @param {Array} aRange: if defined, defines the min/max range to chose the a value from
+     */
+    static random(outputFormat=Color.CONVERTABLE_FORMATS.RGBA, randomizeAlpha=false, rRange=[0,255], gRange=[0,255], bRange=[0,255], aRange=[0,1]) {
+        const formats = Color.CONVERTABLE_FORMATS, random = CDEUtils.random, randomRGBA = [random(...rRange), random(...gRange), random(...bRange), randomizeAlpha?random(...aRange, 2):1]
+        if (outputFormat==formats.HEX) return Color.convertTo(randomRGBA, formats.HEX)
+        else if (outputFormat==formats.TEXT) return Color.convertTo(randomRGBA, formats.TEXT)
+        else if (outputFormat==formats.HSV) return Color.convertTo(randomRGBA, formats.HSV)
+        else return randomRGBA
     }
 
     // converts rbga to hsv (without alpha)
@@ -156,7 +174,7 @@ class Color {
      * @param {Boolean} useAlpha: Whether the search considers opacity
      * @param {Number} temperance: The validity margin for the r,g,b,a values
      * @param {SEARCH_STARTS} searchStart: Direction from which the search starts
-     * @param {[width, height]} areaSize: The search area. (Defaults to the canvas sizes)
+     * @param {[width, height]} areaSize: The search area. (Defaults to the canvas size)
      * @returns The found pos [x,y] or null if nothing was found
      */
     static findFirstPos(canvas, color, useAlpha=false, temperance=Color.DEFAULT_TEMPERANCE, searchStart=Color.DEFAULT_SEARCH_START, areaSize=[]) {
@@ -190,7 +208,8 @@ class Color {
 
     // returns a new instance of the same color
     duplicate(dynamicColorPositions) {
-        if (this._format == Color.FORMATS.GRADIENT || this._format == Color.FORMATS.PATTERN) return new Color(this._color.duplicate(dynamicColorPositions))
+        const formats = Color.FORMATS, format = this._format
+        if (format == formats.GRADIENT || format == formats.PATTERN) return new Color(this._color.duplicate(dynamicColorPositions))
         else return new Color(Color.#unlinkRGBA(this.#rgba))
     }
 
@@ -202,7 +221,8 @@ class Color {
 
     // returns the usable value of the color
     get color() {
-        if (this._format == Color.FORMATS.GRADIENT || this._format == Color.FORMATS.PATTERN) return this._color.value
+        const formats = Color.FORMATS, format = this._format
+        if (format == formats.GRADIENT || format == formats.PATTERN) return this._color.value
         else return Color.formatRgba(this.#rgba)
     }
     get colorRaw() {return this._color} // returns the declaration of the color
@@ -253,4 +273,10 @@ class Color {
             this.#rgba = Color.#hsvToRgba(this.#hsv)
         }
     }
+}
+
+const colors = Object.entries(Color.CSS_COLOR_TO_RGBA_CONVERTIONS), c_ll = colors.length
+for (let i=0;i<c_ll;i++) {
+    const color = colors[i]
+    Object.defineProperty(Color, color[0], {get() {return color[1]}})
 }

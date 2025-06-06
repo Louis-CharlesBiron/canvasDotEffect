@@ -1142,14 +1142,14 @@ The Color class represents a color and provides multiple utility functions such 
 - **isChannel** -> If `true`, the Color instance will be considered a color channel and will not duplicate. (Channels are for global color distribution)
 
 ### **To convert a color to another format,** use the convertTo() function:
-###### - converTo(format=Color.FORMATS.RGBA, color)
+###### - converTo(color, format=Color.FORMATS.RGBA)
 ```js
     const red = "red"
     
     console.log("Here is red in some other formats:",
-        Color.convertTo(Color.FORMATS.RGBA, red)
-        Color.convertTo(Color.FORMATS.HSV, red)
-        Color.convertTo(Color.FORMATS.HEX, red)
+        Color.convertTo(red, Color.FORMATS.RGBA)
+        Color.convertTo(red, Color.FORMATS.HSV)
+        Color.convertTo(red, Color.FORMATS.HEX)
     )
 ```
 **Note:** `ConvertTo` doesn't support gradients.

@@ -287,9 +287,19 @@ class ImageDisplay extends _BaseObj {
     get loop() {return this._source?.loop}
     get isLooping() {return this.loop}
 
+    set source(source) {
+        const initSize = this._size
+        ImageDisplay.initializeDataSource(source, (data, naturalSize)=>{
+            this._source = data
+            this.#naturalSize = naturalSize
+            this.size = initSize
+        }, this._errorCB)
+    }
+    set naturalSize(naturalSize) {this.#naturalSize = naturalSize}
 	set size(size) {
         this.width = size[0]
         this.height = size[1]
+        return this._size
     }
 	set width(width) {this._size[0] = typeof width=="string" ? (+width.replace("%","").trim()/100)*this.#naturalSize[0] : width==null ? this.#naturalSize[0] : width}
 	set height(height) {this._size[1] = typeof height=="string" ? (+height.replace("%","").trim()/100)*this.#naturalSize[1] : height==null ? this.#naturalSize[1] : height}
