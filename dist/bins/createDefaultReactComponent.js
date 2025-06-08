@@ -53,7 +53,7 @@ export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loop
 })`)
 
 
-console.log("\nDefault CDECanvas React component successfully created at '"+join(destination, "CDECanvas.jsx")+"'!\n")
+console.log("Default CDECanvas React component successfully created at '"+join(destination, "CDECanvas.jsx")+"'!\n")
 
 const cli = createInterface({input:process.stdin, output:process.stdout})
 function close(cli) {
@@ -61,10 +61,10 @@ function close(cli) {
     console.log("")
 }
 
-cli.question("Open in explorer? (Y/N)\n", value=>{
+cli.question("Open in explorer [Y/N]?  ", value=>{
     const v = value?.toLowerCase()?.trim()
     if (v=="code") exec("code --new-window "+destination)
-    else if (!value || ["y", "yes", "ye", "ok", "for sure"].includes(v)) exec("explorer "+destination)
+    else if (!v || ["y", "yes", "ye", "ok", "for sure"].includes(v)) exec("explorer "+destination)
     close(cli)
 })
 

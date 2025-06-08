@@ -131,7 +131,7 @@ CVS.startLoop()`)
 fetch("https://file-examples.com/storage/fe32c8d6966839f839df247/2017/04/file_example_MP4_480_1_5MG.mp4").then(res=>res.ok&&res.arrayBuffer()).then(buffer=>buffer&&writeFileSync(join(mediaDest, "coolBackground.mp4"), Buffer.from(buffer)))
 
 
-console.log("\nCDEJS browser project template successfully created at '"+destination+"'!\n")
+console.log("CDEJS browser project template successfully created at '"+destination+"'!\n")
 
 const cli = createInterface({input:process.stdin, output:process.stdout})
 function close(cli) {
@@ -139,10 +139,10 @@ function close(cli) {
     console.log("")
 }
 
-cli.question("Open in explorer? (Y/N)\n", value=>{
+cli.question("Open in explorer [Y/N]?  ", value=>{
     const v = value?.toLowerCase()?.trim()
     if (v=="code") exec("code --new-window "+destination)
-    else if (!value || ["y", "yes", "ye", "ok", "for sure"].includes(v)) exec("explorer "+destination)
+    else if (!v || ["y", "yes", "ye", "ok", "for sure"].includes(v)) exec("explorer "+destination)
     close(cli)
 })
 

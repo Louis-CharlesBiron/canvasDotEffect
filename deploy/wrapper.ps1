@@ -69,7 +69,7 @@ Set-Content -Path $minifiedCodePathUMD -Value @"
 "@
 
 #MINIFY BINS FILES
-$binFiles = @("$bins\createBrowserProjectTemplate.js", "$bins\createDefaultReactComponent.js", "$bins\createProjectTemplate.js", "$bins\getSignature.js", "$bins\openDocumentation.js")
+$binFiles = @("$bins\createBrowserProjectTemplate.js", "$bins\createDefaultReactComponent.js", "$bins\createProjectTemplate.js", "$bins\getSignature.js", "$bins\openDocumentation.js", "$bins\global.js")
 foreach ($filepath in $binFiles) {
     Start-Process -FilePath $terser -ArgumentList "$filepath -o $bins\$((Get-Item $filepath).BaseName).min.js --compress --mangle"
 }

@@ -157,7 +157,7 @@ writeFileSync(join(destination, "package.json"), `{
       "build": "vite build && node ./bin/build.js"
     },
     "dependencies": {
-      "cdejs": "^1.1.2"
+      "cdejs": "^1.1.3"
     },
     "devDependencies": {
       "vite": "^6.2.2"
@@ -207,7 +207,7 @@ fetch("https://file-examples.com/storage/fe32c8d6966839f839df247/2017/04/file_ex
 
 spawn("npm", ["i"], {cwd:destination, shell:true})
 
-console.log("\nCDEJS project template successfully created at '"+destination+"'!\n")
+console.log("CDEJS project template successfully created at '"+destination+"'!\n")
 
 const cli = createInterface({input:process.stdin, output:process.stdout})
 function close(cli) {
@@ -215,10 +215,10 @@ function close(cli) {
     console.log("")
 }
 
-cli.question("Open in explorer? (Y/N)\n", value=>{
+cli.question("Open in explorer [Y/N]?  ", value=>{
     const v = value?.toLowerCase()?.trim()
     if (v=="code") exec("code --new-window "+destination)
-    else if (!value || ["y", "yes", "ye", "ok", "for sure"].includes(v)) exec("explorer "+destination)
+    else if (!v || ["y", "yes", "ye", "ok", "for sure"].includes(v)) exec("explorer "+destination)
     close(cli)
 })
 

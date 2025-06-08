@@ -49,7 +49,7 @@
 ## Getting Started / Minimal setup
 
 
-#### Either run: `npx cdejs-template yourProjectName` or follow these couple steps! (↓)
+#### Either run: `npx cdejs template yourProjectName` or follow these couple steps! (↓)
 1. **Get the library file. (`npm install cdejs` or [canvasDotEffect.min.js](https://github.com/Louis-CharlesBiron/canvasDotEffect/blob/main/dist/canvasDotEffect.min.js))** 
 ```HTML
     <!-- Only if you're using the browser version! Otherwise use: import {...} from "cdejs" -->
@@ -121,7 +121,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.1.2"
+    "cdejs": "^1.1.3"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -2088,6 +2088,21 @@ const CVS = new Canvas(canvas, ()=>{//loopingCB
 # [Npx Commands](#table-of-contents)
 
 Here is the list of available npx commands:
+
+### To access all cdejs commands remotly / other util commands
+
+#### `npx cdejs <commandName> <params?>`
+
+This is the global cdejs command. It provides access to all regular cdejs commands and some more. It also provides basic command autocompletion upon receiving an uncomplete command name.
+
+#### Example use 1:
+Creating a project template using the `cdejs-template` command. (see below for more details)
+`npx cdejs template myProjectName`
+
+#### Example use 2:
+Lists all available cdejs commands. (As well as aliases)
+`npx cdejs list`
+
 
 ### To create a project template
 
