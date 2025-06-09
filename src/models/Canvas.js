@@ -8,6 +8,7 @@ const CDE_CANVAS_DEFAULT_TIMEOUT_FN = window.requestAnimationFrame||window.mozRe
 // Represents a html canvas element
 class Canvas {
     static DOMParser = new DOMParser()
+    static CANVAS_ID_GIVER = 0
     static ELEMENT_ID_GIVER = 0
     static DEFAULT_MAX_DELTATIME_MS = 130
     static DEFAULT_MAX_DELTATIME = Canvas.DEFAULT_MAX_DELTATIME_MS/1000
@@ -38,6 +39,7 @@ class Canvas {
     #lastScrollValues = [window.scrollX, window.screenY] // last window scroll x/y values
     #mouseMoveCB = null      // the custom mouseMoveCB. Use for mobile adjustments
     constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
+        this._id = Canvas.CANVAS_ID_GIVER++                           // Canvas instance id
         this._cvs = cvs                                               // html canvas element
         this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
         this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)       // set styles selector for canvas
@@ -95,7 +97,7 @@ class Canvas {
         },
         onLoad=e=>{
           const callbacks = Canvas.#ON_LOAD_CALLBACKS, cb_ll = callbacks?.length
-          if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
+          if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e, this)
           Canvas.#ON_LOAD_CALLBACKS = null
         }
 
@@ -418,9 +420,8 @@ class Canvas {
 
     // removes any element from the canvas by id
     remove(id) {
-        if (id=="*") {
-            this._els = {refs:[], defs:[]}
-        } else {
+        if (id=="*") this._els = {refs:[], defs:[]}
+        else {
             this._els.defs = this._els.defs.filter(el=>el.id!==id)
             this._els.refs = this._els.refs.filter(source=>source.id!==id)
         }
@@ -636,6 +637,7 @@ class Canvas {
         this.mouseMoveListenersOptimizationEnabled = true
     }
     
+	get id() {return this._id}
 	get cvs() {return this._cvs}
 	get frame() {return this._frame}
 	get ctx() {return this._ctx}
@@ -671,6 +673,7 @@ class Canvas {
     get anims() {return this._anims}
     get mouseMoveListenersOptimizationEnabled() {return this._mouse._moveListenersOptimizationEnabled}
 
+	set id(id) {this._id = id}
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
 	set width(w) {this.setSize(w, null)}
 	set height(h) {this.setSize(null, h)}

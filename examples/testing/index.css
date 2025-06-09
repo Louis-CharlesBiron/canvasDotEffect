@@ -34,3 +34,9 @@ html {
 }
 
 *::-webkit-scrollbar {width: 5px;}
+
+
+.move {
+    transition: 4s all;
+    transform: translate(100px);
+}

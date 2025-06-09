@@ -7,6 +7,7 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
 
 // DECLARE OBJS
 
+
 const normalColorTester = new Color("white")
 
 let movementsTester = new Shape([300,300],[
@@ -63,7 +64,6 @@ let testMore = new Shape([0,0], [new Dot([600, 200]), new Dot([600, 300], null, 
 testMore.playAnim(new Anim((prog)=>testMore.firstDot.colorRaw.rotation=-360*prog, -750))
 
 let aud = new AudioDisplay("./img/song.mp3", [800,250], "lime", AudioDisplay.BARS(100, 3, 10), 32, true)
-CVS.add(aud)
 
 
 let test2 = new Shape((shape, idk)=>{return [50+50,100+shape.dots.length]},[new Dot((dot, shape)=>[shape.x,20]),new Dot(()=>[40+45,40]),new Dot([0,0],null,null,null,[150,150]),new Dot([250,80])],
@@ -106,7 +106,6 @@ let test = new Grid("abcdefg\nhijklm".toUpperCase(), [5, 5], 50, null, [450,50],
     CanvasUtils.drawDotConnections(dot, render.profile1.update([255,255,255,1]))
 })
 
-CVS.add(test)
 
 
 // SINGLE DRAGGABLE DOT
@@ -194,7 +193,6 @@ for (let i = 0;i<20;i++) {
 const testText2 = new TextDisplay("Test § ->", [100, 550], (render, text)=>new Pattern(render, ImageDisplay.loadVideo("./img/vidTest.mp4",true,true), text), null, null, null, null, (obj)=>{
     CanvasUtils.lookAt(testText2, filledShapeTester.firstDot)
 })
-CVS.add(testText2)
 
 let imageTester = new ImageDisplay("./img/logo.png", [-250, 75], [250], (e,a)=>console.log(e,a), null, null, ()=>testMore.firstDot)
 
@@ -217,7 +215,6 @@ let trailTester = new Shape([200, 100], new Dot(), null, "lime", null, (render, 
     ]
 })
 
-CVS.add(trailTester)
 
 let yo = new Shape([0,0], new Dot([700, 600]), null, "aqua", null, (render, dot, ratio, res, m, dist, shape)=>{
     if (dot.id==shape.firstDot.id) {
@@ -241,7 +238,6 @@ let yo = new Shape([0,0], new Dot([700, 600]), null, "aqua", null, (render, dot,
     ]
 })
 
-CVS.add(yo)
 /*
 /*let compOp = Render.DEFAULT_COMPOSITE_OPERATION
 let moreGridTester = new Grid("!?@#$%\n^&*(),.'\n-+_:;[]\n01234567890\n\\/|{}", [7, 7], 50, null, [250,5], 1, [255,255,255,0.5], 50, (render, dot, ratio, res, m, dist, shape, isActive)=>{
@@ -316,6 +312,11 @@ Canvas.loadSVGFilter(`<svg>
     </filter>
    </svg>`, "f")
 
+CVS.add(aud)
+CVS.add(test)
+CVS.add(testText2)
+CVS.add(trailTester)
+CVS.add(yo)
 CVS.add(movementsTester)
 CVS.add(filledShapeTester)
 CVS.add(testMore)
@@ -328,11 +329,14 @@ CVS.add(imageTester)
 
 
 let dupelicateTester = le.duplicate()
-for (let i=0;i<3;i++) {
+for (let i=0;i<300;i++) {
     CVS.add(dupelicateTester)
     dupelicateTester.moveBy([100, 100])
     dupelicateTester = dupelicateTester.duplicate()
 }
+
+
+
 
 // USER ACTIONS
 let mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"
@@ -345,3 +349,7 @@ CVS.setKeyUp()
 
 // START
 CVS.startLoop()
+
+Canvas.addOnLoadCallback((e, cvs)=>{
+    console.log("LOADED")
+})
