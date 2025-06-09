@@ -143,7 +143,6 @@ class CanvasUtils {
         render.batchStroke(Render.getPositionsRect(bounds[0], bounds[1]), color)
     }
 
-    
     // Draws the minimal rectangular area fitting the provided object
     static drawOutlineAccurate(render, obj, color=[0,50,255,1]) {
         render.batchStroke(obj.getBoundsAccurate(), color)
@@ -163,6 +162,13 @@ class CanvasUtils {
             const dragAnim = CanvasUtils.getDraggableDotCB()
             return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, res, m, dist, shape)=>dragAnim(shape.firstDot, m, dist, ratio))
         }
+    }
+
+    // Returns a blank, setup/loop only, object. Can be used to draw non objects
+    static createEmptyObj(cvs, loopCB, setupCB) {
+        const obj = new Shape([0,0], null, 0, null, 0, null, undefined, setupCB, loopCB, null, true)
+        cvs.add(obj)
+        return obj.id
     }
 
     // Provides generic follow paths

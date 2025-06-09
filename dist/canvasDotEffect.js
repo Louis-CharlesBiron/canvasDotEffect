@@ -377,7 +377,6 @@ class CanvasUtils {
         render.batchStroke(Render.getPositionsRect(bounds[0], bounds[1]), color)
     }
 
-    
     // Draws the minimal rectangular area fitting the provided object
     static drawOutlineAccurate(render, obj, color=[0,50,255,1]) {
         render.batchStroke(obj.getBoundsAccurate(), color)
@@ -397,6 +396,13 @@ class CanvasUtils {
             const dragAnim = CanvasUtils.getDraggableDotCB()
             return new Shape(pos||[10,10],new Dot(), radius, color, null, (render, dot, ratio, res, m, dist, shape)=>dragAnim(shape.firstDot, m, dist, ratio))
         }
+    }
+
+    // Returns a blank, setup/loop only, object. Can be used to draw non objects
+    static createEmptyObj(cvs, loopCB, setupCB) {
+        const obj = new Shape([0,0], null, 0, null, 0, null, undefined, setupCB, loopCB, null, true)
+        cvs.add(obj)
+        return obj.id
     }
 
     // Provides generic follow paths
@@ -1688,6 +1694,31 @@ class Render {
         this._textProfiles = []                                              // list of custom style profiles
     }
 
+    /**
+     * The generate() function allows the generation of a custom graph
+     * @param {[x, y]} startPos: pos array defining the starting pos
+     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
+     * @param {Number} width: the width in pixels of the generation result
+     * @param {Number} segmentCount: precision in segments of the generated result
+     * @param {Number} pixelWidth: the pixel width used for generation. Useful to smooth/zoom a graph
+     * @returns The generated path or undefined if the width or segmentCount is lower than 1
+     */
+    static generate(startPos, yFn, width, segmentCount, pixelWidth) {
+        startPos??=[0,0]
+        yFn??=()=>0
+        width??=100
+        segmentCount??=100
+        pixelWidth??=0.1
+
+        if (width > 1 && segmentCount > 1) {
+            const segmentWidth = width/segmentCount, ix = startPos[0], iy = startPos[1], path = new Path2D()
+            path.moveTo(ix+0, iy+yFn(0))
+
+            for (let x=0;x<=width;x+=segmentWidth) path.lineTo(ix+x, iy+yFn(x*pixelWidth))
+            return path
+        }
+    }
+
     // instanciates and returns a path containing a line
     static getLine(startPos, endPos) {
         const path = new Path2D()
@@ -2247,6 +2278,7 @@ const CDE_CANVAS_DEFAULT_TIMEOUT_FN = window.requestAnimationFrame||window.mozRe
 // Represents a html canvas element
 class Canvas {
     static DOMParser = new DOMParser()
+    static CANVAS_ID_GIVER = 0
     static ELEMENT_ID_GIVER = 0
     static DEFAULT_MAX_DELTATIME_MS = 130
     static DEFAULT_MAX_DELTATIME = Canvas.DEFAULT_MAX_DELTATIME_MS/1000
@@ -2277,6 +2309,7 @@ class Canvas {
     #lastScrollValues = [window.scrollX, window.screenY] // last window scroll x/y values
     #mouseMoveCB = null      // the custom mouseMoveCB. Use for mobile adjustments
     constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
+        this._id = Canvas.CANVAS_ID_GIVER++                           // Canvas instance id
         this._cvs = cvs                                               // html canvas element
         this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
         this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)       // set styles selector for canvas
@@ -2334,7 +2367,7 @@ class Canvas {
         },
         onLoad=e=>{
           const callbacks = Canvas.#ON_LOAD_CALLBACKS, cb_ll = callbacks?.length
-          if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e)
+          if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e, this)
           Canvas.#ON_LOAD_CALLBACKS = null
         }
 
@@ -2657,9 +2690,8 @@ class Canvas {
 
     // removes any element from the canvas by id
     remove(id) {
-        if (id=="*") {
-            this._els = {refs:[], defs:[]}
-        } else {
+        if (id=="*") this._els = {refs:[], defs:[]}
+        else {
             this._els.defs = this._els.defs.filter(el=>el.id!==id)
             this._els.refs = this._els.refs.filter(source=>source.id!==id)
         }
@@ -2875,6 +2907,7 @@ class Canvas {
         this.mouseMoveListenersOptimizationEnabled = true
     }
     
+	get id() {return this._id}
 	get cvs() {return this._cvs}
 	get frame() {return this._frame}
 	get ctx() {return this._ctx}
@@ -2910,6 +2943,7 @@ class Canvas {
     get anims() {return this._anims}
     get mouseMoveListenersOptimizationEnabled() {return this._mouse._moveListenersOptimizationEnabled}
 
+	set id(id) {this._id = id}
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
 	set width(w) {this.setSize(w, null)}
 	set height(h) {this.setSize(null, h)}
@@ -4895,7 +4929,7 @@ class Shape extends _Obj {
 
     /**
      * The generate() function allows the generation of custom formations of dot
-     * @param {Function} yTrajectory: a function providing a Y value depanding on a given X value
+     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
      * @param {Number} startOffset: pos array representing the starting position offset
      * @param {Number} length: the width in pixels of the generation result
      * @param {Number} gapX: the gap in pixel skipped between each generation
@@ -4903,17 +4937,17 @@ class Shape extends _Obj {
      * @param {Function?} generationCallback: custom callback called on each generation (this, lastDot)=>
      * @returns The generated Dots
      */
-    static generate(yTrajectory, startOffset, length, gapX, yModifier, generationCallback) {
-        yTrajectory??=x=>0
+    static generate(yFn, startOffset, length, gapX, yModifier, generationCallback) {
+        yFn??=()=>0
         startOffset??=[0,0]
         length??=100
         gapX??=1
         yModifier??=[-50, 50]
 
-        let dots = [], lastDot = null
+        let dots = [], lastDot = null, isGenCB = CDEUtils.isFunction(generationCallback)
         for (let x=0;x<=length;x+=CDEUtils.getValueFromRange(gapX)) {
-            const dot = new Dot([startOffset[0]+x, startOffset[1]+CDEUtils.getValueFromRange(yModifier)+yTrajectory(x)])
-            if (lastDot && CDEUtils.isFunction(generationCallback)) generationCallback(dot, lastDot)
+            const dot = new Dot([startOffset[0]+x, startOffset[1]+CDEUtils.getValueFromRange(yModifier)+yFn(x)])
+            if (lastDot && isGenCB) generationCallback(dot, lastDot)
             dots.push(dot)
             lastDot = dot
         }

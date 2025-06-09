@@ -121,7 +121,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.1.3"
+    "cdejs": "^1.1.4"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -140,9 +140,10 @@ The following sections are short documentations of each class, basically what it
 The Canvas class is the core of the project. It manages the main loop, the window listeners, the delta time, the HTML canvas element, all the canvas objects, and much more.
 #### **The Canvas constructor takes the following parameters:**
 ###### - `new Canvas(cvs, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently)`
+- *id* -> The identifier of the canvas instance.
 - **cvs** -> The HTML canvas element to link to.
 - **loopingCB**? -> A callback ran each frame. `(Canvas)=>`
-- **fpsLimit**? -> The maximum fps cap. Defaults to V-Sync.
+- **fpsLimit**? -> The maximum fps cap. Defaults and caps to V-Sync.
 - **visibilityChangeCB**? -> A callback called on document visibility change. `(isVisible, cvs, event)=>`
 - **cvsFrame**? -> If you don't want the canvas to take the size of its direct parent, you can provide another custom HTML element here.
 - **settings**? -> The custom canvas settings (leave `null` for prebuilt default settings).
@@ -1395,6 +1396,33 @@ Render is a class that centralizes most context operations. It provides function
     }
 ```
 
+#### Example use 3:
+###### - Smoothly drawing a sine graph
+```js
+    // Creating an empty obj to draw a sine graph
+    CanvasUtils.createEmptyObj(CVS, obj=>{// loopCB
+
+        // Receiving the path through the obj's setupResults, and drawing it
+        const path = obj.setupResults
+        if (path) CVS.render.batchStroke(path)
+
+    }, obj=>{// setupCB
+
+        // Generating a new path 500 times at 10ms intervals
+        CDEUtils.repeatedTimeout(500, (i)=>{
+
+            // Generating and updating the drawn path
+            obj.setupResults = Render.generate(
+                [10, 10],             // The start position of the generation
+                (x)=>Math.sin(x)*100, // The function providing a Y value depanding on a given X value. (x)=>{... return y}
+                i,                    // The width of the generation. Will be 500px at the end
+                segmentCount = 200    // The precision in segments of the generated result
+            )
+            
+        }, 10)
+    })
+```
+
 # [RenderStyles](#table-of-contents)
 
 The RenderStyles class allows the customization of renders via style profiles when drawing with the *Render* class. By default, the following profiles are created and accessible via any Render instance: `defaultProfile` and `profile1`, to `profile5`. There is also a `profiles` array to add more custom profiles.
@@ -1831,6 +1859,17 @@ This function is used to rotate the gradient of an object.
         CanvasUtils.rotateGradient(dummyFilledShape, 3000, 1, true)
     }
     
+```
+
+### CreateEmptyObj
+This function is used to create a blank object with only a loopCB and/or setupCB. Useful to draw non objects which often require a loop.
+###### createEmptyObj(cvs, loopCB, setupCB)
+```js
+CanvasUtils.createEmptyObj(CVS, obj=>{// loopCB
+
+    // Drawing a line from [0,0] to [100, 100]
+    CVS.render.batchStroke(Render.getLine([0,0], [100, 100]))
+})
 ```
 
 ### getDraggableDotCB

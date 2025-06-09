@@ -19,7 +19,7 @@ const commands = {
 function getCommand(reqCom, params) {
     const isDirectFind = Boolean(commands[reqCom]), cmd = Object.entries(commands).find((command)=>command[0].toLowerCase().includes(reqCom))
     if (customCommands.includes(reqCom)) return {cmd:reqCom}
-    else if (cmd && reqCom && reqCom != "cdejs") return {isAutoComplete:!isDirectFind&&!params.includes("-y")&&!params.includes("-f")&&!params.includes("-yes")&&!params.includes("-force"), cmdName:cmd[0], cmd:[join(dirname(process.argv[1]), cmd[1]), ...params].filter(Boolean)}
+    else if (cmd && reqCom && reqCom != "cdejs") return {isAutoComplete:!isDirectFind&&!params.includes("-y")&&!params.includes("-f"), cmdName:cmd[0], cmd:[join(dirname(process.argv[1]), cmd[1]), ...params.filter(x=>!x.includes("-y")&&!x.includes("-f"))].filter(Boolean)}
 }
 
 function executeCmd(cmd) {

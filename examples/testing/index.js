@@ -329,7 +329,7 @@ CVS.add(imageTester)
 
 
 let dupelicateTester = le.duplicate()
-for (let i=0;i<300;i++) {
+for (let i=0;i<3;i++) {
     CVS.add(dupelicateTester)
     dupelicateTester.moveBy([100, 100])
     dupelicateTester = dupelicateTester.duplicate()

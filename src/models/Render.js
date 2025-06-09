@@ -42,6 +42,31 @@ class Render {
         this._textProfiles = []                                              // list of custom style profiles
     }
 
+    /**
+     * The generate() function allows the generation of a custom graph
+     * @param {[x, y]} startPos: pos array defining the starting pos
+     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
+     * @param {Number} width: the width in pixels of the generation result
+     * @param {Number} segmentCount: precision in segments of the generated result
+     * @param {Number} pixelWidth: the pixel width used for generation. Useful to smooth/zoom a graph
+     * @returns The generated path or undefined if the width or segmentCount is lower than 1
+     */
+    static generate(startPos, yFn, width, segmentCount, pixelWidth) {
+        startPos??=[0,0]
+        yFn??=()=>0
+        width??=100
+        segmentCount??=100
+        pixelWidth??=0.1
+
+        if (width > 1 && segmentCount > 1) {
+            const segmentWidth = width/segmentCount, ix = startPos[0], iy = startPos[1], path = new Path2D()
+            path.moveTo(ix+0, iy+yFn(0))
+
+            for (let x=0;x<=width;x+=segmentWidth) path.lineTo(ix+x, iy+yFn(x*pixelWidth))
+            return path
+        }
+    }
+
     // instanciates and returns a path containing a line
     static getLine(startPos, endPos) {
         const path = new Path2D()

@@ -64,7 +64,7 @@ class Shape extends _Obj {
 
     /**
      * The generate() function allows the generation of custom formations of dot
-     * @param {Function} yTrajectory: a function providing a Y value depanding on a given X value
+     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
      * @param {Number} startOffset: pos array representing the starting position offset
      * @param {Number} length: the width in pixels of the generation result
      * @param {Number} gapX: the gap in pixel skipped between each generation
@@ -72,17 +72,17 @@ class Shape extends _Obj {
      * @param {Function?} generationCallback: custom callback called on each generation (this, lastDot)=>
      * @returns The generated Dots
      */
-    static generate(yTrajectory, startOffset, length, gapX, yModifier, generationCallback) {
-        yTrajectory??=x=>0
+    static generate(yFn, startOffset, length, gapX, yModifier, generationCallback) {
+        yFn??=()=>0
         startOffset??=[0,0]
         length??=100
         gapX??=1
         yModifier??=[-50, 50]
 
-        let dots = [], lastDot = null
+        let dots = [], lastDot = null, isGenCB = CDEUtils.isFunction(generationCallback)
         for (let x=0;x<=length;x+=CDEUtils.getValueFromRange(gapX)) {
-            const dot = new Dot([startOffset[0]+x, startOffset[1]+CDEUtils.getValueFromRange(yModifier)+yTrajectory(x)])
-            if (lastDot && CDEUtils.isFunction(generationCallback)) generationCallback(dot, lastDot)
+            const dot = new Dot([startOffset[0]+x, startOffset[1]+CDEUtils.getValueFromRange(yModifier)+yFn(x)])
+            if (lastDot && isGenCB) generationCallback(dot, lastDot)
             dots.push(dot)
             lastDot = dot
         }
