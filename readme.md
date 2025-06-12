@@ -12,7 +12,7 @@
 # Table of Contents
 
 - [Getting Started / Minimal setup](#getting-started--minimal-setup)
-- [Classes](#classes)
+- [Classes](#class-descriptions)
   - [Canvas](#canvas)
   - [_Obj](#_obj)
   - [Dot](#dot)
