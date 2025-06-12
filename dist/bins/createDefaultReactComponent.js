@@ -43,10 +43,10 @@ export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loop
         
         // Start
         if (isStatic) CVS.initializeStatic()
-        else CVS.startLoop()
+        else CVS.start()
 
         // On unmount
-        return ()=>CVS.stopLoop()
+        return ()=>CVS.stop()
     }, [])
 
     return <canvas ref={htmlElementCanvasRef}></canvas>

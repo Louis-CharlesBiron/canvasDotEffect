@@ -167,4 +167,4 @@ CVS.setKeyDown()
 CVS.setKeyUp()
 
 // START
-CVS.startLoop()
+CVS.start()

@@ -149,4 +149,4 @@ CVS.setMouseDown()
 CVS.setMouseUp()
 
 // START
-CVS.startLoop()
+CVS.start()

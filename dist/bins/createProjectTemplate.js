@@ -121,7 +121,7 @@ CVS.setKeyDown(_, true)
 CVS.setKeyUp(_, true)
 
 // Start drawing loop
-CVS.startLoop()`)
+CVS.start()`)
 
 // Create .gitignore
 writeFileSync(join(destination, ".gitignore"), `# Logs

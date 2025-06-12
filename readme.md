@@ -89,7 +89,7 @@
 6. **Once everything is created and ready to go, start the drawing loop!**
 ```js
     // Start
-    CVS.startLoop()
+    CVS.start()
 ```
 
 **- In the end, you should have something like this:**
@@ -105,7 +105,7 @@
     CVS.setMouseDown()
     CVS.setMouseUp()
     
-    CVS.startLoop()
+    CVS.start()
 ```
 
 **Note:** if you are using de [NPM](https://www.npmjs.com/package/cdejs) version of this librairy, using [Vite](https://vite.dev/) or any other bundler is recommended.
@@ -176,10 +176,10 @@ The Canvas class is the core of the project. It manages the main loop, the windo
 **To control the canvas loop**, use the following functions:
 ```js
     // Starts the main loop
-    CVS.startLoop() 
+    CVS.start() 
 
     // Stops the main loop
-    CVS.stopLoop()
+    CVS.stop()
 ```
 
 #### Example use:
@@ -2220,7 +2220,7 @@ export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loop
         
         // Start
         if (isStatic) CVS.initializeStatic()
-        else CVS.startLoop()
+        else CVS.start()
 
         // On unmount
         return ()=>CVS.stopLoop()
@@ -2273,7 +2273,7 @@ After this, every dot will be initialized, and all canvas objects will be ready 
 - Adjusts the `pos` according to the `anchorPos`
 
 ### Level 5: Drawing stage
-**This is where the canvas objects will appear on the canvas. Starts when calling `startLoop()` on the Canvas instance. The `draw` function runs every frame for every canvas object. The following will happen:**
+**This is where the canvas objects will appear on the canvas. Starts when calling `start()` on the Canvas instance. The `draw` function runs every frame for every canvas object. The following will happen:**
 - DeltaTime becomes available via the Canvas instance
 - Updates the object's `pos` according to the `anchorPos`
 - Plays the object's animations, if any
@@ -2331,7 +2331,7 @@ staticCVS.clear()
 staticCVS.cleanDrawStatic()
 ```
 **Notes:** 
-- Since there is no drawing loop, you do not need to run `CVS.startLoop()`
+- Since there is no drawing loop, you do not need to run `CVS.start()`
 - You can also overlay dynamic and static canvases to seamlessly distribute the drawing process.
  
 
