@@ -2273,7 +2273,7 @@ class RenderStyles extends _HasColor {
 // Please don't use or credit this code as your own.
 //
 
-const CDE_CANVAS_DEFAULT_TIMEOUT_FN = window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame
+const CDE_CANVAS_TIMEOUT_FUNCTION = window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.msRequestAnimationFrame
 
 // Represents a html canvas element
 class Canvas {
@@ -2300,14 +2300,14 @@ class Canvas {
 
     #lastFrame = 0           // default last frame time
     #lastLimitedFrame = 0    // last frame time for limited fps
+    #fixedTimeStampOffset = 0// fixed requestanimationframe timestamp in ms
     #maxTime = null          // max time between frames
-    #frameSkipsOffset = null // used to prevent significant frame gaps
     #timeStamp = null        // requestanimationframe timestamp in ms
     #cachedEls = []          // cached canvas elements to draw
     #cachedEls_ll = null     // cached canvas elements count/length
     #cachedSize = null       // cached canvas size
     #lastScrollValues = [window.scrollX, window.screenY] // last window scroll x/y values
-    #mouseMoveCB = null      // the custom mouseMoveCB. Use for mobile adjustments
+    #mouseMoveCB = null      // the custom mouseMoveCB. Used for mobile adjustments
     constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._id = Canvas.CANVAS_ID_GIVER++                           // Canvas instance id
         this._cvs = cvs                                               // html canvas element
@@ -2317,14 +2317,14 @@ class Canvas {
         this._ctx = this._cvs.getContext("2d", {willReadFrequently})  // canvas context
         this._settings = this.updateSettings(settings)                // set context settings
         this._els = {refs:[], defs:[]}                                // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
-        this._looping = false                                         // loop state
+        this._state = 0                                               // canvas drawing loop state. 0:off, 1:on, 2:awaiting stop
         this._loopingCB = loopingCB                                   // custom callback called along with the loop() function
         this.fpsLimit = fpsLimit                                      // delay between each frame to limit fps
         this.visibilityChangeCB = visibilityChangeCB                  // callback with the actions to be taken on document visibility change (isVisible, CVS, e)=>
         this._speedModifier = 1                                       // animation/drawing speed multiplier
         this.#maxTime = this.#getMaxTime(fpsLimit)                    // max time between frames
         this._deltaTime = null                                        // useable delta time in seconds
-        this._fixedTimeStamp = null                                   // fixed (offsets lag spikes) requestanimationframe timestamp in ms
+        this._fixedTimeStamp = null                                   // fixed timestamp in ms
         this._windowListeners = this.#initWindowListeners()           // [onresize, onvisibilitychange, onscroll, onload]
         this._viewPos = [0,0]                                         // context view offset
         const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
@@ -2440,69 +2440,75 @@ class Canvas {
         return this._offset = {x:Math.round((x+width)-this.width)+this._viewPos[0], y:Math.round((y+height)-this.height)+this._viewPos[1]}
     }
 
-    // starts the drawing loop
-    startLoop() {
-        if (!this._looping) {
-            this._looping = true
-            this.#loop(0)
-        }
-    }
-
     // main loop, runs every frame
-    #loop(time) {
-        this.#timeStamp = time
-        if (this._fpsLimit) {
+    #loop(time, wasRestarted) {
+        const frameTime = (time-this.#lastFrame)*this._speedModifier, fpsLimit = this._fpsLimit
+
+        if (fpsLimit) {
             const timeDiff = time-this.#lastLimitedFrame
-            if (timeDiff >= this._fpsLimit) {
-                this.#loopCore(time)
+            if (timeDiff >= fpsLimit) {
+                this._fixedTimeStamp = ((this.#timeStamp += frameTime)-this.#fixedTimeStampOffset)
+                if (!wasRestarted) this.#loopCore(time)
                 this.#lastFrame = time
-                this.#lastLimitedFrame = time-(timeDiff%this._fpsLimit)
+                this.#lastLimitedFrame = time-(timeDiff%fpsLimit)
             }
         } else {
-            this.#loopCore(time)
+            this._fixedTimeStamp = ((this.#timeStamp += frameTime)-this.#fixedTimeStampOffset)
+            if (!wasRestarted) this.#loopCore(time)
             this.#lastFrame = time
         }
 
-        if (this._looping) CDE_CANVAS_DEFAULT_TIMEOUT_FN(this.#loop.bind(this))
+        if (this._state==1) CDE_CANVAS_TIMEOUT_FUNCTION(this.#loop.bind(this))
+        else this._state = 0
     }
 
     // core actions of the main loop
     #loopCore(time) {
-        this.#calcDeltaTime(time)
+        const deltaTime = this.#calcDeltaTime(time), mouse = this._mouse, loopingCB = this._loopingCB
 
-        const deltaTime = this._deltaTime, delay = Math.abs((time-this.#timeStamp)-deltaTime*1000), mouse = this._mouse
-        if (this._fixedTimeStamp==0) this._fixedTimeStamp = time-this.#frameSkipsOffset
-        if (time && this._fixedTimeStamp && delay < this.#maxTime) {
-            mouse.calcSpeed(deltaTime)
-            if (!mouse._moveListenersOptimizationEnabled) {
-                mouse.checkListeners(10) // enter
-                mouse.checkListeners(11) // leave
-            }
+        mouse.calcSpeed(deltaTime)
+        if (!mouse._moveListenersOptimizationEnabled) {
+            mouse.checkListeners(10) // mouse enter
+            mouse.checkListeners(11) // mouse leave
+        }
 
-            this.clear()
-            this.draw()
-            this._render.drawBatched()
-            
-            if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB(deltaTime)
+        this.clear()
+        this.draw()
+        this._render.drawBatched()
+        
+        if (loopingCB) this._loopingCB(deltaTime)
 
-            const anims = this._anims, a_ll = anims.length
-            if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
-
-            this._fixedTimeStamp = 0
-        } else if (time) {
-            this._fixedTimeStamp = time-(this.#frameSkipsOffset += this.#maxTime)
-            this.#frameSkipsOffset += this.#maxTime
-        }   
+        const anims = this._anims, a_ll = anims.length
+        if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(this.timeStamp, deltaTime)
     }
 
-    // stops the loop
+    // starts the canvas drawing loop
+    startLoop() {
+        if (this._state!=1) {
+            if (this._state==2) return this._state = 1
+            this._state = 1
+            if (this.#lastFrame) this.#fixedTimeStampOffset += (performance.now()-this.#lastFrame)
+            this.#loop(this.#timeStamp||0, true)
+        }
+    }
+    // starts the canvas drawing loop
+    start() {
+        this.startLoop()
+    }
+
+    // stops the canvas drawing loop
     stopLoop() {
-        this._looping = false
+        if (this._state) this._state = 2
+    }
+    // stops the canvas drawing loop
+    stop() {
+        this.stopLoop()
     }
 
     // calculates and sets the deltaTime
     #calcDeltaTime(time=0) {
-        this._deltaTime = Math.min((time-this.#lastFrame)/1000, this.#maxTime)
+        const deltaTime = (time-this.#lastFrame)/1000, maxTime = this.#maxTime
+        return this._deltaTime = deltaTime>maxTime ? maxTime : deltaTime
     }
 
     // calculates the max time between frames according to the fpsLimit
@@ -2522,7 +2528,7 @@ class Canvas {
 
     // calls the draw function on all canvas objects
     draw() {
-        const els = this.#cachedEls, els_ll = this.#cachedEls_ll, render = this._render, deltaTime = this._deltaTime, timeStamp = this.timeStamp*this._speedModifier
+        const els = this.#cachedEls, els_ll = this.#cachedEls_ll, render = this._render, deltaTime = this._deltaTime, timeStamp = this.timeStamp//*this._speedModifier
         for (let i=0;i<els_ll;i++) {
             const el = els[i], margin = el.activationMargin
             if (!(margin===true) && el.initialized && !this.isWithin(el.pos, margin) || !el.draw) continue
@@ -2532,8 +2538,7 @@ class Canvas {
 
     // clears the canvas
     clear(x=0, y=0, x2=this.width, y2=this.height) {
-        const [oX, oY] = this._viewPos
-        if (oX || oY) {
+        if (this._viewPos[0] || this._viewPos[1]) {
             this.save()
             this.resetTransformations()
             this._ctx.clearRect(x, y, x2, y2)
@@ -2916,10 +2921,12 @@ class Canvas {
 	get size() {return this.#cachedSize}
 	get settings() {return this._settings}
 	get loopingCB() {return this._loopingCB}
-	get looping() {return this._looping}
+	get looping() {return this._state==1}
+	get stopped() {return this._state==0}
+    get state() {return this._state}
 	get deltaTime() {return this._deltaTime}
 	get windowListeners() {return this._windowListeners}
-	get timeStamp() {return this._fixedTimeStamp||this.#timeStamp}
+	get timeStamp() {return this._fixedTimeStamp||this.#timeStamp}// TODO
 	get timeStampRaw() {return this.#timeStamp}
 	get els() {return this._els}
 	get mouse() {return this._mouse}
@@ -2954,7 +2961,10 @@ class Canvas {
     }
     set visibilityChangeCB(visibilityChangeCB) {
         this._visibilityChangeCB = (isVisible, CVS, e)=>{
-            if (isVisible) this.resetReferences()
+            if (isVisible) {
+                this.startLoop()
+                this.resetReferences()
+            } else this.stopLoop()
             if (CDEUtils.isFunction(visibilityChangeCB)) visibilityChangeCB(isVisible, CVS, e)
         }
     }
@@ -2985,13 +2995,13 @@ class Anim {
     
     // progresses the animation 1 frame fowards (loops each frame) 
     getFrame(time, deltaTime) {
-        const isInfinite = this._duration<0, duration = isInfinite?-this._duration:this._duration
+        const isInfinite = this._duration<0, duration = isInfinite?-this._duration:this._duration, startTime = this._startTime
         if (!this._playCount || isInfinite) {
             // SET START TIME
-            if (!this._startTime) this._startTime = time
+            if (!startTime) this._startTime = time
             // PLAY ANIMATION
-            else if (time<this._startTime+duration) {
-                this._progress = this._easing((time-this._startTime)/duration)
+            else if (time<startTime+duration) {
+                this._progress = this._easing((time-startTime)/duration)
                 this._animation(this._progress, this._playCount, deltaTime, this.progress)
             }
             // REPEAT IF NEGATIVE DURATION

@@ -121,7 +121,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.1.4"
+    "cdejs": "^1.1.5"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -180,6 +180,12 @@ The Canvas class is the core of the project. It manages the main loop, the windo
 
     // Stops the main loop
     CVS.stop()
+```
+
+**To control the canvas drawing loop speed**, use the following function:
+```js
+    // Slows down all animations/time related events by 4x
+    CVS.speedModifier = 0.25
 ```
 
 #### Example use:
