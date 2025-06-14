@@ -3,7 +3,7 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
     if (fpsDisplay.textContent !== fps) fpsDisplay.textContent = fps
     mouseSpeed.textContent = CVS?.mouse?.speed?.toFixed(2)+" px/sec"
     mouseAngle.textContent = CVS?.mouse?.dir?.toFixed(2)+" deg"
-}, 60)
+}, 239)
 
 
 // DECLARE OBJS
@@ -149,4 +149,4 @@ CVS.setMouseDown()
 CVS.setMouseUp()
 
 // START
-CVS.startLoop()
+CVS.start()

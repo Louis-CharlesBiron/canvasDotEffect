@@ -105,8 +105,8 @@ CVS2.setKeyDown()
 CVS2.setKeyUp()
 
 // START
-CVS.startLoop()
-CVS2.startLoop()
+CVS.start()
+CVS2.start()
 
 
 

@@ -5,6 +5,9 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
     mouseAngle.textContent = CVS?.mouse?.dir?.toFixed(2)+" deg"
 }, null)
 
+debugPlay.onclick=()=>CVS.start()
+debugStop.onclick=()=>CVS.stop()
+
 // DECLARE OBJS
 
 
@@ -348,7 +351,7 @@ CVS.setKeyDown()
 CVS.setKeyUp()
 
 // START
-CVS.startLoop()
+CVS.start()
 
 Canvas.addOnLoadCallback((e, cvs)=>{
     console.log("LOADED")

@@ -122,6 +122,7 @@ function DvDfy(TARGET) {
         const [ix, iy] = obj.pos, speed = 500, [cornerTL, cornerBR] = obj.getBounds([0,0,0,0]), res = obj.setupResults, {area:[areaMin, areaMax]} = res, 
             d = speed*deltaTime
 
+
         CanvasUtils.drawOutline(CVS.render, obj)
         
         if      (((cornerTL[0] <= areaMin[0]) || (cornerBR[0] <= areaMin[0])) && (res.dir==2||res.dir==3)) res.dir = res.dir==3?0:1 //left
@@ -147,11 +148,11 @@ const YO5 = new AudioDisplay("./img/song.mp3", CVS.getResponsivePos([0.25, 0.25]
 const YO6 = new Grid("HELLO WORLD Grid!!\n        101", [5, 5], 50, _, [10,200], 0, _, _, (render, dot, ratio)=>CanvasUtils.drawDotConnections(dot, render.profile1.update([255,0,255,1],_,_,_,5)))
 
 DvDfy(YO)
-DvDfy(YO2)
-DvDfy(YO3)
-DvDfy(YO4)
-DvDfy(YO5)
-DvDfy(YO6)
+//DvDfy(YO2)
+//DvDfy(YO3)
+//DvDfy(YO4)
+//DvDfy(YO5)
+//DvDfy(YO6)
 
 
 
@@ -167,4 +168,4 @@ CVS.setKeyDown()
 CVS.setKeyUp()
 
 // START
-CVS.startLoop()
+CVS.start()

@@ -125,7 +125,7 @@ CVS.setKeyDown(_, true)
 CVS.setKeyUp(_, true)
 
 // Start drawing loop
-CVS.startLoop()`)
+CVS.start()`)
 
 // Create coolBackground.mp4
 fetch("https://file-examples.com/storage/fe32c8d6966839f839df247/2017/04/file_example_MP4_480_1_5MG.mp4").then(res=>res.ok&&res.arrayBuffer()).then(buffer=>buffer&&writeFileSync(join(mediaDest, "coolBackground.mp4"), Buffer.from(buffer)))
