@@ -217,7 +217,7 @@ class Canvas {
         if (this._state!=1) {
             if (this._state==2) return this._state = 1
             this._state = 1
-            if (this.#lastFrame) this.#fixedTimeStampOffset += (performance.now()-this.#lastFrame)
+            if (this.#lastFrame) this.#fixedTimeStampOffset += (performance.now()-this.#lastFrame)*this._speedModifier
             this.#loop(this.#timeStamp||0, true)
         }
     }
@@ -237,7 +237,7 @@ class Canvas {
 
     // calculates and sets the deltaTime
     #calcDeltaTime(time=0) {
-        const deltaTime = (time-this.#lastFrame)/1000, maxTime = this.#maxTime
+        const deltaTime = (time-this.#lastFrame)/1000, maxTime = this.#maxTime/1000
         return this._deltaTime = deltaTime>maxTime ? maxTime : deltaTime
     }
 
@@ -258,7 +258,7 @@ class Canvas {
 
     // calls the draw function on all canvas objects
     draw() {
-        const els = this.#cachedEls, els_ll = this.#cachedEls_ll, render = this._render, deltaTime = this._deltaTime, timeStamp = this.timeStamp//*this._speedModifier
+        const els = this.#cachedEls, els_ll = this.#cachedEls_ll, render = this._render, deltaTime = this._deltaTime*this._speedModifier, timeStamp = this.timeStamp
         for (let i=0;i<els_ll;i++) {
             const el = els[i], margin = el.activationMargin
             if (!(margin===true) && el.initialized && !this.isWithin(el.pos, margin) || !el.draw) continue

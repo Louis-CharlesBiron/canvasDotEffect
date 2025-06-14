@@ -184,7 +184,7 @@ The Canvas class is the core of the project. It manages the main loop, the windo
 
 **To control the canvas drawing loop speed**, use the following function:
 ```js
-    // Slows down all animations/time related events by 4x
+    // Slows down all animations/deltaTime related events by 4x
     CVS.speedModifier = 0.25
 ```
 
