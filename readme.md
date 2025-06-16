@@ -1405,28 +1405,31 @@ Render is a class that centralizes most context operations. It provides function
 #### Example use 3:
 ###### - Smoothly drawing a sine graph
 ```js
-    // Creating an empty obj to draw a sine graph
-    CanvasUtils.createEmptyObj(CVS, obj=>{// loopCB
+// Creating an empty obj to draw a sine graph
+CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
 
-        // Receiving the path through the obj's setupResults, and drawing it
-        const path = obj.setupResults
-        if (path) CVS.render.batchStroke(path)
+    // Defining some graph properties
+    const startPos = CVS.getCenter(), finalWidth = 500, amplitude = 100, animDuration = 5000
 
-    }, obj=>{// setupCB
+    // Creating an anim to smoothly generate it over 5 seconds
+    obj.playAnim(new Anim((prog)=>{
 
-        // Generating a new path 500 times at 10ms intervals
-        CDEUtils.repeatedTimeout(500, (i)=>{
+        // Generating and updating the drawn path
+        obj.setupResults = Render.generate(
+            startPos,                 // The start pos of the generation
+            x=>Math.sin(x)*amplitude, // The function providing a Y value depanding on a given X value. (x)=>{... return y}
+            finalWidth*prog,          // The width of the generation. Will be 500px at the end
+            animDuration/4            // The precision in segments of the generated result
+        )
+    }, animDuration))
 
-            // Generating and updating the drawn path
-            obj.setupResults = Render.generate(
-                [10, 10],             // The start position of the generation
-                (x)=>Math.sin(x)*100, // The function providing a Y value depanding on a given X value. (x)=>{... return y}
-                i,                    // The width of the generation. Will be 500px at the end
-                segmentCount = 200    // The precision in segments of the generated result
-            )
-            
-        }, 10)
-    })
+}, obj=>{// loopCB
+
+    // Receiving the path through the obj's setupResults, and drawing it in red
+    const path = obj.setupResults
+    if (path) CVS.render.batchStroke(path, [255,0,0,1])
+
+})
 ```
 
 # [RenderStyles](#table-of-contents)
@@ -1869,9 +1872,9 @@ This function is used to rotate the gradient of an object.
 
 ### CreateEmptyObj
 This function is used to create a blank object with only a loopCB and/or setupCB. Useful to draw non objects which often require a loop.
-###### createEmptyObj(cvs, loopCB, setupCB)
+###### createEmptyObj(cvs, setupCB, loopCB)
 ```js
-CanvasUtils.createEmptyObj(CVS, obj=>{// loopCB
+CanvasUtils.createEmptyObj(CVS, null, obj=>{// loopCB
 
     // Drawing a line from [0,0] to [100, 100]
     CVS.render.batchStroke(Render.getLine([0,0], [100, 100]))

@@ -34,7 +34,10 @@ class _BaseObj extends _HasColor {
         this._pos = this.getInitPos()||_BaseObj.DEFAULT_POS
         this.color = this.getInitColor()
         this.setAnchoredPos()
-        if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this.parent)
+        if (CDEUtils.isFunction(this._setupCB)) {
+            const setupResults = this._setupCB(this, this.parent)
+            if (setupResults !== undefined) this._setupResults = setupResults
+        }
     }
 
     // Runs every frame

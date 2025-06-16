@@ -49,9 +49,9 @@ class Render {
      * @param {Number} width: the width in pixels of the generation result
      * @param {Number} segmentCount: precision in segments of the generated result
      * @param {Number} pixelWidth: the pixel width used for generation. Useful to smooth/zoom a graph
-     * @returns The generated path or undefined if the width or segmentCount is lower than 1
+     * @returns {Path2D | null} The generated path or null if the width or segmentCount is lower than 1
      */
-    static generate(startPos, yFn, width, segmentCount, pixelWidth) {
+    static generate(startPos, yFn, width, segmentCount=100, pixelWidth=0.1) {
         startPos??=[0,0]
         yFn??=()=>0
         width??=100
@@ -65,6 +65,8 @@ class Render {
             for (let x=0;x<=width;x+=segmentWidth) path.lineTo(ix+x, iy+yFn(x*pixelWidth))
             return path
         }
+
+        return null
     }
 
     // instanciates and returns a path containing a line
@@ -146,7 +148,6 @@ class Render {
         return path
     }
 
-
     // instanciates and returns a path containing an rounded rectangle
     static getRoundRect(pos, width, height, radius) {
         const path = new Path2D()
@@ -178,18 +179,18 @@ class Render {
     // Queues a path to be stroked in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
     batchStroke(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.toString(renderStyles, filter, compositeOperation, opacity)
-            if (!this._batchedStrokes[profileKey]) this._batchedStrokes[profileKey] = new Path2D()
-            this._batchedStrokes[profileKey].addPath(path)
+            const batch = this._batchedStrokes, filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.toString(renderStyles, filter, compositeOperation, opacity)
+            if (!batch[profileKey]) batch[profileKey] = new Path2D()
+            batch[profileKey].addPath(path)
         }
     }
 
     // Queues a path to be filled in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
     batchFill(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.fillOptimizedToString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.fillOptimizedToString(renderStyles, filter, compositeOperation, opacity)
-            if (!this._batchedFills[profileKey]) this._batchedFills[profileKey] = new Path2D()
-            this._batchedFills[profileKey].addPath(path)
+            const batch = this._batchedFills, filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.fillOptimizedToString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.fillOptimizedToString(renderStyles, filter, compositeOperation, opacity)
+            if (!batch[profileKey]) batch[profileKey] = new Path2D()
+            batch[profileKey].addPath(path)
         } 
     }
 
@@ -205,7 +206,7 @@ class Render {
             let [profileKey, path] = strokes[i], [colorValue, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
             else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].value
-            RenderStyles.apply(this, colorValue, filter, compositeOperation, opacity, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
+            RenderStyles.apply(this, colorValue, filter, compositeOperation, opacity, lineWidth, lineDash?lineDash.split(",").map(Number).filter(Boolean):[0], lineDashOffset, lineJoin, lineCap)
             this._ctx.stroke(path)
         }
         RenderStyles.apply(this, null, DEF_FILTER, DEF_COMP, DEF_ALPHA)

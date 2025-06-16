@@ -165,8 +165,8 @@ class CanvasUtils {
     }
 
     // Returns a blank, setup/loop only, object. Can be used to draw non objects
-    static createEmptyObj(cvs, loopCB, setupCB) {
-        const obj = new Shape([0,0], null, 0, null, 0, null, undefined, setupCB, loopCB, null, true)
+    static createEmptyObj(cvs, setupCB, loopCB) {
+        const obj = new Shape(null, null, 0, null, 0, null, undefined, setupCB, loopCB, null, true)
         cvs.add(obj)
         return obj.id
     }

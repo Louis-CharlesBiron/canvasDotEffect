@@ -95,9 +95,9 @@ class AudioDisplay extends _BaseObj {
             }
    
             this._audioAnalyser.getByteFrequencyData(data)
-            let atPos = this.pos_, accumulator = null, offset = (this._offsetPourcent%1)*(this.#fft/2), adjusted_ll = Math.round(0.49+this._sampleCount)-offset, ii=-offset, i=offset>>0
-            for (;ii<adjusted_ll;ii++,i=(i+1)%this._sampleCount) {
-                const bin = data[i], res = this._binCB(render, bin/128, atPos, this, accumulator, i, this._sampleCount, bin), newPos = res?.[0], newAcc = res?.[1]
+            let atPos = this.pos_, accumulator = null, smapleCount = this._sampleCount, offset = (this._offsetPourcent%1)*(this.#fft/2), adjusted_ll = Math.round(0.49+smapleCount)-offset, ii=-offset, i=offset>>0
+            for (;ii<adjusted_ll;ii++,i=(i+1)%smapleCount) {
+                const bin = data[i], res = this._binCB(render, bin/128, atPos, this, accumulator, i, smapleCount, bin), newPos = res?.[0], newAcc = res?.[1]
                 if (newPos) atPos = newPos
                 if (newAcc) accumulator = newAcc
             }

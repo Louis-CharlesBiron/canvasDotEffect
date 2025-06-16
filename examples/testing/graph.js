@@ -114,29 +114,32 @@ let text = new TextDisplay("yoman test", [200, 600], "lime")
 CVS.add(text)
 
 
+CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
 
-// Creating an empty obj to draw a sine graph
-CanvasUtils.createEmptyObj(CVS, obj=>{// loopCB
+    // Defining some graph properties
+    const startPos = CVS.getCenter(), finalWidth = 500, animDuration = 4000
 
-    // Receiving the path through the obj's setupResults, and drawing it
-    const path = obj.setupResults
-    if (path) CVS.render.batchStroke(path)
-
-}, obj=>{// setupCB
-
-    // Generating a new path 500 times at 10ms intervals
-    const finalWidth = 250
-    CDEUtils.repeatedTimeout(finalWidth, (i)=>{
+    // Creating an anim to smoothly generate it over 5 seconds
+    obj.playAnim(new Anim((prog)=>{
 
         // Generating and updating the drawn path
         obj.setupResults = Render.generate(
-            CVS.getCenter(),      // The start pos of the generation
-            (x)=>Math.sin(x)*100, // The function providing a Y value depanding on a given X value. (x)=>{... return y}
-            i,                    // The width of the generation. Will be 500px at the end
-            finalWidth/2          // The precision in segments of the generated result
+            startPos,                
+            (x) => {
+                const width = 100, height = 100;
+                return height * Math.sin((2 * Math.PI * x * width) / width);
+              },//Math.sin(x)*(x**1.25),
+            finalWidth*prog,         
+            animDuration/4,
         )
+    }, animDuration)
+)
+}, obj=>{// loopCB
 
-    }, 10)
+    // Receiving the path through the obj's setupResults, and drawing it in red
+    const path = obj.setupResults
+    if (path) CVS.render.batchStroke(path, [255,0,0,1])
+
 })
 
 
