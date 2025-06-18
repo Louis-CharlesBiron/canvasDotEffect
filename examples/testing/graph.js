@@ -117,7 +117,7 @@ CVS.add(text)
 CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
 
     // Defining some graph properties
-    const startPos = CVS.getCenter(), finalWidth = 500, animDuration = 4000
+    const startPos = CVS.getCenter(), finalWidth = 400, animDuration = 4000
 
     // Creating an anim to smoothly generate it over 5 seconds
     obj.playAnim(new Anim((prog)=>{
@@ -125,10 +125,7 @@ CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
         // Generating and updating the drawn path
         obj.setupResults = Render.generate(
             startPos,                
-            (x) => {
-                const width = 100, height = 100;
-                return height * Math.sin((2 * Math.PI * x * width) / width);
-              },//Math.sin(x)*(x**1.25),
+            x=>Math.sin(x)*x*3,
             finalWidth*prog,         
             animDuration/4,
         )
@@ -142,6 +139,12 @@ CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
 
 })
 
+CanvasUtils.createEmptyObj(CVS, (obj)=>{
+    return Render.composePath([[25,25], [500, 200], [30, 265], [500, 600], [800, 20], [303, 355], filledShapeTester], Render.LINE_TYPES.LINEAR)
+}, (obj)=>{
+    const path = obj.setupResults
+    if (path) CVS.render.batchStroke(path, [255,0,255,1])
+})
 
 
 // USER ACTIONS

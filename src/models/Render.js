@@ -319,6 +319,30 @@ class Render {
         })
     }
 
+    /**
+     * Create a path connecting all the pos/obj provided in parameter
+     * @param {Array} posArrays: An array of pos or obj to draw a connection to. The connections are drawn in order of their index.
+     * @param {Render.LINE_TYPES | null} lineType: The line type used to create the path. Leave null/undefined for slightly optimized linear lines. 
+     * @returns The created path.
+     */
+    static composePath(posArrays, lineType) {
+        const path = new Path2D(), a_ll = posArrays.length, firstPos = posArrays[0]
+        path.moveTo(firstPos[0], firstPos[1])
+        for (let i=1;i<a_ll;i++) {
+            const pos = posArrays[i].pos||posArrays[i]
+            if (lineType) path.addPath(lineType(posArrays[i-1].pos||posArrays[i-1], pos))
+            else path.lineTo(pos[0], pos[1])
+        }
+        return path
+    }
+
+    /**
+     * Combines paths, TODO
+     */
+    static mergePaths(paths) {
+
+    }
+
 	get ctx() {return this._ctx}
 	get batchedStrokes() {return this._batchedStrokes}
 	get batchedFills() {return this._bactchedStandalones}
