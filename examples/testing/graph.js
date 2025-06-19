@@ -7,7 +7,7 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
 
 
 // DECLARE OBJS
-const normalColorTester = new Color("white")
+const _=null, normalColorTester = new Color("white")
 
 let comp1 = Render.DEFAULT_COMPOSITE_OPERATION+"1"
 let alpha1 = 1
@@ -117,7 +117,8 @@ CVS.add(text)
 CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
 
     // Defining some graph properties
-    const startPos = CVS.getCenter(), finalWidth = 400, animDuration = 4000
+    const startPos = CVS.getCenter(), finalWidth = 400, animDuration = 4000,
+    yFn = Render.Y_FUNCTIONS.SINUS(_, finalWidth)
 
     // Creating an anim to smoothly generate it over 5 seconds
     obj.playAnim(new Anim((prog)=>{
@@ -125,11 +126,19 @@ CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
         // Generating and updating the drawn path
         obj.setupResults = Render.generate(
             startPos,                
-            x=>Math.sin(x)*x*3,
+            yFn,
             finalWidth*prog,         
             animDuration/4,
         )
-    }, animDuration)
+    }, animDuration, _, ()=>{// endCB
+
+        // TODO IMPROVE
+        const endPos = Render.getGenerationEndPos(startPos, yFn, finalWidth)
+        console.log(endPos)
+        // TODO .continueGeneration()
+
+
+    })
 )
 }, obj=>{// loopCB
 
@@ -139,11 +148,18 @@ CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
 
 })
 
-CanvasUtils.createEmptyObj(CVS, (obj)=>{
+CanvasUtils.createEmptyObj(CVS, ()=>{
     return Render.composePath([[25,25], [500, 200], [30, 265], [500, 600], [800, 20], [303, 355], filledShapeTester], Render.LINE_TYPES.LINEAR)
 }, (obj)=>{
     const path = obj.setupResults
     if (path) CVS.render.batchStroke(path, [255,0,255,1])
+})
+
+CanvasUtils.createEmptyObj(CVS, ()=>{
+    return Render.mergePaths([Render.getLine([200, 300], [300, 200]), Render.getLine([20, 250], [250, 20]), Render.getRect([400, 400], 100, 40)], [200, 20])
+}, (obj)=>{
+    const path = obj.setupResults
+    if (path) CVS.render.batchStroke(path, [0,0,255,1])
 })
 
 

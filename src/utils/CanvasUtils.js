@@ -238,7 +238,7 @@ class CanvasUtils {
                 return [x, y]
             }]]
         },
-        RELATIVE: (forceX, forceY)=>{// Doesn't move the dot, unless provided a x/y value. Also accepts other generic follow paths as x/y values.
+        RELATIVE: (forceX, forceY)=>{// Doesn't move the obj, unless provided a x/y value. Also accepts other generic follow paths as x/y values.
             forceX??= undefined
             forceY??= undefined
             let isForceXFn = false, isForceYFn = false

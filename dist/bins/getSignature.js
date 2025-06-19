@@ -4,7 +4,7 @@ const signatures = [
     ["_DynamicColor", `constructor(positions, rotation)`, `constructor(positions, rotation=0)`],
     ["_HasColor"    , `constructor(color)`, `constructor(color="aliceblue")`],
     ["_Obj"         , `constructor(pos, radius, color, setupCB, loopCB, anchorPos, activationMargin)`, `constructor(pos=[0,0], radius=5, color="aliceblue", setupCB=null, loopCB=null, anchorPos=null, activationMargin=null)`],
-    ["Anim"         , `new Anim(animation, duration, easing, endCallback)`, `new Anim(animation, duration=1000, easing=Anim.linear, endCallback)`],
+    ["Anim"         , `new Anim(animation, duration, easing, endCB)`, `new Anim(animation, duration=1000, easing=Anim.linear, endCB)`],
     ["Canvas"       , `new Canvas(cvs, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently)`, `new Canvas(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame=cvs.parentElement, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false)`],
     ["Color"        , `new Color(color, isChannel)`, `new Color(color, isChannel=false)`],
     ["Gradient"     , `new Gradient(ctx, positions, colorStops, type, rotation)`, `new Gradient(ctx, positions, colorStops, type="Linear", rotation=0)`],

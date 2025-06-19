@@ -374,8 +374,8 @@ class Canvas {
 
     // adds an animation to play
     playAnim(anim) {
-        const initEndCB = anim.endCallback
-        anim.endCallback=()=>{
+        const initEndCB = anim.endCB
+        anim.endCB=()=>{
             this._anims = this._anims.filter(a=>a.id!==anim.id)
             if (CDEUtils.isFunction(initEndCB)) initEndCB()
         }

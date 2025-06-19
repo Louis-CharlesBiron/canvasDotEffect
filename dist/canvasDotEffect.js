@@ -2644,8 +2644,8 @@ class Canvas {
 
     // adds an animation to play
     playAnim(anim) {
-        const initEndCB = anim.endCallback
-        anim.endCallback=()=>{
+        const initEndCB = anim.endCB
+        anim.endCB=()=>{
             this._anims = this._anims.filter(a=>a.id!==anim.id)
             if (CDEUtils.isFunction(initEndCB)) initEndCB()
         }
@@ -2981,12 +2981,12 @@ class Anim {
     static #ANIM_ID_GIVER = 0
     static DEFAULT_DURATION = 1000
 
-    constructor(animation, duration, easing, endCallback) {
+    constructor(animation, duration, easing, endCB) {
         this._id = Anim.#ANIM_ID_GIVER++                  // animation id
         this._animation = animation                      // the main animation (clampedProgress, playCount, progress)=>
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
         this._easing = easing||Anim.linear               // easing function (x)=>
-        this._endCallback = endCallback                  // function called when animation is over
+        this._endCB = endCB                  // function called when animation is over
 
         this._startTime = null // start time
         this._progress = 0     // animation progress
@@ -3014,7 +3014,7 @@ class Anim {
     // ends the animation
     end(deltaTime) {
         this._animation(1, this._playCount++, deltaTime, 1)
-        if (CDEUtils.isFunction(this._endCallback)) this._endCallback()
+        if (CDEUtils.isFunction(this._endCB)) this._endCB()
     }
 
     // resets the animation
@@ -3029,7 +3029,7 @@ class Anim {
     get animation() {return this._animation}
 	get duration() {return this._duration}
 	get easing() {return this._easing}
-	get endCallback() {return this._endCallback}
+	get endCB() {return this._endCB}
 	get startTime() {return this._startTime}
 	get progress() {return CDEUtils.clamp(this._progress, 0, 1)}
 	get progressRaw() {return this._progress}
@@ -3038,7 +3038,7 @@ class Anim {
 	set animation(_animation) {return this._animation = _animation}
 	set duration(_duration) {return this._duration = _duration}
 	set easing(_easing) {return this._easing = _easing}
-	set endCallback(_endCallback) {return this._endCallback = _endCallback}
+	set endCB(_endCB) {return this._endCB = _endCB}
 
     // Easings from: https://easings.net/
     static easeInSine=x=>1-Math.cos(x*Math.PI/2)
@@ -3264,8 +3264,8 @@ class _BaseObj extends _HasColor {
             this.currentBacklogAnim.end()
             CDEUtils.addAt(this._anims.backlog, anim, 0)
         }
-        const initEndCB = anim.endCallback
-        anim.endCallback=()=>{
+        const initEndCB = anim.endCB
+        anim.endCB=()=>{
             if (isUnique) this._anims.backlog.shift()
             else this._anims.currents = this._anims.currents.filter(a=>a.id!==anim.id)
             

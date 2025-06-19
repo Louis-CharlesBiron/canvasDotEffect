@@ -1544,7 +1544,7 @@ The Anim class allows the creation of smooth animations and the use of easings.
 - **animation** -> Callback containing the animation code `(progress)=>{...}`.
 - **duration** -> The duration in milliseconds. (Negative values will make the animation repeat infinitely).
 - **easing** -> The easing function to be used `(x)=>{... return x}`.
-- **endCallback**? -> Custom callback ran upon the animation ending.
+- **endCB**? -> Custom callback ran upon the animation ending.
 
 ### **To play an animation:** 
 Use the playAnim() function on any canvas object. All objects have an `anims` property containing the `currents` and the `backlog` animations.
@@ -1824,7 +1824,7 @@ createButton("My custom button", CVS.getCenter(), (button, text)=>{// onClick
     button.playAnim(new Anim((prog)=>{
         button.rotateAt(360*prog)
         text.rotateAt(360*prog)
-    }, 5000, null, ()=>{// anim's endCallback
+    }, 5000, null, ()=>{// anim's endCB
         // Disabling the accurate mouse move listeners mode once the rotation animation is finished (better for performance)
         CVS.disableAccurateMouseMoveListenersMode()
     }), true, true)

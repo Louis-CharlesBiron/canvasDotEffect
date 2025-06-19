@@ -42,33 +42,6 @@ class Render {
         this._textProfiles = []                                              // list of custom style profiles
     }
 
-    /**
-     * The generate() function allows the generation of a custom graph
-     * @param {[x, y]} startPos: pos array defining the starting pos
-     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
-     * @param {Number} width: the width in pixels of the generation result
-     * @param {Number} segmentCount: precision in segments of the generated result
-     * @param {Number} pixelWidth: the pixel width used for generation. Useful to smooth/zoom a graph
-     * @returns {Path2D | null} The generated path or null if the width or segmentCount is lower than 1
-     */
-    static generate(startPos, yFn, width, segmentCount=100, pixelWidth=0.1) {
-        startPos??=[0,0]
-        yFn??=()=>0
-        width??=100
-        segmentCount??=100
-        pixelWidth??=0.1
-
-        if (width > 1 && segmentCount > 1) {
-            const segmentWidth = width/segmentCount, ix = startPos[0], iy = startPos[1], path = new Path2D()
-            path.moveTo(ix+0, iy+yFn(0))
-
-            for (let x=0;x<=width;x+=segmentWidth) path.lineTo(ix+x, iy+yFn(x*pixelWidth))
-            return path
-        }
-
-        return null
-    }
-
     // instanciates and returns a path containing a line
     static getLine(startPos, endPos) {
         const path = new Path2D()
@@ -320,12 +293,47 @@ class Render {
     }
 
     /**
+     * The generate() function allows the generation of a custom graph
+     * @param {[x, y]} startPos: pos array defining the starting pos
+     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
+     * @param {Number} width: the width in pixels of the generation result
+     * @param {Number} segmentCount: precision in segments of the generated result
+     * @returns {Path2D | null} The generated path or null if the width or segmentCount is lower than 1
+     */
+    static generate(startPos, yFn, width, segmentCount=100) {
+        startPos??=[0,0]
+        yFn??=()=>0
+        width??=100
+        segmentCount??=100
+
+        if (width > 1 && segmentCount > 1) {
+            const segmentWidth = width/segmentCount, ix = startPos[0], iy = startPos[1], path = new Path2D()
+            path.moveTo(ix+0, iy+yFn(0))
+
+            for (let x=0;x<=width;x+=segmentWidth) path.lineTo(ix+x, iy+yFn(x))
+            return path
+        }
+        return null
+    }
+
+    /**
+     * Given the following parameters, returns the endPos of a path generated with Render.generate()
+     * @param {[x, y]} startPos: pos array defining the starting pos
+     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
+     * @param {Number} width: the width in pixels of the generation result
+     * @returns {[x, y]} the end pos
+     */
+    static getGenerationEndPos(startPos, yFn, width) {
+        return CDEUtils.addPos(startPos, [width, CDEUtils.round(yFn(width), _BaseObj.POSITION_PRECISION)])
+    }
+
+    /**
      * Create a path connecting all the pos/obj provided in parameter
      * @param {Array} posArrays: An array of pos or obj to draw a connection to. The connections are drawn in order of their index.
      * @param {Render.LINE_TYPES | null} lineType: The line type used to create the path. Leave null/undefined for slightly optimized linear lines. 
      * @returns The created path.
      */
-    static composePath(posArrays, lineType) {
+      static composePath(posArrays, lineType) {
         const path = new Path2D(), a_ll = posArrays.length, firstPos = posArrays[0]
         path.moveTo(firstPos[0], firstPos[1])
         for (let i=1;i<a_ll;i++) {
@@ -337,11 +345,39 @@ class Render {
     }
 
     /**
-     * Combines paths, TODO
+     * Combines all provided paths together
+     * @param {Array} paths: an array containing path2ds 
+     * @returns A single path2d containing all of the provided paths
      */
     static mergePaths(paths) {
-
+        const p_ll = paths.length, initPath = paths[0]
+        for (let i=1;i<p_ll;i++) initPath.addPath(paths[i])
+        return initPath
     }
+
+    static Y_FUNCTIONS = {
+        SINUS: (height=100, periodWidth=100)=>{
+            height??=100
+            periodWidth??=100
+            periodWidth = (2*Math.PI/periodWidth)
+
+            const sin = Math.sin, a = height/2
+            return x=>a*sin(periodWidth*x)
+        },
+        COSINUS: (height=100, periodWidth=100)=>{
+            height??=100
+            periodWidth??=100
+            periodWidth = (2*Math.PI/periodWidth)
+
+            const cos = Math.cos, a = height/2
+            return x=>a*cos(periodWidth*x)
+        },
+        LINEAR: (a=1)=>{
+            a??=1
+            return x=>a*x
+        }
+    }
+
 
 	get ctx() {return this._ctx}
 	get batchedStrokes() {return this._batchedStrokes}
