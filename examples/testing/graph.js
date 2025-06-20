@@ -183,6 +183,12 @@ CanvasUtils.createEmptyObj(CVS, ()=>{
 })
 
 
+CanvasUtils.createEmptyObj(CVS, _, ()=>{
+    CVS.render.replaceColor([255,0,0,1], [255,255,255,1], 254, [[207, 53], [377, 132]])
+})
+
+
+
 // USER ACTIONS
 let mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"
 CVS.setMouseMove(mMove)

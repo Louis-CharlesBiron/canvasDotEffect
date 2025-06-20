@@ -33,13 +33,13 @@ class Render {
         this._profile5 = this._defaultProfile.duplicate()                  // default style profile 5
         this._profiles = []                                                // list of custom style profiles
 
-        this._defaultTextProfile = TextStyles.DEFAULT_PROFILE.duplicate(this)// default style profile template
-        this._textProfile1 = this._defaultTextProfile.duplicate()            // default style profile 1
-        this._textProfile2 = this._defaultTextProfile.duplicate()            // default style profile 2
-        this._textProfile3 = this._defaultTextProfile.duplicate()            // default style profile 3
-        this._textProfile4 = this._defaultTextProfile.duplicate()            // default style profile 4
-        this._textProfile5 = this._defaultTextProfile.duplicate()            // default style profile 5
-        this._textProfiles = []                                              // list of custom style profiles
+        this._defaultTextProfile = TextStyles.DEFAULT_PROFILE.duplicate(this)// default text style profile template
+        this._textProfile1 = this._defaultTextProfile.duplicate()            // default text style profile 1
+        this._textProfile2 = this._defaultTextProfile.duplicate()            // default text style profile 2
+        this._textProfile3 = this._defaultTextProfile.duplicate()            // default text style profile 3
+        this._textProfile4 = this._defaultTextProfile.duplicate()            // default text style profile 4
+        this._textProfile5 = this._defaultTextProfile.duplicate()            // default text style profile 5
+        this._textProfiles = []                                              // list of custom text style profiles
     }
 
     // instanciates and returns a path containing a line
@@ -174,7 +174,7 @@ class Render {
               standalones = this._bactchedStandalones, o_ll = standalones.length,
               gradientSep = Gradient.SERIALIZATION_SEPARATOR, patternSep = Pattern.SERIALIZATION_SEPARATOR,
               DEF_FILTER = Render.DEFAULT_FILTER, DEF_COMP = Render.DEFAULT_COMPOSITE_OPERATION, DEF_ALPHA = Render.DEFAULT_ALPHA
-              
+
         for (let i=0;i<s_ll;i++) {
             let [profileKey, path] = strokes[i], [colorValue, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
@@ -290,6 +290,55 @@ class Render {
 
             RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
         })
+    }
+
+    /**
+     * TODO add option for newColor to be an image or something else than a plain color
+     * 
+     * TODO FIX OPACITY BUG
+     * Replaces a color on the canvas by another one in a specified area
+     * @param {Color | [r,g,b,a]} targetColor: The color to be replaced by newColor
+     * @param {Color | [r,g,b,a]} newColor: The color replacing targetColor
+     * @param {Number} temperance: The validity margin for the r, g, b, a values of the targetColor
+     * @param {[[x, y], [x, y]]} area: A positions array defining the area to replace the color in
+     * @param {Boolean} preventLateReplace: If true, doesn't include colors from batched operations
+     */
+    replaceColor(targetColor, newColor=Color.DEFAULT_RGBA, temperance=Color.DEFAULT_TEMPERANCE, area=null, preventLateReplace=false) {
+        const core = ()=>{
+            const ctx = this._ctx, cvs = ctx.canvas, startX = area?.[0]?.[0]??0, startY = area?.[0]?.[1]??0,
+            img = ctx.getImageData(startX, startY, area?.[1]?.[0]??cvs.width, area?.[1]?.[1]??cvs.height), data = img.data, d_ll = data.length,
+            r = targetColor.r??targetColor[0], g = targetColor.g??targetColor[1], b = targetColor.b??targetColor[2],
+            nr = newColor.r??newColor[0], ng = newColor.g??newColor[1], nb = newColor.b??newColor[2], na = (newColor.a??newColor[3])*255
+
+            if (temperance) {
+                let currentR, currentG, currentB, br = r-temperance, bg = g-temperance, bb = b-temperance, tr = r+temperance, tg = g+temperance, tb = b+temperance
+                for (let i=0;i<d_ll;i+=4) {
+                    currentR = data[i]
+                    if (currentR >= br && currentR <= tr) {
+                        currentG = data[i+1]
+                        currentB = data[i+2]
+                        if (currentG >= bg && currentG <= tg && currentB >= bb && currentB <= tb) {
+                            data[i]   = nr
+                            data[i+1] = ng
+                            data[i+2] = nb
+                            data[i+3] = na
+                        }
+                    }
+                }
+            }
+            else for (let i=0;i<d_ll;i+=4) {
+                if (data[i] == r && data[i+1] == g && data[i+2] == b) {
+                    data[i]   = nr
+                    data[i+1] = ng
+                    data[i+2] = nb
+                    data[i+3] = na
+                }
+            }
+            ctx.putImageData(img, startX, startY)
+        }
+
+        if (preventLateReplace) core()
+        else this._bactchedStandalones.push(core)
     }
 
     /**

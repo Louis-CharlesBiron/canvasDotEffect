@@ -181,16 +181,16 @@ class Color {
         let width = areaSize[0]??canvas.width, height = areaSize[1]??canvas.height,
             data = canvas.ctx.getImageData(0, 0, width, height).data,
             x, y, yi, xi, currentR, currentG, currentB, currentA, ow = 4*width,
-            r = color.r, g = color.g, b = color.b, a = color.a*255,
+            r = color.r??color[0], g = color.g??color[1], b = color.b??color[2], a = (color.a??color[3])*255,
             br = r-temperance, bg = g-temperance, bb = b-temperance, ba = a-temperance,
             tr = r+temperance, tg = g+temperance, tb = b+temperance, ta = a+temperance,
             isSearchTL = searchStart==Color.SEARCH_STARTS.TOP_LEFT,
             startX = isSearchTL?0:width-1, endX = isSearchTL?width:-1, stepX = isSearchTL?1:-1,
             startY = isSearchTL?0:height-1, endY = isSearchTL?height:-1, stepY = isSearchTL?1:-1
 
-            for (y=startY;y!==endY;y+=stepY) {
+            for (y=startY;y!=endY;y+=stepY) {
                 yi = y*ow
-                for (x=startX;x!==endX;x+=stepX) {
+                for (x=startX;x!=endX;x+=stepX) {
                     xi = yi+x*4
                     currentR = data[xi] 
                     if (temperance) {
