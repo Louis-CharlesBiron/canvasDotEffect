@@ -1403,33 +1403,114 @@ Render is a class that centralizes most context operations. It provides function
 ```
 
 #### Example use 3:
+###### - Using an array of pos to draw lines
+```js
+    // Creating an empty obj to create and draw the lines
+    CanvasUtils.createEmptyObj(CVS, ()=>{// setupCB
+
+        // Creating a path connecting all the provided pos ↓
+        return Render.composePath(
+            [ // All the pos / obj's pos to connect with a line
+                [25,25], [500, 200], [30, 265], [500, 600], [800, 20], [303, 355], someOtherObj
+            ], 
+            Render.LINE_TYPES.LINEAR // The line type used
+        )
+
+    }, (obj)=>{// loopCB
+
+        // Receiving the path through the obj's setupResults, and drawing it in red
+        const path = obj.setupResults
+        if (path) CVS.render.batchStroke(path, [255,0,0,1])
+
+    })
+
+```
+
+#### Example use 4:
 ###### - Smoothly drawing a sine graph
 ```js
 // Creating an empty obj to draw a sine graph
-CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
+    CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
 
-    // Defining some graph properties
-    const startPos = CVS.getCenter(), finalWidth = 500, amplitude = 100, animDuration = 5000
+        // Defining some graph properties
+        const startPos = [100, 100],
+            amplitude = 100,
+            finalWidth = 400,
+            animDuration = 5000,
+            yFn = Render.Y_FUNCTIONS.SINUS(amplitude, finalWidth)
+
+        // Creating an anim to smoothly generate it over 5 seconds
+        obj.playAnim(new Anim((prog)=>{
+
+            // Generating and updating the drawn path
+            obj.setupResults = Render.generate(
+                startPos,        // The start pos of the generation
+                yFn,             // The function providing a Y value depanding on a given X value. (x)=>{... return y}
+                finalWidth*prog, // The width of the generation. Will be 400px at the end
+                animDuration/4   // The precision in segments of the generated result
+            )
+        }, animDuration))
+
+    }, obj=>{// loopCB
+
+        // Receiving the path through the obj's setupResults, and drawing it in red
+        const path = obj.setupResults
+        if (path) CVS.render.batchStroke(path, [255,0,0,1])
+
+    })
+```
+
+
+#### Example use 5:
+###### - Smoothly drawing a infinity sign looking graph
+```js
+    CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
+
+        // Defining some graph properties
+        const startPos = [100, 100],
+        amplitude = 100,
+        finalWidth = 400,
+        animDuration = 5000,
+        yFn = Render.Y_FUNCTIONS.SINUS(amplitude, finalWidth)
 
     // Creating an anim to smoothly generate it over 5 seconds
     obj.playAnim(new Anim((prog)=>{
 
         // Generating and updating the drawn path
         obj.setupResults = Render.generate(
-            startPos,                 // The start pos of the generation
-            x=>Math.sin(x)*amplitude, // The function providing a Y value depanding on a given X value. (x)=>{... return y}
-            finalWidth*prog,          // The width of the generation. Will be 500px at the end
-            animDuration/4            // The precision in segments of the generated result
+            startPos,        // The start pos of the generation
+            yFn,             // The function providing a Y value depanding on a given X value. (x)=>{... return y}
+            finalWidth*prog, // The width of the generation. Will be 400px at the end
+            animDuration/4   // The precision in segments of the generated result
         )
-    }, animDuration))
+    }, animDuration, _, ()=>{// endCB
 
-}, obj=>{// loopCB
+            // Defining some graph properties for the 2nd sine wave
+            const startPos2 = Render.getGenerationEndPos(startPos, yFn, finalWidth),
+                yFn2 = Render.Y_FUNCTIONS.SINUS(-amplitude, finalWidth)
 
-    // Receiving the path through the obj's setupResults, and drawing it in red
-    const path = obj.setupResults
-    if (path) CVS.render.batchStroke(path, [255,0,0,1])
+            obj.playAnim(new Anim((prog)=>{
 
-})
+                // Generating and updating the drawn path
+                obj.setupResults = Render.generate(
+                    startPos2,        // The start pos of the 2nd generation (here it's the end pos of the 1st generation)      
+                    yFn2,             // Same Y function as the 1st generation, but with inverted amplitude
+                    -finalWidth*prog, // Same width as the 1st generation, but inverted (negative)
+                    animDuration/4,   // The precision in segments of the generated result
+                    ()=>Render.generate(startPos, yFn, finalWidth, animDuration/4) // The callback defining the base path. (Exact same as 1st generation)
+                )
+
+            }, animDuration))
+
+        })
+    )
+    }, obj=>{// loopCB
+
+        // Receiving the path through the obj's setupResults, and drawing it in red
+        const path = obj.setupResults
+        if (path) CVS.render.batchStroke(path, [255,0,0,1])
+
+    })
 ```
 
 # [RenderStyles](#table-of-contents)

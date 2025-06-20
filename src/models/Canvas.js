@@ -656,7 +656,7 @@ class Canvas {
     get state() {return this._state}
 	get deltaTime() {return this._deltaTime}
 	get windowListeners() {return this._windowListeners}
-	get timeStamp() {return this._fixedTimeStamp||this.#timeStamp}// TODO
+	get timeStamp() {return this._fixedTimeStamp||this.#timeStamp}
 	get timeStampRaw() {return this.#timeStamp}
 	get els() {return this._els}
 	get mouse() {return this._mouse}

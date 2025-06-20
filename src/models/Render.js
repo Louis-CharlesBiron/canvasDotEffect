@@ -296,21 +296,22 @@ class Render {
      * The generate() function allows the generation of a custom graph
      * @param {[x, y]} startPos: pos array defining the starting pos
      * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
-     * @param {Number} width: the width in pixels of the generation result
+     * @param {Number} width: the width in pixels of the generation result. Negative values will generate reversed left-side graphs
      * @param {Number} segmentCount: precision in segments of the generated result
+     * @param {Function} baseGeneration: callback returning a path2d which will receive this generation result
      * @returns {Path2D | null} The generated path or null if the width or segmentCount is lower than 1
      */
-    static generate(startPos, yFn, width, segmentCount=100) {
+    static generate(startPos, yFn, width, segmentCount=100, baseGeneration=null) {
         startPos??=[0,0]
         yFn??=()=>0
         width??=100
         segmentCount??=100
 
-        if (width > 1 && segmentCount > 1) {
-            const segmentWidth = width/segmentCount, ix = startPos[0], iy = startPos[1], path = new Path2D()
-            path.moveTo(ix+0, iy+yFn(0))
-
-            for (let x=0;x<=width;x+=segmentWidth) path.lineTo(ix+x, iy+yFn(x))
+        const dir = Math.sign(width), w = Math.abs(width)+.1
+        if (w > 1 && segmentCount > 1) {
+            const segmentWidth = (w-.1)/segmentCount, ix = startPos[0], iy = startPos[1], path = baseGeneration?baseGeneration(startPos, yFn, width, segmentCount):new Path2D()
+            path.moveTo(ix, iy+yFn(0))
+            for (let x=0;x<=w;x+=segmentWidth) path.lineTo(ix+(x*dir), iy+yFn(x*dir))
             return path
         }
         return null
@@ -330,7 +331,7 @@ class Render {
     /**
      * Create a path connecting all the pos/obj provided in parameter
      * @param {Array} posArrays: An array of pos or obj to draw a connection to. The connections are drawn in order of their index.
-     * @param {Render.LINE_TYPES | null} lineType: The line type used to create the path. Leave null/undefined for slightly optimized linear lines. 
+     * @param {Render.LINE_TYPES | null} lineType: The line type used to create the path. Leave null/undefined for slightly more optimized linear lines. 
      * @returns The created path.
      */
       static composePath(posArrays, lineType) {
@@ -359,17 +360,17 @@ class Render {
         SINUS: (height=100, periodWidth=100)=>{
             height??=100
             periodWidth??=100
-            periodWidth = (2*Math.PI/periodWidth)
+            periodWidth = (2*Math.PI/Math.abs(periodWidth))
 
-            const sin = Math.sin, a = height/2
+            const sin = Math.sin, a = (Math.abs(height)/2)*Math.sign(height)
             return x=>a*sin(periodWidth*x)
         },
         COSINUS: (height=100, periodWidth=100)=>{
             height??=100
             periodWidth??=100
-            periodWidth = (2*Math.PI/periodWidth)
+            periodWidth = (2*Math.PI/Math.abs(periodWidth))
 
-            const cos = Math.cos, a = height/2
+            const cos = Math.cos, a = (Math.abs(height)/2)*Math.sign(height)
             return x=>a*cos(periodWidth*x)
         },
         LINEAR: (a=1)=>{
@@ -377,7 +378,6 @@ class Render {
             return x=>a*x
         }
     }
-
 
 	get ctx() {return this._ctx}
 	get batchedStrokes() {return this._batchedStrokes}
