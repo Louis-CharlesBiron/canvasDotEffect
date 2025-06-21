@@ -339,10 +339,6 @@ class Render {
         else this._bactchedStandalones.push(core)
     }
 
-
-    // TODO, add doc examples
-
-
     /**
      * Applies pixel manipulation to a specified area
      * @param {Render.COLOR_TRANSFORMS} transform 
@@ -407,7 +403,7 @@ class Render {
                         data[i+2] = r*modifier
                     }
                 } else if (transform==transforms.TINT) {
-                    modifier||=[255,255,255]
+                    modifier||=[255,255,255,1]
                     for (let i=0;i<d_ll;i+=4) {
                         data[i]   = modifier[0]
                         data[i+1] = modifier[1]

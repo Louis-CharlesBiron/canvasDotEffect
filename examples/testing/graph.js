@@ -187,7 +187,7 @@ CanvasUtils.createEmptyObj(CVS, _, ()=>{
     CVS.render.replaceColor([255,0,0,1], [0,255,0,1], 10, [[207, 53], [377, 132]])
 
     
-    CVS.render.transformArea(Render.COLOR_TRANSFORMS.TINT, [33, 255, 100], [[350, 100], [530, 540]])
+    CVS.render.transformArea(Render.COLOR_TRANSFORMS.TINT, [33, 255, 100, 1], [[350, 100], [530, 540]])
 
 })
 

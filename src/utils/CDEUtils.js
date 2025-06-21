@@ -23,7 +23,7 @@ class CDEUtils {
         if (decimals) {
             const precision = decimals**10
             return Math.round((Math.random()*(max-min)+min)*precision)/precision
-        } else (Math.random()*(max-min)+min)>>0
+        } else return (Math.random()*(max-min)+min)>>0
     }
 
     // clamps a numeric value between the min and max 
