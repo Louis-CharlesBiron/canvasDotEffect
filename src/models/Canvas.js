@@ -374,8 +374,8 @@ class Canvas {
 
     // adds an animation to play
     playAnim(anim) {
-        const initEndCB = anim.endCallback
-        anim.endCallback=()=>{
+        const initEndCB = anim.endCB
+        anim.endCB=()=>{
             this._anims = this._anims.filter(a=>a.id!==anim.id)
             if (CDEUtils.isFunction(initEndCB)) initEndCB()
         }
@@ -445,7 +445,7 @@ class Canvas {
 
     // removes any element from the canvas by instance type
     getObjs(instance) {
-        return this._els.defs.filter(x=>x instanceof instance)
+        return this.allEls.filter(x=>x instanceof instance)
     }
 
     // saves the context parameters
@@ -656,7 +656,7 @@ class Canvas {
     get state() {return this._state}
 	get deltaTime() {return this._deltaTime}
 	get windowListeners() {return this._windowListeners}
-	get timeStamp() {return this._fixedTimeStamp||this.#timeStamp}// TODO
+	get timeStamp() {return this._fixedTimeStamp||this.#timeStamp}
 	get timeStampRaw() {return this.#timeStamp}
 	get els() {return this._els}
 	get mouse() {return this._mouse}

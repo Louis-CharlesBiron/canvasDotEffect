@@ -59,7 +59,7 @@ const [aaa, bbb] = createButton("My custom button", CVS.getCenter(), (button, te
     button.playAnim(new Anim((prog)=>{
         button.rotateAt(360*prog)
         text.rotateAt(360*prog)
-    }, 5000, _, ()=>{// anim's endCallback
+    }, 5000, _, ()=>{// anim's endCB
         
         // enabling back the listeners optimization
         CVS.mouseMoveListenersOptimizationEnabled=true

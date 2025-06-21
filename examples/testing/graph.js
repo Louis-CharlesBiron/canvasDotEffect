@@ -7,7 +7,7 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
 
 
 // DECLARE OBJS
-const normalColorTester = new Color("white")
+const _=null, normalColorTester = new Color("white")
 
 let comp1 = Render.DEFAULT_COMPOSITE_OPERATION+"1"
 let alpha1 = 1
@@ -117,28 +117,77 @@ CVS.add(text)
 CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
 
     // Defining some graph properties
-    const startPos = CVS.getCenter(), finalWidth = 500, animDuration = 4000
+    const startPos = [100, 100],
+    amplitude = 100,
+    finalWidth = 400,
+    animDuration = 5000,
+    yFn = Render.Y_FUNCTIONS.SINUS(amplitude, finalWidth)
 
-    // Creating an anim to smoothly generate it over 5 seconds
-    obj.playAnim(new Anim((prog)=>{
+  // Creating an anim to smoothly generate it over 5 seconds
+  obj.playAnim(new Anim((prog)=>{
 
-        // Generating and updating the drawn path
-        obj.setupResults = Render.generate(
-            startPos,                
-            (x) => {
-                const width = 100, height = 100;
-                return height * Math.sin((2 * Math.PI * x * width) / width);
-              },//Math.sin(x)*(x**1.25),
-            finalWidth*prog,         
-            animDuration/4,
-        )
-    }, animDuration)
+      // Generating and updating the drawn path
+      obj.setupResults = Render.generate(
+          startPos,        // The start pos of the generation
+          yFn,             // The function providing a Y value depanding on a given X value. (x)=>{... return y}
+          finalWidth*prog, // The width of the generation. Will be 400px at the end
+          animDuration/4   // The precision in segments of the generated result
+      )
+  }, animDuration, _, ()=>{// endCB
+
+        // Defining some graph properties for the 2nd sine wave
+        const startPos2 = Render.getGenerationEndPos(startPos, yFn, finalWidth),
+              yFn2 = Render.Y_FUNCTIONS.SINUS(-amplitude, finalWidth)
+
+        obj.playAnim(new Anim((prog)=>{
+
+            // Generating and updating the drawn path
+            obj.setupResults = Render.generate(
+                startPos2,        // The start pos of the 2nd generation (here it's the end pos of the 1st generation)      
+                yFn2,             // Same Y function as the 1st generation, but with inverted amplitude
+                -finalWidth*prog, // Same width as the 1st generation, but inverted (negative)
+                animDuration/4,   // The precision in segments of the generated result
+                ()=>Render.generate(startPos, yFn, finalWidth, animDuration/4) // The callback defining the base path. (Exact same as 1st generation)
+            )
+
+        }, animDuration))
+
+    })
 )
 }, obj=>{// loopCB
 
     // Receiving the path through the obj's setupResults, and drawing it in red
     const path = obj.setupResults
     if (path) CVS.render.batchStroke(path, [255,0,0,1])
+
+})
+
+
+
+
+
+
+
+CanvasUtils.createEmptyObj(CVS, ()=>{
+    return Render.composePath([[25,25], [500, 200], [30, 265], [500, 600], [800, 20], [303, 355], filledShapeTester], Render.LINE_TYPES.LINEAR)
+}, (obj)=>{
+    const path = obj.setupResults
+    if (path) CVS.render.batchStroke(path, [255,0,253,.25])
+})
+
+CanvasUtils.createEmptyObj(CVS, ()=>{
+    return Render.mergePaths([Render.getLine([200, 300], [300, 200]), Render.getLine([20, 250], [250, 20]), Render.getRect([400, 400], 100, 40)], [200, 20])
+}, (obj)=>{
+    const path = obj.setupResults
+    if (path) CVS.render.batchStroke(path, [0,0,255,.25])
+})
+
+
+CanvasUtils.createEmptyObj(CVS, _, ()=>{
+    CVS.render.replaceColor([255,0,0,1], [0,255,0,1], 10, [[207, 53], [377, 132]])
+
+    
+    CVS.render.transformArea(Render.COLOR_TRANSFORMS.TINT, [33, 255, 100, 1], [[350, 100], [530, 540]])
 
 })
 

@@ -20,7 +20,10 @@ export class CDEUtils {
 
     // returns a random number within the min and max range. Can generate decimals
     static random(min, max, decimals=0) {
-        return +(Math.random()*(max-min)+min).toFixed(decimals)
+        if (decimals) {
+            const precision = decimals**10
+            return Math.round((Math.random()*(max-min)+min)*precision)/precision
+        } else return (Math.random()*(max-min)+min)>>0
     }
 
     // clamps a numeric value between the min and max 
@@ -399,8 +402,8 @@ export class CanvasUtils {
     }
 
     // Returns a blank, setup/loop only, object. Can be used to draw non objects
-    static createEmptyObj(cvs, loopCB, setupCB) {
-        const obj = new Shape([0,0], null, 0, null, 0, null, undefined, setupCB, loopCB, null, true)
+    static createEmptyObj(cvs, setupCB, loopCB) {
+        const obj = new Shape(null, null, 0, null, 0, null, undefined, setupCB, loopCB, null, true)
         cvs.add(obj)
         return obj.id
     }
@@ -472,7 +475,7 @@ export class CanvasUtils {
                 return [x, y]
             }]]
         },
-        RELATIVE: (forceX, forceY)=>{// Doesn't move the dot, unless provided a x/y value. Also accepts other generic follow paths as x/y values.
+        RELATIVE: (forceX, forceY)=>{// Doesn't move the obj, unless provided a x/y value. Also accepts other generic follow paths as x/y values.
             forceX??= undefined
             forceY??= undefined
             let isForceXFn = false, isForceYFn = false
@@ -671,16 +674,16 @@ export class Color {
         let width = areaSize[0]??canvas.width, height = areaSize[1]??canvas.height,
             data = canvas.ctx.getImageData(0, 0, width, height).data,
             x, y, yi, xi, currentR, currentG, currentB, currentA, ow = 4*width,
-            r = color.r, g = color.g, b = color.b, a = color.a*255,
+            r = color.r??color[0], g = color.g??color[1], b = color.b??color[2], a = (color.a??color[3])*255,
             br = r-temperance, bg = g-temperance, bb = b-temperance, ba = a-temperance,
             tr = r+temperance, tg = g+temperance, tb = b+temperance, ta = a+temperance,
             isSearchTL = searchStart==Color.SEARCH_STARTS.TOP_LEFT,
             startX = isSearchTL?0:width-1, endX = isSearchTL?width:-1, stepX = isSearchTL?1:-1,
             startY = isSearchTL?0:height-1, endY = isSearchTL?height:-1, stepY = isSearchTL?1:-1
 
-            for (y=startY;y!==endY;y+=stepY) {
+            for (y=startY;y!=endY;y+=stepY) {
                 yi = y*ow
-                for (x=startX;x!==endX;x+=stepX) {
+                for (x=startX;x!=endX;x+=stepX) {
                     xi = yi+x*4
                     currentR = data[xi] 
                     if (temperance) {
@@ -1667,6 +1670,7 @@ export class Render {
     static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, POSITIONS_RECT:Render.getPositionsRect, ROUND_RECT:Render.getRoundRect, POSITIONS_ROUND_RECT:Render.getPositionsRoundRect}
     static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve}
     static DRAW_METHODS = {FILL:"FILL", STROKE:"STROKE"}
+    static COLOR_TRANSFORMS = {NONE:null, INVERT:1, GRAYSCALE:2, SEPIA:3, RANDOMIZE:4, STATIC:5, MULTIPLY:6, BGRA:7, TINT:8}
 
     #currentCtxVisuals = [Color.DEFAULT_COLOR_VALUE, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA]
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
@@ -1685,38 +1689,13 @@ export class Render {
         this._profile5 = this._defaultProfile.duplicate()                  // default style profile 5
         this._profiles = []                                                // list of custom style profiles
 
-        this._defaultTextProfile = TextStyles.DEFAULT_PROFILE.duplicate(this)// default style profile template
-        this._textProfile1 = this._defaultTextProfile.duplicate()            // default style profile 1
-        this._textProfile2 = this._defaultTextProfile.duplicate()            // default style profile 2
-        this._textProfile3 = this._defaultTextProfile.duplicate()            // default style profile 3
-        this._textProfile4 = this._defaultTextProfile.duplicate()            // default style profile 4
-        this._textProfile5 = this._defaultTextProfile.duplicate()            // default style profile 5
-        this._textProfiles = []                                              // list of custom style profiles
-    }
-
-    /**
-     * The generate() function allows the generation of a custom graph
-     * @param {[x, y]} startPos: pos array defining the starting pos
-     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
-     * @param {Number} width: the width in pixels of the generation result
-     * @param {Number} segmentCount: precision in segments of the generated result
-     * @param {Number} pixelWidth: the pixel width used for generation. Useful to smooth/zoom a graph
-     * @returns The generated path or undefined if the width or segmentCount is lower than 1
-     */
-    static generate(startPos, yFn, width, segmentCount, pixelWidth) {
-        startPos??=[0,0]
-        yFn??=()=>0
-        width??=100
-        segmentCount??=100
-        pixelWidth??=0.1
-
-        if (width > 1 && segmentCount > 1) {
-            const segmentWidth = width/segmentCount, ix = startPos[0], iy = startPos[1], path = new Path2D()
-            path.moveTo(ix+0, iy+yFn(0))
-
-            for (let x=0;x<=width;x+=segmentWidth) path.lineTo(ix+x, iy+yFn(x*pixelWidth))
-            return path
-        }
+        this._defaultTextProfile = TextStyles.DEFAULT_PROFILE.duplicate(this)// default text style profile template
+        this._textProfile1 = this._defaultTextProfile.duplicate()            // default text style profile 1
+        this._textProfile2 = this._defaultTextProfile.duplicate()            // default text style profile 2
+        this._textProfile3 = this._defaultTextProfile.duplicate()            // default text style profile 3
+        this._textProfile4 = this._defaultTextProfile.duplicate()            // default text style profile 4
+        this._textProfile5 = this._defaultTextProfile.duplicate()            // default text style profile 5
+        this._textProfiles = []                                              // list of custom text style profiles
     }
 
     // instanciates and returns a path containing a line
@@ -1798,7 +1777,6 @@ export class Render {
         return path
     }
 
-
     // instanciates and returns a path containing an rounded rectangle
     static getRoundRect(pos, width, height, radius) {
         const path = new Path2D()
@@ -1830,18 +1808,18 @@ export class Render {
     // Queues a path to be stroked in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
     batchStroke(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.toString(renderStyles, filter, compositeOperation, opacity)
-            if (!this._batchedStrokes[profileKey]) this._batchedStrokes[profileKey] = new Path2D()
-            this._batchedStrokes[profileKey].addPath(path)
+            const batch = this._batchedStrokes, filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.toString(renderStyles, filter, compositeOperation, opacity)
+            if (!batch[profileKey]) batch[profileKey] = new Path2D()
+            batch[profileKey].addPath(path)
         }
     }
 
     // Queues a path to be filled in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
     batchFill(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
-            const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.fillOptimizedToString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.fillOptimizedToString(renderStyles, filter, compositeOperation, opacity)
-            if (!this._batchedFills[profileKey]) this._batchedFills[profileKey] = new Path2D()
-            this._batchedFills[profileKey].addPath(path)
+            const batch = this._batchedFills, filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.fillOptimizedToString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.fillOptimizedToString(renderStyles, filter, compositeOperation, opacity)
+            if (!batch[profileKey]) batch[profileKey] = new Path2D()
+            batch[profileKey].addPath(path)
         } 
     }
 
@@ -1852,12 +1830,12 @@ export class Render {
               standalones = this._bactchedStandalones, o_ll = standalones.length,
               gradientSep = Gradient.SERIALIZATION_SEPARATOR, patternSep = Pattern.SERIALIZATION_SEPARATOR,
               DEF_FILTER = Render.DEFAULT_FILTER, DEF_COMP = Render.DEFAULT_COMPOSITE_OPERATION, DEF_ALPHA = Render.DEFAULT_ALPHA
-              
+
         for (let i=0;i<s_ll;i++) {
             let [profileKey, path] = strokes[i], [colorValue, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
             else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].value
-            RenderStyles.apply(this, colorValue, filter, compositeOperation, opacity, lineWidth, lineDash?lineDash.split(",").map(Number).filter(x=>x):[0], lineDashOffset, lineJoin, lineCap)
+            RenderStyles.apply(this, colorValue, filter, compositeOperation, opacity, lineWidth, lineDash?lineDash.split(",").map(Number).filter(Boolean):[0], lineDashOffset, lineJoin, lineCap)
             this._ctx.stroke(path)
         }
         RenderStyles.apply(this, null, DEF_FILTER, DEF_COMP, DEF_ALPHA)
@@ -1968,6 +1946,219 @@ export class Render {
 
             RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
         })
+    }
+
+    /**
+     * Replaces a color on the canvas by another one in a specified area
+     * @param {Color | [r,g,b,a]} targetColor: The color to be replaced by newColor
+     * @param {Color | [r,g,b,a]} newColor: The color replacing targetColor
+     * @param {Number, [rT,gT,bT]} temperance: The validity margin for the r, g, b values of the targetColor
+     * @param {[[x, y], [x, y]] | null} area: A positions array defining the area to replace the color in
+     * @param {Boolean} preventLate: If true, doesn't include colors from batched operations
+     */
+    replaceColor(targetColor, newColor=Color.DEFAULT_RGBA, temperance=Color.DEFAULT_TEMPERANCE, area=null, preventLate=false) {
+        const core = ()=>{
+            const ctx = this._ctx, cvs = ctx.canvas, startX = area?.[0]?.[0]??0, startY = area?.[0]?.[1]??0,
+            img = ctx.getImageData(startX, startY, (area?.[1]?.[0]-startX)||cvs.width, (area?.[1]?.[1]-startY)||cvs.height), data = img.data, d_ll = data.length,
+            r = targetColor.r??targetColor[0], g = targetColor.g??targetColor[1], b = targetColor.b??targetColor[2],
+            nr = newColor.r??newColor[0], ng = newColor.g??newColor[1], nb = newColor.b??newColor[2], na = (newColor.a??newColor[3])*255
+
+            if (temperance) {
+                let currentR, currentG, currentB, rT = temperance[0]??temperance, gT = temperance[1]??temperance, bT = temperance[2]??temperance, br = r-rT, bg = g-gT, bb = b-bT, tr = r+rT, tg = g+gT, tb = b+bT
+                for (let i=0;i<d_ll;i+=4) {
+                    currentR = data[i]
+                    if (currentR >= br && currentR <= tr) {
+                        currentG = data[i+1]
+                        currentB = data[i+2]
+                        if (currentG >= bg && currentG <= tg && currentB >= bb && currentB <= tb) {
+                            data[i]   = nr
+                            data[i+1] = ng
+                            data[i+2] = nb
+                            data[i+3] = na
+                        }
+                    }
+                }
+            }
+            else for (let i=0;i<d_ll;i+=4) {
+                if (data[i] == r && data[i+1] == g && data[i+2] == b) {
+                    data[i]   = nr
+                    data[i+1] = ng
+                    data[i+2] = nb
+                    data[i+3] = na
+                }
+            }
+            ctx.putImageData(img, startX, startY)
+        }
+
+        if (preventLate) core()
+        else this._bactchedStandalones.push(core)
+    }
+
+    /**
+     * Applies pixel manipulation to a specified area
+     * @param {Render.COLOR_TRANSFORMS} transform 
+     * @param {Number | Array} modifier: the modifier value 
+     * @param {[[x, y], [x, y]] | null} area: A positions array defining the area to replace the color in
+     * @param {Boolean} preventLate: If true, doesn't include colors from batched operations
+     */
+    transformArea(transform=COLOR_TRANSFORMS.NONE, modifier, area=null, preventLate=false) {
+        if (transform) {
+            const core = ()=>{
+                const ctx = this._ctx, cvs = ctx.canvas, startX = area?.[0]?.[0]??0, startY = area?.[0]?.[1]??0,
+                img = ctx.getImageData(startX, startY, (area?.[1]?.[0]-startX)||cvs.width, (area?.[1]?.[1]-startY)||cvs.height), data = img.data, d_ll = data.length, transforms = Render.COLOR_TRANSFORMS, random = CDEUtils.random
+
+                if (transform==transforms.INVERT) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        const r=data[i], g=data[i+1], b=data[i+2]
+                        data[i]   = (modifier*255)-r
+                        data[i+1] = (modifier*255)-g
+                        data[i+2] = (modifier*255)-b
+                    }
+                } else if (transform==transforms.GRAYSCALE) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        const average = (data[i]+data[i+1]+data[i+2])/3
+                        data[i]   = average*modifier
+                        data[i+1] = average*modifier
+                        data[i+2] = average*modifier
+                    }
+                } else if (transform==transforms.SEPIA) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        const r=data[i], g=data[i+1], b=data[i+2]
+                        data[i]   = (r*.393+g*.769+b*.189)*modifier
+                        data[i+1] = (r*.349+g*.686+b*.168)*modifier
+                        data[i+2] = (r*.272+g*.534+b*.131)*modifier
+                    }
+                } else if (transform==transforms.RANDOMIZE) {
+                    modifier||=[0, 255]
+                    for (let i=0;i<d_ll;i+=4) {
+                        data[i]   = random(modifier[0], modifier[1])
+                        data[i+1] = random(modifier[0], modifier[1])
+                        data[i+2] = random(modifier[0], modifier[1])
+                    }
+                } else if (transform==transforms.STATIC) {
+                    modifier||=[0, 255]
+                    for (let i=0;i<d_ll;i+=4) data[i] = data[i+1] = data[i+2] = random(modifier[0], modifier[1])
+                }
+                else if (transform==transforms.MULTIPLY) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        data[i]   *= modifier
+                        data[i+1] *= modifier
+                        data[i+2] *= modifier
+                    }
+                } else if (transform==transforms.BGRA) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        const r=data[i], g=data[i+1], b=data[i+2]
+                        data[i]   = b*modifier
+                        data[i+1] = g*modifier
+                        data[i+2] = r*modifier
+                    }
+                } else if (transform==transforms.TINT) {
+                    modifier||=[255,255,255,1]
+                    for (let i=0;i<d_ll;i+=4) {
+                        data[i]   = modifier[0]
+                        data[i+1] = modifier[1]
+                        data[i+2] = modifier[2]
+                    }
+                }
+        
+                ctx.putImageData(img, startX, startY)
+            }
+
+            if (preventLate) core()
+            else this._bactchedStandalones.push(core)
+        }
+    }
+
+    /**
+     * The generate() function allows the generation of a custom graph
+     * @param {[x, y]} startPos: pos array defining the starting pos
+     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
+     * @param {Number} width: the width in pixels of the generation result. Negative values will generate reversed left-side graphs
+     * @param {Number} segmentCount: precision in segments of the generated result
+     * @param {Function} baseGeneration: callback returning a path2d which will receive this generation result
+     * @returns {Path2D | null} The generated path or null if the width or segmentCount is lower than 1
+     */
+    static generate(startPos, yFn, width, segmentCount=100, baseGeneration=null) {
+        startPos??=[0,0]
+        yFn??=()=>0
+        width??=100
+        segmentCount??=100
+
+        const dir = Math.sign(width), w = Math.abs(width)+.1
+        if (w > 1 && segmentCount > 1) {
+            const segmentWidth = (w-.1)/segmentCount, ix = startPos[0], iy = startPos[1], path = baseGeneration?baseGeneration(startPos, yFn, width, segmentCount):new Path2D()
+            path.moveTo(ix, iy+yFn(0))
+            for (let x=0;x<=w;x+=segmentWidth) path.lineTo(ix+(x*dir), iy+yFn(x*dir))
+            return path
+        }
+        return null
+    }
+
+    /**
+     * Given the following parameters, returns the endPos of a path generated with Render.generate()
+     * @param {[x, y]} startPos: pos array defining the starting pos
+     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
+     * @param {Number} width: the width in pixels of the generation result
+     * @returns {[x, y]} the end pos
+     */
+    static getGenerationEndPos(startPos, yFn, width) {
+        return CDEUtils.addPos(startPos, [width, CDEUtils.round(yFn(width), _BaseObj.POSITION_PRECISION)])
+    }
+
+    /**
+     * Create a path connecting all the pos/obj provided in parameter
+     * @param {Array} posArrays: An array of pos or obj to draw a connection to. The connections are drawn in order of their index.
+     * @param {Render.LINE_TYPES | null} lineType: The line type used to create the path. Leave null/undefined for slightly more optimized linear lines. 
+     * @returns The created path.
+     */
+      static composePath(posArrays, lineType) {
+        const path = new Path2D(), a_ll = posArrays.length, firstPos = posArrays[0]
+        path.moveTo(firstPos[0], firstPos[1])
+        for (let i=1;i<a_ll;i++) {
+            const pos = posArrays[i].pos||posArrays[i]
+            if (lineType) path.addPath(lineType(posArrays[i-1].pos||posArrays[i-1], pos))
+            else path.lineTo(pos[0], pos[1])
+        }
+        return path
+    }
+
+    /**
+     * Combines all provided paths together
+     * @param {Array} paths: an array containing path2ds 
+     * @returns A single path2d containing all of the provided paths
+     */
+    static mergePaths(paths) {
+        const p_ll = paths.length, initPath = paths[0]
+        for (let i=1;i<p_ll;i++) initPath.addPath(paths[i])
+        return initPath
+    }
+
+    static Y_FUNCTIONS = {
+        SINUS: (height=100, periodWidth=100)=>{
+            height??=100
+            periodWidth??=100
+            periodWidth = (2*Math.PI/Math.abs(periodWidth))
+
+            const sin = Math.sin, a = (Math.abs(height)/2)*Math.sign(height)
+            return x=>a*sin(periodWidth*x)
+        },
+        COSINUS: (height=100, periodWidth=100)=>{
+            height??=100
+            periodWidth??=100
+            periodWidth = (2*Math.PI/Math.abs(periodWidth))
+
+            const cos = Math.cos, a = (Math.abs(height)/2)*Math.sign(height)
+            return x=>a*cos(periodWidth*x)
+        },
+        LINEAR: (a=1)=>{
+            a??=1
+            return x=>a*x
+        }
     }
 
 	get ctx() {return this._ctx}
@@ -2644,8 +2835,8 @@ export class Canvas {
 
     // adds an animation to play
     playAnim(anim) {
-        const initEndCB = anim.endCallback
-        anim.endCallback=()=>{
+        const initEndCB = anim.endCB
+        anim.endCB=()=>{
             this._anims = this._anims.filter(a=>a.id!==anim.id)
             if (CDEUtils.isFunction(initEndCB)) initEndCB()
         }
@@ -2715,7 +2906,7 @@ export class Canvas {
 
     // removes any element from the canvas by instance type
     getObjs(instance) {
-        return this._els.defs.filter(x=>x instanceof instance)
+        return this.allEls.filter(x=>x instanceof instance)
     }
 
     // saves the context parameters
@@ -2926,7 +3117,7 @@ export class Canvas {
     get state() {return this._state}
 	get deltaTime() {return this._deltaTime}
 	get windowListeners() {return this._windowListeners}
-	get timeStamp() {return this._fixedTimeStamp||this.#timeStamp}// TODO
+	get timeStamp() {return this._fixedTimeStamp||this.#timeStamp}
 	get timeStampRaw() {return this.#timeStamp}
 	get els() {return this._els}
 	get mouse() {return this._mouse}
@@ -2981,12 +3172,12 @@ export class Anim {
     static #ANIM_ID_GIVER = 0
     static DEFAULT_DURATION = 1000
 
-    constructor(animation, duration, easing, endCallback) {
+    constructor(animation, duration, easing, endCB) {
         this._id = Anim.#ANIM_ID_GIVER++                  // animation id
         this._animation = animation                      // the main animation (clampedProgress, playCount, progress)=>
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
         this._easing = easing||Anim.linear               // easing function (x)=>
-        this._endCallback = endCallback                  // function called when animation is over
+        this._endCB = endCB                  // function called when animation is over
 
         this._startTime = null // start time
         this._progress = 0     // animation progress
@@ -3014,7 +3205,7 @@ export class Anim {
     // ends the animation
     end(deltaTime) {
         this._animation(1, this._playCount++, deltaTime, 1)
-        if (CDEUtils.isFunction(this._endCallback)) this._endCallback()
+        if (CDEUtils.isFunction(this._endCB)) this._endCB()
     }
 
     // resets the animation
@@ -3029,7 +3220,7 @@ export class Anim {
     get animation() {return this._animation}
 	get duration() {return this._duration}
 	get easing() {return this._easing}
-	get endCallback() {return this._endCallback}
+	get endCB() {return this._endCB}
 	get startTime() {return this._startTime}
 	get progress() {return CDEUtils.clamp(this._progress, 0, 1)}
 	get progressRaw() {return this._progress}
@@ -3038,7 +3229,7 @@ export class Anim {
 	set animation(_animation) {return this._animation = _animation}
 	set duration(_duration) {return this._duration = _duration}
 	set easing(_easing) {return this._easing = _easing}
-	set endCallback(_endCallback) {return this._endCallback = _endCallback}
+	set endCB(_endCB) {return this._endCB = _endCB}
 
     // Easings from: https://easings.net/
     static easeInSine=x=>1-Math.cos(x*Math.PI/2)
@@ -3119,7 +3310,10 @@ export class _BaseObj extends _HasColor {
         this._pos = this.getInitPos()||_BaseObj.DEFAULT_POS
         this.color = this.getInitColor()
         this.setAnchoredPos()
-        if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this.parent)
+        if (CDEUtils.isFunction(this._setupCB)) {
+            const setupResults = this._setupCB(this, this.parent)
+            if (setupResults !== undefined) this._setupResults = setupResults
+        }
     }
 
     // Runs every frame
@@ -3264,8 +3458,8 @@ export class _BaseObj extends _HasColor {
             this.currentBacklogAnim.end()
             CDEUtils.addAt(this._anims.backlog, anim, 0)
         }
-        const initEndCB = anim.endCallback
-        anim.endCallback=()=>{
+        const initEndCB = anim.endCB
+        anim.endCB=()=>{
             if (isUnique) this._anims.backlog.shift()
             else this._anims.currents = this._anims.currents.filter(a=>a.id!==anim.id)
             
@@ -3553,9 +3747,9 @@ export class AudioDisplay extends _BaseObj {
             }
    
             this._audioAnalyser.getByteFrequencyData(data)
-            let atPos = this.pos_, accumulator = null, offset = (this._offsetPourcent%1)*(this.#fft/2), adjusted_ll = Math.round(0.49+this._sampleCount)-offset, ii=-offset, i=offset>>0
-            for (;ii<adjusted_ll;ii++,i=(i+1)%this._sampleCount) {
-                const bin = data[i], res = this._binCB(render, bin/128, atPos, this, accumulator, i, this._sampleCount, bin), newPos = res?.[0], newAcc = res?.[1]
+            let atPos = this.pos_, accumulator = null, smapleCount = this._sampleCount, offset = (this._offsetPourcent%1)*(this.#fft/2), adjusted_ll = Math.round(0.49+smapleCount)-offset, ii=-offset, i=offset>>0
+            for (;ii<adjusted_ll;ii++,i=(i+1)%smapleCount) {
+                const bin = data[i], res = this._binCB(render, bin/128, atPos, this, accumulator, i, smapleCount, bin), newPos = res?.[0], newAcc = res?.[1]
                 if (newPos) atPos = newPos
                 if (newAcc) accumulator = newAcc
             }
@@ -5519,13 +5713,13 @@ export class Grid extends Shape {
 
     // Creates the dot based symbol at given pos, based on given source
     createSymbol(key, pos=super.relativePos, source=this._source) {
-        let dotGroup = [], xi=[0,0], yi=0, s = source[key], sourceRadius = Math.sqrt(source.width*source.height)
+        let dotGroup = [], xi=[0,0], yi=0, s = source[key], sourceRadius = Math.sqrt(source.width*source.height), places = GridAssets.D.places
 
         if (key===Grid.DELETION_VALUE || key===Grid.SAME_VALUE) return key
 
         if (s) s.map((d,i)=>[new Dot([pos[0]+(xi[0]=d[0]??xi[0]+1,isNaN(Math.abs(d[0]))?xi[0]:Math.abs(d[0]))*this._gaps[0], pos[1]+(yi+=(xi[0]<=xi[1]||!i)||Math.sign(1/xi[0])==-1)*this._gaps[1]]), d[1], yi*sourceRadius+(xi[1]=Math.abs(xi[0]))]).forEach(([dot, c, p],_,a)=>{
             if (isFinite(p)) {
-                GridAssets.D.places.forEach(dir=>c&dir[0]&&dot.addConnection(a.find(n=>n[2]==p+dir[1](sourceRadius))?.[0])) 
+                places.forEach(dir=>c&dir[0]&&dot.addConnection(a.find(n=>n[2]==p+dir[1](sourceRadius))?.[0])) 
                 dotGroup.push(dot)
             }
         })

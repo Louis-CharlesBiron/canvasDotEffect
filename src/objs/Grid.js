@@ -53,13 +53,13 @@ class Grid extends Shape {
 
     // Creates the dot based symbol at given pos, based on given source
     createSymbol(key, pos=super.relativePos, source=this._source) {
-        let dotGroup = [], xi=[0,0], yi=0, s = source[key], sourceRadius = Math.sqrt(source.width*source.height)
+        let dotGroup = [], xi=[0,0], yi=0, s = source[key], sourceRadius = Math.sqrt(source.width*source.height), places = GridAssets.D.places
 
         if (key===Grid.DELETION_VALUE || key===Grid.SAME_VALUE) return key
 
         if (s) s.map((d,i)=>[new Dot([pos[0]+(xi[0]=d[0]??xi[0]+1,isNaN(Math.abs(d[0]))?xi[0]:Math.abs(d[0]))*this._gaps[0], pos[1]+(yi+=(xi[0]<=xi[1]||!i)||Math.sign(1/xi[0])==-1)*this._gaps[1]]), d[1], yi*sourceRadius+(xi[1]=Math.abs(xi[0]))]).forEach(([dot, c, p],_,a)=>{
             if (isFinite(p)) {
-                GridAssets.D.places.forEach(dir=>c&dir[0]&&dot.addConnection(a.find(n=>n[2]==p+dir[1](sourceRadius))?.[0])) 
+                places.forEach(dir=>c&dir[0]&&dot.addConnection(a.find(n=>n[2]==p+dir[1](sourceRadius))?.[0])) 
                 dotGroup.push(dot)
             }
         })

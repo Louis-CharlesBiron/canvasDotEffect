@@ -182,8 +182,8 @@ class _BaseObj extends _HasColor {
             this.currentBacklogAnim.end()
             CDEUtils.addAt(this._anims.backlog, anim, 0)
         }
-        const initEndCB = anim.endCallback
-        anim.endCallback=()=>{
+        const initEndCB = anim.endCB
+        anim.endCB=()=>{
             if (isUnique) this._anims.backlog.shift()
             else this._anims.currents = this._anims.currents.filter(a=>a.id!==anim.id)
             

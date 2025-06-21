@@ -20,7 +20,10 @@ class CDEUtils {
 
     // returns a random number within the min and max range. Can generate decimals
     static random(min, max, decimals=0) {
-        return +(Math.random()*(max-min)+min).toFixed(decimals)
+        if (decimals) {
+            const precision = decimals**10
+            return Math.round((Math.random()*(max-min)+min)*precision)/precision
+        } else return (Math.random()*(max-min)+min)>>0
     }
 
     // clamps a numeric value between the min and max 

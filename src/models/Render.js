@@ -15,6 +15,7 @@ class Render {
     static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, POSITIONS_RECT:Render.getPositionsRect, ROUND_RECT:Render.getRoundRect, POSITIONS_ROUND_RECT:Render.getPositionsRoundRect}
     static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve}
     static DRAW_METHODS = {FILL:"FILL", STROKE:"STROKE"}
+    static COLOR_TRANSFORMS = {NONE:null, INVERT:1, GRAYSCALE:2, SEPIA:3, RANDOMIZE:4, STATIC:5, MULTIPLY:6, BGRA:7, TINT:8}
 
     #currentCtxVisuals = [Color.DEFAULT_COLOR_VALUE, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA]
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
@@ -33,40 +34,13 @@ class Render {
         this._profile5 = this._defaultProfile.duplicate()                  // default style profile 5
         this._profiles = []                                                // list of custom style profiles
 
-        this._defaultTextProfile = TextStyles.DEFAULT_PROFILE.duplicate(this)// default style profile template
-        this._textProfile1 = this._defaultTextProfile.duplicate()            // default style profile 1
-        this._textProfile2 = this._defaultTextProfile.duplicate()            // default style profile 2
-        this._textProfile3 = this._defaultTextProfile.duplicate()            // default style profile 3
-        this._textProfile4 = this._defaultTextProfile.duplicate()            // default style profile 4
-        this._textProfile5 = this._defaultTextProfile.duplicate()            // default style profile 5
-        this._textProfiles = []                                              // list of custom style profiles
-    }
-
-    /**
-     * The generate() function allows the generation of a custom graph
-     * @param {[x, y]} startPos: pos array defining the starting pos
-     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
-     * @param {Number} width: the width in pixels of the generation result
-     * @param {Number} segmentCount: precision in segments of the generated result
-     * @param {Number} pixelWidth: the pixel width used for generation. Useful to smooth/zoom a graph
-     * @returns {Path2D | null} The generated path or null if the width or segmentCount is lower than 1
-     */
-    static generate(startPos, yFn, width, segmentCount=100, pixelWidth=0.1) {
-        startPos??=[0,0]
-        yFn??=()=>0
-        width??=100
-        segmentCount??=100
-        pixelWidth??=0.1
-
-        if (width > 1 && segmentCount > 1) {
-            const segmentWidth = width/segmentCount, ix = startPos[0], iy = startPos[1], path = new Path2D()
-            path.moveTo(ix+0, iy+yFn(0))
-
-            for (let x=0;x<=width;x+=segmentWidth) path.lineTo(ix+x, iy+yFn(x*pixelWidth))
-            return path
-        }
-
-        return null
+        this._defaultTextProfile = TextStyles.DEFAULT_PROFILE.duplicate(this)// default text style profile template
+        this._textProfile1 = this._defaultTextProfile.duplicate()            // default text style profile 1
+        this._textProfile2 = this._defaultTextProfile.duplicate()            // default text style profile 2
+        this._textProfile3 = this._defaultTextProfile.duplicate()            // default text style profile 3
+        this._textProfile4 = this._defaultTextProfile.duplicate()            // default text style profile 4
+        this._textProfile5 = this._defaultTextProfile.duplicate()            // default text style profile 5
+        this._textProfiles = []                                              // list of custom text style profiles
     }
 
     // instanciates and returns a path containing a line
@@ -201,7 +175,7 @@ class Render {
               standalones = this._bactchedStandalones, o_ll = standalones.length,
               gradientSep = Gradient.SERIALIZATION_SEPARATOR, patternSep = Pattern.SERIALIZATION_SEPARATOR,
               DEF_FILTER = Render.DEFAULT_FILTER, DEF_COMP = Render.DEFAULT_COMPOSITE_OPERATION, DEF_ALPHA = Render.DEFAULT_ALPHA
-              
+
         for (let i=0;i<s_ll;i++) {
             let [profileKey, path] = strokes[i], [colorValue, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
             if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
@@ -317,6 +291,219 @@ class Render {
 
             RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
         })
+    }
+
+    /**
+     * Replaces a color on the canvas by another one in a specified area
+     * @param {Color | [r,g,b,a]} targetColor: The color to be replaced by newColor
+     * @param {Color | [r,g,b,a]} newColor: The color replacing targetColor
+     * @param {Number, [rT,gT,bT]} temperance: The validity margin for the r, g, b values of the targetColor
+     * @param {[[x, y], [x, y]] | null} area: A positions array defining the area to replace the color in
+     * @param {Boolean} preventLate: If true, doesn't include colors from batched operations
+     */
+    replaceColor(targetColor, newColor=Color.DEFAULT_RGBA, temperance=Color.DEFAULT_TEMPERANCE, area=null, preventLate=false) {
+        const core = ()=>{
+            const ctx = this._ctx, cvs = ctx.canvas, startX = area?.[0]?.[0]??0, startY = area?.[0]?.[1]??0,
+            img = ctx.getImageData(startX, startY, (area?.[1]?.[0]-startX)||cvs.width, (area?.[1]?.[1]-startY)||cvs.height), data = img.data, d_ll = data.length,
+            r = targetColor.r??targetColor[0], g = targetColor.g??targetColor[1], b = targetColor.b??targetColor[2],
+            nr = newColor.r??newColor[0], ng = newColor.g??newColor[1], nb = newColor.b??newColor[2], na = (newColor.a??newColor[3])*255
+
+            if (temperance) {
+                let currentR, currentG, currentB, rT = temperance[0]??temperance, gT = temperance[1]??temperance, bT = temperance[2]??temperance, br = r-rT, bg = g-gT, bb = b-bT, tr = r+rT, tg = g+gT, tb = b+bT
+                for (let i=0;i<d_ll;i+=4) {
+                    currentR = data[i]
+                    if (currentR >= br && currentR <= tr) {
+                        currentG = data[i+1]
+                        currentB = data[i+2]
+                        if (currentG >= bg && currentG <= tg && currentB >= bb && currentB <= tb) {
+                            data[i]   = nr
+                            data[i+1] = ng
+                            data[i+2] = nb
+                            data[i+3] = na
+                        }
+                    }
+                }
+            }
+            else for (let i=0;i<d_ll;i+=4) {
+                if (data[i] == r && data[i+1] == g && data[i+2] == b) {
+                    data[i]   = nr
+                    data[i+1] = ng
+                    data[i+2] = nb
+                    data[i+3] = na
+                }
+            }
+            ctx.putImageData(img, startX, startY)
+        }
+
+        if (preventLate) core()
+        else this._bactchedStandalones.push(core)
+    }
+
+    /**
+     * Applies pixel manipulation to a specified area
+     * @param {Render.COLOR_TRANSFORMS} transform 
+     * @param {Number | Array} modifier: the modifier value 
+     * @param {[[x, y], [x, y]] | null} area: A positions array defining the area to replace the color in
+     * @param {Boolean} preventLate: If true, doesn't include colors from batched operations
+     */
+    transformArea(transform=COLOR_TRANSFORMS.NONE, modifier, area=null, preventLate=false) {
+        if (transform) {
+            const core = ()=>{
+                const ctx = this._ctx, cvs = ctx.canvas, startX = area?.[0]?.[0]??0, startY = area?.[0]?.[1]??0,
+                img = ctx.getImageData(startX, startY, (area?.[1]?.[0]-startX)||cvs.width, (area?.[1]?.[1]-startY)||cvs.height), data = img.data, d_ll = data.length, transforms = Render.COLOR_TRANSFORMS, random = CDEUtils.random
+
+                if (transform==transforms.INVERT) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        const r=data[i], g=data[i+1], b=data[i+2]
+                        data[i]   = (modifier*255)-r
+                        data[i+1] = (modifier*255)-g
+                        data[i+2] = (modifier*255)-b
+                    }
+                } else if (transform==transforms.GRAYSCALE) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        const average = (data[i]+data[i+1]+data[i+2])/3
+                        data[i]   = average*modifier
+                        data[i+1] = average*modifier
+                        data[i+2] = average*modifier
+                    }
+                } else if (transform==transforms.SEPIA) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        const r=data[i], g=data[i+1], b=data[i+2]
+                        data[i]   = (r*.393+g*.769+b*.189)*modifier
+                        data[i+1] = (r*.349+g*.686+b*.168)*modifier
+                        data[i+2] = (r*.272+g*.534+b*.131)*modifier
+                    }
+                } else if (transform==transforms.RANDOMIZE) {
+                    modifier||=[0, 255]
+                    for (let i=0;i<d_ll;i+=4) {
+                        data[i]   = random(modifier[0], modifier[1])
+                        data[i+1] = random(modifier[0], modifier[1])
+                        data[i+2] = random(modifier[0], modifier[1])
+                    }
+                } else if (transform==transforms.STATIC) {
+                    modifier||=[0, 255]
+                    for (let i=0;i<d_ll;i+=4) data[i] = data[i+1] = data[i+2] = random(modifier[0], modifier[1])
+                }
+                else if (transform==transforms.MULTIPLY) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        data[i]   *= modifier
+                        data[i+1] *= modifier
+                        data[i+2] *= modifier
+                    }
+                } else if (transform==transforms.BGRA) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        const r=data[i], g=data[i+1], b=data[i+2]
+                        data[i]   = b*modifier
+                        data[i+1] = g*modifier
+                        data[i+2] = r*modifier
+                    }
+                } else if (transform==transforms.TINT) {
+                    modifier||=[255,255,255,1]
+                    for (let i=0;i<d_ll;i+=4) {
+                        data[i]   = modifier[0]
+                        data[i+1] = modifier[1]
+                        data[i+2] = modifier[2]
+                    }
+                }
+        
+                ctx.putImageData(img, startX, startY)
+            }
+
+            if (preventLate) core()
+            else this._bactchedStandalones.push(core)
+        }
+    }
+
+    /**
+     * The generate() function allows the generation of a custom graph
+     * @param {[x, y]} startPos: pos array defining the starting pos
+     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
+     * @param {Number} width: the width in pixels of the generation result. Negative values will generate reversed left-side graphs
+     * @param {Number} segmentCount: precision in segments of the generated result
+     * @param {Function} baseGeneration: callback returning a path2d which will receive this generation result
+     * @returns {Path2D | null} The generated path or null if the width or segmentCount is lower than 1
+     */
+    static generate(startPos, yFn, width, segmentCount=100, baseGeneration=null) {
+        startPos??=[0,0]
+        yFn??=()=>0
+        width??=100
+        segmentCount??=100
+
+        const dir = Math.sign(width), w = Math.abs(width)+.1
+        if (w > 1 && segmentCount > 1) {
+            const segmentWidth = (w-.1)/segmentCount, ix = startPos[0], iy = startPos[1], path = baseGeneration?baseGeneration(startPos, yFn, width, segmentCount):new Path2D()
+            path.moveTo(ix, iy+yFn(0))
+            for (let x=0;x<=w;x+=segmentWidth) path.lineTo(ix+(x*dir), iy+yFn(x*dir))
+            return path
+        }
+        return null
+    }
+
+    /**
+     * Given the following parameters, returns the endPos of a path generated with Render.generate()
+     * @param {[x, y]} startPos: pos array defining the starting pos
+     * @param {Function} yFn: a function providing a Y value depanding on a given X value. (x)=>{... return y}
+     * @param {Number} width: the width in pixels of the generation result
+     * @returns {[x, y]} the end pos
+     */
+    static getGenerationEndPos(startPos, yFn, width) {
+        return CDEUtils.addPos(startPos, [width, CDEUtils.round(yFn(width), _BaseObj.POSITION_PRECISION)])
+    }
+
+    /**
+     * Create a path connecting all the pos/obj provided in parameter
+     * @param {Array} posArrays: An array of pos or obj to draw a connection to. The connections are drawn in order of their index.
+     * @param {Render.LINE_TYPES | null} lineType: The line type used to create the path. Leave null/undefined for slightly more optimized linear lines. 
+     * @returns The created path.
+     */
+      static composePath(posArrays, lineType) {
+        const path = new Path2D(), a_ll = posArrays.length, firstPos = posArrays[0]
+        path.moveTo(firstPos[0], firstPos[1])
+        for (let i=1;i<a_ll;i++) {
+            const pos = posArrays[i].pos||posArrays[i]
+            if (lineType) path.addPath(lineType(posArrays[i-1].pos||posArrays[i-1], pos))
+            else path.lineTo(pos[0], pos[1])
+        }
+        return path
+    }
+
+    /**
+     * Combines all provided paths together
+     * @param {Array} paths: an array containing path2ds 
+     * @returns A single path2d containing all of the provided paths
+     */
+    static mergePaths(paths) {
+        const p_ll = paths.length, initPath = paths[0]
+        for (let i=1;i<p_ll;i++) initPath.addPath(paths[i])
+        return initPath
+    }
+
+    static Y_FUNCTIONS = {
+        SINUS: (height=100, periodWidth=100)=>{
+            height??=100
+            periodWidth??=100
+            periodWidth = (2*Math.PI/Math.abs(periodWidth))
+
+            const sin = Math.sin, a = (Math.abs(height)/2)*Math.sign(height)
+            return x=>a*sin(periodWidth*x)
+        },
+        COSINUS: (height=100, periodWidth=100)=>{
+            height??=100
+            periodWidth??=100
+            periodWidth = (2*Math.PI/Math.abs(periodWidth))
+
+            const cos = Math.cos, a = (Math.abs(height)/2)*Math.sign(height)
+            return x=>a*cos(periodWidth*x)
+        },
+        LINEAR: (a=1)=>{
+            a??=1
+            return x=>a*x
+        }
     }
 
 	get ctx() {return this._ctx}

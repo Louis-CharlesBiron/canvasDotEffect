@@ -1377,55 +1377,122 @@ The Pattern class allows the creation image/video based colors. A Pattern instan
 Render is a class that centralizes most context operations. It provides functions to get *lines* and *text*, as well as functions to *stroke / fill* them. Most of the calls to this class are automated via other classes (such as *Dot* and *FilledShape*), except for the utility line getters which allow more customization. It also provides access to style profiles for lines and text (RenderStyles, TextDisplay). Finally, it is automatically instantiated by, and linked to, any Canvas instance and should not be instantiated manually.
 
 #### Example use 1:
-###### - Manually drawing a custom bezier curve 
+###### - Manually drawing custom bezier and quadratic curves
 ```js
-    // Running in the drawEffectCB of a dummy shape...
-    {
-        ...
-        
+    // Creating an empty obj to create and draw the lines
+    CanvasUtils.createEmptyObj(CVS, null, (obj)=>{// loopCB
+
         // Drawing a bezier curve from [100, 100] to [100, 200], using the default control points, in red
-        render.stroke(Render.getBezierCurve([100,100], [100, 200]), [255, 0, 0, 1])
+        CVS.render.batchStroke(Render.getBezierCurve([100,100], [100, 200]), [255, 0, 0, 1])
+
+        // Drawing a bezier curve from [100, 400] to [400, 300], using the default control points with 0.5 spread, in green
+        CVS.render.batchFill(Render.getQuadCurve([100, 400], [400, 300], Render.getDefaultQuadraticControlPos([100, 400], [400, 300], 0.5)), [0, 255, 0, 1])
         
-    }
+    })
 ```
 
 #### Example use 2:
-###### - Manually drawing a custom filled quadratic curve
+###### - Using an array of pos to draw lines
 ```js
-    // Running in the drawEffectCB of a dummy shape...
-    {
-        ...
-        
-        // Drawing a bezier curve from [100, 400] to [400, 300], using the default control points with 0.5 spread
-        render.fill(Render.getQuadCurve(startPos, endPos, Render.getDefaultQuadraticControlPos([100, 400], [400, 300], 0.5)))
-        
-    }
+    // Creating an empty obj to create and draw the lines
+    CanvasUtils.createEmptyObj(CVS, ()=>{// setupCB
+
+        // Creating a path connecting all the provided pos ↓
+        return Render.composePath(
+            [ // All the pos / obj's pos to connect with a line
+                [25,25], [500, 200], [30, 265], [500, 600], [800, 20], [303, 355], someOtherObj
+            ], 
+            Render.LINE_TYPES.LINEAR // The line type used
+        )
+
+    }, (obj)=>{// loopCB
+
+        // Receiving the path through the obj's setupResults, and drawing it in red
+        const path = obj.setupResults
+        if (path) CVS.render.batchStroke(path, [255,0,0,1])
+
+    })
+
 ```
 
 #### Example use 3:
 ###### - Smoothly drawing a sine graph
 ```js
     // Creating an empty obj to draw a sine graph
-    CanvasUtils.createEmptyObj(CVS, obj=>{// loopCB
+    CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
 
-        // Receiving the path through the obj's setupResults, and drawing it
-        const path = obj.setupResults
-        if (path) CVS.render.batchStroke(path)
+        // Defining some graph properties
+        const startPos = [100, 100],
+            amplitude = 100,
+            finalWidth = 400,
+            animDuration = 5000,
+            yFn = Render.Y_FUNCTIONS.SINUS(amplitude, finalWidth)
 
-    }, obj=>{// setupCB
-
-        // Generating a new path 500 times at 10ms intervals
-        CDEUtils.repeatedTimeout(500, (i)=>{
+        // Creating an anim to smoothly generate it over 5 seconds
+        obj.playAnim(new Anim((prog)=>{
 
             // Generating and updating the drawn path
             obj.setupResults = Render.generate(
-                [10, 10],             // The start position of the generation
-                (x)=>Math.sin(x)*100, // The function providing a Y value depanding on a given X value. (x)=>{... return y}
-                i,                    // The width of the generation. Will be 500px at the end
-                segmentCount = 200    // The precision in segments of the generated result
+                startPos,        // The start pos of the generation
+                yFn,             // The function providing a Y value depanding on a given X value. (x)=>{... return y}
+                finalWidth*prog, // The width of the generation. Will be 400px at the end
+                animDuration/4   // The precision in segments of the generated result
             )
-            
-        }, 10)
+        }, animDuration))
+
+    }, obj=>{// loopCB
+
+        // Receiving the path through the obj's setupResults, and drawing it in red
+        const path = obj.setupResults
+        if (path) CVS.render.batchStroke(path, [255,0,0,1])
+
+    })
+```
+
+#### Example use 4:
+###### - Replacing a color by another in a specific area
+```js
+    // Creating an empty obj
+    CanvasUtils.createEmptyObj(CVS, _, ()=>{// loopCB
+        CVS.render.replaceColor(
+            [255,0,0,1], // The target color to replace (red)
+            [0,255,0,1], // The new color (green)
+            10,          // The target color tolerance
+            [ [100, 100], [200, 200] ] // Only replacing within this area
+        )
+    })
+
+    // You can easily test this by combining this and the 3rd example
+```
+
+#### Example use 5:
+###### - Applying some effects in specific areas
+```js
+
+    // Creating an empty obj
+    CanvasUtils.createEmptyObj(CVS, _, ()=>{// loopCB
+        
+        // Applying a green tint on an area
+        CVS.render.transformArea(
+            Render.COLOR_TRANSFORMS.TINT,
+            Color.green, 
+            [ [100, 100], [200, 200] ]
+        )
+
+        // Applying a grayscale effect on an area
+        CVS.render.transformArea(
+            Render.COLOR_TRANSFORMS.GRAYSCALE,
+            null, 
+            [ [300, 100], [400, 200] ]
+        )
+
+        // Applying a colorful static effect on an area
+        CVS.render.transformArea(
+            Render.COLOR_TRANSFORMS.RANDOMIZE,
+            null, 
+            [ [500, 100], [700, 200] ]
+        )
+
     })
 ```
 
@@ -1544,7 +1611,7 @@ The Anim class allows the creation of smooth animations and the use of easings.
 - **animation** -> Callback containing the animation code `(progress)=>{...}`.
 - **duration** -> The duration in milliseconds. (Negative values will make the animation repeat infinitely).
 - **easing** -> The easing function to be used `(x)=>{... return x}`.
-- **endCallback**? -> Custom callback ran upon the animation ending.
+- **endCB**? -> Custom callback ran upon the animation ending.
 
 ### **To play an animation:** 
 Use the playAnim() function on any canvas object. All objects have an `anims` property containing the `currents` and the `backlog` animations.
@@ -1824,7 +1891,7 @@ createButton("My custom button", CVS.getCenter(), (button, text)=>{// onClick
     button.playAnim(new Anim((prog)=>{
         button.rotateAt(360*prog)
         text.rotateAt(360*prog)
-    }, 5000, null, ()=>{// anim's endCallback
+    }, 5000, null, ()=>{// anim's endCB
         // Disabling the accurate mouse move listeners mode once the rotation animation is finished (better for performance)
         CVS.disableAccurateMouseMoveListenersMode()
     }), true, true)
@@ -1869,9 +1936,9 @@ This function is used to rotate the gradient of an object.
 
 ### CreateEmptyObj
 This function is used to create a blank object with only a loopCB and/or setupCB. Useful to draw non objects which often require a loop.
-###### createEmptyObj(cvs, loopCB, setupCB)
+###### createEmptyObj(cvs, setupCB, loopCB)
 ```js
-CanvasUtils.createEmptyObj(CVS, obj=>{// loopCB
+CanvasUtils.createEmptyObj(CVS, null, obj=>{// loopCB
 
     // Drawing a line from [0,0] to [100, 100]
     CVS.render.batchStroke(Render.getLine([0,0], [100, 100]))
