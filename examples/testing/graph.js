@@ -172,7 +172,7 @@ CanvasUtils.createEmptyObj(CVS, ()=>{
     return Render.composePath([[25,25], [500, 200], [30, 265], [500, 600], [800, 20], [303, 355], filledShapeTester], Render.LINE_TYPES.LINEAR)
 }, (obj)=>{
     const path = obj.setupResults
-    if (path) CVS.render.batchStroke(path, [255,0,255,.25])
+    if (path) CVS.render.batchStroke(path, [255,0,253,.25])
 })
 
 CanvasUtils.createEmptyObj(CVS, ()=>{
@@ -184,7 +184,11 @@ CanvasUtils.createEmptyObj(CVS, ()=>{
 
 
 CanvasUtils.createEmptyObj(CVS, _, ()=>{
-    CVS.render.replaceColor([255,0,0,1], [255,255,255,1], 254, [[207, 53], [377, 132]])
+    CVS.render.replaceColor([255,0,0,1], [0,255,0,1], 10, [[207, 53], [377, 132]])
+
+    
+    CVS.render.transformArea(Render.COLOR_TRANSFORMS.TINT, [33, 255, 100], [[350, 100], [530, 540]])
+
 })
 
 

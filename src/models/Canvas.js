@@ -445,7 +445,7 @@ class Canvas {
 
     // removes any element from the canvas by instance type
     getObjs(instance) {
-        return this._els.defs.filter(x=>x instanceof instance)
+        return this.allEls.filter(x=>x instanceof instance)
     }
 
     // saves the context parameters

@@ -15,6 +15,7 @@ class Render {
     static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, POSITIONS_RECT:Render.getPositionsRect, ROUND_RECT:Render.getRoundRect, POSITIONS_ROUND_RECT:Render.getPositionsRoundRect}
     static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve}
     static DRAW_METHODS = {FILL:"FILL", STROKE:"STROKE"}
+    static COLOR_TRANSFORMS = {NONE:null, INVERT:1, GRAYSCALE:2, SEPIA:3, RANDOMIZE:4, STATIC:5, MULTIPLY:6, BGRA:7, TINT:8}
 
     #currentCtxVisuals = [Color.DEFAULT_COLOR_VALUE, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA]
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
@@ -293,25 +294,22 @@ class Render {
     }
 
     /**
-     * TODO add option for newColor to be an image or something else than a plain color
-     * 
-     * TODO FIX OPACITY BUG
      * Replaces a color on the canvas by another one in a specified area
      * @param {Color | [r,g,b,a]} targetColor: The color to be replaced by newColor
      * @param {Color | [r,g,b,a]} newColor: The color replacing targetColor
-     * @param {Number} temperance: The validity margin for the r, g, b, a values of the targetColor
-     * @param {[[x, y], [x, y]]} area: A positions array defining the area to replace the color in
-     * @param {Boolean} preventLateReplace: If true, doesn't include colors from batched operations
+     * @param {Number, [rT,gT,bT]} temperance: The validity margin for the r, g, b values of the targetColor
+     * @param {[[x, y], [x, y]] | null} area: A positions array defining the area to replace the color in
+     * @param {Boolean} preventLate: If true, doesn't include colors from batched operations
      */
-    replaceColor(targetColor, newColor=Color.DEFAULT_RGBA, temperance=Color.DEFAULT_TEMPERANCE, area=null, preventLateReplace=false) {
+    replaceColor(targetColor, newColor=Color.DEFAULT_RGBA, temperance=Color.DEFAULT_TEMPERANCE, area=null, preventLate=false) {
         const core = ()=>{
             const ctx = this._ctx, cvs = ctx.canvas, startX = area?.[0]?.[0]??0, startY = area?.[0]?.[1]??0,
-            img = ctx.getImageData(startX, startY, area?.[1]?.[0]??cvs.width, area?.[1]?.[1]??cvs.height), data = img.data, d_ll = data.length,
+            img = ctx.getImageData(startX, startY, (area?.[1]?.[0]-startX)||cvs.width, (area?.[1]?.[1]-startY)||cvs.height), data = img.data, d_ll = data.length,
             r = targetColor.r??targetColor[0], g = targetColor.g??targetColor[1], b = targetColor.b??targetColor[2],
             nr = newColor.r??newColor[0], ng = newColor.g??newColor[1], nb = newColor.b??newColor[2], na = (newColor.a??newColor[3])*255
 
             if (temperance) {
-                let currentR, currentG, currentB, br = r-temperance, bg = g-temperance, bb = b-temperance, tr = r+temperance, tg = g+temperance, tb = b+temperance
+                let currentR, currentG, currentB, rT = temperance[0]??temperance, gT = temperance[1]??temperance, bT = temperance[2]??temperance, br = r-rT, bg = g-gT, bb = b-bT, tr = r+rT, tg = g+gT, tb = b+bT
                 for (let i=0;i<d_ll;i+=4) {
                     currentR = data[i]
                     if (currentR >= br && currentR <= tr) {
@@ -337,8 +335,92 @@ class Render {
             ctx.putImageData(img, startX, startY)
         }
 
-        if (preventLateReplace) core()
+        if (preventLate) core()
         else this._bactchedStandalones.push(core)
+    }
+
+
+    // TODO, add doc examples
+
+
+    /**
+     * Applies pixel manipulation to a specified area
+     * @param {Render.COLOR_TRANSFORMS} transform 
+     * @param {Number | Array} modifier: the modifier value 
+     * @param {[[x, y], [x, y]] | null} area: A positions array defining the area to replace the color in
+     * @param {Boolean} preventLate: If true, doesn't include colors from batched operations
+     */
+    transformArea(transform=COLOR_TRANSFORMS.NONE, modifier, area=null, preventLate=false) {
+        if (transform) {
+            const core = ()=>{
+                const ctx = this._ctx, cvs = ctx.canvas, startX = area?.[0]?.[0]??0, startY = area?.[0]?.[1]??0,
+                img = ctx.getImageData(startX, startY, (area?.[1]?.[0]-startX)||cvs.width, (area?.[1]?.[1]-startY)||cvs.height), data = img.data, d_ll = data.length, transforms = Render.COLOR_TRANSFORMS, random = CDEUtils.random
+
+                if (transform==transforms.INVERT) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        const r=data[i], g=data[i+1], b=data[i+2]
+                        data[i]   = (modifier*255)-r
+                        data[i+1] = (modifier*255)-g
+                        data[i+2] = (modifier*255)-b
+                    }
+                } else if (transform==transforms.GRAYSCALE) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        const average = (data[i]+data[i+1]+data[i+2])/3
+                        data[i]   = average*modifier
+                        data[i+1] = average*modifier
+                        data[i+2] = average*modifier
+                    }
+                } else if (transform==transforms.SEPIA) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        const r=data[i], g=data[i+1], b=data[i+2]
+                        data[i]   = (r*.393+g*.769+b*.189)*modifier
+                        data[i+1] = (r*.349+g*.686+b*.168)*modifier
+                        data[i+2] = (r*.272+g*.534+b*.131)*modifier
+                    }
+                } else if (transform==transforms.RANDOMIZE) {
+                    modifier||=[0, 255]
+                    for (let i=0;i<d_ll;i+=4) {
+                        data[i]   = random(modifier[0], modifier[1])
+                        data[i+1] = random(modifier[0], modifier[1])
+                        data[i+2] = random(modifier[0], modifier[1])
+                    }
+                } else if (transform==transforms.STATIC) {
+                    modifier||=[0, 255]
+                    for (let i=0;i<d_ll;i+=4) data[i] = data[i+1] = data[i+2] = random(modifier[0], modifier[1])
+                }
+                else if (transform==transforms.MULTIPLY) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        data[i]   *= modifier
+                        data[i+1] *= modifier
+                        data[i+2] *= modifier
+                    }
+                } else if (transform==transforms.BGRA) {
+                    modifier??=1
+                    for (let i=0;i<d_ll;i+=4) {
+                        const r=data[i], g=data[i+1], b=data[i+2]
+                        data[i]   = b*modifier
+                        data[i+1] = g*modifier
+                        data[i+2] = r*modifier
+                    }
+                } else if (transform==transforms.TINT) {
+                    modifier||=[255,255,255]
+                    for (let i=0;i<d_ll;i+=4) {
+                        data[i]   = modifier[0]
+                        data[i+1] = modifier[1]
+                        data[i+2] = modifier[2]
+                    }
+                }
+        
+                ctx.putImageData(img, startX, startY)
+            }
+
+            if (preventLate) core()
+            else this._bactchedStandalones.push(core)
+        }
     }
 
     /**
