@@ -43,8 +43,8 @@ class CDEUtils {
 
     // rounds a number to a specific decimal point
     static round(num, decimals=1) {
-        const factor = 10**decimals
-        return Math.round(num*factor)/factor
+        const precision = 10**decimals
+        return Math.round(num*precision)/precision
     }
 
     // creates a copy of the provided array. (only for length 2)

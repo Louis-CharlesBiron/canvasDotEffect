@@ -184,10 +184,16 @@ CanvasUtils.createEmptyObj(CVS, ()=>{
 
 
 CanvasUtils.createEmptyObj(CVS, _, ()=>{
-    CVS.render.replaceColor([255,0,0,1], [0,255,0,1], 10, [[207, 53], [377, 132]])
+    CVS.render.replaceColor([255,0,0,1], [0,255,0,1], 10, [[207, 53], [377, 132]], CDEUtils.random(1, 10))
 
     
     CVS.render.transformArea(Render.COLOR_TRANSFORMS.TINT, [33, 255, 100, 1], [[350, 100], [530, 540]])
+    
+    
+    CVS.render.transformArea(Render.COLOR_TRANSFORMS.RANDOMIZE, [33, 255, 100, 1], [[115, 115], [400, 350]], 2)
+
+    CVS.render.transformArea(Render.COLOR_TRANSFORMS.STATIC, [33, 255, 100, 1], [[500, 20], [650, 150]], 10)
+
 
 })
 

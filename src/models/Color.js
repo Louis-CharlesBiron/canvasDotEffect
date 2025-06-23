@@ -34,11 +34,11 @@ class Color {
         if (this._format == Color.FORMATS.GRADIENT || this._format == Color.FORMATS.PATTERN) this.#rgba = this.#hsv = []
         else {
             this.#rgba = this._format !== Color.FORMATS.RGBA ? this.convertTo() : Color.#unlinkRGBA(this._color)
-            const rgba = this.#rgba, DDRP = Color.DEFAULT_DECIMAL_ROUNDING_POINT
-            rgba[0] = CDEUtils.round(rgba[0], DDRP)
-            rgba[1] = CDEUtils.round(rgba[1], DDRP)
-            rgba[2] = CDEUtils.round(rgba[2], DDRP)
-            rgba[3] = CDEUtils.round(rgba[3], DDRP)
+            const rgba = this.#rgba, DDRP = Color.DEFAULT_DECIMAL_ROUNDING_POINT, round = CDEUtils.round
+            rgba[0] = round(rgba[0], DDRP)
+            rgba[1] = round(rgba[1], DDRP)
+            rgba[2] = round(rgba[2], DDRP)
+            rgba[3] = round(rgba[3], DDRP)
             this.#hsv = Color.convertTo(this.#rgba, Color.FORMATS.HSV)
         }
     }

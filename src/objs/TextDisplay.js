@@ -34,7 +34,7 @@ class TextDisplay extends _BaseObj {
 
     draw(render, time, deltaTime) {
         if (this.initialized) {
-            if (this.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+            if ((this.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
                 const ctx = render.ctx, hasScaling = this._scale[0]!=1||this._scale[1]!=1, hasTransforms = this._rotation||hasScaling, textValue = this.getTextValue()
 
                 let viewPos
