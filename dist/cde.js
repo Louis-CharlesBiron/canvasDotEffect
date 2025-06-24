@@ -43,8 +43,8 @@ export class CDEUtils {
 
     // rounds a number to a specific decimal point
     static round(num, decimals=1) {
-        const factor = 10**decimals
-        return Math.round(num*factor)/factor
+        const precision = 10**decimals
+        return Math.round(num*precision)/precision
     }
 
     // creates a copy of the provided array. (only for length 2)
@@ -527,11 +527,11 @@ export class Color {
         if (this._format == Color.FORMATS.GRADIENT || this._format == Color.FORMATS.PATTERN) this.#rgba = this.#hsv = []
         else {
             this.#rgba = this._format !== Color.FORMATS.RGBA ? this.convertTo() : Color.#unlinkRGBA(this._color)
-            const rgba = this.#rgba, DDRP = Color.DEFAULT_DECIMAL_ROUNDING_POINT
-            rgba[0] = CDEUtils.round(rgba[0], DDRP)
-            rgba[1] = CDEUtils.round(rgba[1], DDRP)
-            rgba[2] = CDEUtils.round(rgba[2], DDRP)
-            rgba[3] = CDEUtils.round(rgba[3], DDRP)
+            const rgba = this.#rgba, DDRP = Color.DEFAULT_DECIMAL_ROUNDING_POINT, round = CDEUtils.round
+            rgba[0] = round(rgba[0], DDRP)
+            rgba[1] = round(rgba[1], DDRP)
+            rgba[2] = round(rgba[2], DDRP)
+            rgba[3] = round(rgba[3], DDRP)
             this.#hsv = Color.convertTo(this.#rgba, Color.FORMATS.HSV)
         }
     }
@@ -1807,7 +1807,7 @@ export class Render {
 
     // Queues a path to be stroked in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
     batchStroke(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
-        if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+        if ((renderStyles[3]??renderStyles.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const batch = this._batchedStrokes, filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.toString(renderStyles, filter, compositeOperation, opacity)
             if (!batch[profileKey]) batch[profileKey] = new Path2D()
             batch[profileKey].addPath(path)
@@ -1816,7 +1816,7 @@ export class Render {
 
     // Queues a path to be filled in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
     batchFill(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
-        if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+        if ((renderStyles[3]??renderStyles.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const batch = this._batchedFills, filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.fillOptimizedToString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.fillOptimizedToString(renderStyles, filter, compositeOperation, opacity)
             if (!batch[profileKey]) batch[profileKey] = new Path2D()
             batch[profileKey].addPath(path)
@@ -1827,25 +1827,39 @@ export class Render {
     drawBatched() {
         const strokes = Object.entries(this._batchedStrokes), s_ll = strokes.length,
               fills = Object.entries(this._batchedFills), f_ll = fills.length,
+              ctx = this._ctx,
               standalones = this._bactchedStandalones, o_ll = standalones.length,
               gradientSep = Gradient.SERIALIZATION_SEPARATOR, patternSep = Pattern.SERIALIZATION_SEPARATOR,
               DEF_FILTER = Render.DEFAULT_FILTER, DEF_COMP = Render.DEFAULT_COMPOSITE_OPERATION, DEF_ALPHA = Render.DEFAULT_ALPHA
 
         for (let i=0;i<s_ll;i++) {
-            let [profileKey, path] = strokes[i], [colorValue, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
-            if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
+            let stroke = strokes[i], profileKey = stroke[0], path = stroke[1], profile = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR), colorValue = profile[0], lineDash = profile[5]
+            if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(ctx, colorValue)
             else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].value
-            RenderStyles.apply(this, colorValue, filter, compositeOperation, opacity, lineWidth, lineDash?lineDash.split(",").map(Number).filter(Boolean):[0], lineDashOffset, lineJoin, lineCap)
-            this._ctx.stroke(path)
+        
+            let lineDashValue = []
+            if (lineDash) {
+                let l_ll = lineDash.length, at = 0
+                for (let i=0;i<=l_ll;i++) {
+                    if (lineDash[i]=="," || i==l_ll) {
+                        const v = +(lineDash.slice(at, i).trim())
+                        if (v) lineDashValue.push(v)
+                        at = i+1
+                    }
+                }
+            } else lineDashValue[0] = 0
+
+            RenderStyles.apply(this, colorValue, profile[1], profile[2], profile[3], profile[4], lineDashValue, profile[6], profile[7], profile[8])
+            ctx.stroke(path)
         }
         RenderStyles.apply(this, null, DEF_FILTER, DEF_COMP, DEF_ALPHA)
 
         for (let i=0;i<f_ll;i++) {
-            let [profileKey, path] = fills[i], [colorValue, filter, compositeOperation, opacity] = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR)
-            if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(this._ctx, colorValue)
+            let fill = fills[i], profileKey = fill[0], path = fill[1], profile = profileKey.split(RenderStyles.SERIALIZATION_SEPARATOR), colorValue = profile[0]
+            if (colorValue.includes(gradientSep)) colorValue = Gradient.getCanvasGradientFromString(ctx, colorValue)
             else if (colorValue.includes(patternSep)) colorValue = Pattern.LOADED_PATTERN_SOURCES[colorValue.split(patternSep)[0]].value
-            RenderStyles.apply(this, colorValue, filter, compositeOperation, opacity)
-            this._ctx.fill(path)
+            RenderStyles.apply(this, colorValue, profile[1], profile[2], profile[3])
+            ctx.fill(path)
         }
         RenderStyles.apply(this, null, DEF_FILTER, DEF_COMP, DEF_ALPHA)
 
@@ -1860,7 +1874,7 @@ export class Render {
 
     // directly strokes a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
     stroke(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
-        if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+        if ((renderStyles[3]??renderStyles.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2]
             if (renderStyles instanceof RenderStyles) renderStyles.apply(undefined, filter, compositeOperation, opacity)
             else this._defaultProfile.apply(renderStyles, filter, compositeOperation, opacity)
@@ -1872,7 +1886,7 @@ export class Render {
 
     // directly fills a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
     fill(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
-        if (renderStyles[3]??renderStyles.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+        if ((renderStyles[3]??renderStyles.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2]
             if (renderStyles instanceof RenderStyles) renderStyles.apply(undefined, filter, compositeOperation, opacity)
             else this._defaultProfile.apply(renderStyles, filter, compositeOperation, opacity)
@@ -1885,17 +1899,17 @@ export class Render {
     // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
     strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=TextDisplay.DEFAULT_LINE_HEIGHT, visualEffects=[]) {
         if (text) {
-            const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, hasVisualEffects = visualEffects?.length
+            const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, ctx = this._ctx
             if (textStyles instanceof TextStyles) textStyles.apply()
             else this._defaultTextProfile.apply(textStyles)
         
-            if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
-            if (hasVisualEffects) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
+            if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
+            if (visualEffects?.length) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
             
             if (text.includes("\n")) {
                 const lines = text.split("\n"), lines_ll = lines.length
-                for (let i=0;i<lines_ll;i++) this._ctx.strokeText(lines[i], pos[0], pos[1]+i*lineHeight, maxWidth)
-            } else this._ctx.strokeText(text, pos[0], pos[1], maxWidth)
+                for (let i=0;i<lines_ll;i++) ctx.strokeText(lines[i], pos[0], pos[1]+i*lineHeight, maxWidth)
+            } else ctx.strokeText(text, pos[0], pos[1], maxWidth)
 
             RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
         }
@@ -1904,17 +1918,17 @@ export class Render {
     // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
     fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=TextDisplay.DEFAULT_LINE_HEIGHT, visualEffects=[]) {
         if (text) {
-            const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, hasVisualEffects = visualEffects?.length
+            const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, ctx = this._ctx
             if (textStyles instanceof TextStyles) textStyles.apply()
             else this._defaultTextProfile.apply(textStyles)
 
-            if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = this._ctx.strokeStyle = this._ctx.fillStyle = colorValue
-            if (hasVisualEffects) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
+            if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
+            if (visualEffects?.length) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
 
             if (text.includes("\n")) {
                 const lines = text.split("\n"), lines_ll = lines.length
-                for (let i=0;i<lines_ll;i++) this._ctx.fillText(lines[i], pos[0], pos[1]+i*lineHeight, maxWidth)
-            } else this._ctx.fillText(text, pos[0], pos[1], maxWidth)
+                for (let i=0;i<lines_ll;i++) ctx.fillText(lines[i], pos[0], pos[1]+i*lineHeight, maxWidth)
+            } else ctx.fillText(text, pos[0], pos[1], maxWidth)
 
             RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
         }
@@ -1922,8 +1936,7 @@ export class Render {
 
     // directly draws an image on the canvas
     drawImage(img, pos, size, croppingPositions, visualEffects=[]) {
-        const hasVisualEffects = visualEffects?.length
-        if (hasVisualEffects) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
+        if (visualEffects?.length) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
 
         if (croppingPositions) {
             const [[cropStartX, cropStartY], [cropEndX, cropEndY]] = croppingPositions
@@ -1936,8 +1949,7 @@ export class Render {
     // directly draws an image on the canvas once everything else has been drawn
     drawLateImage(img, pos, size, croppingPositions, visualEffects=[]) {
         this._bactchedStandalones.push(()=>{
-            const hasVisualEffects = visualEffects?.length
-            if (hasVisualEffects) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
+            if (visualEffects?.length) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
 
             if (croppingPositions) {
                 const [[cropStartX, cropStartY], [cropEndX, cropEndY]] = croppingPositions
@@ -1954,18 +1966,20 @@ export class Render {
      * @param {Color | [r,g,b,a]} newColor: The color replacing targetColor
      * @param {Number, [rT,gT,bT]} temperance: The validity margin for the r, g, b values of the targetColor
      * @param {[[x, y], [x, y]] | null} area: A positions array defining the area to replace the color in
+     * @param {Number} densityDivider: The higher the divider, the more pixels will skip the processing. (Defaults to 1, meaning every pixel gets processed)
      * @param {Boolean} preventLate: If true, doesn't include colors from batched operations
      */
-    replaceColor(targetColor, newColor=Color.DEFAULT_RGBA, temperance=Color.DEFAULT_TEMPERANCE, area=null, preventLate=false) {
+    replaceColor(targetColor, newColor=Color.DEFAULT_RGBA, temperance=Color.DEFAULT_TEMPERANCE, area=null, densityDivider=1, preventLate=false) {
         const core = ()=>{
             const ctx = this._ctx, cvs = ctx.canvas, startX = area?.[0]?.[0]??0, startY = area?.[0]?.[1]??0,
             img = ctx.getImageData(startX, startY, (area?.[1]?.[0]-startX)||cvs.width, (area?.[1]?.[1]-startY)||cvs.height), data = img.data, d_ll = data.length,
             r = targetColor.r??targetColor[0], g = targetColor.g??targetColor[1], b = targetColor.b??targetColor[2],
-            nr = newColor.r??newColor[0], ng = newColor.g??newColor[1], nb = newColor.b??newColor[2], na = (newColor.a??newColor[3])*255
+            nr = newColor.r??newColor[0], ng = newColor.g??newColor[1], nb = newColor.b??newColor[2], na = (newColor.a??newColor[3])*255,
+            pxStep = 4*(densityDivider>0?densityDivider:1)
 
             if (temperance) {
                 let currentR, currentG, currentB, rT = temperance[0]??temperance, gT = temperance[1]??temperance, bT = temperance[2]??temperance, br = r-rT, bg = g-gT, bb = b-bT, tr = r+rT, tg = g+gT, tb = b+bT
-                for (let i=0;i<d_ll;i+=4) {
+                for (let i=0;i<d_ll;i+=pxStep) {
                     currentR = data[i]
                     if (currentR >= br && currentR <= tr) {
                         currentG = data[i+1]
@@ -1979,7 +1993,7 @@ export class Render {
                     }
                 }
             }
-            else for (let i=0;i<d_ll;i+=4) {
+            else for (let i=0;i<d_ll;i+=pxStep) {
                 if (data[i] == r && data[i+1] == g && data[i+2] == b) {
                     data[i]   = nr
                     data[i+1] = ng
@@ -1999,17 +2013,19 @@ export class Render {
      * @param {Render.COLOR_TRANSFORMS} transform 
      * @param {Number | Array} modifier: the modifier value 
      * @param {[[x, y], [x, y]] | null} area: A positions array defining the area to replace the color in
+     * @param {Number} densityDivider: The higher the divider, the more pixels will skip the processing. (Defaults to 1, meaning every pixel gets processed)
      * @param {Boolean} preventLate: If true, doesn't include colors from batched operations
      */
-    transformArea(transform=COLOR_TRANSFORMS.NONE, modifier, area=null, preventLate=false) {
+    transformArea(transform=COLOR_TRANSFORMS.NONE, modifier, area=null, densityDivider=1, preventLate=false) {
         if (transform) {
             const core = ()=>{
                 const ctx = this._ctx, cvs = ctx.canvas, startX = area?.[0]?.[0]??0, startY = area?.[0]?.[1]??0,
-                img = ctx.getImageData(startX, startY, (area?.[1]?.[0]-startX)||cvs.width, (area?.[1]?.[1]-startY)||cvs.height), data = img.data, d_ll = data.length, transforms = Render.COLOR_TRANSFORMS, random = CDEUtils.random
+                img = ctx.getImageData(startX, startY, (area?.[1]?.[0]-startX)||cvs.width, (area?.[1]?.[1]-startY)||cvs.height),
+                data = img.data, d_ll = data.length, transforms = Render.COLOR_TRANSFORMS, random = CDEUtils.random, pxStep = 4*(densityDivider>0?densityDivider:1)
 
                 if (transform==transforms.INVERT) {
                     modifier??=1
-                    for (let i=0;i<d_ll;i+=4) {
+                    for (let i=0;i<d_ll;i+=pxStep) {
                         const r=data[i], g=data[i+1], b=data[i+2]
                         data[i]   = (modifier*255)-r
                         data[i+1] = (modifier*255)-g
@@ -2017,7 +2033,7 @@ export class Render {
                     }
                 } else if (transform==transforms.GRAYSCALE) {
                     modifier??=1
-                    for (let i=0;i<d_ll;i+=4) {
+                    for (let i=0;i<d_ll;i+=pxStep) {
                         const average = (data[i]+data[i+1]+data[i+2])/3
                         data[i]   = average*modifier
                         data[i+1] = average*modifier
@@ -2025,7 +2041,7 @@ export class Render {
                     }
                 } else if (transform==transforms.SEPIA) {
                     modifier??=1
-                    for (let i=0;i<d_ll;i+=4) {
+                    for (let i=0;i<d_ll;i+=pxStep) {
                         const r=data[i], g=data[i+1], b=data[i+2]
                         data[i]   = (r*.393+g*.769+b*.189)*modifier
                         data[i+1] = (r*.349+g*.686+b*.168)*modifier
@@ -2033,25 +2049,25 @@ export class Render {
                     }
                 } else if (transform==transforms.RANDOMIZE) {
                     modifier||=[0, 255]
-                    for (let i=0;i<d_ll;i+=4) {
+                    for (let i=0;i<d_ll;i+=pxStep) {
                         data[i]   = random(modifier[0], modifier[1])
                         data[i+1] = random(modifier[0], modifier[1])
                         data[i+2] = random(modifier[0], modifier[1])
                     }
                 } else if (transform==transforms.STATIC) {
                     modifier||=[0, 255]
-                    for (let i=0;i<d_ll;i+=4) data[i] = data[i+1] = data[i+2] = random(modifier[0], modifier[1])
+                    for (let i=0;i<d_ll;i+=pxStep) data[i] = data[i+1] = data[i+2] = random(modifier[0], modifier[1])
                 }
                 else if (transform==transforms.MULTIPLY) {
                     modifier??=1
-                    for (let i=0;i<d_ll;i+=4) {
+                    for (let i=0;i<d_ll;i+=pxStep) {
                         data[i]   *= modifier
                         data[i+1] *= modifier
                         data[i+2] *= modifier
                     }
                 } else if (transform==transforms.BGRA) {
                     modifier??=1
-                    for (let i=0;i<d_ll;i+=4) {
+                    for (let i=0;i<d_ll;i+=pxStep) {
                         const r=data[i], g=data[i+1], b=data[i+2]
                         data[i]   = b*modifier
                         data[i+1] = g*modifier
@@ -2059,7 +2075,7 @@ export class Render {
                     }
                 } else if (transform==transforms.TINT) {
                     modifier||=[255,255,255,1]
-                    for (let i=0;i<d_ll;i+=4) {
+                    for (let i=0;i<d_ll;i+=pxStep) {
                         data[i]   = modifier[0]
                         data[i+1] = modifier[1]
                         data[i+2] = modifier[2]
@@ -4562,7 +4578,7 @@ export class TextDisplay extends _BaseObj {
 
     draw(render, time, deltaTime) {
         if (this.initialized) {
-            if (this.a??1 > Color.OPACITY_VISIBILITY_THRESHOLD) {
+            if ((this.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
                 const ctx = render.ctx, hasScaling = this._scale[0]!=1||this._scale[1]!=1, hasTransforms = this._rotation||hasScaling, textValue = this.getTextValue()
 
                 let viewPos
@@ -5846,7 +5862,7 @@ export class Dot extends _Obj {
                 drawEffectCB(render, this, isActive?rawRatio:1, parent.setupResults, parent.parent.mouse, dist, parent, isActive, rawRatio)
             }
 
-            if (this._radius) {
+            if (this._radius && (this.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
                 const ctx = render.ctx, scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")!==-1)||this._rotation
 
                 if (hasTransforms) {
