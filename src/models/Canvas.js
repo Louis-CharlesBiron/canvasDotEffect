@@ -435,6 +435,11 @@ class Canvas {
         this.updateCachedAllEls()
     }
 
+    // removes all objects added to the canvas
+    removeAllObjects() {
+        this.remove("*")
+    }
+
     // get any element from the canvas by id
     get(id) {
         const els = this.#cachedEls, e_ll = this.#cachedEls_ll

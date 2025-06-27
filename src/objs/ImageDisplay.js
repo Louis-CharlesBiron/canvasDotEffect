@@ -34,7 +34,7 @@ class ImageDisplay extends _BaseObj {
     constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, null, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source               // the data source
-        this._size = size                   // the display size of the image (resizes)
+        this._size = size||[]               // the display size of the image (resizes)
         this._errorCB = errorCB             // a callback called if there is an error with the source (errorType, e?)=>
         this._sourceCroppingPositions = null// data source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
     }
