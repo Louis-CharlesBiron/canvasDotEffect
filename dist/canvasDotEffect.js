@@ -2497,7 +2497,7 @@ class Canvas {
     static DEFAULT_CUSTOM_SVG_FILTER_CONTAINER_ID = Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+"CONTAINER"
     static CURSOR_STYLES = {CUSTOM:(filepath, offsetPos=[0,0], fallbackCursorStyle=Canvas.CURSOR_STYLES.AUTO)=>`url("${filepath}") ${offsetPos.join(" ")}, ${fallbackCursorStyle}`, AUTO:"auto", POINTER:"pointer", DEFAULT:"default", CROSSHAIR:"crosshair", MOVE:"move", TEXT:"text", WAIT:"wait", HELP:"help", NONE:"none", GRAB:"grab", GRABBING:"grabbing", ALL_SCROLL:"all-scroll", COL_RESIZE:"col-resize", ROW_RESIZE:"row-resize", N_RESIZE:"n-resize", E_RESIZE:"e-resize", S_RESIZE:"s-resize", W_RESIZE:"w-resize", NE_RESIZE:"ne-resize", NW_RESIZE:"nw-resize", SE_RESIZE:"se-resize", SW_RESIZE:"sw-resize", ZOOM_IN:"zoom-in", ZOOM_OUT:"zoom-out", NO_DROP:"no-drop", COPY:"copy", NOT_ALLOWED:"not-allowed", VERTICAL_TEXT:"vertical-text", CELL:"cell", CONTEXT_MENU:"context-menu", EXT_RESIZE:"ext-resize", DEFAULT_ARROW:"default", UNSET:"unset"}
     static LOADED_SVG_FILTERS = {}
-    static DEFAULT_CTX_SETTINGS = {"imageSmoothingEnabled":false, "willReadFrequently":false, "font":TextStyles.DEFAULT_FONT, "letterSpacing":TextStyles.DEFAULT_LETTER_SPACING, "wordSpacing":TextStyles.DEFAULT_WORD_SPACING, "fontVariantCaps":TextStyles.DEFAULT_FONT_VARIANT_CAPS, "direction":TextStyles.DEFAULT_DIRECTION, "fontSretch":TextStyles.DEFAULT_FONT_STRETCH, "fontKerning":TextStyles.DEFAULT_FONT_KERNING, "textAlign":TextStyles.DEFAULT_TEXT_ALIGN, "textBaseline":TextStyles.DEFAULT_TEXT_BASELINE, "textRendering":TextStyles.DEFAULT_TEXT_RENDERING, "lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR}
+    static DEFAULT_CTX_SETTINGS = {"imageSmoothingEnabled":false, "font":TextStyles.DEFAULT_FONT, "letterSpacing":TextStyles.DEFAULT_LETTER_SPACING, "wordSpacing":TextStyles.DEFAULT_WORD_SPACING, "fontVariantCaps":TextStyles.DEFAULT_FONT_VARIANT_CAPS, "direction":TextStyles.DEFAULT_DIRECTION, "fontSretch":TextStyles.DEFAULT_FONT_STRETCH, "fontKerning":TextStyles.DEFAULT_FONT_KERNING, "textAlign":TextStyles.DEFAULT_TEXT_ALIGN, "textBaseline":TextStyles.DEFAULT_TEXT_BASELINE, "textRendering":TextStyles.DEFAULT_TEXT_RENDERING, "lineDashOffset":RenderStyles.DEFAULT_DASH_OFFSET, "lineJoin":RenderStyles.DEFAULT_JOIN, "lineCap":RenderStyles.DEFAULT_CAP, "lineWidth":RenderStyles.DEFAULT_WIDTH, "fillStyle":Color.DEFAULT_COLOR, "stokeStyle":Color.DEFAULT_COLOR}
     static DEFAULT_CANVAS_WIDTH = 800
     static DEFAULT_CANVAS_HEIGHT = 800
     static DEFAULT_CANVAS_STYLES = {position:"absolute",top:"0",left:"0",width:"100%",height:"100%","background-color":"transparent",border:"none",outline:"none","pointer-events":"none !important","z-index":0,padding:"0 !important",margin:"0","-webkit-transform":"translate3d(0, 0, 0)","-moz-transform": "translate3d(0, 0, 0)","-ms-transform": "translate3d(0, 0, 0)","transform": "translate3d(0, 0, 0)","touch-action":"none","-webkit-user-select":"none","user-select":"none"}
@@ -2517,31 +2517,37 @@ class Canvas {
     #mouseMoveCB = null      // the custom mouseMoveCB. Used for mobile adjustments
     constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._id = Canvas.CANVAS_ID_GIVER++                           // Canvas instance id
-        this._cvs = cvs                                               // html canvas element
-        this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
-        this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)       // set styles selector for canvas
-        this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true)// set styles selector for parent
+        this._cvs = cvs                                               // html canvas element or an OffscreenCanvas instance
+        if (!this.isOffscreenCanvas) {//TODO
+            this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
+            this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)       // set styles selector for canvas
+            this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true)// set styles selector for parent
+            this.visibilityChangeCB = visibilityChangeCB                  // callback with the actions to be taken on document visibility change (isVisible, CVS, e)=>
+        }
+
         this._ctx = this._cvs.getContext("2d", {willReadFrequently})  // canvas context
-        this._settings = this.updateSettings(settings)                // set context settings
+        this._settings = this.updateSettings(settings||Canvas.DEFAULT_CTX_SETTINGS)// set context settings
         this._els = {refs:[], defs:[]}                                // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
         this._state = 0                                               // canvas drawing loop state. 0:off, 1:on, 2:awaiting stop
         this._loopingCB = loopingCB                                   // custom callback called along with the loop() function
         this.fpsLimit = fpsLimit                                      // delay between each frame to limit fps
-        this.visibilityChangeCB = visibilityChangeCB                  // callback with the actions to be taken on document visibility change (isVisible, CVS, e)=>
         this._speedModifier = 1                                       // animation/drawing speed multiplier
         this.#maxTime = this.#getMaxTime(fpsLimit)                    // max time between frames
         this._deltaTime = null                                        // useable delta time in seconds
         this._fixedTimeStamp = null                                   // fixed timestamp in ms
         this._windowListeners = this.#initWindowListeners()           // [onresize, onvisibilitychange, onscroll, onload]
         this._viewPos = [0,0]                                         // context view offset
-        const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
-        this.setSize(frameCBR.width, frameCBR.height)                 // init size
-        this.#initStyles()                                            // init styles
-        this._typingDevice = new TypingDevice()                       // keyboard info
-        this._mouse = new Mouse(this._ctx)                            // mouse info
-        this._offset = this.updateOffset()                            // cvs page offset
-        this._render = new Render(this._ctx)                          // render instance
-        this._anims = []                                              // current animations
+        if (!this.isOffscreenCanvas) {//TODO
+            const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
+            this.setSize(frameCBR.width, frameCBR.height)             // init size
+            this.#initStyles()                                        // init styles
+        } else this.#cachedSize = [this._cvs.width, this._cvs.height]
+
+        this._typingDevice = new TypingDevice()                        // keyboard info
+        this._mouse = new Mouse(this._ctx)                             // mouse info
+        if (!this.isOffscreenCanvas) this._offset = this.updateOffset()// cvs page offset
+        this._render = new Render(this._ctx)                           // render instance
+        this._anims = []                                               // current animations
     }
 
     // sets css styles on the canvas and the parent
@@ -2578,15 +2584,17 @@ class Canvas {
           Canvas.#ON_LOAD_CALLBACKS = null
         }
 
-        window.addEventListener("resize", onresize)
-        window.addEventListener("visibilitychange", onvisibilitychange)
-        window.addEventListener("scroll", onscroll)
+        if (!this.isOffscreenCanvas) {
+            window.addEventListener("resize", onresize)
+            window.addEventListener("visibilitychange", onvisibilitychange)
+            window.addEventListener("scroll", onscroll)
+        }
         window.addEventListener("load", onLoad)
-        return {
-            onrezise:()=>window.removeEventListner("resize", onresize),
-            onvisibilitychange:()=>window.removeEventListener("visibilitychange", onvisibilitychange),
-            onscroll:()=>window.removeEventListener("scroll", onscroll),
-            onDOMContentLoaded:()=>window.removeEventListener("load", onLoad)
+        return this.isOffscreenCanvas ? {removeOnloadListener:()=>window.removeEventListener("load", onLoad)} : {
+            removeOnreziseListener:()=>window.removeEventListner("resize", onresize),
+            removeOnvisibilitychangeListener:()=>window.removeEventListener("visibilitychange", onvisibilitychange),
+            removeOnscrollListener:()=>window.removeEventListener("scroll", onscroll),
+            removeOnloadListener:()=>window.removeEventListener("load", onLoad)
         }
     }
 
@@ -2647,6 +2655,8 @@ class Canvas {
         return this._offset = {x:Math.round((x+width)-this.width)+this._viewPos[0], y:Math.round((y+height)-this.height)+this._viewPos[1]}
     }
 
+
+
     // main loop, runs every frame
     #loop(time, wasRestarted) {
         const frameTime = (time-this.#lastFrame)*this._speedModifier, fpsLimit = this._fpsLimit
@@ -2669,6 +2679,29 @@ class Canvas {
         else this._state = 0
     }
 
+    /**
+     * Plays a single frame of the drawing loop.
+     * @param {Number?} customTime: if provided, forces a time jump. Else doesn't affect time
+     */
+    drawSingleFrame(customTime=null) {
+        let mouse = this._mouse, loopingCB = this._loopingCB, hasCustomTime = customTime!=null, deltaTime = hasCustomTime ? this.#calcDeltaTime(customTime) : this._deltaTime
+        if (!mouse._moveListenersOptimizationEnabled) {
+            mouse.checkListeners(10) // mouse enter
+            mouse.checkListeners(11) // mouse leave
+        }
+
+        this.clear()
+        this.draw()
+        this._render.drawBatched()
+        if (loopingCB) this._loopingCB(deltaTime)
+
+        if (hasCustomTime) {
+            const anims = this._anims, a_ll = anims.length
+            this.#timeStamp = this._fixedTimeStamp = customTime
+            if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(this.#timeStamp, deltaTime)
+        }
+    }
+
     // core actions of the main loop
     #loopCore(time) {
         const deltaTime = this.#calcDeltaTime(time), mouse = this._mouse, loopingCB = this._loopingCB
@@ -2682,7 +2715,6 @@ class Canvas {
         this.clear()
         this.draw()
         this._render.drawBatched()
-        
         if (loopingCB) this._loopingCB(deltaTime)
 
         const anims = this._anims, a_ll = anims.length
@@ -2881,8 +2913,10 @@ class Canvas {
     // updates current canvas settings
     updateSettings(settings) {
         const st = settings||this._settings
-        Object.entries(st).forEach(s=>this._ctx[s[0]]=s[1])
-        return this._settings=st
+        if (st) {
+            Object.entries(st).forEach(s=>this._ctx[s[0]]=s[1])
+            return this._settings=st
+        } else return null
     }
 
     // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "inactive" is true, it only initializes the obj, without adding it to the canvas
@@ -2908,6 +2942,11 @@ class Canvas {
             this._els.refs = this._els.refs.filter(source=>source.id!==id)
         }
         this.updateCachedAllEls()
+    }
+
+    // removes all objects added to the canvas
+    removeAllObjects() {
+        this.remove("*")
     }
 
     // get any element from the canvas by id
@@ -2959,41 +2998,43 @@ class Canvas {
 
     // defines the onmousemove listener
     setMouseMove(cb, global) {
-        this.#mouseMoveCB = cb
-        const onmousemove=e=>{
-            // update pos and direction angle
-            this._mouse.updatePos(e, this._offset)
-            this._mouse.calcAngle()            
-            this.#mouseMovements(cb, e)
-        }, ontouchmove=e=>{
-            const touches = e.touches
-            if (touches.length==1) {
-                e.preventDefault()
-                e.x = CDEUtils.round(touches[0].clientX, 1)
-                e.y = CDEUtils.round(touches[0].clientY, 1)
+        if (!this.isOffscreenCanvas) {
+            this.#mouseMoveCB = cb
+            const onmousemove=e=>{
+                // update pos and direction angle
                 this._mouse.updatePos(e, this._offset)
                 this._mouse.calcAngle()            
                 this.#mouseMovements(cb, e)
-            }
-        }
-        const element = global ? document : this._frame
-        element.addEventListener("mousemove", onmousemove)
-        element.addEventListener("touchmove", ontouchmove)
-        return ()=>{
-            element.removeEventListener("mousemove", onmousemove)
-            element.removeEventListener("touchmove", ontouchmove)
-        }
+            }, ontouchmove=e=>{
+                const touches = e.touches
+                if (touches.length==1) {
+                    e.preventDefault()
+                    e.x = CDEUtils.round(touches[0].clientX, 1)
+                    e.y = CDEUtils.round(touches[0].clientY, 1)
+                    this._mouse.updatePos(e, this._offset)
+                    this._mouse.calcAngle()            
+                    this.#mouseMovements(cb, e)
+                }
+            }, element = global ? document : this._frame
+            element.addEventListener("mousemove", onmousemove)
+            element.addEventListener("touchmove", ontouchmove)
+            return ()=>{
+                element.removeEventListener("mousemove", onmousemove)
+                element.removeEventListener("touchmove", ontouchmove)
+            }            
+        } else return false
     }
 
     // defines the onmouseleave listener
     setMouseLeave(cb, global) {
-        const onmouseleave=e=>{
-            this._mouse.invalidate()
-            this.#mouseMovements(cb, e)
-        }
-        const element = global ? document : this._frame
-        element.addEventListener("mouseleave", onmouseleave)
-        return ()=>element.removeEventListener("mouseleave", onmouseleave)
+        if (!this.isOffscreenCanvas) {
+            const onmouseleave=e=>{
+                this._mouse.invalidate()
+                this.#mouseMovements(cb, e)
+            }, element = global ? document : this._frame
+            element.addEventListener("mouseleave", onmouseleave)
+            return ()=>element.removeEventListener("mouseleave", onmouseleave)            
+        } else return false
     }
 
     // called on any mouse clicks
@@ -3005,87 +3046,89 @@ class Canvas {
 
     // defines the onmousedown listener
     setMouseDown(cb, global) {
-        let isTouch = false
-        const ontouchstart=e=>{
-            isTouch = true
-            const touches = e.touches
-            if (touches.length==1) {
-                e.preventDefault()
-                e.x = CDEUtils.round(touches[0].clientX, 1)
-                e.y = CDEUtils.round(touches[0].clientY, 1)
-                e.button = 0
-                this._mouse.updatePos(e, this._offset)
-                this._mouse.calcAngle()            
-                this.#mouseMovements(this.#mouseMoveCB, e)
-                this.#mouseClicks(cb, e, true)
+        if (!this.isOffscreenCanvas) {
+            let isTouch = false
+            const ontouchstart=e=>{
+                isTouch = true
+                const touches = e.touches
+                if (touches.length==1) {
+                    e.preventDefault()
+                    e.x = CDEUtils.round(touches[0].clientX, 1)
+                    e.y = CDEUtils.round(touches[0].clientY, 1)
+                    e.button = 0
+                    this._mouse.updatePos(e, this._offset)
+                    this._mouse.calcAngle()            
+                    this.#mouseMovements(this.#mouseMoveCB, e)
+                    this.#mouseClicks(cb, e, true)
+                }
+            }, onmousedown=e=>{
+                if (!isTouch) this.#mouseClicks(cb, e)
+                isTouch = false
+            }, element = global ? document : this._frame
+            element.addEventListener("touchstart", ontouchstart)
+            element.addEventListener("mousedown", onmousedown)
+            return ()=>{
+                element.removeEventListener("touchstart", ontouchstart)
+                element.removeEventListener("mousedown", onmousedown)
             }
-        }, onmousedown=e=>{
-            if (!isTouch) this.#mouseClicks(cb, e)
-            isTouch = false
-        }
-        const element = global ? document : this._frame
-        element.addEventListener("touchstart", ontouchstart)
-        element.addEventListener("mousedown", onmousedown)
-        return ()=>{
-            element.removeEventListener("touchstart", ontouchstart)
-            element.removeEventListener("mousedown", onmousedown)
-        }
+        } else return false
     }
 
     // defines the onmouseup listener
     setMouseUp(cb, global) {
-        let isTouch = false
-        const ontouchend=e=>{
-            isTouch = true
-            const changedTouches = e.changedTouches
-            if (!e.touches.length) {
-                e.preventDefault()
-                e.x = CDEUtils.round(changedTouches[0].clientX, 1)
-                e.y = CDEUtils.round(changedTouches[0].clientY, 1)
-                e.button = 0
-                this.#mouseClicks(cb, e)
+        if (!this.isOffscreenCanvas) {
+            let isTouch = false
+            const ontouchend=e=>{
+                isTouch = true
+                const changedTouches = e.changedTouches
+                if (!e.touches.length) {
+                    e.preventDefault()
+                    e.x = CDEUtils.round(changedTouches[0].clientX, 1)
+                    e.y = CDEUtils.round(changedTouches[0].clientY, 1)
+                    e.button = 0
+                    this.#mouseClicks(cb, e)
 
-                this._mouse.invalidate()
-                e.x = Infinity
-                e.y = Infinity
-                this.#mouseMovements(cb, e)
-            }     
-        }, onmouseup=e=>{
-            if (!isTouch) this.#mouseClicks(cb, e)
-            isTouch = false
-        }
-        const element = global ? document : this._frame
-        element.addEventListener("touchend", ontouchend)
-        element.addEventListener("mouseup", onmouseup)
-        return ()=>{
-            element.removeEventListener("touchend", ontouchend)
-            element.removeEventListener("mouseup", onmouseup)
-        }
+                    this._mouse.invalidate()
+                    e.x = Infinity
+                    e.y = Infinity
+                    this.#mouseMovements(cb, e)
+                }     
+            }, onmouseup=e=>{
+                if (!isTouch) this.#mouseClicks(cb, e)
+                isTouch = false
+            }, element = global ? document : this._frame
+            element.addEventListener("touchend", ontouchend)
+            element.addEventListener("mouseup", onmouseup)
+            return ()=>{
+                element.removeEventListener("touchend", ontouchend)
+                element.removeEventListener("mouseup", onmouseup)
+            }
+        } else return false
     }
 
     // defines the onkeydown listener
     setKeyDown(cb, global) {
-        const onkeydown=e=>{
-            this._typingDevice.setDown(e)
-            if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
-            }, globalFirstInteractOnKeyDown=e=>{if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)}
-        
-        const element = global ? document : this._frame
-        element.addEventListener("keydown", onkeydown)
-        document.addEventListener("keydown", globalFirstInteractOnKeyDown)
-        return ()=>element.removeEventListener("keydown", onkeydown)
+        if (!this.isOffscreenCanvas) {
+            const onkeydown=e=>{
+                this._typingDevice.setDown(e)
+                if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
+            }, globalFirstInteractOnKeyDown=e=>{if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)}, element = global ? document : this._frame
+            element.addEventListener("keydown", onkeydown)
+            document.addEventListener("keydown", globalFirstInteractOnKeyDown)
+            return ()=>element.removeEventListener("keydown", onkeydown)            
+        } else return false
     }
 
     // defines the onkeyup listener
     setKeyUp(cb, global) {
-        const onkeyup=e=>{
-            this._typingDevice.setUp(e)
-            if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
-        }
-
-        const element = global ? document : this._frame
-        element.addEventListener("keyup", onkeyup)
-        return ()=>element.removeEventListener("keyup", onkeyup)
+        if (!this.isOffscreenCanvas) {
+            const onkeyup=e=>{
+                this._typingDevice.setUp(e)
+                if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
+            }, element = global ? document : this._frame
+            element.addEventListener("keyup", onkeyup)
+            return ()=>element.removeEventListener("keyup", onkeyup)            
+        } else return false
     }
 
     // returns the center [x,y] of the canvas
@@ -3156,6 +3199,7 @@ class Canvas {
     get speedModifier() {return this._speedModifier}
     get anims() {return this._anims}
     get mouseMoveListenersOptimizationEnabled() {return this._mouse._moveListenersOptimizationEnabled}
+    get isOffscreenCanvas() {return this._cvs instanceof OffscreenCanvas} 
 
 	set id(id) {this._id = id}
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
@@ -4247,7 +4291,7 @@ class ImageDisplay extends _BaseObj {
     constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, null, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source               // the data source
-        this._size = size                   // the display size of the image (resizes)
+        this._size = size||[]               // the display size of the image (resizes)
         this._errorCB = errorCB             // a callback called if there is an error with the source (errorType, e?)=>
         this._sourceCroppingPositions = null// data source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
     }

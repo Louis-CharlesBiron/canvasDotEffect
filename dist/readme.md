@@ -121,7 +121,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.1.6"
+    "cdejs": "^1.1.7"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -2463,6 +2463,7 @@ const optimizedDrawEffectCB = (render, dot, ratio, dragAnim, mouse, dist, shape,
         
         // Again, the effect is only for the first dot
         // Here we use the provided "isActive" variable to make sure the mouse checks are only running when necessary
+        // (Using mouse listeners could help optimizing this case even more)
         if (isActive) {// (isActive is only true if ratio < 1)
             const mouseOn = firstDot.isWithin(mouse.pos)
             if (mouseOn && mouse.clicked) firstDot.color = [255, 0, 0, 1]
@@ -2474,6 +2475,26 @@ const optimizedDrawEffectCB = (render, dot, ratio, dragAnim, mouse, dist, shape,
 }
 ```
 
+## - Using an offscreen canvas:
+Using an offscreen canvas can be more performant in some cases, as it reduces DOM usage and is fully usable in web workers.
+
+#### Offscreen canvas example:
+```js
+    // When creating the Canvas instance, provided an offscreen canvas instead of a html canvas
+    const CVS = new Canvas(new OffscreenCanvas(1000, 1000))
+    
+    // Creating and adding shapes ...
+    const dummyShape = new Shape([50, 50], [new Dot()])
+    CVS.add(dummyShape)
+    
+    // Starting the canvas loop
+    CVS.start()
+```
+
+**Notes:** 
+- Since the offscreen canvas is completely detached from the DOM, prebuilt mouse/keybord listeners are not available.
+ 
+
 # [Intended Practices](#table-of-contents)
 
 - Putting `null` as any parameter value will assign it the default value.
@@ -2481,7 +2502,7 @@ const optimizedDrawEffectCB = (render, dot, ratio, dragAnim, mouse, dist, shape,
 
 - Use the `mod()` function for effective ratio usages.
 - If needed and applicable, use the available prebuilt event listeners.
-- More complex shapes can have very extensive declarations, declare them in a separate file(s) and use them in a centralized project file. 
+- Complex canvas objects can have very extensive declarations, declare them in a separate file(s) and use them in a centralized project file. 
 
 
 ****

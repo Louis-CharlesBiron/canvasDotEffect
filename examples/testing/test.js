@@ -1,6 +1,6 @@
 const _ = null
 
-const fpsCounter = new FPSCounter(), CVS = new Canvas(canvas, ()=>{//looping
+const fpsCounter = new FPSCounter(), CVS = new Canvas(0?canvas:new OffscreenCanvas(1000, 1000), ()=>{//looping
     let fps = fpsCounter.getFps()+"\n"+fpsCounter.fpsRaw
     if (fpsDisplay.textContent !== fps) fpsDisplay.textContent = fps
     mouseSpeed.textContent = CVS?.mouse?.speed?.toFixed(2)+" px/sec"
