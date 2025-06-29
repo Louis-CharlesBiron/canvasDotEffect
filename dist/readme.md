@@ -2492,7 +2492,7 @@ Using an offscreen canvas can be more performant in some cases, as it reduces DO
 ```
 
 **Notes:** 
-- Since the offscreen canvas is completely detached from the DOM, prebuilt mouse/keybord listeners are not available.
+- Since the offscreen canvas is completely detached from the DOM, prebuilt mouse/keyboard listeners and SVG filters are not available.
  
 
 # [Intended Practices](#table-of-contents)

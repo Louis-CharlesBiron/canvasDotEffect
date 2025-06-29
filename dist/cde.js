@@ -4267,7 +4267,7 @@ export class ImageDisplay extends _BaseObj {
     static DEFAULT_WIDTH = 128
     static DEFAULT_HEIGHT = 128
     static SOURCE_TYPES = {FILE_PATH:"string", DYNAMIC:"[object Object]", CAMERA:"CAMERA", CAPTURE:"CAPTURE", IMAGE:HTMLImageElement, SVG:SVGImageElement, BITMAP_PROMISE:Promise, BITMAP:ImageBitmap, VIDEO:HTMLVideoElement, CANVAS:HTMLCanvasElement, OFFSCREEN_CANVAS:OffscreenCanvas}
-    static DYNAMIC_SOURCE_TYPES = {VIDEO:HTMLVideoElement, CANVAS:HTMLCanvasElement}
+    static DYNAMIC_SOURCE_TYPES = {VIDEO:HTMLVideoElement, CANVAS:HTMLCanvasElement, OFFSCREEN_CANVAS:OffscreenCanvas}
     static RESOLUTIONS = {SD:[640, 480], HD:[1280, 720], FULL_HD:[1920, 1080], "4K":[3840,2160], FOURK:[3840,2160], MAX:[3840,2160]}
     static CAMERA_FACING_MODES = {USER:"user", ENVIRONMENT:"environment"}
     static DEFAULT_FACING_MODE = ImageDisplay.CAMERA_FACING_MODES.USER
@@ -4288,6 +4288,7 @@ export class ImageDisplay extends _BaseObj {
     static IS_SCREEN_RECORD_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
 
     #naturalSize = null
+    #type = null
     constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, null, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source               // the data source
@@ -4311,7 +4312,8 @@ export class ImageDisplay extends _BaseObj {
 
     draw(render, time, deltaTime) {
         if (this.initialized) {
-            if (this._source instanceof HTMLVideoElement && (!this._source.src && !this._source.srcObject?.active)) return;
+            const source = this._source
+            if (source instanceof HTMLVideoElement && (!source.src && !source.srcObject?.active)) return;
 
             const ctx = render.ctx, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
 
@@ -4325,8 +4327,8 @@ export class ImageDisplay extends _BaseObj {
                 ctx.translate(-cx, -cy)
             }
 
-            if (this._source instanceof HTMLCanvasElement) render.drawLateImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
-            else render.drawImage(this._source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
+            if (source instanceof HTMLCanvasElement || source instanceof OffscreenCanvas) render.drawLateImage(source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
+            else render.drawImage(source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
 
             if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
         }
@@ -4390,16 +4392,16 @@ export class ImageDisplay extends _BaseObj {
     }
 
     // Returns a usable image source
-    static loadImage(path) {
+    static loadImage(src) {
         const image = new Image()
-        image.src = path
+        image.src = src
         return image
     }
 
     // Returns a usable video source
-    static loadVideo(path, looping=true, autoPlay=true) {
+    static loadVideo(src, looping=true, autoPlay=true) {
         const video = document.createElement("video")
-        video.src = path
+        video.src = src instanceof File ? URL.createObjectURL(file) : src
         video.preload = "auto"
         video.loop = looping
         if (autoPlay) {
@@ -4517,6 +4519,43 @@ export class ImageDisplay extends _BaseObj {
         const positions = this.#getRectBounds()
         return super.getBounds(positions, padding, rotation, scale, super.getCenter(positions))
     }
+    
+    /**
+     * Returns whether the provided file type is supported
+     * @param {String | File} file: the file or filename 
+     * @returns Whether the file is supported or not
+     */
+    static isFormatSupported(file) {
+        return ImageDisplay.isImageFormatSupported(file)||ImageDisplay.isVideoFormatSupported(file)
+    }
+
+    /**
+     * Returns whether the provided image file type is supported
+     * @param {String | File} file: the file or filename 
+     * @returns Whether the image file is supported or not
+     */
+    static isImageFormatSupported(file) {
+        const name = file?.name||file
+        return ImageDisplay.SUPPORTED_IMAGE_FORMATS.some(ext=>name.endsWith("."+ext))
+    }
+
+    /**
+     * Returns whether the provided video file type is supported
+     * @param {String | File} file: the file or filename 
+     * @returns Whether the video file is supported or not
+     */
+    static isVideoFormatSupported(file) {
+        const name = file?.name||file
+        return ImageDisplay.SUPPORTED_VIDEO_FORMATS.some(ext=>name.endsWith("."+ext))
+    }
+
+    /**
+     * @returns Returns all the supported file formats in a string usable in a HTML file input
+     */
+    static getSupportedHTMLAccept() {
+        const sep = ", ."
+        return "."+ImageDisplay.SUPPORTED_IMAGE_FORMATS.join(sep)+sep+ImageDisplay.SUPPORTED_VIDEO_FORMATS.join(sep)
+    }
 
 	get ctx() {return this._parent._ctx}
 	get size() {return this._size||[0,0]}
@@ -4534,15 +4573,11 @@ export class ImageDisplay extends _BaseObj {
     get source() {return this._source}
 	get sourceCroppingPositions() {return this._sourceCroppingPositions}
 
-    get video() {return this._source}
-    get image() {return this._source}
     get paused() {return this._source?.paused}
-    get isPaused() {return this.paused}
-    get playbackRate() {return this._source?.playbackRate}
     get speed() {return this.playbackRate}
     get currentTime() {return this._source?.currentTime}
-    get loop() {return this._source?.loop}
     get isLooping() {return this.loop}
+    get isDynamic() {return this._source instanceof ImageDisplay.DYNAMIC_SOURCE_TYPES.CANVAS || this._source instanceof ImageDisplay.DYNAMIC_SOURCE_TYPES.OFFSCREEN_CANVAS || this._source instanceof ImageDisplay.DYNAMIC_SOURCE_TYPES.VIDEO}
 
     set source(source) {
         const initSize = this._size
@@ -4566,11 +4601,8 @@ export class ImageDisplay extends _BaseObj {
             else ImageDisplay.playMedia(this._source)
         }catch(e){}
     }
-    set isPaused(isPaused) {this.paused = isPaused}
-    set playbackRate(playbackRate) {this._source.playbackRate = playbackRate}
     set speed(speed) {this.playbackRate = speed}
     set currentTime(currentTime) {this._source.currentTime = currentTime}
-    set loop(loop) {this._source.loop = loop}
     set isLooping(isLooping) {this.loop = isLooping}
 	set sourceCroppingPositions(sourceCroppingPositions) {
         if (sourceCroppingPositions) {
