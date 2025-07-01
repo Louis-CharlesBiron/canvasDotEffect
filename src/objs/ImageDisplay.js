@@ -26,7 +26,7 @@ class ImageDisplay extends _BaseObj {
     static DEFAULT_CAPTURE_CURSOR = "always"
     static DEFAULT_CAPTURE_SETTINGS = ImageDisplay.loadCapture()
     static DEFAULT_CAPTURES = {CAPTURE_SD:ImageDisplay.loadCapture(ImageDisplay.RESOLUTIONS.SD), CAPTURE_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.HD), CAPTURE_FULL_HD:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FULL_HD), CAPTURE_4k:ImageDisplay.loadCamera(ImageDisplay.RESOLUTIONS.FOURK), CAPTURE:ImageDisplay.DEFAULT_CAPTURE_SETTINGS}
-    static ERROR_TYPES = {NO_PERMISSION:0, DEVICE_IN_USE:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3, NOT_AVAILABLE:4}
+    static ERROR_TYPES = {NO_PERMISSION:0, DEVICE_IN_USE:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3, NOT_AVAILABLE:4, NOT_SUPPORTED:5}
     static IS_CAMERA_SUPPORTED = ()=>!!navigator?.mediaDevices?.getUserMedia
     static IS_SCREEN_RECORD_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
 
@@ -81,8 +81,9 @@ class ImageDisplay extends _BaseObj {
         const types = ImageDisplay.SOURCE_TYPES
         if (typeof dataSrc==types.FILE_PATH) {
             const extension = dataSrc.split(".")[dataSrc.split(".").length-1]
-            if (ImageDisplay.SUPPORTED_IMAGE_FORMATS.includes(extension)) ImageDisplay.loadImage(dataSrc).onload=e=>ImageDisplay.#initData(e.target, loadCallback)
+            if (ImageDisplay.SUPPORTED_IMAGE_FORMATS.includes(extension)) ImageDisplay.loadImage(dataSrc, errorCB).onload=e=>ImageDisplay.#initData(e.target, loadCallback)
             else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) ImageDisplay.#initVideoDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback, errorCB)
+            else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_SUPPORTED, dataSrc) 
         } else if (dataSrc instanceof types.IMAGE || dataSrc instanceof types.SVG) {
             const fakeLoaded = dataSrc.getAttribute("fakeload")
             if (dataSrc.complete && dataSrc.src && !fakeLoaded) ImageDisplay.#initData(dataSrc, loadCallback)
@@ -107,7 +108,7 @@ class ImageDisplay extends _BaseObj {
     // Initializes a video data source
     static #initVideoDataSource(dataSource, loadCallback, errorCB) {
         const fn=()=>this.#initData(dataSource, loadCallback, dataSource.videoWidth, dataSource.videoHeight)
-        dataSource.onerror=e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.FILE_NOT_FOUND, e)}
+        dataSource.onerror=e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.FILE_NOT_FOUND, dataSource, e)}
         if (dataSource.readyState) fn()
         else dataSource.onloadeddata=fn
     }
@@ -117,26 +118,28 @@ class ImageDisplay extends _BaseObj {
         video.srcObject = stream
         video.autoplay = true
         video.setAttribute("permaLoad", "1")
-        stream.oninactive=e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.SOURCE_DISCONNECTED, e)}
+        stream.oninactive=e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.SOURCE_DISCONNECTED, stream, e)}
         video.oncanplay=()=>this.#initData(video, loadCallback, video.videoWidth, video.videoHeight)
     }
 
     // Initializes a camera capture data source
     static #initCameraDataSource(settings=true, loadCallback, errorCB) {
-        if (ImageDisplay.IS_CAMERA_SUPPORTED()) navigator.mediaDevices.getUserMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e.toString().includes("NotReadableError")?ImageDisplay.ERROR_TYPES.DEVICE_IN_USE:ImageDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        if (ImageDisplay.IS_CAMERA_SUPPORTED()) navigator.mediaDevices.getUserMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e.toString().includes("NotReadableError")?ImageDisplay.ERROR_TYPES.DEVICE_IN_USE:ImageDisplay.ERROR_TYPES.NO_PERMISSION, settings, e)})
         else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE)
     }
 
     // Initializes a screen capture data source
     static #initCaptureDataSource(settings=true, loadCallback, errorCB) {
-        if (ImageDisplay.IS_SCREEN_RECORD_SUPPORTED()) navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NO_PERMISSION, e)})
+        if (ImageDisplay.IS_SCREEN_RECORD_SUPPORTED()) navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NO_PERMISSION, settings, e)})
         else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE)
     }
 
     // Returns a usable image source
-    static loadImage(src) {
+    static loadImage(src, errorCB=null, forceLoad=false) {
         const image = new Image()
         image.src = src
+        if (CDEUtils.isFunction(errorCB)) image.onerror=e=>errorCB(ImageDisplay.ERROR_TYPES.FILE_NOT_FOUND, src, e)
+        if (forceLoad) image.setAttribute("fakeload", "1")
         return image
     }
 
@@ -183,6 +186,15 @@ class ImageDisplay extends _BaseObj {
         }
     }
 
+    /**
+     * Returns the name of the errors
+     * @param {ImageDisplay.ERROR_TYPES} errorCode: The error code contained in ERROR_TYPES
+     * @returns the name of the error based on the error code
+     */
+    static getErrorFromCode(errorCode) {
+        return Object.keys(ImageDisplay.ERROR_TYPES)[errorCode]
+    }
+
     // Plays the source (use only if the source is a video)
     playVideo() {
         ImageDisplay.playMedia(this._source)
@@ -196,7 +208,7 @@ class ImageDisplay extends _BaseObj {
 
     // Plays the source
     static playMedia(source, errorCB) {
-        if (source instanceof HTMLVideoElement || source instanceof HTMLAudioElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>source.play().catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e, source)})))
+        if (source instanceof HTMLVideoElement || source instanceof HTMLAudioElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>source.play().catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE, source, e)})))
     }
     
     // returns the natural size of the source
@@ -314,6 +326,7 @@ class ImageDisplay extends _BaseObj {
     get centerPos() {return [this.centerX, this.centerY]}
     get source() {return this._source}
 	get sourceCroppingPositions() {return this._sourceCroppingPositions}
+    get errorCB() {return this._errorCB}
 
     get paused() {return this._source?.paused}
     get speed() {return this.playbackRate}
@@ -329,6 +342,7 @@ class ImageDisplay extends _BaseObj {
             this.size = initSize
         }, this._errorCB)
     }
+    set errorCB(errorCB) {this._errorCB = errorCB}
     set naturalSize(naturalSize) {this.#naturalSize = naturalSize}
 	set size(size) {
         this.width = size[0]
