@@ -31,7 +31,6 @@ class ImageDisplay extends _BaseObj {
     static IS_SCREEN_RECORD_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
 
     #naturalSize = null
-    #type = null
     constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, null, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source               // the data source
@@ -70,7 +69,7 @@ class ImageDisplay extends _BaseObj {
                 ctx.translate(-cx, -cy)
             }
 
-            if (source instanceof HTMLCanvasElement || source instanceof OffscreenCanvas) render.drawLateImage(source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
+            if (source instanceof HTMLCanvasElement) render.drawLateImage(source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
             else render.drawImage(source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
 
             if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
@@ -295,7 +294,7 @@ class ImageDisplay extends _BaseObj {
     /**
      * @returns Returns all the supported file formats in a string usable in a HTML file input
      */
-    static getSupportedHTMLAccept() {
+    static getSupportedHTMLAcceptValue() {
         const sep = ", ."
         return "."+ImageDisplay.SUPPORTED_IMAGE_FORMATS.join(sep)+sep+ImageDisplay.SUPPORTED_VIDEO_FORMATS.join(sep)
     }
