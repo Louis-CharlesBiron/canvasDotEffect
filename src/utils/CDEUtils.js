@@ -163,12 +163,13 @@ class CDEUtils {
 
     /**
     * Rounds the specied decimal number if it's close enough to its rounded value 
-    * @param {Number} n: a decimal number 
+    * @param {Number} num: a decimal number 
     * @param {Number} acceptableDiff: the minimal difference between the given decimal number and it's rounded conterpart, for them be considered the same 
     * @returns The potentially adjusted number
     */
-    static getAcceptableDiff(n, acceptableDiff=CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE) {
-        return Math.round(n)-n <= acceptableDiff ? Math.round(n) : n
+    static getAcceptableDiff(num, acceptableDiff=CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE) {
+        const rounded = Math.round(num)
+        return rounded-num <= acceptableDiff ? rounded : num
     }
 
     /**

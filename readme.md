@@ -2201,9 +2201,9 @@ const CVS = new Canvas(canvas, ()=>{//loopingCB
 
 Here is the list of available npx commands:
 
-### To access all cdejs commands remotly / other util commands
+## To access all cdejs commands remotely / other utility commands:
 
-#### `npx cdejs <commandName> <params?>`
+### Use: `npx cdejs <commandName> <params?>`
 
 This is the global cdejs command. It provides access to all regular cdejs commands and some more. It also provides basic command autocompletion upon receiving an uncomplete command name.
 

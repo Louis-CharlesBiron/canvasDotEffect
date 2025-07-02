@@ -125,13 +125,13 @@ class ImageDisplay extends _BaseObj {
     // Initializes a camera capture data source
     static #initCameraDataSource(settings=true, loadCallback, errorCB) {
         if (ImageDisplay.IS_CAMERA_SUPPORTED()) navigator.mediaDevices.getUserMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e.toString().includes("NotReadableError")?ImageDisplay.ERROR_TYPES.DEVICE_IN_USE:ImageDisplay.ERROR_TYPES.NO_PERMISSION, settings, e)})
-        else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE)
+        else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE, settings)
     }
 
     // Initializes a screen capture data source
     static #initCaptureDataSource(settings=true, loadCallback, errorCB) {
         if (ImageDisplay.IS_SCREEN_RECORD_SUPPORTED()) navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NO_PERMISSION, settings, e)})
-        else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE)
+        else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE, settings)
     }
 
     // Returns a usable image source
@@ -146,7 +146,7 @@ class ImageDisplay extends _BaseObj {
     // Returns a usable video source
     static loadVideo(src, looping=true, autoPlay=true) {
         const video = document.createElement("video")
-        video.src = src instanceof File ? URL.createObjectURL(file) : src
+        video.src = src instanceof File ? URL.createObjectURL(src) : src
         video.preload = "auto"
         video.loop = looping
         if (autoPlay) {
@@ -273,6 +273,15 @@ class ImageDisplay extends _BaseObj {
         const positions = this.#getRectBounds()
         return super.getBounds(positions, padding, rotation, scale, super.getCenter(positions))
     }
+
+    // deletes the object from the canvas
+    remove() {
+        if (this._source instanceof HTMLVideoElement) {
+            this._source.pause()
+            this._source.remove()
+        }
+        this._parent.remove(this._id)
+    }
     
     /**
      * Returns whether the provided file type is supported
@@ -349,8 +358,8 @@ class ImageDisplay extends _BaseObj {
         this.height = size[1]
         return this._size
     }
-	set width(width) {this._size[0] = typeof width=="string" ? (+width.replace("%","").trim()/100)*this.#naturalSize[0] : width==null ? this.#naturalSize[0] : width}
-	set height(height) {this._size[1] = typeof height=="string" ? (+height.replace("%","").trim()/100)*this.#naturalSize[1] : height==null ? this.#naturalSize[1] : height}
+    set width(width) {this._size[0] = (typeof width=="string" ? (+width.replace("%","").trim()/100)*this.#naturalSize[0] : width==null ? this.#naturalSize[0] : width)>>0}
+	set height(height) {this._size[1] = (typeof height=="string" ? (+height.replace("%","").trim()/100)*this.#naturalSize[1] : height==null ? this.#naturalSize[1] : height)>>0}
     set paused(paused) {
         try {
             if (paused) this._source.pause()
