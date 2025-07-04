@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {mkdirSync, copyFileSync, writeFileSync, readdirSync} from "fs"
+import {mkdirSync, copyFileSync, writeFileSync} from "fs"
 import {join, dirname} from "path"
 import {fileURLToPath} from "url"
 import {createInterface} from "readline"

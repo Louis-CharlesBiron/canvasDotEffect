@@ -14,7 +14,7 @@ $version = (Get-Content "$dist\package.json" | ConvertFrom-Json).version
 
 #UPDATE VERSIONED FILES
 foreach ($filepath in $verisonedFiles) {
-(Get-Content $filepath -Encoding UTF8) -replace '"cdejs": "\^.*?"', @"
+(Get-Content $filepath) -replace '"cdejs": "\^.*?"', @"
 `"cdejs`": `"^$version`"
 "@ | Set-Content $filepath
 }
@@ -38,11 +38,11 @@ $c.wrapOrder.split(" ") | ForEach-Object {
 
     $UMDCJSClasses += "$className,"
 
-    $content = Get-Content ($fullPaths | Where-Object {(Split-Path $_ -Leaf) -eq $orderPath}) -Raw -Encoding UTF8
+    $content = Get-Content ($fullPaths | Where-Object {(Split-Path $_ -Leaf) -eq $orderPath}) -Raw
     $mergedCode += "$content`n"
     $mergedCodeESM += "$($content -replace "class $className", "export class $className")`n"
 }
-$mergedCode = "'use strict';$($mergedCode.Trim())"
+$mergedCode = "'use strict';`n$($mergedCode.Trim())"
 $mergedCodeESM = $mergedCodeESM.Trim()
 
 #CREATE MERGED FILE
@@ -63,18 +63,18 @@ Start-Process -FilePath $terser -ArgumentList "$toMinifyPathESM -o $minifiedCode
 Start-Process -FilePath $terser -ArgumentList "$toMinifyPath -o $minifiedCodePathUMD --compress" -wait
 
 #ADD UMD WRAPPER
-$minifiedCode = Get-Content -Path $minifiedCodePathUMD -Raw -Encoding UTF8
+$minifiedCode = Get-Content -Path $minifiedCodePathUMD -Raw
 Set-Content -Path $minifiedCodePathUMD -Value @"
 // CanvasDotEffect UMD - v$version
 (function(factory){if(typeof define==="function"&&define.amd)define([],factory);else if(typeof module==="object"&&module.exports)module.exports=factory();else if(typeof window!=="undefined")window.CDE=factory();else this.CDE=factory()})(function(){$minifiedCode;return{$UMDCJSClasses}})
 "@
 
 #ADD VERSION COMMENT TO ESM
-Set-Content -Path $minifiedCodePathESM -Value "// CanvasDotEffect ESM - v$version`n$(Get-Content $minifiedCodePathESM -Raw -Encoding UTF8)"
+Set-Content -Path $minifiedCodePathESM -Value "// CanvasDotEffect ESM - v$version`n$(Get-Content $minifiedCodePathESM -Raw)"
 
 #MINIFY BINS FILES
 $binFiles = @("createBrowserProjectTemplate.js", "createDefaultReactComponent.js", "createProjectTemplate.js", "getSignature.js", "openDocumentation.js", "global.js")
 foreach ($filepath in $binFiles) {
-    $path = "$bins\$filepath"
-    Start-Process -FilePath $terser -ArgumentList "$path -o $bins\$((Get-Item $filepath).BaseName).min.js --compress --mangle"
+    $filepath = "$bins\$filepath"
+    Start-Process -FilePath $terser -ArgumentList "$filepath -o $bins\$((Get-Item $filepath).BaseName).min.js --compress --mangle"
 }

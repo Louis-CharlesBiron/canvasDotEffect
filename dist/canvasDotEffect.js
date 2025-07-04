@@ -1,3 +1,4 @@
+'use strict';
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
 // Please don't use or credit this code as your own.
@@ -163,12 +164,13 @@ class CDEUtils {
 
     /**
     * Rounds the specied decimal number if it's close enough to its rounded value 
-    * @param {Number} n: a decimal number 
+    * @param {Number} num: a decimal number 
     * @param {Number} acceptableDiff: the minimal difference between the given decimal number and it's rounded conterpart, for them be considered the same 
     * @returns The potentially adjusted number
     */
-    static getAcceptableDiff(n, acceptableDiff=CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE) {
-        return Math.round(n)-n <= acceptableDiff ? Math.round(n) : n
+    static getAcceptableDiff(num, acceptableDiff=CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE) {
+        const rounded = Math.round(num)
+        return rounded-num <= acceptableDiff ? rounded : num
     }
 
     /**
@@ -3754,7 +3756,7 @@ class AudioDisplay extends _BaseObj {
     static DEFAULT_SCREEN_AUDIO_SETTINGS = AudioDisplay.loadScreenAudio()
     static MAX_NORMALISED_DATA_VALUE = 255/128
     static MAX_DELAY_TIME = 179
-    static ERROR_TYPES = {NO_PERMISSION:0, NO_AUDIO_TRACK:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3, NOT_AVAILABLE:4}
+    static ERROR_TYPES = {NO_PERMISSION:0, DEVICE_IN_USE:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3, NOT_AVAILABLE:4, NOT_SUPPORTED:5}
     static BIQUAD_FILTER_TYPES = {DEFAULT:"allpass", ALLPASS:"allpass", BANDPASS:"bandpass", HIGHPASS:"highpass", HIGHSHELF:"highshelf", LOWPASS:"lowpass", LOWSHELF:"lowshelf", NOTCH:"notch", PEAKING:"peaking"}
     static IS_MICROPHONE_SUPPORTED = ()=>!!navigator?.mediaDevices?.getUserMedia
     static IS_SCREEN_ADUIO_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
@@ -3860,7 +3862,7 @@ class AudioDisplay extends _BaseObj {
             this._source = audio
 
             if (isStream) {
-                audio.oninactive=e=>{if (CDEUtils.isFunction(this._errorCB)) this._errorCB(AudioDisplay.ERROR_TYPES.SOURCE_DISCONNECTED, e)}
+                audio.oninactive=e=>{if (CDEUtils.isFunction(this._errorCB)) this._errorCB(AudioDisplay.ERROR_TYPES.SOURCE_DISCONNECTED, source, e)}
                 this._source = this._audioCtx.createMediaStreamSource(audio)
                 this._source.connect(this._gainNode)
             } else this._audioCtx.createMediaElementSource(audio).connect(this._gainNode)
@@ -3891,14 +3893,14 @@ class AudioDisplay extends _BaseObj {
         } else if (dataSrc instanceof types.VIDEO || dataSrc instanceof types.AUDIO) AudioDisplay.#initAudioDataSource(dataSrc, loadCallback, errorCB)
         else if (dataSrc instanceof MediaStream) {
             if (dataSrc.getAudioTracks().length && CDEUtils.isFunction(loadCallback)) loadCallback(dataSrc, true)
-            else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
+            else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK, dataSrc)
         }
     }
 
     // Initializes a audio data source
     static #initAudioDataSource(dataSource, loadCallback, errorCB) {
         const initLoad=()=>{if (CDEUtils.isFunction(loadCallback)) loadCallback(dataSource)}
-        dataSource.onerror=e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.FILE_NOT_FOUND, e)}
+        dataSource.onerror=e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.FILE_NOT_FOUND, dataSource, e)}
         if (dataSource.readyState) initLoad()
         else dataSource.onloadeddata=initLoad
     }
@@ -3907,18 +3909,18 @@ class AudioDisplay extends _BaseObj {
     static #initMicrophoneDataSource(settings=true, loadCallback, errorCB) {
         if (AudioDisplay.IS_MICROPHONE_SUPPORTED()) navigator.mediaDevices.getUserMedia({audio:settings}).then(src=>{
             if (src.getAudioTracks().length && CDEUtils.isFunction(loadCallback)) loadCallback(src, true)
-            else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
-        }).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_PERMISSION, e)})
-        else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NOT_AVAILABLE)
+            else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK, settings)
+        }).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_PERMISSION, settings, e)})
+        else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NOT_AVAILABLE, settings)
     }
 
     // Initializes a screen audio capture data source
     static #initScreenAudioDataSource(settings=true, loadCallback, errorCB) {
         if (AudioDisplay.IS_MICROPHONE_SUPPORTED()) navigator.mediaDevices.getDisplayMedia({audio:settings}).then(src=>{
             if (src.getAudioTracks().length && CDEUtils.isFunction(loadCallback)) loadCallback(src, true)
-            else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK)
-        }).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_PERMISSION, e)})
-        else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NOT_AVAILABLE)
+            else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_AUDIO_TRACK, settings)
+        }).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NO_PERMISSION, settings, e)})
+        else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NOT_AVAILABLE, settings)
     }
 
     // Returns a usable video source
@@ -4055,8 +4057,31 @@ class AudioDisplay extends _BaseObj {
         this.setReverb()
     }
 
-    // Returns the likeliness of an audio format/extension to work (ex: "mp3" -> "probably") 
-    static isAudioFormatSupported(extension) {return new Audio().canPlayType("audio/"+extension.replaceAll(".",""))||"Hell nah"}
+    /**
+     * Returns whether the provided audio file type is supported
+     * @param {String | File} file: the file or filename 
+     * @returns Whether the audio file is supported or not
+     */
+    static isAudioFormatSupported(file) {
+        const name = file?.name||file
+        return AudioDisplay.SUPPORTED_AUDIO_FORMATS.some(ext=>name.endsWith("."+ext))
+    }
+
+    /**
+     * @returns Returns all the supported file formats in a string usable in a HTML file input
+     */
+    static getSupportedHTMLAcceptValue() {
+        return "."+AudioDisplay.SUPPORTED_AUDIO_FORMATS.join(", .")
+    }
+
+    /**
+     * Returns the name of the errors
+     * @param {AudioDisplay.ERROR_TYPES} errorCode: The error code contained in ERROR_TYPES
+     * @returns the name of the error based on the error code
+     */
+    static getErrorFromCode(errorCode) {
+        return Object.keys(AudioDisplay.ERROR_TYPES)[errorCode]
+    }
 
     // returns a separate copy of this AudioDisplay instance
     duplicate(source=this._source, pos=this.pos_, color=this._color, binCB=this._binCB, sampleCount=this._sampleCount, disableAudio=this._disableAudio, offsetPourcent=this._offsetPourcent, errorCB=this._errorCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
@@ -4388,13 +4413,13 @@ class ImageDisplay extends _BaseObj {
     // Initializes a camera capture data source
     static #initCameraDataSource(settings=true, loadCallback, errorCB) {
         if (ImageDisplay.IS_CAMERA_SUPPORTED()) navigator.mediaDevices.getUserMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(e.toString().includes("NotReadableError")?ImageDisplay.ERROR_TYPES.DEVICE_IN_USE:ImageDisplay.ERROR_TYPES.NO_PERMISSION, settings, e)})
-        else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE)
+        else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE, settings)
     }
 
     // Initializes a screen capture data source
     static #initCaptureDataSource(settings=true, loadCallback, errorCB) {
         if (ImageDisplay.IS_SCREEN_RECORD_SUPPORTED()) navigator.mediaDevices.getDisplayMedia({video:settings}).then(src=>ImageDisplay.#initMediaStream(src, loadCallback, errorCB)).catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NO_PERMISSION, settings, e)})
-        else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE)
+        else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE, settings)
     }
 
     // Returns a usable image source
@@ -4409,7 +4434,7 @@ class ImageDisplay extends _BaseObj {
     // Returns a usable video source
     static loadVideo(src, looping=true, autoPlay=true) {
         const video = document.createElement("video")
-        video.src = src instanceof File ? URL.createObjectURL(file) : src
+        video.src = src instanceof File ? URL.createObjectURL(src) : src
         video.preload = "auto"
         video.loop = looping
         if (autoPlay) {
@@ -4536,6 +4561,15 @@ class ImageDisplay extends _BaseObj {
         const positions = this.#getRectBounds()
         return super.getBounds(positions, padding, rotation, scale, super.getCenter(positions))
     }
+
+    // deletes the object from the canvas
+    remove() {
+        if (this._source instanceof HTMLVideoElement) {
+            this._source.pause()
+            this._source.remove()
+        }
+        this._parent.remove(this._id)
+    }
     
     /**
      * Returns whether the provided file type is supported
@@ -4612,8 +4646,8 @@ class ImageDisplay extends _BaseObj {
         this.height = size[1]
         return this._size
     }
-	set width(width) {this._size[0] = typeof width=="string" ? (+width.replace("%","").trim()/100)*this.#naturalSize[0] : width==null ? this.#naturalSize[0] : width}
-	set height(height) {this._size[1] = typeof height=="string" ? (+height.replace("%","").trim()/100)*this.#naturalSize[1] : height==null ? this.#naturalSize[1] : height}
+    set width(width) {this._size[0] = (typeof width=="string" ? (+width.replace("%","").trim()/100)*this.#naturalSize[0] : width==null ? this.#naturalSize[0] : width)>>0}
+	set height(height) {this._size[1] = (typeof height=="string" ? (+height.replace("%","").trim()/100)*this.#naturalSize[1] : height==null ? this.#naturalSize[1] : height)>>0}
     set paused(paused) {
         try {
             if (paused) this._source.pause()
