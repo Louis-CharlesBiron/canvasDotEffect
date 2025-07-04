@@ -22,6 +22,7 @@ class TextDisplay extends _BaseObj {
     initialize() {
         this._textStyles = CDEUtils.isFunction(this._textStyles) ? this._textStyles(this.render, this) : this._textStyles??this.render.defaultTextProfile
         this.#resize()
+        this.initialized = true
         super.initialize()
     }
 
@@ -52,7 +53,7 @@ class TextDisplay extends _BaseObj {
                 
                 if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
             }
-        } else this.initialized = true
+        }
 
         super.draw(time, deltaTime)
     }
@@ -175,6 +176,8 @@ class TextDisplay extends _BaseObj {
     get trueSize() {return [Math.abs(this._size[0]*this._scale[0]), Math.abs(this._size[1]*this._scale[1])]}
     get render() {return this._parent.render}
     get lineCount() {return this.#lineCount}
+    get width() {return this.trueSize[0]}
+    get height() {return this.trueSize[1]}
 
 	set text(text) {
         const lastYScale = this._scale[1]
