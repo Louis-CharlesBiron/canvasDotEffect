@@ -121,7 +121,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.1.7"
+    "cdejs": "^1.1.8"
   },
   "devDependencies": {
     "vite": "^6.2.2"

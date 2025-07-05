@@ -157,7 +157,7 @@ writeFileSync(join(destination, "package.json"), `{
       "build": "vite build && node ./bin/build.js"
     },
     "dependencies": {
-      "cdejs": "^1.1.7"
+      "cdejs": "^1.1.8"
     },
     "devDependencies": {
       "vite": "^6.2.2"
