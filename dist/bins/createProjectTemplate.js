@@ -203,7 +203,7 @@ readdirSync(source).filter(filepath=>{
 console.log("Build completed!\n")`)
 
 // Create coolBackground.mp4
-fetch("https://file-examples.com/storage/fe32c8d6966839f839df247/2017/04/file_example_MP4_480_1_5MG.mp4").then(res=>res.ok&&res.arrayBuffer()).then(buffer=>buffer&&writeFileSync(join(mediaDest, "coolBackground.mp4"), Buffer.from(buffer)))
+fetch("https://file-examples.com/storage/fe9a194958686838db9645f/2017/04/file_example_MP4_480_1_5MG.mp4").then(res=>res.ok&&res.arrayBuffer()).then(buffer=>buffer&&writeFileSync(join(mediaDest, "coolBackground.mp4"), Buffer.from(buffer)))
 
 spawn("npm", ["i"], {cwd:destination, shell:true})
 
