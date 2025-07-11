@@ -192,7 +192,7 @@ The Canvas class is the core of the project. It manages the main loop, the windo
 ###### - Creating a Canvas instance that displays fps
 ```js
     // Creating a FPSCounter instance
-    const fpsCounter = new CDEUtils.FPSCounter()
+    const fpsCounter = new FPSCounter()
     
     const CVS = new Canvas(
         document.getElementById("canvas"),  // The HTML canvas element to link to
@@ -2141,7 +2141,7 @@ CVS.add(manualSineWaveDrawer)
 
 
 ## [CDEUtils](#table-of-contents)
-The CDEUtils class provides utilities such as `random`, `clamp`, `FPSCounter`, and `mod`.
+The CDEUtils class provides utilities such as `random`, `clamp`, and `mod`.
 
 ### Linear interpolation (mod)
 This function is used to get a value in a range.
