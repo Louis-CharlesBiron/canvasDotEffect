@@ -15,7 +15,7 @@ class Render {
     static PATH_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve, ARC:Render.getArc, ARC_TO:Render.getArcTo, ELLIPSE:Render.getEllispe, RECT:Render.getRect, POSITIONS_RECT:Render.getPositionsRect, ROUND_RECT:Render.getRoundRect, POSITIONS_ROUND_RECT:Render.getPositionsRoundRect}
     static LINE_TYPES = {LINEAR:Render.getLine, QUADRATIC:Render.getQuadCurve, CUBIC_BEZIER:Render.getBezierCurve}
     static DRAW_METHODS = {FILL:"FILL", STROKE:"STROKE"}
-    static COLOR_TRANSFORMS = {NONE:null, INVERT:1, GRAYSCALE:2, SEPIA:3, RANDOMIZE:4, STATIC:5, MULTIPLY:6, BGRA:7, TINT:8}
+    static COLOR_TRANSFORMS = {NONE:null, INVERT:1, GRAYSCALE:2, SEPIA:3, RANDOMIZE:4, STATIC:5, MULTIPLY:6, BGRA:7, TINT:8, FORCE_TINT:9}
 
     #currentCtxVisuals = [Color.DEFAULT_COLOR_VALUE, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA]
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
@@ -419,6 +419,14 @@ class Render {
                         data[i+2] = r*modifier
                     }
                 } else if (transform==transforms.TINT) {
+                    modifier||=[255,255,255,1]
+                    for (let i=0;i<d_ll;i+=pxStep) {
+                        data[i]   += modifier[0]
+                        data[i+1] += modifier[1]
+                        data[i+2] += modifier[2]
+                        data[i+3] += modifier[3]
+                    }
+                } else if (transform==transforms.FORCE_TINT) {
                     modifier||=[255,255,255,1]
                     for (let i=0;i<d_ll;i+=pxStep) {
                         data[i]   = modifier[0]
