@@ -165,6 +165,7 @@ class TextDisplay extends _BaseObj {
     getBounds(padding, rotation=this._rotation, scale=this._scale) {
         return super.getBounds(this.#getRectBounds(), padding, rotation, scale, this._pos)
     }
+
     get ctx() {return this._parent.ctx}
     get render() {return this._parent.render}
 	get text() {return this._text+""}

@@ -338,6 +338,7 @@ class ImageDisplay extends _BaseObj {
     get errorCB() {return this._errorCB}
 
     get paused() {return this._source?.paused}
+    get playbackRate() {return this._source?.playbackRate}
     get speed() {return this.playbackRate}
     get currentTime() {return this._source?.currentTime}
     get isLooping() {return this.loop}
@@ -366,6 +367,7 @@ class ImageDisplay extends _BaseObj {
             else ImageDisplay.playMedia(this._source)
         }catch(e){}
     }
+    set playbackRate(playbackRate) {this._source.playbackRate = playbackRate}
     set speed(speed) {this.playbackRate = speed}
     set currentTime(currentTime) {this._source.currentTime = currentTime}
     set isLooping(isLooping) {this.loop = isLooping}

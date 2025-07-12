@@ -2205,7 +2205,7 @@ Here is the list of available npx commands:
 
 ### Use: `npx cdejs <commandName> <params?>`
 
-This is the global cdejs command. It provides access to all regular cdejs commands and some more. It also provides basic command autocompletion upon receiving an uncomplete command name.
+This is the global cdejs command. It provides access to all regular *cdejs* commands and some more. It also provides basic command autocompletion upon receiving an incomplete command name.
 
 #### Example use 1:
 Creating a project template using the `cdejs-template` command. (see below for more details)
@@ -2226,7 +2226,7 @@ This command creates a **modular** CanvasDotEffect project template. It accepts 
 
 #### `npx cdejs-browser-template <projectName?>` | *`npx cdejs-bt <projectName?>`*
 
-This command creates a **non modular** CanvasDotEffect project template. It accepts an optional project name as parameter.
+This command creates a **non-modular** CanvasDotEffect project template. It accepts an optional project name as parameter.
 
 ### To create the CDECanvas React component
 
@@ -2240,11 +2240,11 @@ This command creates the proposed CDECanvas React component, for usage of this l
 
 This command opens the library documentation in the default browser.
 
-### To view classes / common callbacks signatures
+### To view classes / common callback signatures
 
 #### `npx cdejs-signature <filter?> <withDefaultValues?>` | *`npx cdejs-sig <filter?> <withDefaultValues?>`*
 
-This command shows the signature of classes and common available callbacks. It accepts an optional filter as its first parameter. 
+This command shows the signature of classes and commonly available callbacks. It accepts an optional filter as its first parameter. 
 
 Examples: 
 - `npx cdejs-signature *` will return every available signature
