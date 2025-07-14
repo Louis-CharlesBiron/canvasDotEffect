@@ -164,9 +164,9 @@ class AudioDisplay extends _BaseObj {
     static initializeDataSource(dataSrc, loadCallback, errorCB) {
         const types = AudioDisplay.SOURCE_TYPES
         if (typeof dataSrc==types.FILE_PATH) {
-            const extension = dataSrc.split(".")[dataSrc.split(".").length-1]
-            if (AudioDisplay.SUPPORTED_AUDIO_FORMATS.includes(extension)) AudioDisplay.#initAudioDataSource(AudioDisplay.loadAudio(dataSrc), loadCallback, errorCB)
-            else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) AudioDisplay.#initAudioDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback, errorCB)
+            if (AudioDisplay.isAudioFormatSupported(dataSrc)) AudioDisplay.#initAudioDataSource(AudioDisplay.loadAudio(dataSrc), loadCallback, errorCB)
+            else if (ImageDisplay.isVideoFormatSupported(dataSrc)) AudioDisplay.#initAudioDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback, errorCB)
+            else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NOT_SUPPORTED, dataSrc) 
         } else if (dataSrc.toString()==types.DYNAMIC) {
             if (dataSrc.type==types.MICROPHONE) AudioDisplay.#initMicrophoneDataSource(dataSrc.settings, loadCallback, errorCB)
             else if (dataSrc.type==types.SCREEN_AUDIO) AudioDisplay.#initScreenAudioDataSource(dataSrc.settings, loadCallback, errorCB)
@@ -343,7 +343,7 @@ class AudioDisplay extends _BaseObj {
      * @returns Whether the audio file is supported or not
      */
     static isAudioFormatSupported(file) {
-        const name = file?.name||file
+        const name = (file?.name||file).toLowerCase()
         return AudioDisplay.SUPPORTED_AUDIO_FORMATS.some(ext=>name.endsWith("."+ext))
     }
 

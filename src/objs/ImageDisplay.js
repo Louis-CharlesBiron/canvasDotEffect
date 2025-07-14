@@ -80,9 +80,8 @@ class ImageDisplay extends _BaseObj {
     static initializeDataSource(dataSrc, loadCallback, errorCB) {
         const types = ImageDisplay.SOURCE_TYPES
         if (typeof dataSrc==types.FILE_PATH) {
-            const extension = dataSrc.split(".")[dataSrc.split(".").length-1]
-            if (ImageDisplay.SUPPORTED_IMAGE_FORMATS.includes(extension)) ImageDisplay.loadImage(dataSrc, errorCB).onload=e=>ImageDisplay.#initData(e.target, loadCallback)
-            else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) ImageDisplay.#initVideoDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback, errorCB)
+            if (ImageDisplay.isImageFormatSupported(dataSrc)) ImageDisplay.loadImage(dataSrc, errorCB).onload=e=>ImageDisplay.#initData(e.target, loadCallback)
+            else if (ImageDisplay.isVideoFormatSupported(dataSrc)) ImageDisplay.#initVideoDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback, errorCB)
             else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_SUPPORTED, dataSrc) 
         } else if (dataSrc instanceof types.IMAGE || dataSrc instanceof types.SVG) {
             const fakeLoaded = dataSrc.getAttribute("fakeload")
@@ -318,7 +317,7 @@ class ImageDisplay extends _BaseObj {
      * @returns Whether the image file is supported or not
      */
     static isImageFormatSupported(file) {
-        const name = file?.name||file
+        const name = (file?.name||file).toLowerCase()
         return ImageDisplay.SUPPORTED_IMAGE_FORMATS.some(ext=>name.endsWith("."+ext))
     }
 
@@ -328,7 +327,7 @@ class ImageDisplay extends _BaseObj {
      * @returns Whether the video file is supported or not
      */
     static isVideoFormatSupported(file) {
-        const name = file?.name||file
+        const name = (file?.name||file).toLowerCase()
         return ImageDisplay.SUPPORTED_VIDEO_FORMATS.some(ext=>name.endsWith("."+ext))
     }
 

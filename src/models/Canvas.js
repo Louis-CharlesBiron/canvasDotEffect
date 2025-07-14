@@ -211,8 +211,8 @@ class Canvas {
     drawSingleFrame(customTime=null) {
         let mouse = this._mouse, loopingCB = this._loopingCB, hasCustomTime = customTime!=null, deltaTime = hasCustomTime ? this.#calcDeltaTime(customTime) : this._deltaTime
         if (!mouse._moveListenersOptimizationEnabled) {
-            mouse.checkListeners(10) // mouse enter
-            mouse.checkListeners(11) // mouse leave
+            mouse.checkListeners(Mouse.LISTENER_TYPES.ENTER)
+            mouse.checkListeners(Mouse.LISTENER_TYPES.LEAVE)
         }
 
         this.clear()
@@ -233,8 +233,8 @@ class Canvas {
 
         mouse.calcSpeed(deltaTime)
         if (!mouse._moveListenersOptimizationEnabled) {
-            mouse.checkListeners(10) // mouse enter
-            mouse.checkListeners(11) // mouse leave
+            mouse.checkListeners(Mouse.LISTENER_TYPES.ENTER)
+            mouse.checkListeners(Mouse.LISTENER_TYPES.LEAVE)
         }
 
         this.clear()

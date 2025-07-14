@@ -9,7 +9,7 @@ class Mouse {
     static DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1
     static DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
     static #LISTENER_ID_GIVER = 0
-    static LISTENER_TYPES = {CLICK:0, DOWN:0, UP:1, MAIN_DOWN:0, MAIN_UP:1, MIDDLE_DOWN:2, MIDDLE_UP:3, RIGHT_DOWN:4, RIGHT_UP:5, EXTRA_FOWARD_DOWN:6, EXTRA_FOWARD_UP:7, EXTRA_BACK_DOWN:8, EXTRA_BACK_UP:9, ENTER:10, LEAVE:11, EXIT:11}
+    static LISTENER_TYPES = {CLICK:0, DOWN:0, UP:1, MAIN_DOWN:0, MAIN_UP:1, MIDDLE_DOWN:2, MIDDLE_UP:3, RIGHT_DOWN:4, RIGHT_UP:5, EXTRA_FOWARD_DOWN:6, EXTRA_FOWARD_UP:7, EXTRA_BACK_DOWN:8, EXTRA_BACK_UP:9, MOVE:10, ENTER:11, LEAVE:12, EXIT:12}
     
     #fixedLastPos = [0,0]
     #wasWithin = []
@@ -101,11 +101,13 @@ class Mouse {
         this._y = e.y-offset.y
 
         if (this._moveListenersOptimizationEnabled) {
-            this.checkListeners(10) // enter
-            this.checkListeners(11) // leave
+            this.checkListeners(Mouse.LISTENER_TYPES.ENTER)
+            this.checkListeners(Mouse.LISTENER_TYPES.LEAVE)
             this.#fixedLastPos[0] = this._x
             this.#fixedLastPos[1] = this._y
         }
+
+        this.checkListeners(Mouse.LISTENER_TYPES.MOVE)
     }
 
     // sets and returns whether the current mouse position is valid
@@ -146,25 +148,26 @@ class Mouse {
                            nowWithin = ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))
                     
                     if (this._moveListenersOptimizationEnabled) {
-                        if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this.#fixedLastPos):obj.isWithin(this.#fixedLastPos))) || (isStaticBounds && this.isWithin(this.#fixedLastPos, obj, isPath2D)))==validation) callback(obj, mousePos)
+                        if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this.#fixedLastPos):obj.isWithin(this.#fixedLastPos))) || (isStaticBounds && this.isWithin(this.#fixedLastPos, obj, isPath2D)))==validation) callback(mousePos, this, obj)
                     } else {
                         const wasWithin = this.#wasWithin[typedListener[3]]
                         if (!wasWithin && nowWithin) {
                             this.#wasWithin[typedListener[3]] = true
-                            if (validation==2) callback(obj, mousePos)
+                            if (validation==2) callback(mousePos, this, obj)
                         } else if (!nowWithin && wasWithin) {
                             this.#wasWithin[typedListener[3]] = false
-                            if (validation==1) callback(obj, mousePos)
+                            if (validation==1) callback(mousePos, this, obj)
                         }
                     }
                 }
             } else {
                 if (type==TYPES.MAIN_DOWN||type==TYPES.RIGHT_DOWN||type==TYPES.MIDDLE_DOWN||type==TYPES.EXTRA_BACK_DOWN||type==TYPES.EXTRA_FOWARD_DOWN) validation = this._clicked
                 else if (type==TYPES.MAIN_UP||type==TYPES.RIGHT_UP||type==TYPES.MIDDLE_UP||type==TYPES.EXTRA_BACK_UP||type==TYPES.EXTRA_FOWARD_UP) validation = !this._clicked
+                else validation = true
 
                 for (let i=0;i<typedListeners_ll;i++) {
                     const [obj, callback, hasAccurateBounds] = typedListeners[i], isPath2D = obj instanceof Path2D, isStaticBounds = Array.isArray(obj)||isPath2D
-                    if (validation && ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))) callback(obj, mousePos)
+                    if (validation && ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))) callback(mousePos, this, obj)
                 }
             }
         }
