@@ -166,6 +166,19 @@ class TextDisplay extends _BaseObj {
         return super.getBounds(this.#getRectBounds(), padding, rotation, scale, this._pos)
     }
 
+    /**
+     * Loads a custom font by file or url. Direct font files are loaded using the FontFace api, while non direct font source are loaded via an HTML <link> element.
+     * @param {String | ArrayBuffer | TypedArray} src: The source of the font, either a file or a url
+     * @param {String?} fontFaceName: The font family name of the custom font (Only applicable for FontFace load)
+     * @param {Object?} fontFaceDescriptors: Object defining the font properties (Only applicable for FontFace load) 
+     * @param {Function?} readyCB: Callback called upon custom font loading completed. (fontFace, fontFamily)=>{...} (Only applicable for FontFace load)
+     * @param {Function?} errorCB: Callback called upon custom font loading errors. (error)=>{...} (Only applicable for FontFace load) 
+     * @returns The loaded font via a FontFace instance or a <link> element
+     */
+    static loadCustomFont(src, fontFaceName=null, fontFaceDescriptors={}, readyCB=null, errorCB=(e)=>console.warn("Error loading font:", src, e)) {
+        TextStyles.loadCustomFont(src, fontFaceName, fontFaceDescriptors, readyCB, errorCB)
+    }
+
     get ctx() {return this._parent.ctx}
     get render() {return this._parent.render}
 	get text() {return this._text+""}

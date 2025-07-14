@@ -23,6 +23,8 @@ class TextStyles {
     static DEFAULT_TEXT_BASELINE = TextStyles.BASELINES.MIDDLE
     static DEFAULT_TEXT_RENDERING = TextStyles.RENDERINGS.FAST
     static DEFAULT_PROFILE = new TextStyles(null, TextStyles.DEFAULT_FONT, TextStyles.DEFAULT_LETTER_SPACING, TextStyles.DEFAULT_WORD_SPACING, TextStyles.DEFAULT_FONT_VARIANT_CAPS, TextStyles.DEFAULT_DIRECTION, TextStyles.DEFAULT_FONT_STRETCH, TextStyles.DEFAULT_FONT_KERNING, TextStyles.DEFAULT_TEXT_ALIGN, TextStyles.DEFAULT_TEXT_BASELINE, TextStyles.DEFAULT_TEXT_RENDERING)
+    static SUPPORTED_FONTS_FORMATS = ["woff","woff2","ttf","otf"]
+    static #FONTFACE_NAME_OFFSET = 1
 
     #ctx = null
     constructor(render, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
@@ -94,6 +96,43 @@ class TextStyles {
         if (textAlign && currentTextStyles[7] !== textAlign) currentTextStyles[7] = ctx.textAlign = textAlign
         if (textBaseline && currentTextStyles[8] !== textBaseline) currentTextStyles[8] = ctx.textBaseline = textBaseline
         if (textRendering && currentTextStyles[9] !== textRendering) currentTextStyles[9] = ctx.textRendering = textRendering
+    }
+    
+    /**
+     * Returns whether the provided font file type is supported
+     * @param {String | File} file: the file or filename 
+     * @returns Whether the font file is supported or not
+     */
+    static isFontFormatSupported(file) {
+        const name = file?.name||file
+        return TextStyles.SUPPORTED_FONTS_FORMATS.some(ext=>name.endsWith("."+ext))
+    }
+
+    /**
+     * Loads a custom font by file or url. Direct font files are loaded using the FontFace api, while non direct font source are loaded via an HTML <link> element.
+     * @param {String | ArrayBuffer | TypedArray} src: The source of the font, either a file or a url
+     * @param {String?} fontFaceName: The font family name of the custom font (Only applicable for FontFace load)
+     * @param {Object?} fontFaceDescriptors: Object defining the font properties (Only applicable for FontFace load) 
+     * @param {Function?} readyCB: Callback called upon custom font loading completed. (fontFace, fontFamily)=>{...} (Only applicable for FontFace load)
+     * @param {Function?} errorCB: Callback called upon custom font loading errors. (error)=>{...} (Only applicable for FontFace load) 
+     * @returns The loaded font via a FontFace instance or a <link> element
+     */
+    static loadCustomFont(src, fontFaceName=null, fontFaceDescriptors={}, readyCB=null, errorCB=(e)=>console.warn("Error loading font:", src, e)) {
+        if (TextStyles.isFontFormatSupported(src) || src instanceof ArrayBuffer || src instanceof Int8Array || src instanceof Uint8Array || src instanceof Uint8ClampedArray || src instanceof Int16Array || src instanceof Uint16Array || src instanceof Int32Array || src instanceof Uint32Array || src instanceof Float32Array || src instanceof Float64Array || src instanceof BigInt64Array || src instanceof BigUint64Array) {
+            const font = new FontFace(fontFaceName||"customFont"+TextStyles.#FONTFACE_NAME_OFFSET++, `url(${src})`, fontFaceDescriptors)
+            font.load().then((fontData)=>{
+                document.fonts.add(fontData)
+                if (CDEUtils.isFunction(readyCB)) readyCB(font, font.family)
+            }).catch((e)=>{if (CDEUtils.isFunction(errorCB)) errorCB(e)})
+            return font
+        } else {
+            const link = document.createElement("link")
+            link.rel = "stylesheet"
+            link.type = "text/css"
+            link.href = src
+            link.id = "customFont"+TextStyles.#FONTFACE_NAME_OFFSET++
+            return document.querySelector("head").appendChild(link)
+        }
     }
 
     get id() {return this.id}
