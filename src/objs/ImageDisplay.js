@@ -282,6 +282,26 @@ class ImageDisplay extends _BaseObj {
         }
         this._parent.remove(this._id)
     }
+
+    /**
+     * Resizes the image's width keeping the original aspect ratio
+     * @param {Number | String} width: The width in px, or the width in % based on the natural size 
+     */
+    aspectRatioWidthResize(width) {
+        const heightFactor = this._size[1]/this._size[0], newWidth = (typeof width=="string" ? (+width.replace("%","").trim()/100)*this.#naturalSize[0] : width==null ? this.#naturalSize[0] : width)>>0
+        this._size[0] = newWidth
+        this._size[1] = newWidth*heightFactor
+    }
+
+    /**
+     * Resizes the image's height keeping the original aspect ratio
+     * @param {Number | String} height: The height in px, or the height in % based on the natural size 
+     */
+    aspectRatioHeightResize(height) {
+        const widthFactor = this._size[0]/this._size[1], newHeight = (typeof height=="string" ? (+height.replace("%","").trim()/100)*this.#naturalSize[1] : height==null ? this.#naturalSize[1] : height)>>0
+        this._size[1] = newHeight
+        this._size[0] = newHeight*widthFactor
+    }
     
     /**
      * Returns whether the provided file type is supported
