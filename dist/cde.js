@@ -402,8 +402,16 @@ export class CanvasUtils {
         }
     }
 
-    // TODO manage color/line styles
-    static createDrawingBoard(CVS, borderPositions=[[0,0], CVS.size], renderStyles=[255,0,0,1], borderColor=Color.DEFAULT_RGBA, newLineMoveThreshold=Math.min(6, (CVS.fpsLimit||60)/15)) {
+    /**
+     * Creates a simple drawable area with mouse control, as a canvas object
+     * @param {Canvas} CVS: The Canvas instance to use
+     * @param {[[x1, y1], [x2, y2]]?} borderPositions: The two corners delimiting the draw area
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: The style profile / color of the drawings
+     * @param {Number?} newLineMoveThreshold: The number mouse events to wait before drawing a line
+     * @param {Color | [r,g,b,a]?} borderColor: The color of the border
+     * @returns The create object
+     */
+    static createDrawingBoard(CVS, borderPositions=[[0,0], CVS.size], renderStyles=[255,0,0,1], newLineMoveThreshold=Math.min(1, (CVS.fpsLimit||60)/15), borderColor=Color.DEFAULT_RGBA) {
         let d_ll = 0, render = CVS.render, cvsStatic = Canvas.STATIC, thresholdAt=0, obj = new Shape(null, [new Dot(borderPositions[0]), new Dot(borderPositions[1], )], 0, null, 0, null, null, ()=>[], ()=>{
             for (let i=0;i<d_ll;i++) render.batchStroke(obj.setupResults[i], renderStyles)
             if (borderColor && (borderColor.a || borderColor[3])) CanvasUtils.drawOutline(render, obj, borderColor)
