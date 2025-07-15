@@ -339,6 +339,9 @@ for (let i=0;i<3;i++) {
 }
 
 
+//CanvasUtils.createDrawingBoard(CVS, [[800, 300], [1200, 700]], [255, 0, 255, 1], Render.LINE_TYPES.LINEAR)
+CanvasUtils.createDrawingBoard(CVS, [[800, 300], [1200, 700]], [0, 0, 255, 1], null, 10)
+
 
 
 // USER ACTIONS

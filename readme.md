@@ -1750,6 +1750,7 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 - **valid** -> Whether the mouse pos is valid(is inside the canvas and initialized).
 - **x** -> The current x value of the mouse on the canvas.
 - **y** -> The current y value of the mouse on the canvas.
+- **lastPos** -> The last x/y values of the mouse on the canvas, updated each mouse move event.
 - **dir** -> The direction in degrees of the mouse's last movement.
 - **speed** -> The current speed (in px/s) of the mouse.
 - **clicked** -> Whether the main button of the mouse is pressed.
@@ -1814,8 +1815,15 @@ const throwableDot = new Shape([10, 10], new Dot([10, 10]), null, null, null,
     (render, dot, ratio, setupResults, mouse, dist, shape)=>{// drawEffectCB callback
 
         // Changing the dot's size based on mouse distance for an additional small effect
-        dot.radius = CDEUtils.mod(shape.radius*2, ratio, shape.radius*2*0.5)
+        const effectRadius = shape.radius*2
+        dot.radius = CDEUtils.mod(effectRadius, ratio, effectRadius/2)
         
+
+
+        // Next, we deal with mouse over/click visual effects.
+        // While this solution works fine,
+        // The next few lines could be done even more effectively by using the mouse.addListener() function.
+
         // Checking if the mouse is hovering the dot
         const isMouseOver = dot.isWithin(m.pos)
         

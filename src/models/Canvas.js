@@ -29,6 +29,7 @@ class Canvas {
     static STATES = {STOPPED:0, LOOPING:1, REQUESTED_STOP:2}
     static #ON_LOAD_CALLBACKS = []
     static #ON_FIRST_INTERACT_CALLBACKS = []
+    static DEFAULT_MOUSE_MOVE_THROTTLE_DELAY = 10
 
     #lastFrame = 0           // default last frame time
     #lastLimitedFrame = 0    // last frame time for limited fps
@@ -72,6 +73,7 @@ class Canvas {
         if (!this.isOffscreenCanvas) this._offset = this.updateOffset()// cvs page offset
         this._render = new Render(this._ctx)                           // render instance
         this._anims = []                                               // current animations
+        this._mouseMoveThrottlingDelay = Canvas.DEFAULT_MOUSE_MOVE_THROTTLE_DELAY// mouse move throttling delay
     }
 
     // sets css styles on the canvas and the parent
@@ -98,7 +100,7 @@ class Canvas {
         onscroll=()=>{
           const scrollX = window.scrollX, scrollY = window.scrollY
           this.updateOffset()
-          this._mouse.updatePos({x:this._mouse.x+(scrollX-this.#lastScrollValues[0]), y:this._mouse.y+(scrollY-this.#lastScrollValues[1])}, {x:0, y:0})
+          this._mouse.updatePos(this._mouse.x+(scrollX-this.#lastScrollValues[0]), this._mouse.y+(scrollY-this.#lastScrollValues[1]), [0,0])
           this.#mouseMovements()
           this.#lastScrollValues[0] = scrollX
           this.#lastScrollValues[1] = scrollY
@@ -177,10 +179,8 @@ class Canvas {
     // updates the calculated canvas offset in the page
     updateOffset() {
         const {width, height, x, y} = this._cvs.getBoundingClientRect()
-        return this._offset = {x:Math.round((x+width)-this.width)+this._viewPos[0], y:Math.round((y+height)-this.height)+this._viewPos[1]}
+        return this._offset = [Math.round((x+width)-this.width)+this._viewPos[0], Math.round((y+height)-this.height)+this._viewPos[1]]
     }
-
-
 
     // main loop, runs every frame
     #loop(time, wasRestarted) {
@@ -211,8 +211,8 @@ class Canvas {
     drawSingleFrame(customTime=null) {
         let mouse = this._mouse, loopingCB = this._loopingCB, hasCustomTime = customTime!=null, deltaTime = hasCustomTime ? this.#calcDeltaTime(customTime) : this._deltaTime
         if (!mouse._moveListenersOptimizationEnabled) {
-            mouse.checkListeners(10) // mouse enter
-            mouse.checkListeners(11) // mouse leave
+            mouse.checkListeners(Mouse.LISTENER_TYPES.ENTER)
+            mouse.checkListeners(Mouse.LISTENER_TYPES.LEAVE)
         }
 
         this.clear()
@@ -233,8 +233,8 @@ class Canvas {
 
         mouse.calcSpeed(deltaTime)
         if (!mouse._moveListenersOptimizationEnabled) {
-            mouse.checkListeners(10) // mouse enter
-            mouse.checkListeners(11) // mouse leave
+            mouse.checkListeners(Mouse.LISTENER_TYPES.ENTER)
+            mouse.checkListeners(Mouse.LISTENER_TYPES.LEAVE)
         }
 
         this.clear()
@@ -362,7 +362,7 @@ class Canvas {
         this._viewPos[1] = y
         
         this.updateOffset()
-        this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
+        this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
         this.#mouseMovements()
     }
 
@@ -374,7 +374,7 @@ class Canvas {
         this._viewPos[1] += y
 
         this.updateOffset()
-        this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
+        this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
         this.#mouseMovements()
     }
 
@@ -400,7 +400,7 @@ class Canvas {
                 ly = ny
 
                 this.updateOffset()
-                this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
+                this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
                 this.#mouseMovements()
             }, time, easing))
         }
@@ -511,32 +511,37 @@ class Canvas {
     // called on mouse move
     #mouseMovements(cb, e) {
         // update ratioPos to mouse pos if not overwritten
-        const r_ll = this.refs.length
+        const refs = this.refs, r_ll = refs.length
         for (let i=0;i<r_ll;i++) {
-            const ref = this.refs[i]
+            const ref = refs[i]
             if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos = this._mouse.pos
         }
-        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
-
         this._mouse.checkValid()
+        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
     }
+    
 
     // defines the onmousemove listener
     setMouseMove(cb, global) {
         if (!this.isOffscreenCanvas) {
+            let lastEventTime=0
             this.#mouseMoveCB = cb
             const onmousemove=e=>{
-                // update pos and direction angle
-                this._mouse.updatePos(e, this._offset)
-                this._mouse.calcAngle()            
-                this.#mouseMovements(cb, e)
+                const time = this.timeStamp
+                if (time-lastEventTime > this._mouseMoveThrottlingDelay) {
+                    lastEventTime = time
+                    this._mouse.updatePos(e.x, e.y, this._offset)
+                    this._mouse.calcAngle()         
+                    this.#mouseMovements(cb, e)
+                }
             }, ontouchmove=e=>{
-                const touches = e.touches
-                if (touches.length==1) {
+                const touches = e.touches, time = this.timeStamp
+                if (time-lastEventTime > this._mouseMoveThrottlingDelay && touches.length==1) {
+                    lastEventTime = time
                     e.preventDefault()
                     e.x = CDEUtils.round(touches[0].clientX, 1)
                     e.y = CDEUtils.round(touches[0].clientY, 1)
-                    this._mouse.updatePos(e, this._offset)
+                    this._mouse.updatePos(e.x, e.y, this._offset)
                     this._mouse.calcAngle()            
                     this.#mouseMovements(cb, e)
                 }
@@ -581,7 +586,7 @@ class Canvas {
                     e.x = CDEUtils.round(touches[0].clientX, 1)
                     e.y = CDEUtils.round(touches[0].clientY, 1)
                     e.button = 0
-                    this._mouse.updatePos(e, this._offset)
+                    this._mouse.updatePos(e.x, e.y, this._offset)
                     this._mouse.calcAngle()            
                     this.#mouseMovements(this.#mouseMoveCB, e)
                     this.#mouseClicks(cb, e, true)
@@ -686,6 +691,13 @@ class Canvas {
     disableAccurateMouseMoveListenersMode() {
         this.mouseMoveListenersOptimizationEnabled = true
     }
+
+    /**
+     * Disables all mouse move throttling cause by the mouseMoveThrottlingDelay property.
+     */
+    disableMouseMoveThrottling() {
+        this._mouseMoveThrottlingDelay = 0
+    }
     
 	get id() {return this._id}
 	get cvs() {return this._cvs}
@@ -725,6 +737,7 @@ class Canvas {
     get anims() {return this._anims}
     get mouseMoveListenersOptimizationEnabled() {return this._mouse._moveListenersOptimizationEnabled}
     get isOffscreenCanvas() {return this._cvs instanceof OffscreenCanvas} 
+    get mouseMoveThrottlingDelay() {return this._mouseMoveThrottlingDelay}
 
 	set id(id) {this._id = id}
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
@@ -750,4 +763,5 @@ class Canvas {
     }
     set speedModifier(speedModifier) {this._speedModifier = speedModifier}
     set mouseMoveListenersOptimizationEnabled(enabled) {this._mouse._moveListenersOptimizationEnabled = enabled}
+    set mouseMoveThrottlingDelay(mouseMoveThrottlingDelay) {this._mouseMoveThrottlingDelay = mouseMoveThrottlingDelay}
 }

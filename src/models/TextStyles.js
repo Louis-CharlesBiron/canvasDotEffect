@@ -104,7 +104,7 @@ class TextStyles {
      * @returns Whether the font file is supported or not
      */
     static isFontFormatSupported(file) {
-        const name = file?.name||file
+        const name = (file?.name||file).toLowerCase()
         return TextStyles.SUPPORTED_FONTS_FORMATS.some(ext=>name.endsWith("."+ext))
     }
 

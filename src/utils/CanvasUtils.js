@@ -140,17 +140,17 @@ class CanvasUtils {
     // Draws the minimal rectangular area fitting the provided object
     static drawOutline(render, obj, color=[255,0,0,1]) {
         const bounds = obj.getBounds()
-        render.batchStroke(Render.getPositionsRect(bounds[0], bounds[1]), color)
+        render.batchStroke(Render.getPositionsRect(bounds[0], bounds[1]), color?.color||color)
     }
 
     // Draws the minimal rectangular area fitting the provided object
     static drawOutlineAccurate(render, obj, color=[0,50,255,1]) {
-        render.batchStroke(obj.getBoundsAccurate(), color)
+        render.batchStroke(obj.getBoundsAccurate(), color?.color||color)
     }
 
     // Draws a dot at the provided pos
     static drawPos(render, pos, color=[255,0,0,1], radius) {
-        render.batchStroke(Render.getArc(pos, radius), color)
+        render.batchStroke(Render.getArc(pos, radius), color?.color||color)
     }
 
     // Provides quick generic shape declarations
@@ -164,11 +164,54 @@ class CanvasUtils {
         }
     }
 
-    // Returns a blank, setup/loop only, object. Can be used to draw non objects
-    static createEmptyObj(cvs, setupCB, loopCB) {
+    // TODO manage color/line styles
+    static createDrawingBoard(CVS, borderPositions=[[0,0], CVS.size], renderStyles=[255,0,0,1], borderColor=Color.DEFAULT_RGBA, newLineMoveThreshold=Math.min(6, (CVS.fpsLimit||60)/15)) {
+        let d_ll = 0, render = CVS.render, cvsStatic = Canvas.STATIC, thresholdAt=0, obj = new Shape(null, [new Dot(borderPositions[0]), new Dot(borderPositions[1], )], 0, null, 0, null, null, ()=>[], ()=>{
+            for (let i=0;i<d_ll;i++) render.batchStroke(obj.setupResults[i], renderStyles)
+            if (borderColor && (borderColor.a || borderColor[3])) CanvasUtils.drawOutline(render, obj, borderColor)
+        }, null, true)
+        CVS.add(obj)
+
+        CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.DOWN, (pos)=>{
+            const path = new Path2D(), x = pos[0], y = pos[1]
+            path.moveTo(x, y)
+            path.arc(x, y, (renderStyles.lineWidth||render.defaultProfile.lineWidth)/4, 0, CDEUtils.CIRC)
+            d_ll = obj.setupResults.push(path)
+        })
+
+        CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.ENTER, (pos, mouse)=>{
+            if (mouse.clicked) {
+                const path = new Path2D(), x = pos[0], y = pos[1]
+                path.moveTo(x, y)
+                d_ll = obj.setupResults.push(path)
+            }
+        })
+
+        CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.MOVE, (pos,mouse)=>{
+            if ((++thresholdAt)==newLineMoveThreshold) {
+                const lastPos = mouse.lastPos, path = obj.setupResults[d_ll-1]
+                if (path && mouse.clicked && obj.isWithin(lastPos)) {
+                    path.lineTo(pos[0], pos[1], lastPos[0], lastPos[1])
+                    if (CVS.fpsLimit == cvsStatic) for (let i=0;i<d_ll;i++) render.stroke(obj.setupResults[i], renderStyles)
+                }
+                thresholdAt=0
+            }
+        })
+        
+        return obj
+    }
+
+    /**
+     * Creates a blank, setup/loop only, object. Can be used to draw non objects.
+     * @param {Canvas} CVS: The Canvas instance to use
+     * @param {Function} setupCB: Function called on object's initialization. (this, this.parent)=>
+     * @param {Function} loopCB Function called each frame for this object (this)=>
+     * @returns The created empty Shape object
+     */
+    static createEmptyObj(CVS, setupCB, loopCB) {
         const obj = new Shape(null, null, 0, null, 0, null, undefined, setupCB, loopCB, null, true)
-        cvs.add(obj)
-        return obj.id
+        CVS.add(obj)
+        return obj
     }
 
     // Provides generic follow paths
