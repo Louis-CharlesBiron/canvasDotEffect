@@ -11,26 +11,26 @@ class Mouse {
     static #LISTENER_ID_GIVER = 0
     static LISTENER_TYPES = {CLICK:0, DOWN:0, UP:1, MAIN_DOWN:0, MAIN_UP:1, MIDDLE_DOWN:2, MIDDLE_UP:3, RIGHT_DOWN:4, RIGHT_UP:5, EXTRA_FOWARD_DOWN:6, EXTRA_FOWARD_UP:7, EXTRA_BACK_DOWN:8, EXTRA_BACK_UP:9, MOVE:10, ENTER:11, LEAVE:12, EXIT:12}
     
-    #fixedLastPos = [0,0]
+    #lastX = null // previous x value of the mouse on the canvas, updated each frame
+    #lastY = null // previous y value of the mouse on the canvas, updated each frame
     #wasWithin = []
     constructor(ctx) {
-        this._ctx = ctx                   // canvas 2d context
-        this._valid = false               // whether the mouse pos is valid (is inside the canvas and initialized)
-        this._x = null                    // current x value of the mouse on the canvas
-        this._y = null                    // current y value of the mouse on the canvas
-        this._rawX = null                 // current x value of the mouse on the canvas without any offsets
-        this._rawY = null                 // current y value of the mouse on the canvas without any offsets
-        this._lastX = null                // previous x value of the mouse on the canvas
-        this._lastY = null                // previous y value of the mouse on the canvas
-        this._dir = null                  // direction in degrees of the mouse
-        this._speed = null                // speed in px/s of the mouse
-        this._clicked = false             // whether the main button of the mouse is active
-        this._rightClicked = false        // whether the secondary button of the mouse is active
-        this._scrollClicked = false       // whether the scroll button of the mouse is active (pressed)
-        this._extraForwardClicked = false // whether the extra foward button of the mouse is active (not present on every mouse)
-        this._extraBackClicked = false    // whether the extra back button of the mouse is active (not present on every mouse)
-        this._holdValue = null            // a custom manual value. Ex: can be used to easily reference an object the mouse is holding
-        this._listeners = []              // list of all current listeners
+        this._ctx = ctx                  // canvas 2d context
+        this._valid = false              // whether the mouse pos is valid (is inside the canvas and initialized)
+        this._x = null                   // current x value of the mouse on the canvas
+        this._y = null                   // current y value of the mouse on the canvas
+        this._lastPos = [0,0]            // last mouse pos, updated each move event
+        this._rawX = null                // current x value of the mouse on the canvas without any offsets
+        this._rawY = null                // current y value of the mouse on the canvas without any offsets
+        this._dir = null                 // direction in degrees of the mouse
+        this._speed = null               // speed in px/s of the mouse
+        this._clicked = false            // whether the main button of the mouse is active
+        this._rightClicked = false       // whether the secondary button of the mouse is active
+        this._scrollClicked = false      // whether the scroll button of the mouse is active (pressed)
+        this._extraForwardClicked = false// whether the extra foward button of the mouse is active (not present on every mouse)
+        this._extraBackClicked = false   // whether the extra back button of the mouse is active (not present on every mouse)
+        this._holdValue = null           // a custom manual value. Ex: can be used to easily reference an object the mouse is holding
+        this._listeners = []             // list of all current listeners
 
         this._moveListenersOptimizationEnabled = true // when true, only checks move listeners on mouse move, else checks every frame
     }
@@ -38,22 +38,21 @@ class Mouse {
     // calculates and sets the current mouse speed (run every frame)
     calcSpeed(deltaTime) {
         const DECELERATION = Mouse.DEFAULT_MOUSE_DECELERATION
-        if (isFinite(this._lastX) && isFinite(this._lastY) && deltaTime) {
-            this._speed = this._speed*DECELERATION+(CDEUtils.getDist(this._x, this._y, this._lastX, this._lastY)/deltaTime)*(1-DECELERATION)
+        if (isFinite(this.#lastX) && isFinite(this.#lastY) && deltaTime) {
+            this._speed = this._speed*DECELERATION+(CDEUtils.getDist(this._x, this._y, this.#lastX, this.#lastY)/deltaTime)*(1-DECELERATION)
             if (this._speed < Mouse.DEFAULT_MOUSE_MOVE_TRESHOLD) this._speed = 0
         } else this._speed = 0
 
-        this._lastX = this._x
-        this._lastY = this._y
+        this.#lastX = this._x
+        this.#lastY = this._y
     }
 
     // calculates and set the current mouse direction (run on mouse move)
     calcAngle() {
-        const dx = this._x-this._lastX, dy = this._y-this._lastY
+        const dx = this._x-this.#lastX, dy = this._y-this.#lastY
         if (isFinite(dx) && isFinite(dy) && (dx||dy)) {
             let angle = (-CDEUtils.toDeg(Math.atan2(dy, dx))+360)%360, diff = angle-this._dir
             diff += (360*(diff<-180))-(360*(diff>180))
-
             this._dir = (this._dir+diff*Mouse.DEFAULT_MOUSE_ANGULAR_DECELERATION+360)%360
         } else this._dir = 0
     }
@@ -81,7 +80,6 @@ class Mouse {
             this._extraForwardClicked = isMouseDownEvent
             this.checkListeners(isMouseDownEvent?TYPES.EXTRA_FOWARD_DOWN:TYPES.EXTRA_FOWARD_UP)
         }
-
     }
 
     // invalidates mouse position
@@ -93,20 +91,20 @@ class Mouse {
     }
     
     // updates current mouse position considering page offsets
-    updatePos(e, offset) {
+    updatePos(x, y, offset) {
         this._valid = true
-        this._rawX = e.x
-        this._rawY = e.y
-        this._x = e.x-offset.x
-        this._y = e.y-offset.y
+        this._rawX = x
+        this._rawY = y
+        this._x = x-offset[0]
+        this._y = y-offset[1]
 
         if (this._moveListenersOptimizationEnabled) {
             this.checkListeners(Mouse.LISTENER_TYPES.ENTER)
             this.checkListeners(Mouse.LISTENER_TYPES.LEAVE)
-            this.#fixedLastPos[0] = this._x
-            this.#fixedLastPos[1] = this._y
         }
 
+        this._lastPos[0] = this._x
+        this._lastPos[1] = this._y
         this.checkListeners(Mouse.LISTENER_TYPES.MOVE)
     }
 
@@ -148,7 +146,7 @@ class Mouse {
                            nowWithin = ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))
                     
                     if (this._moveListenersOptimizationEnabled) {
-                        if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this.#fixedLastPos):obj.isWithin(this.#fixedLastPos))) || (isStaticBounds && this.isWithin(this.#fixedLastPos, obj, isPath2D)))==validation) callback(mousePos, this, obj)
+                        if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this._lastPos):obj.isWithin(this._lastPos))) || (isStaticBounds && this.isWithin(this._lastPos, obj, isPath2D)))==validation) callback(mousePos, this, obj)
                     } else {
                         const wasWithin = this.#wasWithin[typedListener[3]]
                         if (!wasWithin && nowWithin) {
@@ -213,9 +211,11 @@ class Mouse {
     get rawX() {return this._rawX}
 	get rawY() {return this._rawY}
 	get rawPos() {return [this._rawX, this._rawY]}
-	get lastX() {return this._lastX}
-	get lastY() {return this._lastY}
-	get lastPos() {return [this._lastX, this._lastY]}
+	get deltaTimeLastX() {return this.#lastX}
+	get deltaTimeLastY() {return this.#lastY}
+	get lastX() {return this._lastPos[0]}
+	get lastY() {return this._lastPos[0]}
+	get lastPos() {return this._lastPos}
 	get dir() {return this._dir}
 	get speed() {return this._speed}
 	get clicked() {return this._clicked}
@@ -229,8 +229,6 @@ class Mouse {
 
     set ctx(ctx) {this._ctx = ctx}
 	set valid(valid) {this._valid = valid}
-	set lastX(_lastX) {this._lastX = _lastX}
-	set lastY(_lastY) {this._lastY = _lastY}
 	set dir(_dir) {this._dir = _dir}
 	set speed(_speed) {this._speed = _speed}
 	set clicked(_clicked) {this._clicked = _clicked}

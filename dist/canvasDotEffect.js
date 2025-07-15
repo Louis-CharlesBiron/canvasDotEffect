@@ -379,17 +379,17 @@ class CanvasUtils {
     // Draws the minimal rectangular area fitting the provided object
     static drawOutline(render, obj, color=[255,0,0,1]) {
         const bounds = obj.getBounds()
-        render.batchStroke(Render.getPositionsRect(bounds[0], bounds[1]), color)
+        render.batchStroke(Render.getPositionsRect(bounds[0], bounds[1]), color?.color||color)
     }
 
     // Draws the minimal rectangular area fitting the provided object
     static drawOutlineAccurate(render, obj, color=[0,50,255,1]) {
-        render.batchStroke(obj.getBoundsAccurate(), color)
+        render.batchStroke(obj.getBoundsAccurate(), color?.color||color)
     }
 
     // Draws a dot at the provided pos
     static drawPos(render, pos, color=[255,0,0,1], radius) {
-        render.batchStroke(Render.getArc(pos, radius), color)
+        render.batchStroke(Render.getArc(pos, radius), color?.color||color)
     }
 
     // Provides quick generic shape declarations
@@ -403,11 +403,54 @@ class CanvasUtils {
         }
     }
 
-    // Returns a blank, setup/loop only, object. Can be used to draw non objects
-    static createEmptyObj(cvs, setupCB, loopCB) {
+    // TODO manage color/line styles
+    static createDrawingBoard(CVS, borderPositions=[[0,0], CVS.size], renderStyles=[255,0,0,1], borderColor=Color.DEFAULT_RGBA, newLineMoveThreshold=Math.min(6, (CVS.fpsLimit||60)/15)) {
+        let d_ll = 0, render = CVS.render, cvsStatic = Canvas.STATIC, thresholdAt=0, obj = new Shape(null, [new Dot(borderPositions[0]), new Dot(borderPositions[1], )], 0, null, 0, null, null, ()=>[], ()=>{
+            for (let i=0;i<d_ll;i++) render.batchStroke(obj.setupResults[i], renderStyles)
+            if (borderColor && (borderColor.a || borderColor[3])) CanvasUtils.drawOutline(render, obj, borderColor)
+        }, null, true)
+        CVS.add(obj)
+
+        CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.DOWN, (pos)=>{
+            const path = new Path2D(), x = pos[0], y = pos[1]
+            path.moveTo(x, y)
+            path.arc(x, y, (renderStyles.lineWidth||render.defaultProfile.lineWidth)/4, 0, CDEUtils.CIRC)
+            d_ll = obj.setupResults.push(path)
+        })
+
+        CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.ENTER, (pos, mouse)=>{
+            if (mouse.clicked) {
+                const path = new Path2D(), x = pos[0], y = pos[1]
+                path.moveTo(x, y)
+                d_ll = obj.setupResults.push(path)
+            }
+        })
+
+        CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.MOVE, (pos,mouse)=>{
+            if ((++thresholdAt)==newLineMoveThreshold) {
+                const lastPos = mouse.lastPos, path = obj.setupResults[d_ll-1]
+                if (path && mouse.clicked && obj.isWithin(lastPos)) {
+                    path.lineTo(pos[0], pos[1], lastPos[0], lastPos[1])
+                    if (CVS.fpsLimit == cvsStatic) for (let i=0;i<d_ll;i++) render.stroke(obj.setupResults[i], renderStyles)
+                }
+                thresholdAt=0
+            }
+        })
+        
+        return obj
+    }
+
+    /**
+     * Creates a blank, setup/loop only, object. Can be used to draw non objects.
+     * @param {Canvas} CVS: The Canvas instance to use
+     * @param {Function} setupCB: Function called on object's initialization. (this, this.parent)=>
+     * @param {Function} loopCB Function called each frame for this object (this)=>
+     * @returns The created empty Shape object
+     */
+    static createEmptyObj(CVS, setupCB, loopCB) {
         const obj = new Shape(null, null, 0, null, 0, null, undefined, setupCB, loopCB, null, true)
-        cvs.add(obj)
-        return obj.id
+        CVS.add(obj)
+        return obj
     }
 
     // Provides generic follow paths
@@ -1427,28 +1470,28 @@ class Mouse {
     static DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1
     static DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
     static #LISTENER_ID_GIVER = 0
-    static LISTENER_TYPES = {CLICK:0, DOWN:0, UP:1, MAIN_DOWN:0, MAIN_UP:1, MIDDLE_DOWN:2, MIDDLE_UP:3, RIGHT_DOWN:4, RIGHT_UP:5, EXTRA_FOWARD_DOWN:6, EXTRA_FOWARD_UP:7, EXTRA_BACK_DOWN:8, EXTRA_BACK_UP:9, ENTER:10, LEAVE:11, EXIT:11}
+    static LISTENER_TYPES = {CLICK:0, DOWN:0, UP:1, MAIN_DOWN:0, MAIN_UP:1, MIDDLE_DOWN:2, MIDDLE_UP:3, RIGHT_DOWN:4, RIGHT_UP:5, EXTRA_FOWARD_DOWN:6, EXTRA_FOWARD_UP:7, EXTRA_BACK_DOWN:8, EXTRA_BACK_UP:9, MOVE:10, ENTER:11, LEAVE:12, EXIT:12}
     
-    #fixedLastPos = [0,0]
+    #lastX = null // previous x value of the mouse on the canvas, updated each frame
+    #lastY = null // previous y value of the mouse on the canvas, updated each frame
     #wasWithin = []
     constructor(ctx) {
-        this._ctx = ctx                   // canvas 2d context
-        this._valid = false               // whether the mouse pos is valid (is inside the canvas and initialized)
-        this._x = null                    // current x value of the mouse on the canvas
-        this._y = null                    // current y value of the mouse on the canvas
-        this._rawX = null                 // current x value of the mouse on the canvas without any offsets
-        this._rawY = null                 // current y value of the mouse on the canvas without any offsets
-        this._lastX = null                // previous x value of the mouse on the canvas
-        this._lastY = null                // previous y value of the mouse on the canvas
-        this._dir = null                  // direction in degrees of the mouse
-        this._speed = null                // speed in px/s of the mouse
-        this._clicked = false             // whether the main button of the mouse is active
-        this._rightClicked = false        // whether the secondary button of the mouse is active
-        this._scrollClicked = false       // whether the scroll button of the mouse is active (pressed)
-        this._extraForwardClicked = false // whether the extra foward button of the mouse is active (not present on every mouse)
-        this._extraBackClicked = false    // whether the extra back button of the mouse is active (not present on every mouse)
-        this._holdValue = null            // a custom manual value. Ex: can be used to easily reference an object the mouse is holding
-        this._listeners = []              // list of all current listeners
+        this._ctx = ctx                  // canvas 2d context
+        this._valid = false              // whether the mouse pos is valid (is inside the canvas and initialized)
+        this._x = null                   // current x value of the mouse on the canvas
+        this._y = null                   // current y value of the mouse on the canvas
+        this._lastPos = [0,0]            // last mouse pos, updated each move event
+        this._rawX = null                // current x value of the mouse on the canvas without any offsets
+        this._rawY = null                // current y value of the mouse on the canvas without any offsets
+        this._dir = null                 // direction in degrees of the mouse
+        this._speed = null               // speed in px/s of the mouse
+        this._clicked = false            // whether the main button of the mouse is active
+        this._rightClicked = false       // whether the secondary button of the mouse is active
+        this._scrollClicked = false      // whether the scroll button of the mouse is active (pressed)
+        this._extraForwardClicked = false// whether the extra foward button of the mouse is active (not present on every mouse)
+        this._extraBackClicked = false   // whether the extra back button of the mouse is active (not present on every mouse)
+        this._holdValue = null           // a custom manual value. Ex: can be used to easily reference an object the mouse is holding
+        this._listeners = []             // list of all current listeners
 
         this._moveListenersOptimizationEnabled = true // when true, only checks move listeners on mouse move, else checks every frame
     }
@@ -1456,22 +1499,21 @@ class Mouse {
     // calculates and sets the current mouse speed (run every frame)
     calcSpeed(deltaTime) {
         const DECELERATION = Mouse.DEFAULT_MOUSE_DECELERATION
-        if (isFinite(this._lastX) && isFinite(this._lastY) && deltaTime) {
-            this._speed = this._speed*DECELERATION+(CDEUtils.getDist(this._x, this._y, this._lastX, this._lastY)/deltaTime)*(1-DECELERATION)
+        if (isFinite(this.#lastX) && isFinite(this.#lastY) && deltaTime) {
+            this._speed = this._speed*DECELERATION+(CDEUtils.getDist(this._x, this._y, this.#lastX, this.#lastY)/deltaTime)*(1-DECELERATION)
             if (this._speed < Mouse.DEFAULT_MOUSE_MOVE_TRESHOLD) this._speed = 0
         } else this._speed = 0
 
-        this._lastX = this._x
-        this._lastY = this._y
+        this.#lastX = this._x
+        this.#lastY = this._y
     }
 
     // calculates and set the current mouse direction (run on mouse move)
     calcAngle() {
-        const dx = this._x-this._lastX, dy = this._y-this._lastY
+        const dx = this._x-this.#lastX, dy = this._y-this.#lastY
         if (isFinite(dx) && isFinite(dy) && (dx||dy)) {
             let angle = (-CDEUtils.toDeg(Math.atan2(dy, dx))+360)%360, diff = angle-this._dir
             diff += (360*(diff<-180))-(360*(diff>180))
-
             this._dir = (this._dir+diff*Mouse.DEFAULT_MOUSE_ANGULAR_DECELERATION+360)%360
         } else this._dir = 0
     }
@@ -1499,7 +1541,6 @@ class Mouse {
             this._extraForwardClicked = isMouseDownEvent
             this.checkListeners(isMouseDownEvent?TYPES.EXTRA_FOWARD_DOWN:TYPES.EXTRA_FOWARD_UP)
         }
-
     }
 
     // invalidates mouse position
@@ -1511,19 +1552,21 @@ class Mouse {
     }
     
     // updates current mouse position considering page offsets
-    updatePos(e, offset) {
+    updatePos(x, y, offset) {
         this._valid = true
-        this._rawX = e.x
-        this._rawY = e.y
-        this._x = e.x-offset.x
-        this._y = e.y-offset.y
+        this._rawX = x
+        this._rawY = y
+        this._x = x-offset[0]
+        this._y = y-offset[1]
 
         if (this._moveListenersOptimizationEnabled) {
-            this.checkListeners(10) // enter
-            this.checkListeners(11) // leave
-            this.#fixedLastPos[0] = this._x
-            this.#fixedLastPos[1] = this._y
+            this.checkListeners(Mouse.LISTENER_TYPES.ENTER)
+            this.checkListeners(Mouse.LISTENER_TYPES.LEAVE)
         }
+
+        this._lastPos[0] = this._x
+        this._lastPos[1] = this._y
+        this.checkListeners(Mouse.LISTENER_TYPES.MOVE)
     }
 
     // sets and returns whether the current mouse position is valid
@@ -1564,25 +1607,26 @@ class Mouse {
                            nowWithin = ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))
                     
                     if (this._moveListenersOptimizationEnabled) {
-                        if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this.#fixedLastPos):obj.isWithin(this.#fixedLastPos))) || (isStaticBounds && this.isWithin(this.#fixedLastPos, obj, isPath2D)))==validation) callback(obj, mousePos)
+                        if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this._lastPos):obj.isWithin(this._lastPos))) || (isStaticBounds && this.isWithin(this._lastPos, obj, isPath2D)))==validation) callback(mousePos, this, obj)
                     } else {
                         const wasWithin = this.#wasWithin[typedListener[3]]
                         if (!wasWithin && nowWithin) {
                             this.#wasWithin[typedListener[3]] = true
-                            if (validation==2) callback(obj, mousePos)
+                            if (validation==2) callback(mousePos, this, obj)
                         } else if (!nowWithin && wasWithin) {
                             this.#wasWithin[typedListener[3]] = false
-                            if (validation==1) callback(obj, mousePos)
+                            if (validation==1) callback(mousePos, this, obj)
                         }
                     }
                 }
             } else {
                 if (type==TYPES.MAIN_DOWN||type==TYPES.RIGHT_DOWN||type==TYPES.MIDDLE_DOWN||type==TYPES.EXTRA_BACK_DOWN||type==TYPES.EXTRA_FOWARD_DOWN) validation = this._clicked
                 else if (type==TYPES.MAIN_UP||type==TYPES.RIGHT_UP||type==TYPES.MIDDLE_UP||type==TYPES.EXTRA_BACK_UP||type==TYPES.EXTRA_FOWARD_UP) validation = !this._clicked
+                else validation = true
 
                 for (let i=0;i<typedListeners_ll;i++) {
                     const [obj, callback, hasAccurateBounds] = typedListeners[i], isPath2D = obj instanceof Path2D, isStaticBounds = Array.isArray(obj)||isPath2D
-                    if (validation && ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))) callback(obj, mousePos)
+                    if (validation && ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))) callback(mousePos, this, obj)
                 }
             }
         }
@@ -1628,9 +1672,11 @@ class Mouse {
     get rawX() {return this._rawX}
 	get rawY() {return this._rawY}
 	get rawPos() {return [this._rawX, this._rawY]}
-	get lastX() {return this._lastX}
-	get lastY() {return this._lastY}
-	get lastPos() {return [this._lastX, this._lastY]}
+	get deltaTimeLastX() {return this.#lastX}
+	get deltaTimeLastY() {return this.#lastY}
+	get lastX() {return this._lastPos[0]}
+	get lastY() {return this._lastPos[0]}
+	get lastPos() {return this._lastPos}
 	get dir() {return this._dir}
 	get speed() {return this._speed}
 	get clicked() {return this._clicked}
@@ -1644,8 +1690,6 @@ class Mouse {
 
     set ctx(ctx) {this._ctx = ctx}
 	set valid(valid) {this._valid = valid}
-	set lastX(_lastX) {this._lastX = _lastX}
-	set lastY(_lastY) {this._lastY = _lastY}
 	set dir(_dir) {this._dir = _dir}
 	set speed(_speed) {this._speed = _speed}
 	set clicked(_clicked) {this._clicked = _clicked}
@@ -2253,6 +2297,8 @@ class TextStyles {
     static DEFAULT_TEXT_BASELINE = TextStyles.BASELINES.MIDDLE
     static DEFAULT_TEXT_RENDERING = TextStyles.RENDERINGS.FAST
     static DEFAULT_PROFILE = new TextStyles(null, TextStyles.DEFAULT_FONT, TextStyles.DEFAULT_LETTER_SPACING, TextStyles.DEFAULT_WORD_SPACING, TextStyles.DEFAULT_FONT_VARIANT_CAPS, TextStyles.DEFAULT_DIRECTION, TextStyles.DEFAULT_FONT_STRETCH, TextStyles.DEFAULT_FONT_KERNING, TextStyles.DEFAULT_TEXT_ALIGN, TextStyles.DEFAULT_TEXT_BASELINE, TextStyles.DEFAULT_TEXT_RENDERING)
+    static SUPPORTED_FONTS_FORMATS = ["woff","woff2","ttf","otf"]
+    static #FONTFACE_NAME_OFFSET = 1
 
     #ctx = null
     constructor(render, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
@@ -2324,6 +2370,43 @@ class TextStyles {
         if (textAlign && currentTextStyles[7] !== textAlign) currentTextStyles[7] = ctx.textAlign = textAlign
         if (textBaseline && currentTextStyles[8] !== textBaseline) currentTextStyles[8] = ctx.textBaseline = textBaseline
         if (textRendering && currentTextStyles[9] !== textRendering) currentTextStyles[9] = ctx.textRendering = textRendering
+    }
+    
+    /**
+     * Returns whether the provided font file type is supported
+     * @param {String | File} file: the file or filename 
+     * @returns Whether the font file is supported or not
+     */
+    static isFontFormatSupported(file) {
+        const name = (file?.name||file).toLowerCase()
+        return TextStyles.SUPPORTED_FONTS_FORMATS.some(ext=>name.endsWith("."+ext))
+    }
+
+    /**
+     * Loads a custom font by file or url. Direct font files are loaded using the FontFace api, while non direct font source are loaded via an HTML <link> element.
+     * @param {String | ArrayBuffer | TypedArray} src: The source of the font, either a file or a url
+     * @param {String?} fontFaceName: The font family name of the custom font (Only applicable for FontFace load)
+     * @param {Object?} fontFaceDescriptors: Object defining the font properties (Only applicable for FontFace load) 
+     * @param {Function?} readyCB: Callback called upon custom font loading completed. (fontFace, fontFamily)=>{...} (Only applicable for FontFace load)
+     * @param {Function?} errorCB: Callback called upon custom font loading errors. (error)=>{...} (Only applicable for FontFace load) 
+     * @returns The loaded font via a FontFace instance or a <link> element
+     */
+    static loadCustomFont(src, fontFaceName=null, fontFaceDescriptors={}, readyCB=null, errorCB=(e)=>console.warn("Error loading font:", src, e)) {
+        if (TextStyles.isFontFormatSupported(src) || src instanceof ArrayBuffer || src instanceof Int8Array || src instanceof Uint8Array || src instanceof Uint8ClampedArray || src instanceof Int16Array || src instanceof Uint16Array || src instanceof Int32Array || src instanceof Uint32Array || src instanceof Float32Array || src instanceof Float64Array || src instanceof BigInt64Array || src instanceof BigUint64Array) {
+            const font = new FontFace(fontFaceName||"customFont"+TextStyles.#FONTFACE_NAME_OFFSET++, `url(${src})`, fontFaceDescriptors)
+            font.load().then((fontData)=>{
+                document.fonts.add(fontData)
+                if (CDEUtils.isFunction(readyCB)) readyCB(font, font.family)
+            }).catch((e)=>{if (CDEUtils.isFunction(errorCB)) errorCB(e)})
+            return font
+        } else {
+            const link = document.createElement("link")
+            link.rel = "stylesheet"
+            link.type = "text/css"
+            link.href = src
+            link.id = "customFont"+TextStyles.#FONTFACE_NAME_OFFSET++
+            return document.querySelector("head").appendChild(link)
+        }
     }
 
     get id() {return this.id}
@@ -2516,6 +2599,7 @@ class Canvas {
     static STATES = {STOPPED:0, LOOPING:1, REQUESTED_STOP:2}
     static #ON_LOAD_CALLBACKS = []
     static #ON_FIRST_INTERACT_CALLBACKS = []
+    static DEFAULT_MOUSE_MOVE_THROTTLE_DELAY = 10
 
     #lastFrame = 0           // default last frame time
     #lastLimitedFrame = 0    // last frame time for limited fps
@@ -2559,6 +2643,7 @@ class Canvas {
         if (!this.isOffscreenCanvas) this._offset = this.updateOffset()// cvs page offset
         this._render = new Render(this._ctx)                           // render instance
         this._anims = []                                               // current animations
+        this._mouseMoveThrottlingDelay = Canvas.DEFAULT_MOUSE_MOVE_THROTTLE_DELAY// mouse move throttling delay
     }
 
     // sets css styles on the canvas and the parent
@@ -2585,7 +2670,7 @@ class Canvas {
         onscroll=()=>{
           const scrollX = window.scrollX, scrollY = window.scrollY
           this.updateOffset()
-          this._mouse.updatePos({x:this._mouse.x+(scrollX-this.#lastScrollValues[0]), y:this._mouse.y+(scrollY-this.#lastScrollValues[1])}, {x:0, y:0})
+          this._mouse.updatePos(this._mouse.x+(scrollX-this.#lastScrollValues[0]), this._mouse.y+(scrollY-this.#lastScrollValues[1]), [0,0])
           this.#mouseMovements()
           this.#lastScrollValues[0] = scrollX
           this.#lastScrollValues[1] = scrollY
@@ -2664,10 +2749,8 @@ class Canvas {
     // updates the calculated canvas offset in the page
     updateOffset() {
         const {width, height, x, y} = this._cvs.getBoundingClientRect()
-        return this._offset = {x:Math.round((x+width)-this.width)+this._viewPos[0], y:Math.round((y+height)-this.height)+this._viewPos[1]}
+        return this._offset = [Math.round((x+width)-this.width)+this._viewPos[0], Math.round((y+height)-this.height)+this._viewPos[1]]
     }
-
-
 
     // main loop, runs every frame
     #loop(time, wasRestarted) {
@@ -2698,8 +2781,8 @@ class Canvas {
     drawSingleFrame(customTime=null) {
         let mouse = this._mouse, loopingCB = this._loopingCB, hasCustomTime = customTime!=null, deltaTime = hasCustomTime ? this.#calcDeltaTime(customTime) : this._deltaTime
         if (!mouse._moveListenersOptimizationEnabled) {
-            mouse.checkListeners(10) // mouse enter
-            mouse.checkListeners(11) // mouse leave
+            mouse.checkListeners(Mouse.LISTENER_TYPES.ENTER)
+            mouse.checkListeners(Mouse.LISTENER_TYPES.LEAVE)
         }
 
         this.clear()
@@ -2720,8 +2803,8 @@ class Canvas {
 
         mouse.calcSpeed(deltaTime)
         if (!mouse._moveListenersOptimizationEnabled) {
-            mouse.checkListeners(10) // mouse enter
-            mouse.checkListeners(11) // mouse leave
+            mouse.checkListeners(Mouse.LISTENER_TYPES.ENTER)
+            mouse.checkListeners(Mouse.LISTENER_TYPES.LEAVE)
         }
 
         this.clear()
@@ -2849,7 +2932,7 @@ class Canvas {
         this._viewPos[1] = y
         
         this.updateOffset()
-        this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
+        this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
         this.#mouseMovements()
     }
 
@@ -2861,7 +2944,7 @@ class Canvas {
         this._viewPos[1] += y
 
         this.updateOffset()
-        this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
+        this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
         this.#mouseMovements()
     }
 
@@ -2887,7 +2970,7 @@ class Canvas {
                 ly = ny
 
                 this.updateOffset()
-                this._mouse.updatePos({x:this._mouse.rawX, y:this._mouse.rawY}, this._offset)
+                this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
                 this.#mouseMovements()
             }, time, easing))
         }
@@ -2998,32 +3081,37 @@ class Canvas {
     // called on mouse move
     #mouseMovements(cb, e) {
         // update ratioPos to mouse pos if not overwritten
-        const r_ll = this.refs.length
+        const refs = this.refs, r_ll = refs.length
         for (let i=0;i<r_ll;i++) {
-            const ref = this.refs[i]
+            const ref = refs[i]
             if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos = this._mouse.pos
         }
-        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
-
         this._mouse.checkValid()
+        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
     }
+    
 
     // defines the onmousemove listener
     setMouseMove(cb, global) {
         if (!this.isOffscreenCanvas) {
+            let lastEventTime=0
             this.#mouseMoveCB = cb
             const onmousemove=e=>{
-                // update pos and direction angle
-                this._mouse.updatePos(e, this._offset)
-                this._mouse.calcAngle()            
-                this.#mouseMovements(cb, e)
+                const time = this.timeStamp
+                if (time-lastEventTime > this._mouseMoveThrottlingDelay) {
+                    lastEventTime = time
+                    this._mouse.updatePos(e.x, e.y, this._offset)
+                    this._mouse.calcAngle()         
+                    this.#mouseMovements(cb, e)
+                }
             }, ontouchmove=e=>{
-                const touches = e.touches
-                if (touches.length==1) {
+                const touches = e.touches, time = this.timeStamp
+                if (time-lastEventTime > this._mouseMoveThrottlingDelay && touches.length==1) {
+                    lastEventTime = time
                     e.preventDefault()
                     e.x = CDEUtils.round(touches[0].clientX, 1)
                     e.y = CDEUtils.round(touches[0].clientY, 1)
-                    this._mouse.updatePos(e, this._offset)
+                    this._mouse.updatePos(e.x, e.y, this._offset)
                     this._mouse.calcAngle()            
                     this.#mouseMovements(cb, e)
                 }
@@ -3068,7 +3156,7 @@ class Canvas {
                     e.x = CDEUtils.round(touches[0].clientX, 1)
                     e.y = CDEUtils.round(touches[0].clientY, 1)
                     e.button = 0
-                    this._mouse.updatePos(e, this._offset)
+                    this._mouse.updatePos(e.x, e.y, this._offset)
                     this._mouse.calcAngle()            
                     this.#mouseMovements(this.#mouseMoveCB, e)
                     this.#mouseClicks(cb, e, true)
@@ -3173,6 +3261,13 @@ class Canvas {
     disableAccurateMouseMoveListenersMode() {
         this.mouseMoveListenersOptimizationEnabled = true
     }
+
+    /**
+     * Disables all mouse move throttling cause by the mouseMoveThrottlingDelay property.
+     */
+    disableMouseMoveThrottling() {
+        this._mouseMoveThrottlingDelay = 0
+    }
     
 	get id() {return this._id}
 	get cvs() {return this._cvs}
@@ -3212,6 +3307,7 @@ class Canvas {
     get anims() {return this._anims}
     get mouseMoveListenersOptimizationEnabled() {return this._mouse._moveListenersOptimizationEnabled}
     get isOffscreenCanvas() {return this._cvs instanceof OffscreenCanvas} 
+    get mouseMoveThrottlingDelay() {return this._mouseMoveThrottlingDelay}
 
 	set id(id) {this._id = id}
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
@@ -3237,6 +3333,7 @@ class Canvas {
     }
     set speedModifier(speedModifier) {this._speedModifier = speedModifier}
     set mouseMoveListenersOptimizationEnabled(enabled) {this._mouse._moveListenersOptimizationEnabled = enabled}
+    set mouseMoveThrottlingDelay(mouseMoveThrottlingDelay) {this._mouseMoveThrottlingDelay = mouseMoveThrottlingDelay}
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -3892,9 +3989,9 @@ class AudioDisplay extends _BaseObj {
     static initializeDataSource(dataSrc, loadCallback, errorCB) {
         const types = AudioDisplay.SOURCE_TYPES
         if (typeof dataSrc==types.FILE_PATH) {
-            const extension = dataSrc.split(".")[dataSrc.split(".").length-1]
-            if (AudioDisplay.SUPPORTED_AUDIO_FORMATS.includes(extension)) AudioDisplay.#initAudioDataSource(AudioDisplay.loadAudio(dataSrc), loadCallback, errorCB)
-            else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) AudioDisplay.#initAudioDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback, errorCB)
+            if (AudioDisplay.isAudioFormatSupported(dataSrc)) AudioDisplay.#initAudioDataSource(AudioDisplay.loadAudio(dataSrc), loadCallback, errorCB)
+            else if (ImageDisplay.isVideoFormatSupported(dataSrc)) AudioDisplay.#initAudioDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback, errorCB)
+            else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NOT_SUPPORTED, dataSrc) 
         } else if (dataSrc.toString()==types.DYNAMIC) {
             if (dataSrc.type==types.MICROPHONE) AudioDisplay.#initMicrophoneDataSource(dataSrc.settings, loadCallback, errorCB)
             else if (dataSrc.type==types.SCREEN_AUDIO) AudioDisplay.#initScreenAudioDataSource(dataSrc.settings, loadCallback, errorCB)
@@ -4071,7 +4168,7 @@ class AudioDisplay extends _BaseObj {
      * @returns Whether the audio file is supported or not
      */
     static isAudioFormatSupported(file) {
-        const name = file?.name||file
+        const name = (file?.name||file).toLowerCase()
         return AudioDisplay.SUPPORTED_AUDIO_FORMATS.some(ext=>name.endsWith("."+ext))
     }
 
@@ -4376,9 +4473,8 @@ class ImageDisplay extends _BaseObj {
     static initializeDataSource(dataSrc, loadCallback, errorCB) {
         const types = ImageDisplay.SOURCE_TYPES
         if (typeof dataSrc==types.FILE_PATH) {
-            const extension = dataSrc.split(".")[dataSrc.split(".").length-1]
-            if (ImageDisplay.SUPPORTED_IMAGE_FORMATS.includes(extension)) ImageDisplay.loadImage(dataSrc, errorCB).onload=e=>ImageDisplay.#initData(e.target, loadCallback)
-            else if (ImageDisplay.SUPPORTED_VIDEO_FORMATS.includes(extension)) ImageDisplay.#initVideoDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback, errorCB)
+            if (ImageDisplay.isImageFormatSupported(dataSrc)) ImageDisplay.loadImage(dataSrc, errorCB).onload=e=>ImageDisplay.#initData(e.target, loadCallback)
+            else if (ImageDisplay.isVideoFormatSupported(dataSrc)) ImageDisplay.#initVideoDataSource(ImageDisplay.loadVideo(dataSrc), loadCallback, errorCB)
             else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_SUPPORTED, dataSrc) 
         } else if (dataSrc instanceof types.IMAGE || dataSrc instanceof types.SVG) {
             const fakeLoaded = dataSrc.getAttribute("fakeload")
@@ -4578,6 +4674,26 @@ class ImageDisplay extends _BaseObj {
         }
         this._parent.remove(this._id)
     }
+
+    /**
+     * Resizes the image's width keeping the original aspect ratio
+     * @param {Number | String} width: The width in px, or the width in % based on the natural size 
+     */
+    aspectRatioWidthResize(width) {
+        const heightFactor = this._size[1]/this._size[0], newWidth = (typeof width=="string" ? (+width.replace("%","").trim()/100)*this.#naturalSize[0] : width==null ? this.#naturalSize[0] : width)>>0
+        this._size[0] = newWidth
+        this._size[1] = newWidth*heightFactor
+    }
+
+    /**
+     * Resizes the image's height keeping the original aspect ratio
+     * @param {Number | String} height: The height in px, or the height in % based on the natural size 
+     */
+    aspectRatioHeightResize(height) {
+        const widthFactor = this._size[0]/this._size[1], newHeight = (typeof height=="string" ? (+height.replace("%","").trim()/100)*this.#naturalSize[1] : height==null ? this.#naturalSize[1] : height)>>0
+        this._size[1] = newHeight
+        this._size[0] = newHeight*widthFactor
+    }
     
     /**
      * Returns whether the provided file type is supported
@@ -4594,7 +4710,7 @@ class ImageDisplay extends _BaseObj {
      * @returns Whether the image file is supported or not
      */
     static isImageFormatSupported(file) {
-        const name = file?.name||file
+        const name = (file?.name||file).toLowerCase()
         return ImageDisplay.SUPPORTED_IMAGE_FORMATS.some(ext=>name.endsWith("."+ext))
     }
 
@@ -4604,7 +4720,7 @@ class ImageDisplay extends _BaseObj {
      * @returns Whether the video file is supported or not
      */
     static isVideoFormatSupported(file) {
-        const name = file?.name||file
+        const name = (file?.name||file).toLowerCase()
         return ImageDisplay.SUPPORTED_VIDEO_FORMATS.some(ext=>name.endsWith("."+ext))
     }
 
@@ -4847,6 +4963,19 @@ class TextDisplay extends _BaseObj {
     // returns the minimal rectangular area containing the text according to default text placements/parameters
     getBounds(padding, rotation=this._rotation, scale=this._scale) {
         return super.getBounds(this.#getRectBounds(), padding, rotation, scale, this._pos)
+    }
+
+    /**
+     * Loads a custom font by file or url. Direct font files are loaded using the FontFace api, while non direct font source are loaded via an HTML <link> element.
+     * @param {String | ArrayBuffer | TypedArray} src: The source of the font, either a file or a url
+     * @param {String?} fontFaceName: The font family name of the custom font (Only applicable for FontFace load)
+     * @param {Object?} fontFaceDescriptors: Object defining the font properties (Only applicable for FontFace load) 
+     * @param {Function?} readyCB: Callback called upon custom font loading completed. (fontFace, fontFamily)=>{...} (Only applicable for FontFace load)
+     * @param {Function?} errorCB: Callback called upon custom font loading errors. (error)=>{...} (Only applicable for FontFace load) 
+     * @returns The loaded font via a FontFace instance or a <link> element
+     */
+    static loadCustomFont(src, fontFaceName=null, fontFaceDescriptors={}, readyCB=null, errorCB=(e)=>console.warn("Error loading font:", src, e)) {
+        TextStyles.loadCustomFont(src, fontFaceName, fontFaceDescriptors, readyCB, errorCB)
     }
 
     get ctx() {return this._parent.ctx}
