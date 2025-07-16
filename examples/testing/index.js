@@ -339,7 +339,7 @@ for (let i=0;i<3;i++) {
 }
 
 
-CanvasUtils.createDrawingBoard(CVS, [[800, 300], [1200, 700]], new RenderStyles(CVS.render, "red", null, null, null, 5, 10), 1, null)
+CanvasUtils.createDrawingBoard(CVS, [[800, 300], [1200, 700]], new RenderStyles(CVS.render, "red", null, null, null, 5, 10), 1)
 
 // USER ACTIONS
 let mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"

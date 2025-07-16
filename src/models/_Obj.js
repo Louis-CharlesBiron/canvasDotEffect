@@ -20,22 +20,40 @@ class _Obj extends _BaseObj {
         super.initialize()
     }
 
-    // returns the value of the inital radius declaration
+    /**
+     * @returns the value of the inital radius declaration
+     */
     getInitRadius() {
         return CDEUtils.isFunction(this._initRadius) ? this._initRadius(this._parent instanceof Canvas?this:this._parent, this) : this._initRadius??null
     }
 
-    // returns whether the provided pos is inside the obj
+    /**
+     * Returns whether the provided pos is inside the obj
+     * @param {[x,y]} pos: the pos to check 
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos representing the recangular area
+     */
     isWithin(pos, positions) {
         return super.isWithin(pos, positions)
     }
 
-    // returns the center pos of the provided positions
+    /**
+     * Returns the center pos of the provided positions
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos representing the recangular area
+     * @returns the center pos
+     */
     getCenter(positions) {
         return super.getCenter(positions)
     }
 
-    // returns the minimal rectangular area defined by the provided positions
+    /**
+     * Returns the minimal rectangular area defined by the provided positions
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos represencting the recangular area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the results
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @param {[x,y]?} centerPos: the center pos used for rotation/scale
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(positions, padding, rotation, scale, centerPos) {
         return super.getBounds(positions, padding, rotation, scale, centerPos)
     }

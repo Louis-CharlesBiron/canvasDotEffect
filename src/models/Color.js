@@ -21,11 +21,15 @@ class Color {
     
     #rgba = null // cached rgba value
     #hsv = null  // cached hsv value
-    constructor(color, isChannel) {
+
+    /**
+     * @param {String | [r,g,b,a] | Color} color: the color definition
+     * @param {Boolean?} isChannel: if true, this Color will be used as a channel and will not duplicate
+     */
+    constructor(color, isChannel=false) {
         this._color = color instanceof Color ? color._color : color||Color.DEFAULT_COLOR // the color value declaration, in any supported format
         this._format = Color.getFormat(this._color) // the format of the color
         this.#updateCache()
-
         this._isChannel = isChannel||false // if true, this instance will be used as a color channel and will not duplicate
     }
 
@@ -43,7 +47,12 @@ class Color {
         }
     }
 
-    // converts a color to another color format
+    /**
+     * Converts a color to another color format
+     * @param {String | [r,g,b,a] | Color} color: the color to convert
+     * @param {Color.CONVERTABLE_FORMATS} format 
+     * @returns the color in the provided format
+     */
     static convertTo(color, format=Color.CONVERTABLE_FORMATS.RGBA) {
         let inputFormat = Color.getFormat(color), convertedColor = color, formats = Color.CONVERTABLE_FORMATS, RGBA=formats.RGBA, HEX=formats.HEX, TEXT=formats.TEXT, HSV=formats.HSV
 
@@ -64,7 +73,12 @@ class Color {
 
         return convertedColor
     }
-    // instance version
+    /**
+     * Converts a color to another color format
+     * @param {String | [r,g,b,a] | Color} color: the color to convert
+     * @param {Color.CONVERTABLE_FORMATS} format 
+     * @returns the color in the provided format
+     */
     convertTo(color=this._color, format=Color.CONVERTABLE_FORMATS.RGBA) {
         return Color.convertTo(color, format)
     }
@@ -134,10 +148,12 @@ class Color {
         return hex.padEnd(9, "F").match(/[a-z0-9]{2}/gi).reduce((a,b,i)=>a.concat(parseInt(b, 16)/(i&&!(i%3)?255:1)),[])
     }
 
-    // returns the format of the provided color
+    /**
+     * Returns the format of the provided color
+     * @param {String | [r,g,b,a] | Color} color: the color definition
+     */
     static getFormat(color) {
-        return Array.isArray(color) ?
-            (color.length == 4 ? Color.FORMATS.RGBA : Color.FORMATS.HSV) :
+        return Array.isArray(color) ? (color.length == 4 ? Color.FORMATS.RGBA : Color.FORMATS.HSV) :
         color instanceof Color ? Color.FORMATS.COLOR :
         color instanceof Gradient ? Color.FORMATS.GRADIENT :
         color instanceof Pattern ? Color.FORMATS.PATTERN :
@@ -149,18 +165,32 @@ class Color {
         return color instanceof Color ? color.isChannel?color:color.duplicate() : new Color(color)
     }
     
-    // formats a rgba array to a usable rgba value
+    /**
+     * Formats a rgba array to a usable rgba value
+     * @param {[r,g,b,a]} arrayRgba: the rgba array to format
+     * @returns a string containing the color as rgba format
+     */
     static formatRgba(arrayRgba) {
         return Array.isArray(arrayRgba) ? `rgba(${arrayRgba[0]}, ${arrayRgba[1]}, ${arrayRgba[2]}, ${arrayRgba[3]})` : null
     }
 
-    // creates an rgba array
+    /**
+     * Creates an rgba array
+     * @param {Number?} r: a number between 0 and 255 that represents the red value
+     * @param {Number?} g: a number between 0 and 255 that represents the green value
+     * @param {Number?} b: a number between 0 and 255 that represents the blue value
+     * @param {Number?} a: a number between 0 and 1 that represents the opacity
+     * @returns the created rgba array
+     */
     static rgba(r=255, g=255, b=255, a=1) {
         const round = CDEUtils.round, roundingPoint = Color.DEFAULT_DECIMAL_ROUNDING_POINT
         return [round(r, roundingPoint), round(g, roundingPoint), round(b, roundingPoint), round(a, roundingPoint)]
     }
 
-    // returns the usable value of a color from any supported format
+    /**
+     * Returns the usable value of a color from any supported format
+     * @param {String | [r,g,b,a] | Color} color: the color definition
+     */
     static getColorValue(color) {
         if (typeof color=="string" || color instanceof CanvasGradient || color instanceof CanvasPattern) return color
         else if (color instanceof _DynamicColor) return color.value
@@ -206,7 +236,10 @@ class Color {
         return null
     }
 
-    // returns a new instance of the same color
+    /**
+     * Returns a new instance of the same color
+     * @param {[pos1, pos2]} dynamicColorPositions: the positions if the color is a _DynamicColor instance
+     */
     duplicate(dynamicColorPositions) {
         const formats = Color.FORMATS, format = this._format
         if (format == formats.GRADIENT || format == formats.PATTERN) return new Color(this._color.duplicate(dynamicColorPositions))

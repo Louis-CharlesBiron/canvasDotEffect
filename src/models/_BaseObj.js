@@ -10,6 +10,15 @@ class _BaseObj extends _HasColor {
     static POSITION_PRECISION = 6
 
     #lastAnchorPos = [0,0]
+
+    /**
+     * @param {[x,y]?} pos: the [x,y] pos of the object
+     * @param {Color | [r,g,b,a] ?} color: the color of the object
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: The pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     */
     constructor(pos, color, setupCB, loopCB, anchorPos, activationMargin) {
         super(color)
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
@@ -19,7 +28,7 @@ class _BaseObj extends _HasColor {
         this._loopCB = loopCB                    // called each frame for this object (this)=>
         this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
-        this._activationMargin = activationMargin??Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING // the px margin amount where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+        this._activationMargin = activationMargin??Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING // the px margin amount where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active
         
         this._parent = null                      // the object's parent
         this._rotation = 0                       // the object's rotation in degrees 
@@ -52,12 +61,16 @@ class _BaseObj extends _HasColor {
         if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
     }
 
-    // returns the value of the inital color declaration
+    /**
+     * @returns: the value of the inital color declaration
+     */
     getInitColor() {
         return CDEUtils.isFunction(this._initColor) ? this._initColor(this.render??this.parent.render, this) : this._initColor||null
     }
 
-    // returns the value of the inital pos declaration
+    /**
+     * @returns: the value of the inital pos declaration
+     */
     getInitPos() {
         return CDEUtils.isFunction(this._initPos) ? CDEUtils.unlinkArr2(this._initPos(this._parent instanceof Canvas?this:this._parent, this)) : CDEUtils.unlinkArr2(this.adjustPos(this._initPos))
     }
@@ -73,21 +86,36 @@ class _BaseObj extends _HasColor {
         }
     }
 
-    // Teleports to given coords
+    /**
+     * Instantly moves the object to the given pos
+     * @param {[x,y]} pos: the pos to move to 
+     */
     moveAt(pos) {
         const [x, y] = pos
         if (CDEUtils.isDefined(x) && isFinite(x)) this.x = x
         if (CDEUtils.isDefined(y) && isFinite(y)) this.y = y
     }
 
-    // Teleports to incremented coords
+    /**
+     * Instantly moves the object by the increments provided
+     * @param {[x,y]} pos: the x/y values to increment by
+     */
     moveBy(pos) {
         const [x, y] = pos
         if (CDEUtils.isDefined(x) && isFinite(x)) this.x += x
         if (CDEUtils.isDefined(y) && isFinite(y)) this.y += y
     }
 
-    // Smoothly moves to coords in set time
+    /**
+     * Smoothly moves to a pos in set time
+     * @param {[x,y]} pos: the pos to move to 
+     * @param {Number?} time: the move time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {[x,y]?} initPos: the pos to start the movement. Defaults to object's current pos 
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} force: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the created Anim instance
+     */
     moveTo(pos, time, easing, initPos, isUnique, force) {
         time??=1000
         easing??=Anim.easeInOutQuad
@@ -102,23 +130,40 @@ class _BaseObj extends _HasColor {
         }, time, easing), isUnique, force)
     }
 
-    // Rotates the object clock-wise by a specified degree increment around its pos
+    /**
+     * Rotates the object clock-wise by a specified degree increment around its pos
+     * @param {Number} deg: the degrees to rotate by
+     */
     rotateBy(deg) {
         this.rotation = (this._rotation+deg)%360
     }
 
-    // Rotates the object to a specified degree around its pos
+    /**
+     * Rotates the object to a specified degree around its pos
+     * @param {Number} deg: the degrees to rotate to
+     */
     rotateAt(deg) {
         this.rotation = deg%360
     }
 
-    // Smoothly rotates the object to a specified degree around its pos
+    /**
+     * Smoothly rotates the object to a specified degree around its pos
+     * @param {Number} deg: the degrees to rotate to
+     * @param {Number?} time: the rotate time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} force: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the created Anim instance
+     */
     rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, isUnique=false, force=false) {
         const ir = this._rotation, dr = deg-this._rotation
         return this.playAnim(new Anim((prog)=>this.rotateAt(ir+dr*prog), time, easing), isUnique, force)
     }
 
-    // Scales the object by a specified amount [scaleX, scaleY] from its pos
+    /**
+     * Scales the object by a specified amount [scaleX, scaleY] from its pos
+     * @param {[scaleX, scaleY]} scale: the x/y values to scale the object by
+     */
     scaleBy(scale) {
         let [scaleX, scaleY] = scale
         if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
@@ -127,12 +172,24 @@ class _BaseObj extends _HasColor {
         this.scale[1] *= scaleY
     }
 
-    // Scales the object to a specified amount [scaleX, scaleY] from its pos
+    /**
+     * Scales the object to a specified amount [scaleX, scaleY] from its pos
+     * @param {[scaleX, scaleY]} scale: the x/y values to scale the object to
+     */
     scaleAt(scale) {
         this.scale = scale
     }
 
-    // Smoothly scales the text to a specified amount [scaleX, scaleY] from its pos
+    /**
+     * Smoothly scales the text to a specified amount [scaleX, scaleY] from its pos
+     * @param {[scaleX, scaleY]} scale: the x/y values to scale the object to
+     * @param {Number?} time: the scale time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {[x,y]} centerPos: the center pos used for scaling
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} force: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the created Anim instance
+     */
     scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=false, force=false) {
         const is = CDEUtils.unlinkArr2(this._scale), dsX = scale[0]-is[0], dsY = scale[1]-is[1]
         return this.playAnim(new Anim(prog=>this.scaleAt([is[0]+dsX*prog, is[1]+dsY*prog], centerPos), time, easing), isUnique, force)
@@ -164,9 +221,18 @@ class _BaseObj extends _HasColor {
         }, duration, easing))
     }
 
-    // moves the obj in specified direction at specified distance(force)
-    addForce(distance, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
-        let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
+    /**
+     * Moves the object in the specified direction, at the specified distance/force
+     * @param {Number} distance: the distance in pixels
+     * @param {Number} deg: the degree representing the direction of the movement
+     * @param {Number?} time: the move time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} animForce: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the created Anim instance
+     */
+    addForce(distance, deg, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
+        let rDir = CDEUtils.toRad(deg), ix = this.x, iy = this.y,
             dx = CDEUtils.getAcceptableDiff(distance*Math.cos(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE),
             dy = CDEUtils.getAcceptableDiff(distance*Math.sin(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE)
         
@@ -176,7 +242,13 @@ class _BaseObj extends _HasColor {
         }, time, easing), isUnique, animForce)
     }
 
-    // adds an animation to play. "isUnique" makes it so the animation gets queue in the backlog. "force" terminates the current backlog animation and replaces it with the specified "anim"
+    /**
+     * Adds an animation to play on the object
+     * @param {Anim} anim: the Anim instance containing the animation
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} force: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the provided Anim instance
+     */
     playAnim(anim, isUnique, force) {
         if (isUnique && this.currentBacklogAnim && force) {
             this.currentBacklogAnim.end()
@@ -193,13 +265,20 @@ class _BaseObj extends _HasColor {
         return anim
     }
 
-    // clears all blacklog and currents anim
+    /**
+     * Clears all blacklog and currents anim
+     */
     clearAnims() {
         this._anims.backlog = []
         this._anims.currents = []
     }
 
-    // allows flexible pos declarations
+    // 
+    /**
+     * Allows flexible pos declarations, if a x/y value is null, it gets adjusted to the current corresponding object's value
+     * @param {[x,y]} pos: a pos array
+     * @returns the adjusted pos array
+     */
     adjustPos(pos) {
         let [x, y] = pos
         if (!CDEUtils.isDefined(x)) x = this.x??0
@@ -207,23 +286,40 @@ class _BaseObj extends _HasColor {
         return [x, y]
     }
 
-    // deletes the object from the canvas
+    /**
+     * Deletes the object from the canvas
+     */
     remove() {
         this._parent.remove(this._id)
     }
 
-    // returns whether the provided pos is in the provided positions
+    /**
+     * Returns whether the provided pos is in the provided area
+     * @param {[x,y]} pos: the pos to check 
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos representing the recangular area
+     */
     isWithin(pos, positions) {
         return pos[0] >= positions[0][0] && pos[0] <= positions[1][0] && pos[1] >= positions[0][1] && pos[1] <= positions[1][1]
     }
 
-    // returns the center pos of the provided positions
+    /**
+     * Returns the center pos of the provided positions
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos represencting the recangular area
+     */
     getCenter(positions) {
         return CDEUtils.getPositionsCenter(positions)
     }
 
-    // returns the 4 corners of the provided positions accounting for rotation and scale. corners -> [TOP-LEFT, BOTTOM-RIGHT, TOP-RIGHT, BOTTOM-LEFT]
-    getCorners(positions, padding=0, rotation, scale, centerPos=this.getCenter(positions)) {
+    /**
+     * Returns the 4 corners of the provided positions accounting for rotation and scale
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos represencting the recangular area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the results
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @param {[x,y]?} centerPos: the center pos used for rotation/scale
+     * @returns corners -> [TO:-LEFT, BOTTOM-RIGHT, TOP-RIGHT, BOTTOM-LEFT]
+     */
+    getCorners(positions, padding=0, rotation=null, scale=null, centerPos=this.getCenter(positions)) {
         const rotatePos = CDEUtils.rotatePos, scalePos = CDEUtils.scalePos
 
         positions[2] = [positions[1][0], positions[0][1]]
@@ -245,7 +341,6 @@ class _BaseObj extends _HasColor {
         padding??=0
         if (padding) {
             padding = typeof padding=="number" ? [padding, padding, padding, padding] : [padding[0],padding[1]??padding[0], padding[2]??padding[0], padding[3]??padding[1]]
-
             positions[0][0] -= padding[3]
             positions[0][1] -= padding[0]
             positions[2][0] += padding[1]
@@ -259,7 +354,15 @@ class _BaseObj extends _HasColor {
         return positions
     }
 
-    // returns the minimal rectangular area defined by the provided positions
+    /**
+     * Returns the minimal rectangular area defined by the provided positions
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos represencting the recangular area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the results
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @param {[x,y]?} centerPos: the center pos used for rotation/scale
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(positions, padding, rotation, scale, centerPos=this.getCenter(positions)) {
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
 

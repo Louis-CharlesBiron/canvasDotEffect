@@ -5,6 +5,10 @@
 
 // Abstract class, provides color attributes to other classes
 class _HasColor {
+
+    /**
+     * @param {String | [r,g,b,a] | Color | Function} color: the color definition
+     */
     constructor(color) {
         this._initColor = color       // declaration color value || (ctx, this)=>{return color value}
         this._color = this._initColor // the current color or gradient of the object

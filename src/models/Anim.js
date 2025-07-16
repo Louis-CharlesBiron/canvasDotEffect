@@ -8,12 +8,18 @@ class Anim {
     static #ANIM_ID_GIVER = 0
     static DEFAULT_DURATION = 1000
 
-    constructor(animation, duration, easing, endCB) {
-        this._id = Anim.#ANIM_ID_GIVER++                  // animation id
-        this._animation = animation                      // the main animation (clampedProgress, playCount, progress)=>
+    /**
+     * @param {Function} animationCB: a function called each frame containing the animation code. (clampedProgress, playCount, progress)=>{...}
+     * @param {Number?} duration: the animation duration in miliseconds. Negative numbers make the animation loop infinitely
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {Function?} endCB: a function called upon the anim end
+     */
+    constructor(animationCB, duration, easing, endCB) {
+        this._id = Anim.#ANIM_ID_GIVER++                 // animation id
+        this._animation = animationCB                    // the main animation (clampedProgress, playCount, progress)=>
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
         this._easing = easing||Anim.linear               // easing function (x)=>
-        this._endCB = endCB                  // function called when animation is over
+        this._endCB = endCB                              // function called when animation is over
 
         this._startTime = null // start time
         this._progress = 0     // animation progress

@@ -42,9 +42,19 @@ class Canvas {
     #lastScrollValues = [window.scrollX, window.screenY] // last window scroll x/y values
     #mouseMoveCB = null      // the custom mouseMoveCB. Used for mobile adjustments
     #visibilityChangeLastState = null // stores the cvs state before document visibility change
+
+    /**
+     * @param {HTMLCanvasElement | OffscreenCanvas} cvs: the html canvas element or an OffscreenCanvas instance to link to
+     * @param {Function?} loopingCB: a function called along with the loop() function. (deltatime)=>{...}
+     * @param {Number?} fpsLimit: the maximal frames per second cap. Defaults to V-Sync
+     * @param {Function?} visibilityChangeCB: a function called upon document visibility change. (isVisible)=>{...}
+     * @param {HTMLElement?} cvsFrame: if defined and if "cvs" is an HTML canvas, sets this element as the parent of the canvas element
+     * @param {Object?} settings: an object containing the canvas settings
+     * @param {Boolean} willReadFrequently: whether the getImageData optimizations are enabled
+     */
     constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
-        this._id = Canvas.CANVAS_ID_GIVER++                           // Canvas instance id
-        this._cvs = cvs                                               // html canvas element or an OffscreenCanvas instance
+        this._id = Canvas.CANVAS_ID_GIVER++                               // Canvas instance id
+        this._cvs = cvs                                                   // html canvas element or an OffscreenCanvas instance
         if (!this.isOffscreenCanvas) {
             this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
             this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)       // set styles selector for canvas
@@ -56,7 +66,7 @@ class Canvas {
         this._els = {refs:[], defs:[]}                                // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
         this._state = 0                                               // canvas drawing loop state. 0:off, 1:on, 2:awaiting stop
         this._loopingCB = loopingCB                                   // custom callback called along with the loop() function
-        this.fpsLimit = fpsLimit                                      // delay between each frame to limit fps
+        this.fpsLimit = fpsLimit                                      // the max frames per second
         this._speedModifier = 1                                       // animation/drawing speed multiplier
         this.#maxTime = this.#getMaxTime(fpsLimit)                    // max time between frames
         this._deltaTime = null                                        // useable delta time in seconds
@@ -65,8 +75,8 @@ class Canvas {
         this._viewPos = [0,0]                                         // context view offset
         if (!this.isOffscreenCanvas) {
             const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
-            this.setSize(frameCBR.width, frameCBR.height)             // init size
-            this.#initStyles()                                        // init styles
+            this.setSize(frameCBR.width, frameCBR.height)              // init size
+            this.#initStyles()                                         // init styles
         } else this.#cachedSize = [this._cvs.width, this._cvs.height]
         this._typingDevice = new TypingDevice()                        // keyboard info
         this._mouse = new Mouse(this._ctx)                             // mouse info
@@ -125,18 +135,27 @@ class Canvas {
         }
     }
 
-    // sets the cursor style on the canvas
+    /**
+     * Modifies the canvas cursor appearance
+     * @param {Canvas.CURSOR_STYLES} cursorStyle: the cursor style to use
+     */
     setCursorStyle(cursorStyle=Canvas.CURSOR_STYLES.DEFAULT) {
         const frame = this._frame
         if (frame.style.cursor !== cursorStyle) frame.style.cursor = cursorStyle
     }
 
-    // adds a callback to be called once the document is loaded
+    /**
+     * Adds a callback to be called once the document is loaded
+     * @param {Function} callback: the callback to call 
+     */
     static addOnLoadCallback(callback) {
         if (CDEUtils.isFunction(callback) && Canvas.#ON_LOAD_CALLBACKS) Canvas.#ON_LOAD_CALLBACKS.push(callback)
     }
 
-    // adds a callback to be called once the document has been interacted with for the first time
+    /**
+     * Adds a callback to be called once the document has been interacted with for the first time
+     * @param {Function} callback: the callback to call 
+     */
     static addOnFirstInteractCallback(callback) {
         if (CDEUtils.isFunction(callback) && Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#ON_FIRST_INTERACT_CALLBACKS.push(callback)
     }
@@ -164,12 +183,18 @@ class Canvas {
         return id
     }
 
-    // returns the filter elements of a loaded svg filter
+    /**
+     * Returns the filter elements of a loaded svg filter
+     * @param {String} id: the identifier of the svg filter
+     */
     static getSVGFilter(id) {
         return Canvas.LOADED_SVG_FILTERS[id]
     }
 
-    // deletes a loaded svg filter
+    /**
+     * Deletes a loaded svg filter
+     * @param {String} id: the identifier of the svg filter
+     */
     static removeSVGFilter(id) {
         id = Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+id
         document.getElementById(id).remove()
@@ -246,7 +271,9 @@ class Canvas {
         if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(this.timeStamp, deltaTime)
     }
 
-    // starts the canvas drawing loop
+    /**
+     * Starts the canvas drawing loop
+     */
     startLoop() {
         if (this._state!=1) {
             if (this._state==2) return this._state = 1
@@ -255,16 +282,22 @@ class Canvas {
             this.#loop(this.#timeStamp||0, true)
         }
     }
-    // starts the canvas drawing loop
+    /**
+     * Starts the canvas drawing loop
+     */
     start() {
         this.startLoop()
     }
 
-    // stops the canvas drawing loop
+    /**
+     * Stops the canvas drawing loop
+     */
     stopLoop() {
         if (this._state) this._state = 2
     }
-    // stops the canvas drawing loop
+    /**
+     * Stops the canvas drawing loop
+     */
     stop() {
         this.stopLoop()
     }
@@ -300,7 +333,13 @@ class Canvas {
         }
     }
 
-    // clears the canvas
+    /**
+     * Clears the provided area of the canvas
+     * @param {Number?} x: the x value of the top-left corner
+     * @param {Number?} y: the y value of the top-left corner
+     * @param {Number?} x2: the x value of the bottom-right corner
+     * @param {Number?} y2: the y value of the bottom-right corner
+     */
     clear(x=0, y=0, x2=this.width, y2=this.height) {
         if (this._viewPos[0] || this._viewPos[1]) {
             this.save()
@@ -310,7 +349,9 @@ class Canvas {
         } else this._ctx.clearRect(x, y, x2, y2)
     }
 
-    // initializes the canvas as static
+    /**
+     * Initializes the canvas as static
+     */
     initializeStatic() {
         this.fpsLimit = 0
         this.draw()
@@ -330,30 +371,41 @@ class Canvas {
         }
     }
 
-    // draws a single frame (use with static canvas)
+    /**
+     * Draws a single frame (use with static canvas)
+     */
     drawStatic() {
         this.draw()
         this._render.drawBatched()
         if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB()
     }
 
-    // clears the canvas and draws a single frame (use with static canvas)
+    /**
+     * Clears the canvas and draws a single frame (use with static canvas)
+     */
     cleanDrawStatic() {
         this.clear()
         this.drawStatic()
     }
 
-    // resets every fragile references
+    /**
+     * Resets every fragile references
+     */
     resetReferences() {
         this.refs.filter(ref=>ref.fragile).forEach(r=>r.reset())
     }
 
-    // discards all current context transformations
+    /**
+     * Discards all current context transformations
+     */
     resetTransformations() {
         this.ctx.setTransform(1,0,0,1,0,0)
     }
 
-    // moves the context to a specific x/y value
+    /**
+     * Moves the camera view to a specific x/y value
+     * @param {[x,y]} pos: the pos to move the camera view to
+     */
     moveViewAt(pos) {
         let [x, y] = pos
         this.resetTransformations()
@@ -366,7 +418,10 @@ class Canvas {
         this.#mouseMovements()
     }
 
-    // moves the context by specified x/y values
+    /**
+     * Moves the camera view by specified x/y values
+     * @param {[x,y]} pos: the x/y values to move the camera view by
+     */
     moveViewBy(pos) {
         let [x, y] = pos
         this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
@@ -378,8 +433,15 @@ class Canvas {
         this.#mouseMovements()
     }
 
-    // Smoothly moves to coords in set time
-    moveViewTo(pos, time, easing, initPos) {
+    /**
+     * Smoothly moves the camera view to the provided pos, in set time
+     * @param {[x,y]} pos: the pos to move the camera view to
+     * @param {Number?} time: the move time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {[x,y]} initPos: the pos to start the movement. Defaults to the current camera view pos 
+     * @returns the created Anim instance
+     */
+    moveViewTo(pos, time=null, easing=null, initPos=null) {
         time??=1000
         easing??=Anim.easeInOutQuad
         initPos??=this._viewPos
@@ -406,7 +468,11 @@ class Canvas {
         }
     }
 
-    // adds an animation to play
+    /**
+     * Adds an animation to play
+     * @param {Anim} anim: the Anim instance containing the animation
+     * @returns the provided Anim instance
+     */
     playAnim(anim) {
         const initEndCB = anim.endCB
         anim.endCB=()=>{
@@ -417,7 +483,12 @@ class Canvas {
         return anim
     }
 
-    // sets the width and height in px of the canvas element. If "forceCSSupdate" is true, it also force the resizes on the frame with css
+    /**
+     * Sets the width and height in pixels of the canvas element
+     * @param {Number?} forceWidth: if defined, forces the canvas to resize to this width in pixels
+     * @param {Number?} forceHeight: if defined, forces the canvas to resize to this height in pixels
+     * @param {Boolean?} forceCSSupdate if true, also force the resizes on the frame using CSS
+     */
     setSize(forceWidth, forceHeight, forceCSSupdate) {
         const {width, height} = this._frame.getBoundingClientRect(), w = forceWidth??width, h = forceHeight??height
 
@@ -435,7 +506,10 @@ class Canvas {
         this.#cachedSize = [this._cvs.width, this._cvs.height]
     }
 
-    // updates current canvas settings
+    /**
+     * Updates current canvas settings
+     * @param {Object?} settings: an object containing the canvas settings
+     */
     updateSettings(settings) {
         const st = settings||this._settings
         if (st) {
@@ -444,7 +518,12 @@ class Canvas {
         } else return null
     }
 
-    // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "inactive" is true, it only initializes the obj, without adding it to the canvas
+    /**
+     * Adds one or many objects to the canvas, either as a definition or as a reference/source
+     * @param {_BaseObj | Array[_BaseObj]} objs: the object(s) to add
+     * @param {Boolean?} inactive: if true, only initializes the object without adding it to the canvas
+     * @returns 
+     */
     add(objs, inactive=false) {
         const l = objs&&(objs.length??1)
         for (let i=0;i<l;i++) {
@@ -459,7 +538,10 @@ class Canvas {
         return objs
     }
 
-    // removes any element from the canvas by id
+    /**
+     * Removes an object from the canvas
+     * @param {Number} id: the id of the object to delete
+     */
     remove(id) {
         if (id=="*") this._els = {refs:[], defs:[]}
         else {
@@ -469,12 +551,18 @@ class Canvas {
         this.updateCachedAllEls()
     }
 
-    // removes all objects added to the canvas
+    /**
+     * Removes all objects added to the canvas
+     */
     removeAllObjects() {
         this.remove("*")
     }
 
-    // get any element from the canvas by id
+    /**
+     * Get an object from the canvas
+     * @param {Number} id: the id of the object to get
+     * @returns the desired object
+     */
     get(id) {
         const els = this.#cachedEls, e_ll = this.#cachedEls_ll
         for (let i=0;i<e_ll;i++) {
@@ -484,17 +572,25 @@ class Canvas {
         return null
     }
 
-    // removes any element from the canvas by instance type
-    getObjs(instance) {
-        return this.allEls.filter(x=>x instanceof instance)
+    /**
+     * Removes any element from the canvas by instance type
+     * @param {Class} instanceType: the class definition
+     * @returns any object matching the class definition
+     */
+    getObjs(instanceType) {
+        return this.allEls.filter(x=>x instanceof instanceType)
     }
 
-    // saves the context parameters
+    /**
+     * Saves the context parameters
+     */
     save() {
         this._ctx.save()
     }
     
-    // restore the saved context parameters
+    /**
+     * Restore the saved context parameters
+     */
     restore() {
         this._ctx.restore()
     }
@@ -509,7 +605,7 @@ class Canvas {
     }
 
     // called on mouse move
-    #mouseMovements(cb, e) {
+    #mouseMovements(callback, e) {
         // update ratioPos to mouse pos if not overwritten
         const refs = this.refs, r_ll = refs.length
         for (let i=0;i<r_ll;i++) {
@@ -517,22 +613,27 @@ class Canvas {
             if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos = this._mouse.pos
         }
         this._mouse.checkValid()
-        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
+        if (CDEUtils.isFunction(callback)) callback(this._mouse, e)
     }
     
 
-    // defines the onmousemove listener
-    setMouseMove(cb, global) {
+    /**
+     * Defines the onmousemove listener
+     * @param {Function} callback: a function called on event. (mouse, event)=>{...}
+     * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
+     * @returns a callback which removes the listeners
+     */
+    setMouseMove(callback, global) {
         if (!this.isOffscreenCanvas) {
             let lastEventTime=0
-            this.#mouseMoveCB = cb
+            this.#mouseMoveCB = callback
             const onmousemove=e=>{
                 const time = this.timeStamp
                 if (time-lastEventTime > this._mouseMoveThrottlingDelay) {
                     lastEventTime = time
                     this._mouse.updatePos(e.x, e.y, this._offset)
                     this._mouse.calcAngle()         
-                    this.#mouseMovements(cb, e)
+                    this.#mouseMovements(callback, e)
                 }
             }, ontouchmove=e=>{
                 const touches = e.touches, time = this.timeStamp
@@ -543,7 +644,7 @@ class Canvas {
                     e.y = CDEUtils.round(touches[0].clientY, 1)
                     this._mouse.updatePos(e.x, e.y, this._offset)
                     this._mouse.calcAngle()            
-                    this.#mouseMovements(cb, e)
+                    this.#mouseMovements(callback, e)
                 }
             }, element = global ? document : this._frame
             element.addEventListener("mousemove", onmousemove)
@@ -555,12 +656,17 @@ class Canvas {
         } else return false
     }
 
-    // defines the onmouseleave listener
-    setMouseLeave(cb, global) {
+    /**
+     * Defines the onmouseleave listener
+     * @param {Function} callback: a function called on event. (mouse, event)=>{...}
+     * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
+     * @returns a callback which removes the listeners
+     */
+    setMouseLeave(callback, global) {
         if (!this.isOffscreenCanvas) {
             const onmouseleave=e=>{
                 this._mouse.invalidate()
-                this.#mouseMovements(cb, e)
+                this.#mouseMovements(callback, e)
             }, element = global ? document : this._frame
             element.addEventListener("mouseleave", onmouseleave)
             return ()=>element.removeEventListener("mouseleave", onmouseleave)            
@@ -574,7 +680,12 @@ class Canvas {
         if (!preventOnFirstInteractionTrigger && Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
     }
 
-    // defines the onmousedown listener
+    /**
+     * Defines the onmousedown listener
+     * @param {Function} callback: a function called on event. (mouse, event)=>{...}
+     * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
+     * @returns a callback which removes the listeners
+     */
     setMouseDown(cb, global) {
         if (!this.isOffscreenCanvas) {
             let isTouch = false
@@ -604,8 +715,13 @@ class Canvas {
         } else return false
     }
 
-    // defines the onmouseup listener
-    setMouseUp(cb, global) {
+    /**
+     * Defines the onmouseup listener
+     * @param {Function} callback: a function called on event. (mouse, event)=>{...}
+     * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
+     * @returns a callback which removes the listeners
+     */
+    setMouseUp(callback, global) {
         if (!this.isOffscreenCanvas) {
             let isTouch = false
             const ontouchend=e=>{
@@ -616,15 +732,15 @@ class Canvas {
                     e.x = CDEUtils.round(changedTouches[0].clientX, 1)
                     e.y = CDEUtils.round(changedTouches[0].clientY, 1)
                     e.button = 0
-                    this.#mouseClicks(cb, e)
+                    this.#mouseClicks(callback, e)
 
                     this._mouse.invalidate()
                     e.x = Infinity
                     e.y = Infinity
-                    this.#mouseMovements(cb, e)
+                    this.#mouseMovements(callback, e)
                 }     
             }, onmouseup=e=>{
-                if (!isTouch) this.#mouseClicks(cb, e)
+                if (!isTouch) this.#mouseClicks(callback, e)
                 isTouch = false
             }, element = global ? document : this._frame
             element.addEventListener("touchend", ontouchend)
@@ -636,12 +752,17 @@ class Canvas {
         } else return false
     }
 
-    // defines the onkeydown listener
-    setKeyDown(cb, global) {
+    /**
+     * Defines the onkeydown listener
+     * @param {Function} callback: a function called on event. (typingDevice, event)=>{...}
+     * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
+     * @returns a callback which removes the listeners
+     */
+    setKeyDown(callback, global) {
         if (!this.isOffscreenCanvas) {
             const onkeydown=e=>{
                 this._typingDevice.setDown(e)
-                if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
+                if (CDEUtils.isFunction(callback)) callback(this._typingDevice, e)
             }, globalFirstInteractOnKeyDown=e=>{if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)}, element = global ? document : this._frame
             element.addEventListener("keydown", onkeydown)
             document.addEventListener("keydown", globalFirstInteractOnKeyDown)
@@ -649,45 +770,68 @@ class Canvas {
         } else return false
     }
 
-    // defines the onkeyup listener
-    setKeyUp(cb, global) {
+    /**
+     * Defines the onkeyup listener
+     * @param {Function} callback: a function called on event. (typingDevice, event)=>{...}
+     * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
+     * @returns a callback which removes the listeners
+     */
+    setKeyUp(callback, global) {
         if (!this.isOffscreenCanvas) {
             const onkeyup=e=>{
                 this._typingDevice.setUp(e)
-                if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
+                if (CDEUtils.isFunction(callback)) callback(this._typingDevice, e)
             }, element = global ? document : this._frame
             element.addEventListener("keyup", onkeyup)
             return ()=>element.removeEventListener("keyup", onkeyup)            
         } else return false
     }
 
-    // returns the center [x,y] of the canvas
+    /**
+     * @returns the center [x,y] of the canvas
+     */
     getCenter() {
         return [this.width/2, this.height/2]
     }
 
-    // returns whether the provided position is within the canvas bounds
+    /**
+     * Returns whether the provided position is within the canvas bounds
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the results
+     */
     isWithin(pos, padding=0) {
         const viewPos = this._viewPos
         return pos[0] >= -padding-viewPos[0] && pos[0] <= this.#cachedSize[0]+padding-viewPos[0] && pos[1] >= -padding-viewPos[1] && pos[1] <= this.#cachedSize[1]+padding-viewPos[1]
     }
 
-    // returns the px value of the provided pourcent value. PourcentileValue should be a number between 0 and 1. UseWidth determines whether the width or height should be used.
+    /**
+     * Returns the pixel value of the provided pourcent value
+     * @param {Number} pourcentileValue: a number between 0 and 1 representing a pourcentile
+     * @param {Boolean?} useWidth: whether the width or height should be used
+     */
     pct(pourcentileValue, useWidth=true) {
         return useWidth ? this.width*pourcentileValue : this.height*pourcentileValue
     }
 
-    // Returns the px values of the provided pourcent values. PourcentilePos should be an array(2) of numbers between 0 and 1. ReferenceDims is the reference dimensions used to calculate the values
+    /**
+     * Returns the px values of the provided pourcent values.
+     * @param {[x%, y%]} pourcentilePos: the x/y pourcentiles as numbers between 0 and 1
+     * @param {[width,height]?} referenceDims: the reference dimensions used to calculate the values
+     */
     getResponsivePos(pourcentilePos, referenceDims=this.size) {
         return [pourcentilePos[0]*referenceDims[0], pourcentilePos[1]*referenceDims[1]]
     }
 
-    // Enables checks for mouse enter/leave listeners every frame
+    /**
+     * Enables checks for mouse enter/leave listeners every frame
+     */
     enableAccurateMouseMoveListenersMode() {
         this.mouseMoveListenersOptimizationEnabled = false
     }
 
-    // Disables checks for mouse enter/leave listeners every frame (only checks on mouse movements)
+    /**
+     * Disables checks for mouse enter/leave listeners every frame (only checks on mouse movements)
+     */
     disableAccurateMouseMoveListenersMode() {
         this.mouseMoveListenersOptimizationEnabled = true
     }
