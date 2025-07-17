@@ -23,9 +23,22 @@ class Pattern extends _DynamicColor {
 
     #lastUpdateTime = null
     #initialized = false
+    /**
+     * @param {Render} render: a render instance
+     * @param {ImageDisplay.SOURCE_TYPES} source: a media source, such as an image or a video
+     * @param {[[x1,y1], [x2,y2]]} positions: the rectangular area defined by two corners containing the pattern
+     * @param {[[startX, startY], [endX, endY]]?} sourceCroppingPositions: source cropping positions delimiting a rectangle, cropping everything outside of it. (Defaults to no cropping)
+     * @param {Boolean?} keepAspectRatio: Whether the media should resize by keeping the original aspect ratio
+     * @param {Pattern.FORCE_UPDATE_LEVELS?} forcedUpdates: whether/how the pattern forces updates
+     * @param {Number?} rotation: the rotation in degrees 
+     * @param {Function?} errorCB: function called upon any error loading the media
+     * @param {Function?} readyCB: function called when the media is loaded
+     * @param {Number?} frameRate: how many times per seconds should the media update (mostly used for videos)
+     * @param {Pattern.REPETITION_MODES} repeatMode: the repetition mode used for displaying the media at a larger size than what it's covering
+     */
     constructor(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, errorCB, readyCB, frameRate, repeatMode) {
         super(
-            positions, // [ [x1, y1], [x2, y2] ] | instance of _Obj
+            positions, // [ [x1, y1], [x2, y2] ] | instance of _BaseObj
             rotation   // rotation of the pattern
         )
         this._id = Pattern.#ID_GIVER++                                         // instance id
@@ -87,7 +100,10 @@ class Pattern extends _DynamicColor {
         } else return false
     }
 
-    // tries to update the curent pattern. Succeeds if forced, or if the last update's elapsed time corresponds to the frame rate 
+    /**
+     * Tries to update the curent pattern. Succeeds if forced, or if the last update's elapsed time corresponds to the frame rate
+     * @param {Pattern.FORCE_UPDATE_LEVELS} forceLevel: the force level used
+     */
     update(forceLevel=this._forcedUpdates) {
         if (this.#initialized) {
             const source = this._source, ctx = this._render.ctx, isCanvas = source instanceof HTMLCanvasElement, forceLevels = Pattern.FORCE_UPDATE_LEVELS, time = (isCanvas||forceLevel==forceLevels.RESPECT_FRAME_RATE)?performance.now()/1000:source.currentTime
@@ -142,17 +158,23 @@ class Pattern extends _DynamicColor {
         return this._id+Pattern.SERIALIZATION_SEPARATOR
     }
 
-    // Plays the source (use only if the source is a video)
+    /**
+     * Plays the source (use only if the source is a video)
+     */
     playVideo() {
         ImageDisplay.playMedia(this._source)
     }
 
-    // Pauses the source (use only if the source is a video)
+    /**
+     * Pauses the source (use only if the source is a video)
+     */
     pauseVideo() {
         try {this._source.pause()}catch(e){}
     }
 
-    // returns a separate copy of this Pattern instance
+    /**
+     * Returns a separate copy of this Pattern instance
+     */
     duplicate(positions=this._positions, render=this._render, source=this._source, sourceCroppingPositions=this._sourceCroppingPositions, keepAspectRatio=this._keepAspectRatio, forcedUpdates=this._forcedUpdates, rotation=this._rotation, errorCB=this._errorCB, frameRate=this._frameRate, repeatMode=this._repeatMode) {
         if (source instanceof HTMLElement && !source.getAttribute("permaLoad") && !(source instanceof HTMLCanvasElement)) {
             source = source.cloneNode()
@@ -161,23 +183,48 @@ class Pattern extends _DynamicColor {
         return new Pattern(render, source, CDEUtils.unlinkPositions(positions), CDEUtils.unlinkPositions(sourceCroppingPositions), keepAspectRatio, forcedUpdates, rotation, errorCB, null, frameRate, repeatMode)
     }
 
-    // Returns a usable image source
-    static loadImage(path) {
-        return ImageDisplay.loadImage(path)
+    /**
+     * Create a usable image source
+     * @param {String} path: the source path
+     * @param {Function?} errorCB: function called upon any error loading the media
+     * @param {Boolean?} forceLoad: whether to force the reloading of the image if the image is being reused
+     * @returns an HTML image element
+     */
+    static loadImage(path, errorCB=null, forceLoad=false) {
+        return ImageDisplay.loadImage(path, errorCB, forceLoad)
     }
 
-    // Returns a usable video source
-    static loadVideo(path, looping=true, autoPlay=true) {
-        return ImageDisplay.loadVideo(path, looping, autoPlay)
+    /**
+     * Returns a usable video source
+     * @param {String | File} src: the source of the video, either a path or a File
+     * @param {Boolean?} looping: whether the video loops
+     * @param {Boolean?} autoPlay: whether the video autoplays
+     * @returns a HTML video element
+     */
+    static loadVideo(src, looping=true, autoPlay=true) {
+        return ImageDisplay.loadVideo(src, looping, autoPlay)
     }
 
-    // Returns a usable camera capture source
-    static loadCamera(resolution, facingMode, frameRate=this._frameRate) {
+    /**
+     * Returns a usable camera capture source
+     * @param {[resolutionX, resolutionY]?} resolution: the camera resolution
+     * @param {ImageDisplay.CAMERA_FACING_MODES?} facingMode: which camera to use
+     * @param {Number?} frameRate: how many times the camera feed updates per seconds
+     * @returns an object containing camera settings, usable as a source
+     */
+    static loadCamera(resolution=null, facingMode=null, frameRate=this._frameRate) {
         return ImageDisplay.loadCamera(resolution, facingMode, frameRate)
     }
 
-    // Returns a usable screen capture source
-    static loadCapture(resolution, cursor, frameRate=this.frameRate, mediaSource) {
+    /**
+     * Returns a usable screen capture source
+     * @param {[resolutionX, resolutionY]?} resolution: the screen capture resolution
+     * @param {ImageDisplay.CAPTURE_CURSOR?} cursor: how the cursor is captured
+     * @param {Number?} frameRate: how many times the screen capture feed updates per seconds
+     * @param {ImageDisplay.CAPTURE_MEDIA_SOURCES?} mediaSource: the default screen source to capture
+     * @returns an object containing screen capture settings, usable as a source
+     */
+    static loadCapture(resolution=null, cursor=null, frameRate=this.frameRate, mediaSource=null) {
         return ImageDisplay.loadCapture(resolution, cursor, frameRate, mediaSource)
     }
 

@@ -82,7 +82,9 @@ class Mouse {
         }
     }
 
-    // invalidates mouse position
+    /**
+     * Invalidates mouse position
+     */
     invalidate() {
         this._x = Infinity
         this._y = Infinity
@@ -90,7 +92,12 @@ class Mouse {
         this._rawY = Infinity
     }
     
-    // updates current mouse position considering page offsets
+    /**
+     * Updates current mouse position considering page offsets
+     * @param {Number} x: the new x value of the mouse
+     * @param {Number} y: the new y value of the mouse
+     * @param {[offsetX, offsetY]} offset: the x/y offset values
+     */
     updatePos(x, y, offset) {
         this._valid = true
         this._rawX = x
@@ -108,7 +115,10 @@ class Mouse {
         this.checkListeners(Mouse.LISTENER_TYPES.MOVE)
     }
 
-    // sets and returns whether the current mouse position is valid
+    /**
+     * Sets and returns whether the current mouse position is valid
+     * @returns whether the mouse pos is valid
+     */
     checkValid() {
         if (this._x == Infinity || this._x == null || this._y == Infinity || this._y == null) return this._valid = false
         else if (!this._valid) return this._valid = true
@@ -196,7 +206,13 @@ class Mouse {
         this._listeners[type] = id=="*"?[]:this._listeners[type].filter(l=>l[3]!==(id?.[3]??id))
     }
 
-    // returns whether the provided pos is inside the provided positions
+    /**
+     * Returns whether the provided pos is inside the provided positions
+     * @param {[x,y]} pos: the pos to check
+     * @param {[[x1, y1], [x2, y2]] | Path2D} positions: the positions or path defining an area
+     * @param {Boolean} isPath2D: whether "positions" is a Path2D instance
+     * @returns whether "pos" is inside "positions"
+     */
     isWithin(pos, positions, isPath2D) {
         const [x,y]=pos
         if (isPath2D) return this._ctx.isPointInPath(positions, pos[0], pos[1])

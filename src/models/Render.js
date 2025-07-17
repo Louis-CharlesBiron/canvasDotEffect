@@ -20,6 +20,10 @@ class Render {
     #currentCtxVisuals = [Color.DEFAULT_COLOR_VALUE, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA]
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
     #currentCtxTextStyles = TextStyles.DEFAULT_PROFILE.getStyles()
+
+    /**
+     * @param {CanvasRenderingContext2D} ctx: canvas context to link to
+     */
     constructor(ctx) {
         this._ctx = ctx               // Canvas context
         this._batchedStrokes = {}     // current batch of strokes
@@ -43,7 +47,12 @@ class Render {
         this._textProfiles = []                                              // list of custom text style profiles
     }
 
-    // instanciates and returns a path containing a line
+    /**
+     * Instanciates and returns a path containing a line
+     * @param {[x,y]} startPos: the start pos of the line
+     * @param {[x,y]} endPos: the end pos of the line
+     * @returns a Path2D instance
+     */
     static getLine(startPos, endPos) {
         const path = new Path2D()
         path.moveTo(startPos[0],startPos[1])
@@ -51,8 +60,14 @@ class Render {
         return path
     }
 
-    // instanciates and returns a path containing a quadratic curve
-    static getQuadCurve(startPos, endPos, controlPos) {
+    /**
+     * Instanciates and returns a path containing a quadratic curve
+     * @param {[x,y]} startPos: the start pos of the line
+     * @param {[x,y]} endPos: the end pos of the line
+     * @param {[x,y]?} controlPos: the control pos of the curve
+     * @returns a Path2D instance
+     */
+    static getQuadCurve(startPos, endPos, controlPos=null) {
         if (!Array.isArray(controlPos)) controlPos = Render.getDefaultQuadraticControlPos(startPos, endPos, controlPos||undefined)
 
         const path = new Path2D()
@@ -61,13 +76,26 @@ class Render {
         return path
     }
 
-    // returns a control pos to create a decent default quadratic curve
+    /**
+     * Returns a control pos to create a decent default quadratic curve
+     * @param {[x,y]} startPos: the start pos of the line
+     * @param {[x,y]} endPos: the end pos of the line
+     * @param {Number?} spread: a modifier value for the default control pos generation 
+     * @returns a control pos [x,y]
+     */
     static getDefaultQuadraticControlPos(startPos, endPos, spread=1) {
         return [endPos[0]*spread, startPos[1]*spread]
     }
 
-    // instanciates and returns a path containing a cubic bezier curve
-    static getBezierCurve(startPos, endPos, controlPos1, controlPos2) {
+    /**
+     * Instanciates and returns a path containing a cubic bezier curve
+     * @param {[x,y]} startPos: the start pos of the line
+     * @param {[x,y]} endPos: the end pos of the line
+     * @param {[x,y]?} controlPos1: the first control pos of the curve
+     * @param {[x,y]?} controlPos2: the second control pos of the curve
+     * @returns a Path2D instance
+     */
+    static getBezierCurve(startPos, endPos, controlPos1=null, controlPos2=null) {
         if (!controlPos2 || !controlPos1) {
             const controlPoses = Render.getDefaultBezierControlPos(startPos, endPos, controlPos1||undefined)
             controlPos1 = controlPoses[0]
@@ -80,20 +108,40 @@ class Render {
         return path
     }
 
-    // returns 2 control positions to create a decent default bezier curve
+    /**
+     * Returns 2 control positions to create a decent default bezier curve
+     * @param {[x,y]} startPos: the start pos of the line
+     * @param {[x,y]} endPos: the end pos of the line
+     * @param {Number?} spread: a modifier value for the default control pos generation 
+     * @returns a control pos [x,y]
+     */
     static getDefaultBezierControlPos(startPos, endPos, spread=0.75) {
         const [startX, startY] = startPos, [endX, endY] = endPos
         return [[startX+(endX-startX)*(1-spread), startY+(endY-startY)*spread], [endX-(endX-startX)*(1-spread), endY-(endY-startY)*spread]]
     }
 
-    // instanciates and returns a path containing an arc
-    static getArc(pos, radius=5, startRadian=0, endRadian=CDEUtils.CIRC) {
+    /**
+     * Instanciates and returns a path containing an arc
+     * @param {[x,y]} pos: the pos of the arc
+     * @param {Number?} radius: the radius in pixels of the arc
+     * @param {Number?} startAngleRadian: the start angle of the arc in radian
+     * @param {Number?} endAngleRadian: the end angle of the arc in radian
+     * @returns a Path2D instance
+     */
+    static getArc(pos, radius=5, startAngleRadian=0, endAngleRadian=CDEUtils.CIRC) {
         const path = new Path2D()
-        path.arc(pos[0], pos[1], radius, startRadian, endRadian)
+        path.arc(pos[0], pos[1], radius, startAngleRadian, endAngleRadian)
         return path
     }
 
-    // instanciates and returns a path containing an arcTo
+    /**
+     * Instanciates and returns a path containing an arcTo
+     * @param {[x,y]} startPos: the start pos of the line
+     * @param {[x,y]} controlPos1: the first control pos of the arc
+     * @param {[x,y]} controlPos2: the second control pos of the arc
+     * @param {Number} radius: the radius in pixels of the arc
+     * @returns a Path2D instance
+     */
     static getArcTo(startPos, controlPos1, controlPos2, radius) {
         const path = new Path2D()
         path.moveTo(startPos[0], startPos[1])
@@ -101,56 +149,103 @@ class Render {
         return path
     }
 
-    // instanciates and returns a path containing an ellipse
-    static getEllispe(centerPos, radiusX, radiusY, rotationRadian=0, startRadian=0, endRadian=CDEUtils.CIRC, counterclockwise=false) {
+    /**
+     * Instanciates and returns a path containing an ellipse
+     * @param {[x,y]} centerPos: the center pos of the ellipse
+     * @param {Number} radiusX: the horizontal radius
+     * @param {Number} radiusY: the vertical radius
+     * @param {Number?} rotationRadian: the rotation of the ellipse in radian
+     * @param {Number?} startAngleRadian: the start angle of the ellipse in radian
+     * @param {Number?} endAngleRadian: the end angle of the ellipse in radian
+     * @param {Boolean?} counterclockwise: the rotation side
+     * @returns a Path2D instance
+     */
+    static getEllispe(centerPos, radiusX, radiusY, rotationRadian=0, startAngleRadian=0, endAngleRadian=CDEUtils.CIRC, counterclockwise=false) {
         const path = new Path2D()
-        path.ellipse(centerPos[0], centerPos[1], radiusX, radiusY, rotationRadian, startRadian, endRadian, counterclockwise)
+        path.ellipse(centerPos[0], centerPos[1], radiusX, radiusY, rotationRadian, startAngleRadian, endAngleRadian, counterclockwise)
         return path
     }
 
-    // instanciates and returns a path containing an rectangle
+    /**
+     * Instanciates and returns a path containing an rectangle
+     * @param {[x,y]} pos: the top left pos
+     * @param {Number} width: the width of the rectangle
+     * @param {Number} height: the height of the rectangle
+     * @returns a Path2D instance
+     */
     static getRect(pos, width, height) {
         const path = new Path2D()
         path.rect(pos[0], pos[1], width, height)
         return path
     }
 
-    // instanciates and returns a path containing an rectangle
+    /**
+     * Instanciates and returns a path containing an rectangle
+     * @param {[x,y]} pos: the top left pos
+     * @param {[x,y]} pos2: the bottom right pos
+     * @returns a Path2D instance
+     */
     static getPositionsRect(pos, pos2) {
         const path = new Path2D(), x1 = pos[0], y1 = pos[1]
         path.rect(x1, y1, pos2[0]-x1, pos2[1]-y1)
         return path
     }
 
-    // instanciates and returns a path containing an rounded rectangle
-    static getRoundRect(pos, width, height, radius) {
+    /**
+     * Instanciates and returns a path containing an rounded rectangle
+     * @param {[x,y]} pos: the top left pos
+     * @param {Number} width: the width of the rectangle
+     * @param {Number} height: the height of the rectangle
+     * @param {Number?} cornerRadius: the corner radius 
+     * @returns a Path2D instance
+     */
+    static getRoundRect(pos, width, height, cornerRadius=5) {
         const path = new Path2D()
-        path.roundRect(pos[0], pos[1], width, height, radius)
+        path.roundRect(pos[0], pos[1], width, height, cornerRadius)
         return path
     }
 
-    // instanciates and returns a path containing an rounded rectangle
-    static getPositionsRoundRect(pos, pos2, radius=5) {
+    /**
+     * Instanciates and returns a path containing an rounded rectangle
+     * @param {[x,y]} pos: the top left pos
+     * @param {[x,y]} pos2: the bottom right pos
+     * @param {Number?} cornerRadius: the corner radius 
+     * @returns a Path2D instance
+     */
+    static getPositionsRoundRect(pos, pos2, cornerRadius=5) {
         const path = new Path2D(), x1 = pos[0], y1 = pos[1]
-        path.roundRect(x1, y1, pos2[0]-x1, pos2[1]-y1, radius)
+        path.roundRect(x1, y1, pos2[0]-x1, pos2[1]-y1, cornerRadius)
         return path
     }
 
-    // creates and adds a new custom RenderStyles profile base on a given base profile
+    /**
+     * Creates and adds a new custom RenderStyles profile base on a given base profile
+     * @param {RenderStyles} baseProfile: the RenderStyles instance to base the copy on
+     * @returns a RenderStyles instance
+     */
     createCustomStylesProfile(baseProfile=this._defaultProfile) {
         const profile = baseProfile.duplicate()
         this._profiles.push(profile)
         return profile
     }
 
-    // creates and adds a new custom TextStyles profile base on a given base profile
+    /**
+     * Creates and adds a new custom TextStyles profile base on a given base profile
+     * @param {TextStyles} baseTextProfile: the TextStyles instance to base the copy on
+     * @returns a TextStyles instance
+     */
     createCustomTextStylesProfile(baseTextProfile=this._defaultTextProfile) {
         const textProfile = baseTextProfile.duplicate()
         this._textProfiles.push(textProfile)
         return textProfile
     }
 
-    // Queues a path to be stroked in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
+    /**
+     * Queues a path to be stroked in batch at the end of the current frame
+     * @param {Path2D} path: the path to batch
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either be a rgba array or a RenderStyles instance
+     * @param {[filter, compositeOperation, opacity]?} forceVisualEffects: the filter, composite operation and opacity effects to apply
+     */
     batchStroke(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if ((renderStyles[3]??renderStyles.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const batch = this._batchedStrokes, filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.toString(renderStyles, filter, compositeOperation, opacity)
@@ -159,7 +254,12 @@ class Render {
         }
     }
 
-    // Queues a path to be filled in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
+    /**
+     * Queues a path to be filled in batch at the end of the current frame
+     * @param {Path2D} path: the path to batch
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either be a rgba array or a RenderStyles instance
+     * @param {[filter, compositeOperation, opacity]?} forceVisualEffects: the filter, composite operation and opacity effects to apply
+     */
     batchFill(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if ((renderStyles[3]??renderStyles.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const batch = this._batchedFills, filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.fillOptimizedToString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.fillOptimizedToString(renderStyles, filter, compositeOperation, opacity)
@@ -168,7 +268,9 @@ class Render {
         } 
     }
 
-    // Fills and strokes all batched paths
+    /**
+     * Fills and strokes all batched paths
+     */
     drawBatched() {
         const strokes = Object.entries(this._batchedStrokes), s_ll = strokes.length,
               fills = Object.entries(this._batchedFills), f_ll = fills.length,
@@ -217,7 +319,12 @@ class Render {
         this._batchedFills = {}
     }
 
-    // directly strokes a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
+    /**
+     * Directly strokes a path on the canvas
+     * @param {Path2D} path: the path to batch
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either be a rgba array or a RenderStyles instance
+     * @param {[filter, compositeOperation, opacity]?} forceVisualEffects: the filter, composite operation and opacity effects to apply
+     */
     stroke(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if ((renderStyles[3]??renderStyles.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2]
@@ -229,7 +336,12 @@ class Render {
         }
     }
 
-    // directly fills a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
+    /**
+     * Directly fills a path on the canvas
+     * @param {Path2D} path: the path to batch
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either be a rgba array or a RenderStyles instance
+     * @param {[filter, compositeOperation, opacity]?} forceVisualEffects: the filter, composite operation and opacity effects to apply
+     */
     fill(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if ((renderStyles[3]??renderStyles.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2]
@@ -241,7 +353,16 @@ class Render {
         }
     }
 
-    // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
+    /**
+     * Directly strokes text on the canvas
+     * @param {String} text: the text to draw
+     * @param {[x,y]} pos: the pos of the text 
+     * @param {Color | [r,g,b,a]} color: the color of the text 
+     * @param {TextStyles} textStyles: a TextStyles instance
+     * @param {Number?} maxWidth: the max width of the text
+     * @param {Number?} lineHeight: the line height in pixels if the text is multiline 
+     * @param {[filter, compositeOperation, opacity]?} visualEffects: the filter, composite operation and opacity effects to apply
+     */
     strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=TextDisplay.DEFAULT_LINE_HEIGHT, visualEffects=[]) {
         if (text) {
             const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, ctx = this._ctx
@@ -260,7 +381,16 @@ class Render {
         }
     }
 
-    // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
+    /**
+     * Directly fills text on the canvas
+     * @param {String} text: the text to draw
+     * @param {[x,y]} pos: the pos of the text 
+     * @param {Color | [r,g,b,a]} color: the color of the text 
+     * @param {TextStyles} textStyles: a TextStyles instance
+     * @param {Number?} maxWidth: the max width of the text
+     * @param {Number?} lineHeight: the line height in pixels if the text is multiline 
+     * @param {[filter, compositeOperation, opacity]?} visualEffects: the filter, composite operation and opacity effects to apply
+     */
     fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=TextDisplay.DEFAULT_LINE_HEIGHT, visualEffects=[]) {
         if (text) {
             const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, ctx = this._ctx
@@ -279,7 +409,14 @@ class Render {
         }
     }
 
-    // directly draws an image on the canvas
+    /**
+     * Directly draws an image on the canvas
+     * @param {CanvasImageSource} img: the img to draw
+     * @param {[x,y]} pos: the top left position of the image
+     * @param {[width,height]} size: the size of the image
+     * @param {[[startX, startY], [endX, endY]]?} croppingPositions: cropping positions delimiting a rectangle, cropping everything outside of it. (Defaults to no cropping)
+     * @param {[filter, compositeOperation, opacity]?} visualEffects: the filter, composite operation and opacity effects of the image
+     */
     drawImage(img, pos, size, croppingPositions, visualEffects=[]) {
         if (visualEffects?.length) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
 
@@ -291,7 +428,14 @@ class Render {
         RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
     }
 
-    // directly draws an image on the canvas once everything else has been drawn
+    /**
+     * Directly draws an image on the canvas once everything batchded has been drawn
+     * @param {CanvasImageSource} img: the img to draw
+     * @param {[x,y]} pos: the top left position of the image
+     * @param {[width,height]} size: the size of the image
+     * @param {[[startX, startY], [endX, endY]]?} croppingPositions: cropping positions delimiting a rectangle, cropping everything outside of it. (Defaults to no cropping)
+     * @param {[filter, compositeOperation, opacity]?} visualEffects: the filter, composite operation and opacity effects of the image
+     */
     drawLateImage(img, pos, size, croppingPositions, visualEffects=[]) {
         this._bactchedStandalones.push(()=>{
             if (visualEffects?.length) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])

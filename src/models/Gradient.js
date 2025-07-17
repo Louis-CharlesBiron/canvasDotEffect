@@ -12,6 +12,14 @@ class Gradient extends _DynamicColor {
 
     #lastRotation = null
     #lastType = null
+
+    /**
+     * @param {CanvasRenderingContext2D} ctx: canvas context to use
+     * @param {[[x1,y1], [x2,y2]]} positions: the rectangular area defined by two corners containing the gradient
+     * @param {Array[[0..1, Color]]} colorStops: an array containing all colors stop. The 1st index of a color stop is a number between 0 and 1 representing the pourcentile and the 2nd is the color. ex: [0.5, Color]
+     * @param {Gradient.TYPES?} type: the type of gradient
+     * @param {Number?} rotation: the rotation in degrees 
+     */
     constructor(ctx, positions, colorStops, type, rotation) {
         super(
             positions, // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | instance of _Obj
@@ -25,7 +33,7 @@ class Gradient extends _DynamicColor {
 
     /**
      * Given an canvas object, returns automatic positions values for linear, radial or conic gradients
-     * @param {Shape|Dot|TextDisplay} obj: Inheritor of _Obj
+     * @param {_BaseObj} obj: Inheritor of _BaseObj
      * @returns the new calculated positions or the current value of this._positions if the parameter 'obj' isn't an instance of a canvas object
      */
     getAutomaticPositions(obj=this._initPositions) {
@@ -100,7 +108,11 @@ class Gradient extends _DynamicColor {
         } else return false
     }
 
-    // Creates and returns the gradient. Updates it if the initPositions is a Shape/Dot/TextDisplay instance
+    /**
+     * Creates and returns the gradient. Updates it if the initPositions is a _BaseObj inheritor
+     * @param {Boolean} force: whether to force the update even if the positions haven't changed
+     * @returns the gradient or null
+     */
     update(force) {
         if (this._initPositions != _DynamicColor.PLACEHOLDER) {
             const positions = this.getAutomaticPositions()
@@ -110,7 +122,9 @@ class Gradient extends _DynamicColor {
         }
     }
 
-    // returns a separate copy of the Gradient
+    /**
+     * @returns a separate copy of the Gradient
+     */
     duplicate(positions=this._positions, ctx=this._ctx, colorStops=this._colorStops, type=this._type, rotation=this._rotation) {
         return new Gradient(ctx, CDEUtils.unlinkPositions(positions), [...colorStops], type, rotation)
     }

@@ -133,7 +133,13 @@ class ImageDisplay extends _BaseObj {
         else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE, settings)
     }
 
-    // Returns a usable image source
+    /**
+     * Create a usable image source
+     * @param {String} path: the source path
+     * @param {Function?} errorCB: function called upon any error loading the media
+     * @param {Boolean?} forceLoad: whether to force the reloading of the image if the image is being reused
+     * @returns an HTML image element
+     */
     static loadImage(src, errorCB=null, forceLoad=false) {
         const image = new Image()
         image.src = src
@@ -142,7 +148,13 @@ class ImageDisplay extends _BaseObj {
         return image
     }
 
-    // Returns a usable video source
+    /**
+     * Returns a usable video source
+     * @param {String | File} src: the source of the video, either a path or a File
+     * @param {Boolean?} looping: whether the video loops
+     * @param {Boolean?} autoPlay: whether the video autoplays
+     * @returns a HTML video element
+     */
     static loadVideo(src, looping=true, autoPlay=true) {
         const video = document.createElement("video")
         video.src = src instanceof File ? URL.createObjectURL(src) : src
@@ -156,8 +168,14 @@ class ImageDisplay extends _BaseObj {
         return video
     }
 
-    // Returns a usable camera capture source
-    static loadCamera(resolution, facingMode, frameRate) {
+    /**
+     * Returns a usable camera capture source
+     * @param {[resolutionX, resolutionY]?} resolution: the camera resolution
+     * @param {ImageDisplay.CAMERA_FACING_MODES?} facingMode: which camera to use
+     * @param {Number?} frameRate: how many times the camera feed updates per seconds
+     * @returns an object containing camera settings, usable as a source
+     */
+    static loadCamera(resolution=null, facingMode=null, frameRate=null) {
         resolution??=ImageDisplay.DEFAULT_CAMERA_RESOLUTION
         return {
             type:ImageDisplay.SOURCE_TYPES.CAMERA,
@@ -170,8 +188,15 @@ class ImageDisplay extends _BaseObj {
         }
     }
 
-    // Returns a usable screen capture source
-    static loadCapture(resolution, cursor, frameRate, mediaSource) {
+    /**
+     * Returns a usable screen capture source
+     * @param {[resolutionX, resolutionY]?} resolution: the screen capture resolution
+     * @param {ImageDisplay.CAPTURE_CURSOR?} cursor: how the cursor is captured
+     * @param {Number?} frameRate: how many times the screen capture feed updates per seconds
+     * @param {ImageDisplay.CAPTURE_MEDIA_SOURCES?} mediaSource: the default screen source to capture
+     * @returns an object containing screen capture settings, usable as a source
+     */
+    static loadCapture(resolution=null, cursor=null, frameRate=null, mediaSource=null) {
         resolution??=ImageDisplay.DEFAULT_CAPTURE_RESOLUTION
         return {
             type:ImageDisplay.SOURCE_TYPES.CAPTURE,
