@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Allows the creation of custom gradients
 class Pattern extends _DynamicColor {
     static #ID_GIVER = 0
     static #CROPPING_CTX = new OffscreenCanvas(1,1).getContext("2d")
@@ -23,7 +22,9 @@ class Pattern extends _DynamicColor {
 
     #lastUpdateTime = null
     #initialized = false
+
     /**
+     * Allows the creation of custom gradients
      * @param {Render} render: a render instance
      * @param {ImageDisplay.SOURCE_TYPES} source: a media source, such as an image or a video
      * @param {[[x1,y1], [x2,y2]]} positions: the rectangular area defined by two corners containing the pattern

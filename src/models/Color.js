@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Represents a color value
 class Color {
     static DEFAULT_COLOR = "aliceblue"
     static DEFAULT_RGBA = [240, 248, 255, 1]
@@ -23,6 +22,7 @@ class Color {
     #hsv = null  // cached hsv value
 
     /**
+     * Represents a color value
      * @param {String | [r,g,b,a] | Color} color: the color definition
      * @param {Boolean?} isChannel: if true, this Color will be used as a channel and will not duplicate
      */

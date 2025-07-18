@@ -3,8 +3,18 @@
 // Please don't use or credit this code as your own.
 //
 
-// The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
 class Dot extends _Obj {
+
+    /**
+     * Important object component to create effects, can be used on it's own, but designed to be contained by a Shape instance
+     * @param {[x,y]?} pos: the [x,y] pos of the object
+     * @param {Number?} radius: the radius of the object 
+     * @param {Color | [r,g,b,a] ?} color: the color of the object
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: The pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     * @param {Boolean?} disablePathCaching: if true, disables path caching. Could be more performant if the Dot is highly dynamic
+     */
     constructor(pos, radius, color, setupCB, anchorPos, activationMargin, disablePathCaching=false) {
         super(pos, radius, color, setupCB, null, anchorPos, activationMargin)
         this._connections = []  // array of Dot to eventually draw a connecting line to
@@ -45,27 +55,44 @@ class Dot extends _Obj {
         super.draw(time, deltaTime)
     }
 
-    // returns pythagorian distance between the ratio defining position and the dot
-    getDistance(fx=this.ratioPos[0], fy=this.ratioPos[1]) {
-        return CDEUtils.getDist(fx, fy, this.x, this.y)
+    /**
+     * Returns pythagorian distance between the dot and another pos. (Defaults to the ratio defining pos)
+     * @param {[x,y]?} pos: the pos to get the distance between
+     * @returns the distance
+     */
+    getDistance(pos=this.ratioPos) {
+        const dotPos = this._pos
+        return CDEUtils.getDist(pos[0], pos[1], dotPos[0], dotPos[1])
     }
 
-    // calculates the ratio based on distance and parent's limit
+    /**
+     * Calculates the ratio based on distance and parent's limit
+     * @param {Number} dist: the distance 
+     * @returns the ratio
+     */
     getRatio(dist) {
         return dist / this.limit
     }
 
-    // adds a dot to the connection array
+    /**
+     * Adds a dot to the connection array
+     * @param {Dot} dot: the Dot instance to add
+     */
     addConnection(dot) {
         if (dot instanceof Dot) this._connections.push(dot)
     }
 
-    // removes a dot from the connection array
+    /**
+     * Removes a dot from the connection array
+     * @param {Dot | id} dotOrId: the Dot instance or id of, to remove from the connection array 
+     */
     removeConnection(dotOrId) {
         this._connections = this._connections.filter(d=>typeof dotOrId=="number"?d.id!==dotOrId:d.id!==dotOrId.id)
     }
 
-    // deletes the dot
+    /**
+     * Deletes the dot
+     */
     remove() {
         this._parent.remove(this._id)
     }
@@ -94,17 +121,23 @@ class Dot extends _Obj {
         return [[[s_x1, s_y1], [s_x2, s_y2]], [[t_x2, t_y2], [t_x1, t_y1]]]
     }
 
-    // activates path caching and updates the cached path
+    /**
+     * Activates path caching and updates the cached path
+     */
     updateCachedPath() {
         this._cachedPath = Render.getArc(this._pos, this._radius)
     }
 
-    // disables path caching
+    /**
+     * Disables path caching
+     */
     disablePathCaching() {
         this._cachedPath = null
     }
 
-    // returns a separate copy of this Dot
+    /**
+     * Returns a separate copy of this Dot
+     */
     duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color, setupCB=this._setupCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, disablePathCaching=!this._cachedPath) {
         const colorObject = color, colorRaw = colorObject.colorRaw, dot = new Dot(
             pos,
@@ -122,23 +155,43 @@ class Dot extends _Obj {
         return dot
     }
 
-    // returns whether the provided pos is in the dot pos, positions, padding,
+    /**
+     * Returns whether the provided pos is in the dot
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is inside the Dot
+     */
     isWithin(pos, padding, rotation, scale) {
         return super.isWithin(pos, this.getBounds(padding, rotation, scale))
     }
 
-    // returns whether the provided pos is in the image
+    /**
+     * Returns whether the provided pos is inside the Dot very accurately
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingX, paddingY?] ?} padding: the padding applied validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is inside the Dot
+     */
     isWithinAccurate(pos, axisPadding, rotation, scale) {
         return this.ctx.isPointInPath(this.getBoundsAccurate(axisPadding, rotation, scale), pos[0], pos[1])
     }
 
-    // returns the raw a minimal rectangular area containing all of the dot (no scale/rotation)
+    // returns the raw a minimal rectangular area containing all of the Dot (no scale/rotation)
     #getRectBounds() {
         const pos = this._pos, radius = this._radius
         return [[pos[0]-radius, pos[1]-radius], [pos[0]+radius, pos[1]+radius]]
     }
 
-    // returns the accurate area containing all of the dot
+    /**
+     * Returns the accurate area containing all of the Dot
+     * @param {Number | [paddingX, paddingY?] ?} axisPadding: the padding applied validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns a Path2D
+     */
     getBoundsAccurate(axisPadding, rotation=this._rotation, scale=this._scale) {
         const radius = this._radius
         axisPadding??=0
@@ -146,12 +199,20 @@ class Dot extends _Obj {
         return Render.getEllispe(this._pos, radius*scale[0]+axisPadding[0], radius*scale[1]+axisPadding[1], CDEUtils.toRad(rotation))
     }
 
-    // returns the center pos of the image
+    /**
+     * @returns the center pos of the Dot
+     */
     getCenter() {
         return this._pos
     }
 
-    // returns the minimal rectangular area containing all of the dot
+    /**
+     * Returns the minimal rectangular area containing all of the Dot
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(padding, rotation=this._rotation, scale=this._scale) {
         const positions = this.#getRectBounds()
         return super.getBounds(positions, padding, (scale[0]!=scale[1]&&(scale[0]!=1||scale[1]!=1))?rotation:0, scale, super.getCenter(positions))

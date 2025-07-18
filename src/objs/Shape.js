@@ -9,12 +9,12 @@ class Shape extends _Obj {
 
     constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile) {
         super(pos, radius??_Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, loopCB, anchorPos, activationMargin)
-        this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
+        this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffectCB can take effect
         this._initDots = dots                    // initial dots declaration
         this._dots = []                          // array containing current dots in the shape
         this._ratioPos = [Infinity,Infinity]     // position of ratio target object 
         this._drawEffectCB = drawEffectCB        // (render, Dot, ratio, setupResults, mouse, distance, parent, isActive, rawRatio)=>
-        this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>
+        this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>{return [x,y]}
         this._fragile = fragile||false           // whether the shape resets on document visibility change
     }
 

@@ -3,11 +3,20 @@
 // Please don't use or credit this code as your own.
 //
 
-// Abstract canvas obj class, with radius
 class _Obj extends _BaseObj {
     static DEFAULT_RADIUS = 5
     static RADIUS_PRECISION = 4
 
+    /**
+     * Abstract canvas obj class, with radius
+     * @param {[x,y]?} pos: the [x,y] pos of the object
+     * @param {Number?} radius: the radius of the object 
+     * @param {Color | [r,g,b,a] ?} color: the color of the object
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: The pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     */
     constructor(pos, radius, color, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
         this._initRadius = radius       // initial object's radius delcaration

@@ -3,12 +3,12 @@
 // Please don't use or credit this code as your own.
 //
 
-// Abstract dynamic color class
 class _DynamicColor {
     static PLACEHOLDER = "PLACEHOLDER" // can be used to instantiate a dynamic color without positions, and apply that of the object, on assignement
     static PLACEHOLDER_COLOR = "transparent"
 
     /**
+     * Abstract dynamic color class
      * @param {[[x1,y1], [x2,y2]]} positions: the rectangular area defined by two corners
      * @param {Number?} rotation: the rotation in degrees 
      */

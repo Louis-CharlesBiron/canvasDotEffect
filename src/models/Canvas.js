@@ -5,7 +5,6 @@
 
 const CDE_CANVAS_TIMEOUT_FUNCTION = window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.msRequestAnimationFrame||function(fn){window.setTimeout(()=>fn(performance.now()),1000/60)}
 
-// Represents a html canvas element
 class Canvas {
     static DOMParser = new DOMParser()
     static CANVAS_ID_GIVER = 0
@@ -44,6 +43,7 @@ class Canvas {
     #visibilityChangeLastState = null // stores the cvs state before document visibility change
 
     /**
+     * Represents a html canvas element
      * @param {HTMLCanvasElement | OffscreenCanvas} cvs: the html canvas element or an OffscreenCanvas instance to link to
      * @param {Function?} loopingCB: a function called along with the loop() function. (deltatime)=>{...}
      * @param {Number?} fpsLimit: the maximal frames per second cap. Defaults to V-Sync

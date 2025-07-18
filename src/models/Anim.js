@@ -3,12 +3,12 @@
 // Please don't use or credit this code as your own.
 //
 
-// Allows the creation of smooth progress based animations 
 class Anim {
     static #ANIM_ID_GIVER = 0
     static DEFAULT_DURATION = 1000
 
     /**
+     * Allows the creation of smooth progress based animations 
      * @param {Function} animationCB: a function called each frame containing the animation code. (clampedProgress, playCount, progress)=>{...}
      * @param {Number?} duration: the animation duration in miliseconds. Negative numbers make the animation loop infinitely
      * @param {Function?} easing: the easing function used. (x)=>{return y} 

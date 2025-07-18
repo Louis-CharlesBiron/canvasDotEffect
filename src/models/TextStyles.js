@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Represents a styling profile for text
 class TextStyles {
     static CAPS_VARIANTS = {NORMAL:"normal", SMALL_CAPS:"small-caps", ALL_SMALL_CAPS:"all-small-caps", PETITE_CAPS:"petite-caps", ALL_PETITE_CAPS:"all-petite-caps", UNICASE:"unicase", TILTING_CAPS:"tilting-caps"}
     static DIRECTIONS = {LEFT_TO_RIGHT:"ltr", RIGHT_TO_LEFT:"rtl", INHERIT:"inherit"}
@@ -27,6 +26,21 @@ class TextStyles {
     static #FONTFACE_NAME_OFFSET = 1
 
     #ctx = null
+
+    /**
+     * Represents a styling profile for text
+     * @param {Render} render: the render instance to link to
+     * @param {String?} font: the text font-style, font-variant, font-weight, font-size, line-height and font-family to use
+     * @param {Number | String ?} letterSpacing: the gaps in px between letters
+     * @param {Number | String ?} wordSpacing: the gaps in px between words
+     * @param {TextStyles.CAPS_VARIANTS?} fontVariantCaps: specifies alternative capitalization
+     * @param {TextStyles.DIRECTIONS?} direction: the text direction
+     * @param {TextStyles.STRETCHES?} fontStretch: the text streching
+     * @param {TextStyles.KERNINGS?} fontKerning: whether the default spacing of certain letters is uniform
+     * @param {TextStyles.ALIGNMENTS?} textAlign: the text horizontal alignment
+     * @param {TextStyles.BASELINES?} textBaseline: the text vertical alignment
+     * @param {TextStyles.RENDERINGS?} textRendering: the text rendering method
+     */
     constructor(render, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         this._id = Render.TEXT_PROFILE_ID_GIVER++                                    // profile id
         this._render = render                                                        // Canvas render instance
@@ -43,17 +57,34 @@ class TextStyles {
         this._textRendering = textRendering??TextStyles.DEFAULT_TEXT_RENDERING       // text rendering optimization method
     }
 
-    // returns a separate copy of the profile
+    /**
+     * @returns a separate copy of the profile
+     */
     duplicate(render=this._render, font=this._font, letterSpacing=this._letterSpacing, wordSpacing=this._wordSpacing, fontVariantCaps=this._fontVariantCaps, direction=this._direction, fontStretch=this._fontStretch, fontKerning=this._fontKerning, textAlign=this._textAlign, textBaseline=this._textBaseline, textRendering=this._textRendering) {
         return new TextStyles(render, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
     }
 
-    // returns the profile's styles as an array
+    /**
+     * @returns the profile's styles as an array
+     */
     getStyles() {
         return [this._font, this._letterSpacing, this._wordSpacing, this._fontVariantCaps, this._direction, this._fontStretch, this._fontKerning, this._textAlign, this._textBaseline, this._textRendering]
     }
 
-    // updates a profile's attributes and returns the updated version
+    /**
+     * Updates a profile's attributes and returns the updated version
+     * @param {String?} font: the text font-style, font-variant, font-weight, font-size, line-height and font-family to use
+     * @param {Number | String ?} letterSpacing: the gaps in px between letters
+     * @param {Number | String ?} wordSpacing: the gaps in px between words
+     * @param {TextStyles.CAPS_VARIANTS?} fontVariantCaps: specifies alternative capitalization
+     * @param {TextStyles.DIRECTIONS?} direction: the text direction
+     * @param {TextStyles.STRETCHES?} fontStretch: the text streching
+     * @param {TextStyles.KERNINGS?} fontKerning: whether the default spacing of certain letters is uniform
+     * @param {TextStyles.ALIGNMENTS?} textAlign: the text horizontal alignment
+     * @param {TextStyles.BASELINES?} textBaseline: the text vertical alignment
+     * @param {TextStyles.RENDERINGS?} textRendering: the text rendering method
+     * @returns the updated TextStyles instance
+     */
     update(font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         if (font) this._font = font
         if (letterSpacing) this._letterSpacing = typeof letterSpacing=="number"?letterSpacing+"px":letterSpacing
@@ -68,7 +99,19 @@ class TextStyles {
         return this
     }
 
-    // directly applies the styles of the profile
+    /**
+     * Directly applies the styles of the profile
+     * @param {String?} font: the text font-style, font-variant, font-weight, font-size, line-height and font-family to use
+     * @param {Number | String ?} letterSpacing: the gaps in px between letters
+     * @param {Number | String ?} wordSpacing: the gaps in px between words
+     * @param {TextStyles.CAPS_VARIANTS?} fontVariantCaps: specifies alternative capitalization
+     * @param {TextStyles.DIRECTIONS?} direction: the text direction
+     * @param {TextStyles.STRETCHES?} fontStretch: the text streching
+     * @param {TextStyles.KERNINGS?} fontKerning: whether the default spacing of certain letters is uniform
+     * @param {TextStyles.ALIGNMENTS?} textAlign: the text horizontal alignment
+     * @param {TextStyles.BASELINES?} textBaseline: the text vertical alignment
+     * @param {TextStyles.RENDERINGS?} textRendering: the text rendering method
+     */
     apply(font=this._font, letterSpacing=this._letterSpacing, wordSpacing=this._wordSpacing, fontVariantCaps=this._fontVariantCaps, direction=this._direction, fontStretch=this._fontStretch, fontKerning=this._fontKerning, textAlign=this._textAlign, textBaseline=this._textBaseline, textRendering=this._textRendering) {
         const ctx = this.#ctx, currentTextStyles = this._render.currentCtxTextStyles
         if (font && currentTextStyles[0] !== font) currentTextStyles[0] = ctx.font = font
@@ -83,7 +126,19 @@ class TextStyles {
         if (textRendering && currentTextStyles[9] !== textRendering) currentTextStyles[9] = ctx.textRendering = textRendering
     }
 
-    // directly applies the styles of the profile
+    /**
+     * Directly applies the provided styles
+     * @param {String?} font: the text font-style, font-variant, font-weight, font-size, line-height and font-family to use
+     * @param {Number | String ?} letterSpacing: the gaps in px between letters
+     * @param {Number | String ?} wordSpacing: the gaps in px between words
+     * @param {TextStyles.CAPS_VARIANTS?} fontVariantCaps: specifies alternative capitalization
+     * @param {TextStyles.DIRECTIONS?} direction: the text direction
+     * @param {TextStyles.STRETCHES?} fontStretch: the text streching
+     * @param {TextStyles.KERNINGS?} fontKerning: whether the default spacing of certain letters is uniform
+     * @param {TextStyles.ALIGNMENTS?} textAlign: the text horizontal alignment
+     * @param {TextStyles.BASELINES?} textBaseline: the text vertical alignment
+     * @param {TextStyles.RENDERINGS?} textRendering: the text rendering method
+     */
     static apply(ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         const currentTextStyles = [ctx.font, ctx.letterSpacing, ctx.wordSpacing, ctx.fontVariantCaps, ctx.direction, ctx.fontStretch, ctx.fontKerning, ctx.textAlign, ctx.textBaseline, ctx.textRendering]
         if (font && currentTextStyles[0] !== font) currentTextStyles[0] = ctx.font = font

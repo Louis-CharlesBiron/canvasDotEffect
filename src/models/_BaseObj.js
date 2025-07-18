@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Abstract canvas obj class
 class _BaseObj extends _HasColor {
     static DEFAULT_POS = [0,0]
     static ABSOLUTE_ANCHOR = [0,0]
@@ -12,6 +11,7 @@ class _BaseObj extends _HasColor {
     #lastAnchorPos = [0,0]
 
     /**
+     * Abstract canvas obj class
      * @param {[x,y]?} pos: the [x,y] pos of the object
      * @param {Color | [r,g,b,a] ?} color: the color of the object
      * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}

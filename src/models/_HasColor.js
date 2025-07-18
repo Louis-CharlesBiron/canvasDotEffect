@@ -3,10 +3,10 @@
 // Please don't use or credit this code as your own.
 //
 
-// Abstract class, provides color attributes to other classes
 class _HasColor {
 
     /**
+     * Abstract class, provides color attributes to other classes
      * @param {String | [r,g,b,a] | Color | Function} color: the color definition
      */
     constructor(color) {

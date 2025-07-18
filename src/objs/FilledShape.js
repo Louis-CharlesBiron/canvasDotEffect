@@ -3,15 +3,32 @@
 // Please don't use or credit this code as your own.
 //
 
-// Regular shape with a filled area defined by its dots
 class FilledShape extends Shape {
     #lastDotsPos = null
+
+    /**
+     * Regular shape with a filled area defined by its dots
+     * @param {Color | String | [r,g,b,a]?} fillColor: the color of the area's filling
+     * @param {Boolean?} dynamicUpdates: whether the shape's filling checks for updates every frame
+     * @param {[x,y]?} pos: the pos of the object 
+     * @param {Dot | Dot[] ?} dots: array containing current dots in the shape
+     * @param {Number?} radius: the radius of the dots
+     * @param {Color | String | [r,g,b,a]?} color: the color of the dots
+     * @param {Number?} limit: the delimiter radius within which the drawEffectCB can take effect
+     * @param {Function?} drawEffectCB: a function called every frame for each dot of the shape, used to create effects. (render, dot, ratio, setupResults, mouse, distance, parent, isActive, rawRatio)=>
+     * @param {Function?} ratioPosCB: a function that returns a ratio pos target for calculating the dots ratio attribute. (this, dots)=>{return [x,y]}
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: The pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     * @param {Boolean?} fragile: (DEPRECATED) whether the shape resets on document visibility change 
+     */
     constructor(fillColor, dynamicUpdates=false, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile) {
         super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile)
         this._initFillColor = fillColor       // declaration color fill value
         this._fillColor = this._initFillColor // the current color or gradient of the filled shape
-        this._path = null                     // path perimeter delimiting the surface to fill
         this._dynamicUpdates = dynamicUpdates // whether the shape's filling checks for updates every frame
+        this._path = null                     // path perimeter delimiting the surface to fill
     }
 
     // initializes the filled shape and creates its path
@@ -32,7 +49,9 @@ class FilledShape extends Shape {
         }
     }
 
-    // updates the path perimeter if the dots pos have changed
+    /**
+     * Updates the path perimeter if the dots pos have changed
+     */
     updatePath() {
         const d_ll = this.dots.length
         if (d_ll) {
@@ -51,7 +70,9 @@ class FilledShape extends Shape {
         }
     }
 
-    // returns a separate copy of this FilledShape (only initialized for objects)
+    /**
+     * @returns a separate copy of this FilledShape (only for initialized objects)
+     */
     duplicate() {
         const fillColorObject = this._fillColor, fillColorRaw = fillColorObject.colorRaw, colorObject = this._color, colorRaw = colorObject.colorRaw, filledShape = new FilledShape(
             (_,shape)=>(fillColorRaw instanceof Gradient||fillColorRaw instanceof Pattern)?fillColorRaw.duplicate(Array.isArray(fillColorRaw.initPositions)?null:shape):fillColorObject.duplicate(),

@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Allows the creation of custom gradients
 class Gradient extends _DynamicColor {
     static TYPES = {LINEAR:"Linear", RADIAL:"Radial", CONIC:"Conic"}
     static DEFAULT_TYPE = Gradient.TYPES.LINEAR
@@ -14,6 +13,7 @@ class Gradient extends _DynamicColor {
     #lastType = null
 
     /**
+     * Allows the creation of custom gradients
      * @param {CanvasRenderingContext2D} ctx: canvas context to use
      * @param {[[x1,y1], [x2,y2]]} positions: the rectangular area defined by two corners containing the gradient
      * @param {Array[[0..1, Color]]} colorStops: an array containing all colors stop. The 1st index of a color stop is a number between 0 and 1 representing the pourcentile and the 2nd is the color. ex: [0.5, Color]

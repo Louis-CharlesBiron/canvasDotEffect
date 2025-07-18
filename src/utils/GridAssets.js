@@ -1,3 +1,8 @@
+// JS
+// Canvas Dot Effect by Louis-Charles Biron
+// Please don't use or credit this code as your own.
+//
+
 class GridAssets {
     static D = ["t","r","b","l","tr","br","bl","tl","i"].reduce((a,b,i)=>(a.places.push([a[b]=1<<i,(ar)=>{if(i==0){return -ar}else if(i==1){return 1}else if(i==2){return ar}else if(i==3){return -1}else if(i==4){return 1-ar}else if(i==5){return ar+1}else if(i==6){return ar-1}else if(i==7){return -ar-1}else if(i==8){return 0}}]),a),{places:[]})
     static DEFAULT_SOURCE = GridAssets.fontSource5x5

@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Represents the user's mouse
 class Mouse {
     static DEFAULT_MOUSE_DECELERATION = 0.8
     static DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1
@@ -14,6 +13,11 @@ class Mouse {
     #lastX = null // previous x value of the mouse on the canvas, updated each frame
     #lastY = null // previous y value of the mouse on the canvas, updated each frame
     #wasWithin = []
+
+    /**
+     * Represents the user's mouse. Automatically instantiated by a Canvas instance
+     * @param {CanvasRenderingContext2D} ctx: the canvas context to link to
+     */
     constructor(ctx) {
         this._ctx = ctx                  // canvas 2d context
         this._valid = false              // whether the mouse pos is valid (is inside the canvas and initialized)

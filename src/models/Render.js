@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Drawing manager, centralises most context operation
 class Render {
     static PROFILE_ID_GIVER = -1
     static TEXT_PROFILE_ID_GIVER = -1
@@ -22,6 +21,7 @@ class Render {
     #currentCtxTextStyles = TextStyles.DEFAULT_PROFILE.getStyles()
 
     /**
+     * Drawing manager, centralises most context operation. Automatically instantiated by a Canvas instance
      * @param {CanvasRenderingContext2D} ctx: canvas context to link to
      */
     constructor(ctx) {

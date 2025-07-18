@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Represents a styling profile for paths
 class RenderStyles extends _HasColor {
     static JOIN_TYPES = {MITER:"miter", BEVEL:"bevel", ROUND:"round"} // spiky, flat, round
     static CAP_TYPES = {BUTT:"butt", SQUARE:"square", ROUND:"round"}  // short, long, round
@@ -16,6 +15,20 @@ class RenderStyles extends _HasColor {
     static DEFAULT_PROFILE = new RenderStyles(null, Color.DEFAULT_RGBA, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA, RenderStyles.DEFAULT_WIDTH, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH_OFFSET, RenderStyles.DEFAULT_JOIN, RenderStyles.DEFAULT_CAP)
 
     #ctx = null
+
+    /**
+     * Represents a styling profile for paths
+     * @param {Render} render: the render instance to link to
+     * @param {Color | [r,g,b,a]?} color: the color to use
+     * @param {String?} filter: the filter value, as a CSS filter
+     * @param {Render.COMPOSITE_OPERATIONS?} compositeOperation: the composite operation used (/!\ Some composite operations are invasive)
+     * @param {Number?} opacity: the opacity level, as a number from 0..1
+     * @param {Number?} lineWidth: the width of stroked lines, in pixel
+     * @param {Number | Array ?} lineDash: the line dash distance(s), in pixel
+     * @param {Number?} lineDashOffset: the offset of line dashes, in pixel
+     * @param {RenderStyles.JOIN_TYPES?} lineJoin: the line join style
+     * @param {RenderStyles.CAP_TYPES?} lineCap: the line cap style
+     */
     constructor(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         super(color)
         if (render) this.color = this.getInitColor()
@@ -32,31 +45,53 @@ class RenderStyles extends _HasColor {
         this._lineCap = lineCap??RenderStyles.DEFAULT_CAP                                // determines the shape of line ends
     }
 
-    // returns a separate copy of the profile
+    /**
+     * @returns a separate copy of the profile
+     */
     duplicate(render=this._render, color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
         return new RenderStyles(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
     }
 
-    // returns the profile's styles as an array
+    /**
+     * @returns the profile's styles as an array
+     */
     getStyles() {
         return [this._filter, this._compositeOperation, this._opacity, this._lineWidth, this._lineDash, this._lineDashOffset, this._lineJoin, this._lineCap]
     }
 
-    // serializes the styles profile
+    /**
+     * Serializes the styles profile
+     * @returns the serialized profiled
+     */
     toString(color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
         let sep = RenderStyles.SERIALIZATION_SEPARATOR, colorValue = Color.getColorValue(color)
         if (colorValue instanceof CanvasGradient || colorValue instanceof CanvasPattern) colorValue = color.toString()
         return colorValue+sep+filter+sep+compositeOperation+sep+opacity+sep+lineWidth+sep+lineDash+sep+lineDashOffset+sep+lineJoin+sep+lineCap
     }
 
-    // serializes the styles profile, but only the color value and visual effects
+    /**
+     * Serializes the styles profile, but only the color value and visual effects
+     * @returns the serialized profiled
+     */
     fillOptimizedToString(color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity) {
         let sep = RenderStyles.SERIALIZATION_SEPARATOR, colorValue = Color.getColorValue(color)
         if (colorValue instanceof CanvasGradient || colorValue instanceof CanvasPattern) colorValue = color.toString()
         return colorValue+sep+filter+sep+compositeOperation+sep+opacity
     }
 
-    // updates a profile's attributes and returns the updated version
+    /**
+     * Updates a profile's attributes and returns the updated version
+     * @param {Color | [r,g,b,a]?} color: the color to use
+     * @param {String?} filter: the filter value, as a CSS filter
+     * @param {Render.COMPOSITE_OPERATIONS?} compositeOperation: the composite operation used (/!\ Some composite operations are invasive)
+     * @param {Number?} opacity: the opacity level, as a number from 0..1
+     * @param {Number?} lineWidth: the width of stroked lines, in pixel
+     * @param {Number | Array ?} lineDash: the line dash distance(s), in pixel
+     * @param {Number?} lineDashOffset: the offset of line dashes, in pixel
+     * @param {RenderStyles.JOIN_TYPES?} lineJoin: the line join style
+     * @param {RenderStyles.CAP_TYPES?} lineCap: the line cap style
+     * @returns the updated RenderStyles instance
+     */
     update(color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         if (color) this.color = color
         if (filter) this._filter = filter
@@ -70,7 +105,18 @@ class RenderStyles extends _HasColor {
         return this
     }
 
-    // directly applies the styles of the profile
+    /**
+     * Directly applies the styles of the profile
+     * @param {Color | [r,g,b,a]?} color: the color to use
+     * @param {String?} filter: the filter value, as a CSS filter
+     * @param {Render.COMPOSITE_OPERATIONS?} compositeOperation: the composite operation used (/!\ Some composite operations are invasive)
+     * @param {Number?} opacity: the opacity level, as a number from 0..1
+     * @param {Number?} lineWidth: the width of stroked lines, in pixel
+     * @param {Number | Array ?} lineDash: the line dash distance(s), in pixel
+     * @param {Number?} lineDashOffset: the offset of line dashes, in pixel
+     * @param {RenderStyles.JOIN_TYPES?} lineJoin: the line join style
+     * @param {RenderStyles.CAP_TYPES?} lineCap: the line cap style
+     */
     apply(color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
         const ctx = this.#ctx, colorValue = Color.getColorValue(color), currentStyles = this._render.currentCtxStyles, currentCtxVisuals = this._render.currentCtxVisuals
         if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
@@ -90,7 +136,18 @@ class RenderStyles extends _HasColor {
         if (lineCap && currentStyles[4] !== lineCap) currentStyles[4] = ctx.lineCap = lineCap
     }
 
-    // directly applies the provided styles
+    /**
+     * Directly applies the provided styles
+     * @param {Color | [r,g,b,a]?} color: the color to use
+     * @param {String?} filter: the filter value, as a CSS filter
+     * @param {Render.COMPOSITE_OPERATIONS?} compositeOperation: the composite operation used (/!\ Some composite operations are invasive)
+     * @param {Number?} opacity: the opacity level, as a number from 0..1
+     * @param {Number?} lineWidth: the width of stroked lines, in pixel
+     * @param {Number | Array ?} lineDash: the line dash distance(s), in pixel
+     * @param {Number?} lineDashOffset: the offset of line dashes, in pixel
+     * @param {RenderStyles.JOIN_TYPES?} lineJoin: the line join style
+     * @param {RenderStyles.CAP_TYPES?} lineCap: the line cap style
+     */
     static apply(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         const ctx = render.ctx, colorValue = color&&Color.getColorValue(color), currentStyles = render.currentCtxStyles, currentCtxVisuals = render.currentCtxVisuals
         if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue

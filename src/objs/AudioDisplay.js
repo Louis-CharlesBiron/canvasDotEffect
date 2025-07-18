@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Displays audio as an object
 class AudioDisplay extends _BaseObj {
     static LOADED_IR_BUFFERS = []
     static SUPPORTED_AUDIO_FORMATS = ["mp3", "wav", "ogg", "aac", "m4a", "opus", "flac"]
@@ -44,6 +43,22 @@ class AudioDisplay extends _BaseObj {
     #buffer_ll = null // the length of data
     #data = null      // the fft data values (raw bins)
     #fft = null       // the fftSize
+
+    /**
+     * Displays audio as an object
+     * @param {AudioDisplay.SOURCE_TYPES?} source: the source of the audio 
+     * @param {[x,y]?} pos: the pos of the object 
+     * @param {Color | String | [r,g,b,a]?} color: the color of the object
+     * @param {Function?} binCB: a function called for each bin of the audio, used to create the display. (render, bin, atPos, audioDisplay, accumulator, i, sampleCount, rawBin)=>{... return? [ [newX, newY], newAccumulatorValue ]}
+     * @param {Number?} sampleCount: the max count of bins, (fftSize is calculated by the nearest valid value). Ex: if sampleCount is "32" and the display style is "BARS", 32 bars will be displayed
+     * @param {Boolean?} disableAudio: whether the audio output is disabled or not (does not affect the visual display)
+     * @param {Number?} offsetPourcent: the offset pourcent (0..1) in the bins order when calling binCB
+     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, e?)=>
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: The pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     */
     constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source??""                                         // the source of the audio
@@ -107,30 +122,45 @@ class AudioDisplay extends _BaseObj {
         super.draw(time, deltaTime)
     }
 
-    // updates the "transformable" attribute according to whether any rotation/scale are setted
+    // updates the "transformable" attribute according to whether any rotation/scale are set
     #updateTransformable() {
         const hasTransforms = this._rotation || this._scale[0]!=1 || this._scale[1]!=1
         if (hasTransforms && this._transformable < 2) this._transformable = 2
         else if (!hasTransforms && this._transformable) this._transformable--
     }
 
-    // (NOT ALWAYS RELIABLE) returns whether the provided pos is in the audio display
+    /**
+     * (UNRELIABLE WITH AudioDisplay) Returns whether the provided pos is in the audio display
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is in the audio display
+     */
     isWithin(pos, padding, rotation, scale) {
         return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
     }
 
-    // (NOT ALWAYS RELIABLE) returns the raw a minimal rectangular area containing all of the audio display (no scale/rotation)
+    // (UNRELIABLE WITH AudioDisplay) returns the raw a minimal rectangular area containing all of the audio display (no scale/rotation)
     #getRectBounds(binWidth=2, binHeight=100, binSpacing=5) {
         const pos = this._pos, sizeX = this._sampleCount*(binWidth*binSpacing)/2
         return [[pos[0],pos[1]], [pos[0]+sizeX,pos[1]+binHeight*2]]
     }
 
-    // (NOT ALWAYS RELIABLE) returns the center pos of the audio display
+    /**
+     * (UNRELIABLE WITH AudioDisplay) returns the center pos of the audio display
+     */
     getCenter() {
         return super.getCenter(this.#getRectBounds())
     }
 
-    // (NOT ALWAYS RELIABLE) returns the minimal rectangular area containing all of the audio display
+    /**
+     * (UNRELIABLE WITH AudioDisplay) returns the minimal rectangular area containing all of the audio display
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(padding, rotation=this._rotation, scale=this._scale) {
         const positions = this.#getRectBounds()
         return super.getBounds(positions, padding, rotation, scale, this._pos)
@@ -160,7 +190,12 @@ class AudioDisplay extends _BaseObj {
         }, this._errorCB)
     }
 
-    // Initializes a AudioDisplay data source
+    /**
+     * Initializes a AudioDisplay data source
+     * @param {AudioDisplay.SOURCE_TYPES?} dataSrc: the source of the audio 
+     * @param {Function?} loadCallback: a function called upon source load (audioElement, isStream)=>
+     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, e?)=>
+     */
     static initializeDataSource(dataSrc, loadCallback, errorCB) {
         const types = AudioDisplay.SOURCE_TYPES
         if (typeof dataSrc==types.FILE_PATH) {
@@ -203,7 +238,13 @@ class AudioDisplay extends _BaseObj {
         else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NOT_AVAILABLE, settings)
     }
 
-    // Returns a usable video source
+    /**
+     * Returns a usable audio source
+     * @param {String} src: the source of the audio
+     * @param {Boolean?} looping: whether the audio loops
+     * @param {Boolean?} autoPlay: whether the audio autoplays
+     * @returns a Audio instance
+     */
     static loadAudio(path, looping=true, autoPlay=true) {
         const audio = new Audio(path)
         audio.preload = "auto"
@@ -215,7 +256,17 @@ class AudioDisplay extends _BaseObj {
         return audio
     }
 
-    // returns a usable microphone capture source
+    /**
+     * Returns a usable microphone capture source
+     * @param {Boolean?} autoGainControl: whether the auto gain control is enabled
+     * @param {Boolean?} echoCancellation: whether the echo cancellation is enabled
+     * @param {Boolean?} noiseSuppression: whether the noise suppression is enabled
+     * @param {Boolean?} isStereo: whether the microphone is mono or stereo
+     * @param {Number?} delay: the delay of the microphone
+     * @param {Number?} sampleRate: the sample rate
+     * @param {Number?} sampleSize: the sample size
+     * @returns an object containing microphone settings, usable as a source
+     */
     static loadMicrophone(autoGainControl, echoCancellation, noiseSuppression, isStereo, delay, sampleRate, sampleSize) {
         autoGainControl??=AudioDisplay.DEFAULT_MICROPHONE_AUTO_GAIN_CONTROL
         echoCancellation??=AudioDisplay.DEFAULT_MICROPHONE_ECHO_CANCELLATION
@@ -238,7 +289,17 @@ class AudioDisplay extends _BaseObj {
         }
     }
 
-    // returns a usable screen audio capture source 
+    /**
+     * Returns a usable screen audio capture source
+     * @param {Boolean?} autoGainControl: whether the auto gain control is enabled
+     * @param {Boolean?} echoCancellation: whether the echo cancellation is enabled
+     * @param {Boolean?} noiseSuppression: whether the noise suppression is enabled
+     * @param {Boolean?} isStereo: whether the screen audio is mono or stereo
+     * @param {Number?} delay: the delay of the screen audio
+     * @param {Number?} sampleRate: the sample rate
+     * @param {Number?} sampleSize: the sample size
+     * @returns an object containing screen audio settings, usable as a source
+     */
     static loadScreenAudio(autoGainControl, echoCancellation, noiseSuppression, isStereo, delay, sampleRate, sampleSize) {
         autoGainControl??=AudioDisplay.DEFAULT_MICROPHONE_AUTO_GAIN_CONTROL
         echoCancellation??=AudioDisplay.DEFAULT_MICROPHONE_ECHO_CANCELLATION
@@ -261,54 +322,83 @@ class AudioDisplay extends _BaseObj {
         }
     }
 
-    // provides a generic customizable distortion curve to use with the waveShaperNode.curve (based on https://stackoverflow.com/questions/22312841/waveshaper-node-in-webaudio-how-to-emulate-distortion)
-    static getDistortionCurve(intensity) {
+    /**
+     * Provides a generic customizable distortion curve to use with the waveShaperNode.curve (based on https://stackoverflow.com/questions/22312841/waveshaper-node-in-webaudio-how-to-emulate-distortion)
+     * @param {Number} intensity: the intensity of the distortion curve
+     * @param {Number?} sampleCount: the distortion curve size
+     * @returns the generated distortion curve 
+     */
+    static getDistortionCurve(intensity, sampleCount=44100) {
         if (!intensity) return null
-        let n_samples = 44100, curve = new Float32Array(n_samples), i=0
-        for (;i<n_samples;i++) {
-            const x = i*2/n_samples-1
-            curve[i] = (3+intensity)*x*20*CDEUtils.TO_DEGREES/(Math.PI+intensity*Math.abs(x))
+
+        let curve = new Float32Array(sampleCount), i=0, PI = Math.PI, abs = Math.abs, TO_DEGREES = CDEUtils.TO_DEGREES
+        for (;i<sampleCount;i++) {
+            const x = i*2/sampleCount-1
+            curve[i] = (3+intensity)*x*20*TO_DEGREES/(PI+intensity*abs(x))
         }
         return curve
     }
 
-    // connects the convolverNode to the audio chain
+    /**
+     * Connects the convolverNode to the audio chain
+     */
     connectConvolver() {
         this._biquadFilterNode.disconnect(0)
         this._biquadFilterNode.connect(this._convolverNode)
         this._convolverNode.connect(this._dynamicsCompressorNode)
     }
 
-    // disconnects the convolverNode from the audio chain
+    /**
+     * Disconnects the convolverNode from the audio chain
+     */
     disconnectConvolver() {
         this._biquadFilterNode.disconnect(0)
         this._biquadFilterNode.connect(this._dynamicsCompressorNode)
     }
 
-    // loads a impulse response file into a usable buffer
-    loadImpulseResponse(filePath, readyCallback=buffer=>{this.setReverb(buffer);this.connectConvolver()}) {
-        fetch(filePath).then(res=>res.arrayBuffer()).then(data=>this._audioCtx.decodeAudioData(data)).then(buffer=>{
+    /**
+     * Loads a impulse response file into a usable buffer
+     * @param {String} src: the source of the impulse response file 
+     * @param {Function?} readyCallback: a function called once the file is loaded
+     */
+    loadImpulseResponse(src, readyCallback=buffer=>{this.setReverb(buffer);this.connectConvolver()}) {
+        fetch(src).then(res=>res.arrayBuffer()).then(data=>this._audioCtx.decodeAudioData(data)).then(buffer=>{
             AudioDisplay.LOADED_IR_BUFFERS.push(buffer)
             if (CDEUtils.isFunction(readyCallback)) readyCallback(buffer)
         })
     }
 
-    // sets the gain value of the audio 
+    /**
+     * Sets the volume of the audio 
+     * @param {Number?} gain: the gain value
+     */
     setVolume(gain=1) {
         this._gainNode.gain.value = gain
     }
 
-    // sets the filter type of the biquadFilterNode
+    /**
+     * Sets the filter type of the biquadFilterNode
+     * @param {AudioDisplay.BIQUAD_FILTER_TYPES} filterType: the type of filter to use
+     */
     setBiquadFilterType(filterType=AudioDisplay.BIQUAD_FILTER_TYPES.DEFAULT) {
         this._biquadFilterNode.type = filterType
     }
 
-    // sets the distortion curve of the waveShaperNode
+    /**
+     * Sets the distortion curve of the waveShaperNode
+     * @param {Number?} intensity: the intensity of the distortion curve. Defaults to no distortion
+     */
     setDistortionCurve(intensity=null) {
         this._waveShaperNode.curve = typeof intensity=="number" ? AudioDisplay.getDistortionCurve(intensity) : intensity
     }
 
-    // sets the 3D position of the audio's origin
+    /**
+     * Sets the 3D position of the audio's origin
+     * @param {Number?} x: the x position
+     * @param {Number?} y: the y position
+     * @param {Number?} z: the z position
+     * @param {Number?} secondsOffset: the time offset in seconds
+     */
     setOriginPos(x=0, y=0, z=0, secondsOffset=0) {
         const time = this._audioCtx.currentTime
         if (x!=null) this._pannerNode.positionX.setValueAtTime(x, time+secondsOffset)
@@ -316,18 +406,26 @@ class AudioDisplay extends _BaseObj {
         if (z!=null) this._pannerNode.positionZ.setValueAtTime(z, time+secondsOffset)
     }
 
-    // sets the audio feedback delay (in seconds)
+    /**
+     * Sets the audio feedback delay
+     * @param {Number?} seconds: the delay value
+     */
     setDelay(seconds=0) {
         this._delayNode.delayTime.value = seconds > AudioDisplay.MAX_DELAY_TIME ? AudioDisplay.MAX_DELAY_TIME : seconds
     }
 
-    // sets the convolverNode impulse response buffer
+    /**
+     * Sets the convolverNode impulse response buffer
+     * @param {AudioBuffer} buffer: the impulse response buffer to use
+     */
     setReverb(buffer=null) {
         if (buffer) this._convolverNode.buffer = buffer
         else this.disconnectConvolver()
     }
     
-    // resets all audio modifiers to their default values (-> no audio changes)
+    /**
+     * resets all audio modifiers to their default values (no audio changes)
+     */
     resetAudioModifiers() {
         this.setVolume()
         this.setBiquadFilterType()
@@ -363,7 +461,9 @@ class AudioDisplay extends _BaseObj {
         return Object.keys(AudioDisplay.ERROR_TYPES)[errorCode]
     }
 
-    // returns a separate copy of this AudioDisplay instance
+    /**
+     * @returns a separate copy of this AudioDisplay instance
+     */
     duplicate(source=this._source, pos=this.pos_, color=this._color, binCB=this._binCB, sampleCount=this._sampleCount, disableAudio=this._disableAudio, offsetPourcent=this._offsetPourcent, errorCB=this._errorCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const colorObject = color, colorRaw = colorObject.colorRaw, audioDisplay = new AudioDisplay(
             source instanceof MediaStreamAudioSourceNode ? source.mediaStream.clone() : source.cloneNode(), 
@@ -386,8 +486,15 @@ class AudioDisplay extends _BaseObj {
         return this.initialized ? audioDisplay : null
     }
 
-    // GENERIC DISPLAYS
-    // generic binCB for waveform display
+    /**
+     * Generic binCB for a waveform display
+     * @param {Number?} maxHeight: the maximal height in pixels of the bars
+     * @param {Number?} minHeight: the minimal height in pixels of the bars
+     * @param {Number?} spacing: the horizontal space in pixels between each bar
+     * @param {Number?} barWidth: the width in pixels of each bar
+     * @param {Boolean?} transformable: whether the binCB accpets visual effects
+     * @returns a usable binCB
+     */
     static BARS(maxHeight, minHeight, spacing, barWidth, transformable) {
         maxHeight??=100
         minHeight??=0
@@ -414,7 +521,14 @@ class AudioDisplay extends _BaseObj {
         }
     }
 
-    // generic binCB for circular display
+    /**
+     * Generic binCB for a circular display
+     * @param {Number?} maxRadius: the maximal radius in pixels
+     * @param {Number?} minRadius: the minimal radius in pixels
+     * @param {Boolean?} transformable: whether the binCB accpets visual effects
+     * @param {Number?} precision: how many bins to skip before drawing a bin. The lower, the prettier, the higher, the most performant.
+     * @returns a usable binCB
+     */
     static CIRCLE(maxRadius, minRadius, transformable, precision) {
         maxRadius??=100
         minRadius??=0
@@ -434,7 +548,15 @@ class AudioDisplay extends _BaseObj {
         }
     }
 
-    // generic binCB for sin-ish wave display
+    /**
+     * Generic binCB for sin-ish wave display
+     * @param {Number?} maxHeight: the maximal height in pixels of the bina
+     * @param {Number?} minHeight: the minimal height in pixels of the bina
+     * @param {Number?} spacing: the horizontal space in pixels between each bin
+     * @param {Boolean?} transformable: whether the binCB accpets visual effects
+     * @param {Number?} precision: how many bins to skip before drawing a bin. The lower, the prettier, the higher, the most performant.
+     * @returns a usable binCB
+     */
     static TOP_WAVE(maxHeight, minHeight, spacing, transformable, precision) {
         maxHeight??=100
         minHeight??=0
@@ -473,7 +595,16 @@ class AudioDisplay extends _BaseObj {
         }
     }
 
-    // generic binCB for spiral particle cloud display
+    /**
+     * Generic binCB for spiral particle cloud display
+     * @param {Number?} maxRadius: the maximal radius in pixels
+     * @param {Number?} minRadius: the minimal radius in pixels
+     * @param {Number?} particleRadius: the radius of each particle 
+     * @param {Boolean?} transformable: whether the binCB accpets visual effects
+     * @param {Number?} precision: how many bins to skip before drawing a bin. The lower, the prettier, the higher, the most performant.
+     * @param {Number?} angleStep: the circular distance between each particle, in radian 
+     * @returns a usable binCB
+     */
     static CLOUD(maxRadius, minRadius, particleRadius, transformable, precision, angleStep) {
         maxRadius??=100
         minRadius??=0
@@ -517,7 +648,8 @@ class AudioDisplay extends _BaseObj {
     get data() {return this.#data}
     get fft() {return this.#fft}
     get bufferLength() {return this.#buffer_ll}
-    get transformable() {return this._transformable}
+    get transformableRaw() {return this._transformable}
+    get transformable() {return Boolean(this._transformable)}
 
     get video() {return this._source}
     get image() {return this._source}
@@ -556,7 +688,7 @@ class AudioDisplay extends _BaseObj {
     }
 	set offsetPourcent(_offsetPourcent) {this._offsetPourcent = _offsetPourcent}
 	set errorCB(_errorCB) {this._errorCB = _errorCB}
-    set transformable(transformable) {this._transformable = transformable}
+    set transformable(transformable) {this._transformable = +transformable}
     set rotation(rotation) {
         super.rotation = rotation
         this.#updateTransformable()
