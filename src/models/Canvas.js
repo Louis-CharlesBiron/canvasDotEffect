@@ -54,6 +54,7 @@ class Canvas {
      */
     constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._id = Canvas.CANVAS_ID_GIVER++                               // Canvas instance id
+        if (!cvs) throw new Error("The cvs (canvas) parameter is undefined")
         this._cvs = cvs                                                   // html canvas element or an OffscreenCanvas instance
         if (!this.isOffscreenCanvas) {
             this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
