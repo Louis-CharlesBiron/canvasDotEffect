@@ -63,7 +63,7 @@ writeFileSync(join(destination, "index.css"), `html, body {
 }`)
 
 // Create index.js
-writeFileSync(join(destination, "index.js"), `const {CDEUtils,FPSCounter,CanvasUtils,Color,_HasColor,GridAssets,TypingDevice,Mouse,Render,TextStyles,RenderStyles,Canvas,Anim,_BaseObj,AudioDisplay,ImageDisplay,TextDisplay,_DynamicColor,Pattern,_Obj,Shape,Gradient,FilledShape,Grid,Dot} = CDE
+writeFileSync(join(destination, "index.js"), `const {CDEUtils,FPSCounter,CanvasUtils,Color,Render,TextStyles,RenderStyles,Canvas,Anim,AudioDisplay,ImageDisplay,TextDisplay,Pattern,Shape,Gradient,FilledShape,Grid,Dot} = CDE
 
 const _ = null, fpsCounter = new FPSCounter(), CVS = new Canvas(document.getElementById("canvasId"), 
     ()=>{// loopingCB
