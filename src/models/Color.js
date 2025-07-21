@@ -27,8 +27,9 @@ class Color {
      * @param {Boolean?} isChannel: if true, this Color will be used as a channel and will not duplicate
      */
     constructor(color, isChannel=false) {
-        this._color = color instanceof Color ? color._color : color||Color.DEFAULT_COLOR // the color value declaration, in any supported format
-        this._format = Color.getFormat(this._color) // the format of the color
+        const format = Color.getFormat(color)
+        this._color = color instanceof Color ? color._color : (format&&color)||Color.DEFAULT_COLOR // the color value declaration, in any supported format
+        this._format = format||Color.getFormat(this._color) // the format of the color
         this.#updateCache()
         this._isChannel = isChannel||false // if true, this instance will be used as a color channel and will not duplicate
     }
@@ -55,20 +56,21 @@ class Color {
      */
     static convertTo(color, format=Color.CONVERTABLE_FORMATS.RGBA) {
         let inputFormat = Color.getFormat(color), convertedColor = color, formats = Color.CONVERTABLE_FORMATS, RGBA=formats.RGBA, HEX=formats.HEX, TEXT=formats.TEXT, HSV=formats.HSV
-
-        if (format==RGBA) {
-            if (inputFormat==HEX) convertedColor = Color.#hexToRgba(color)
-            else if (inputFormat==TEXT) convertedColor = Color.#unlinkRGBA(Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color])
-            else if (inputFormat==HSV) convertedColor = Color.#hsvToRgba(color)
-        } else if (format==HEX) {
-            if (inputFormat==RGBA) convertedColor = Color.#rgbaToHex(color)
-            else Color.#rgbaToHex(Color.convertTo(color, RGBA))
-        } else if (format==TEXT) {
-            if (inputFormat==RGBA) convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[color.toString()] ?? color
-            else convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[Color.convertTo(color, RGBA).toString()] ?? color
-        } else if (format==HSV) {
-            if (inputFormat==RGBA) convertedColor = Color.#rgbaToHsv(color)
-            else convertedColor = Color.#rgbaToHsv(Color.convertTo(color, RGBA))
+        if (inputFormat) {
+            if (format==RGBA) {
+                if (inputFormat==HEX) convertedColor = Color.#hexToRgba(color)
+                else if (inputFormat==TEXT) convertedColor = Color.#unlinkRGBA(Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color])
+                else if (inputFormat==HSV) convertedColor = Color.#hsvToRgba(color)
+            } else if (format==HEX) {
+                if (inputFormat==RGBA) convertedColor = Color.#rgbaToHex(color)
+                else convertedColor = Color.#rgbaToHex(Color.convertTo(color, RGBA))
+            } else if (format==TEXT) {
+                if (inputFormat==RGBA) convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[color.toString()] ?? color
+                else convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[Color.convertTo(color, RGBA).toString()] ?? color
+            } else if (format==HSV) {
+                if (inputFormat==RGBA) convertedColor = Color.#rgbaToHsv(color)
+                else convertedColor = Color.#rgbaToHsv(Color.convertTo(color, RGBA))
+            }
         }
 
         return convertedColor
@@ -119,7 +121,7 @@ class Color {
 
     // create a separate copy of an RGBA array
     static #unlinkRGBA(rgba) {
-        return [rgba[0], rgba[1], rgba[2], rgba[3]]
+        return rgba ? [rgba[0], rgba[1], rgba[2], rgba[3]] : null
     }
 
     // converts hsv to rbga (without default alpha)
@@ -140,7 +142,8 @@ class Color {
     
     // converts rbga to hex
     static #rgbaToHex(rgba) {
-        return "#"+rgba.reduce((a,b,i)=>a+=(i&&!(i%3)?Math.round(b*255):b).toString(16).padStart(2,"0"),"")
+        const hex = "#"+rgba.reduce((a,b,i)=>a+=(i&&!(i%3)?Math.round(b*255):b).toString(16).padStart(2,"0"),"")
+        return rgba[3]==1 ? hex.slice(0,7) : hex
     }
 
     // converts hex to rgba
@@ -153,11 +156,14 @@ class Color {
      * @param {String | [r,g,b,a] | Color} color: the color definition
      */
     static getFormat(color) {
-        return Array.isArray(color) ? (color.length == 4 ? Color.FORMATS.RGBA : Color.FORMATS.HSV) :
-        color instanceof Color ? Color.FORMATS.COLOR :
-        color instanceof Gradient ? Color.FORMATS.GRADIENT :
-        color instanceof Pattern ? Color.FORMATS.PATTERN :
-        color.includes("#") ? Color.FORMATS.HEX : Color.FORMATS.TEXT
+        const formats = Color.FORMATS
+        if (!color) return null
+        return Array.isArray(color) ? (color.length == 4 ? formats.RGBA : formats.HSV) :
+        color instanceof Color ? formats.COLOR :
+        color instanceof Gradient ? formats.GRADIENT :
+        color instanceof Pattern ? formats.PATTERN :
+        color[0] == "#" ? formats.HEX :
+        Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color] ? formats.TEXT: null
     }
 
     // ajust color values to Color instances
@@ -271,9 +277,12 @@ class Color {
     get brightness() {return this.#hsv[2]}
 
     set color(color) {
-        this._color = color?._color||color
-        this._format = Color.getFormat(this._color)
-        this.#updateCache()
+        const colorValue = color?._color||color, format = Color.getFormat(colorValue)
+        if (format) {
+            this._color = colorValue
+            this._format = format 
+            this.#updateCache()
+        }
     }
     set r(r) {this.#rgba[0] = CDEUtils.round(r, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
     set g(g) {this.#rgba[1] = CDEUtils.round(g, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}

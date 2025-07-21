@@ -103,6 +103,8 @@ class FilledShape extends Shape {
     get initFillColor() {return this._initFillColor}
 	get path() {return this._path}
 	get dynamicUpdates() {return this._dynamicUpdates}
+    get instanceOf() {return "FilledShape"}
+
 
     set fillColor(fillColor) {
         const fc = this._fillColor

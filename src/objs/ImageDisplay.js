@@ -441,6 +441,7 @@ class ImageDisplay extends _BaseObj {
     get source() {return this._source}
 	get sourceCroppingPositions() {return this._sourceCroppingPositions}
     get errorCB() {return this._errorCB}
+    get instanceOf() {return "ImageDisplay"}
 
     get paused() {return this._source?.paused}
     get playbackRate() {return this._source?.playbackRate}

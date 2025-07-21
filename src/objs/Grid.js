@@ -167,6 +167,7 @@ class Grid extends Shape {
 	get gaps() {return this._gaps}
 	get spacing() {return this._spacing}
 	get source() {return this._source}
+    get instanceOf() {return "Grid"}
 
 	set keys(keys) {
         const n_ll = keys.length>this._keys.length?keys.length:this._keys.length, newKeys = new Array(n_ll)

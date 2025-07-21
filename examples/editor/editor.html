@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="img/logo.png" type="image/x-icon">
     <title>CDE_EDITOR</title>
     <link rel="stylesheet" href="editor.css">
 </head>
@@ -18,27 +17,31 @@
 
             <div class="sidebar">
                 <div class="management bar">
-                    <button>+</button>
-                    <button>-</button>
-                    <button>Duplicate</button>
-                    <button>Remove all</button>
+                    <button id="m_addObj">+</button>
+                    <button id="m_removeAll">Remove all</button>
                 </div>
 
                 <div class="query bar">
                     Query
-                    <select id=""></select>
-                    <label>Id: <input type="number"></label>
-                    <span>Selected objet: *obj type* - *obj id*</span>
+                    <select id="q_allEls"></select>
+                    <label>Id: <input type="number" id="q_id" min="0"></label>
+                    <span id="q_selected">Selected objet: *obj type* - *obj id*</span>
                 </div>
 
                 <div class="editor bar">
-                    <label>Pos: <input type="number" id="" placeholder="x"> <input type="number" id="" placeholder="x"></label>
-                    <label>Color: <input type="color" id=""> <input type="text" id="" placeholder=""></label>
-                    <label>SetupCB: <textarea id="" placeholder="code ran on initialization of object"></textarea></label>
-                    <label>LoopCB: <textarea id="" placeholder="code ran every frame for object"></textarea></label>
-                    <label>Anchor Pos: <input type="number" id="" placeholder="x"> <input type="number" id="" placeholder="x"></label>
-                    <label>Activation Margin: <input type="number" id="" placeholder="x"></label>
-                    -------------------
+                    <button id="e_remove">Remove</button>
+                    <button>Duplicate</button>
+                    <button>Refresh obj</button>
+                    <label>Pos: <input type="number" id="e_posX" placeholder="x" step="5"> <input type="number" id="e_posY" placeholder="y" step="5"></label>
+                    <label>Color: <input type="color" id="e_colorPicker"> <input type="text" id="e_color" placeholder="blue"></label>
+                    <label>SetupCB: <textarea id="e_setupCB" placeholder="code ran on initialization of object"></textarea></label>
+                    <label>LoopCB: <textarea id="e_loopCB" placeholder="code ran every frame for object"></textarea></label>
+                    <label>Anchor Pos: <input type="number" id="e_anchorPosX" placeholder="x"> <input type="number" id="e_anchorPosY" placeholder="y"></label>
+                    <label>Activation Margin: <input type="number" id="e_activeMargin" placeholder="25"></label>
+                    <br>
+                    <b> - - DOT - - </b>
+                    <label>Radius: <input type="number" id="e_radius" placeholder="5"></label>
+
 
                 </div>
 
@@ -60,6 +63,14 @@
                 <span id="mouseInfo"></span>
                 <span id="mouseSpeed"></span>
                 <span id="mouseAngle"></span>
+            </div>
+
+            <div class="pointerActions">
+                <span style="font-weight: bold;font-size: 1.2em;">Pointer actions:</span>
+                <label>Object selector: <input type="radio" name="pointerActions" id="p_selectObj" checked></label>
+                <label>Object selector: <input type="radio" name="pointerActions" id="p_selectObj" checked></label>
+                <label>Object remover: <input type="radio" name="pointerActions" id="p_removeDot"></label>
+                <label>Dot placer: <input type="radio" name="pointerActions" id="p_placeDot"></label>
             </div>
         </div>
 

@@ -435,6 +435,7 @@ class Shape extends _Obj {
     get thirdDot() {return this._dots[2]}
     get lastDot() {return CDEUtils.getLast(this._dots, 0)}
     get asSource() {return this._dots}
+    get instanceOf() {return "Shape"}
 
     set dots(ratioPos) {this._ratioPos = ratioPos}
     set ratioPos(ratioPos) {this._ratioPos = ratioPos}

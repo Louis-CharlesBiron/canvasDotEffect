@@ -650,6 +650,7 @@ class AudioDisplay extends _BaseObj {
     get bufferLength() {return this.#buffer_ll}
     get transformableRaw() {return this._transformable}
     get transformable() {return Boolean(this._transformable)}
+    get instanceOf() {return "AudioDisplay"}
 
     get video() {return this._source}
     get image() {return this._source}

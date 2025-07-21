@@ -1791,12 +1791,12 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 ```js
 
     // Adding a mouse down to a canvas object
-    const listenerId = CVS.mouse.addListener(someShape, Mouse.LISTENER_TYPES.DOWN, (obj, mousePos)=>{
+    const listenerId = CVS.mouse.addListener(someShape, Mouse.LISTENER_TYPES.DOWN, (mousePos, obj, mouse)=>{
         console.log("The shape was clicked!")
     })
 
     // Updating the previous listener's callback. (Setting newObj/newCallback to null doesn't update it)
-    CVS.mouse.updateListener(Mouse.LISTENER_TYPES.DOWN, listenerId, null, (obj, mousePos)=>{
+    CVS.mouse.updateListener(Mouse.LISTENER_TYPES.DOWN, listenerId, null, (mousePos, obj, mouse)=>{
         console.log("This is the new click callback!")
     })
 

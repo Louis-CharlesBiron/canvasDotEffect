@@ -675,9 +675,9 @@ class Canvas {
     }
 
     // called on any mouse clicks
-    #mouseClicks(cb, e, preventOnFirstInteractionTrigger) {
+    #mouseClicks(callback, e, preventOnFirstInteractionTrigger) {
         this._mouse.updateMouseClicks(e)
-        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
+        if (CDEUtils.isFunction(callback)) callback(this._mouse, e)
         if (!preventOnFirstInteractionTrigger && Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
     }
 
@@ -687,7 +687,7 @@ class Canvas {
      * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
      * @returns a callback which removes the listeners
      */
-    setMouseDown(cb, global) {
+    setMouseDown(callback, global) {
         if (!this.isOffscreenCanvas) {
             let isTouch = false
             const ontouchstart=e=>{
@@ -701,10 +701,10 @@ class Canvas {
                     this._mouse.updatePos(e.x, e.y, this._offset)
                     this._mouse.calcAngle()            
                     this.#mouseMovements(this.#mouseMoveCB, e)
-                    this.#mouseClicks(cb, e, true)
+                    this.#mouseClicks(callback, e, true)
                 }
             }, onmousedown=e=>{
-                if (!isTouch) this.#mouseClicks(cb, e)
+                if (!isTouch) this.#mouseClicks(callback, e)
                 isTouch = false
             }, element = global ? document : this._frame
             element.addEventListener("touchstart", ontouchstart)

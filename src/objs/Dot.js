@@ -241,7 +241,7 @@ class Dot extends _Obj {
     get relativePos() {return super.relativePos}
     get radius() {return this._radius}
     get cachedPath() {return this._cachedPath}
-
+    get instanceOf() {return "Dot"}
 
     set x(x) {
         x = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)

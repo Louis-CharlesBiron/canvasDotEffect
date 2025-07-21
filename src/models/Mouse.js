@@ -144,7 +144,7 @@ class Mouse {
         return listener[2]
     }
 
-    // checks conditions for every listeners of a certain type, if valid, calls the listeners callback as such: (obj, mousePos)=>
+    // checks conditions for every listeners of a certain type, if valid, calls the listeners callback as such: (mousePos, obj, mouse)=>
     checkListeners(type) {
         const typedListeners = this._listeners[type], typedListeners_ll = typedListeners?.length
 
@@ -160,15 +160,15 @@ class Mouse {
                            nowWithin = ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))
                     
                     if (this._moveListenersOptimizationEnabled) {
-                        if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this._lastPos):obj.isWithin(this._lastPos))) || (isStaticBounds && this.isWithin(this._lastPos, obj, isPath2D)))==validation) callback(mousePos, this, obj)
+                        if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this._lastPos):obj.isWithin(this._lastPos))) || (isStaticBounds && this.isWithin(this._lastPos, obj, isPath2D)))==validation) callback(mousePos, obj, this)
                     } else {
                         const wasWithin = this.#wasWithin[typedListener[3]]
                         if (!wasWithin && nowWithin) {
                             this.#wasWithin[typedListener[3]] = true
-                            if (validation==2) callback(mousePos, this, obj)
+                            if (validation==2) callback(mousePos, obj, this)
                         } else if (!nowWithin && wasWithin) {
                             this.#wasWithin[typedListener[3]] = false
-                            if (validation==1) callback(mousePos, this, obj)
+                            if (validation==1) callback(mousePos, obj, this)
                         }
                     }
                 }
@@ -179,7 +179,7 @@ class Mouse {
 
                 for (let i=0;i<typedListeners_ll;i++) {
                     const [obj, callback, hasAccurateBounds] = typedListeners[i], isPath2D = obj instanceof Path2D, isStaticBounds = Array.isArray(obj)||isPath2D
-                    if (validation && ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))) callback(mousePos, this, obj)
+                    if (validation && ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))) callback(mousePos, obj, this)
                 }
             }
         }
@@ -208,6 +208,13 @@ class Mouse {
      */
     removeListener(type, id) {
         this._listeners[type] = id=="*"?[]:this._listeners[type].filter(l=>l[3]!==(id?.[3]??id))
+    }
+
+    /**
+     * Remoevs all existing listeners
+     */
+    removeAllListeners() {
+        this._listeners = []
     }
 
     /**

@@ -252,6 +252,7 @@ class TextDisplay extends _BaseObj {
     get lineCount() {return this.#lineCount}
     get width() {return this.trueSize[0]}
     get height() {return this.trueSize[1]}
+    get instanceOf() {return "TextDisplay"}
 
 	set text(text) {
         const lastYScale = this._scale[1]

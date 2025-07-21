@@ -46,12 +46,19 @@ input[type="password"]::-ms-reveal,input[type="password"]::-ms-clear,input[type=
     height: 100%;
     background-color: var(--c1);
     border-bottom: 3px solid var(--c3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .status {
     width: 100%;
     height: 4%;
     background-color: var(--c2);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
 }
 
 input[type="number"] {
@@ -60,7 +67,7 @@ input[type="number"] {
 }
 
 .bar {
-    width: 100%;
+    width: 97%;
     display: flex;
     flex-direction: column;
     padding: 10px 0;
