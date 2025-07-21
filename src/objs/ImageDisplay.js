@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Displays an image or a video as an object
 class ImageDisplay extends _BaseObj {
     static SUPPORTED_IMAGE_FORMATS = ["jpg","jpeg","png","gif","svg","webp","bmp","tiff","ico","heif","heic"]
     static SUPPORTED_VIDEO_FORMATS = ["mp4","webm","ogv","mov","avi","mkv","flv","wmv","3gp","m4v"]
@@ -31,6 +30,18 @@ class ImageDisplay extends _BaseObj {
     static IS_SCREEN_RECORD_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
 
     #naturalSize = null
+    
+    /**
+     * Displays an image or a video as an object
+     * @param {CanvasImageSource} source: a media source, such as an image or a video
+     * @param {[x,y]?} pos: the [x,y] pos of the top left of the object
+     * @param {[width, height]?} size: the width and height of the display. Either as pixels or as pourcentiles (ex: ["50%", 200])
+     * @param {Function?} errorCB: function called upon any error loading the media
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     */
     constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, null, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source               // the data source
@@ -77,6 +88,12 @@ class ImageDisplay extends _BaseObj {
         super.draw(time, deltaTime)
     }
 
+    /**
+     * Initializes a ImageDisplay data source
+     * @param {ImageDisplay.SOURCE_TYPES} dataSrc: the source of the media 
+     * @param {Function?} loadCallback: a function called upon source load (mediaElement, size)=>
+     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, dataSrc, e?)=>
+     */
     static initializeDataSource(dataSrc, loadCallback, errorCB) {
         const types = ImageDisplay.SOURCE_TYPES
         if (typeof dataSrc==types.FILE_PATH) {
@@ -219,28 +236,42 @@ class ImageDisplay extends _BaseObj {
         return Object.keys(ImageDisplay.ERROR_TYPES)[errorCode]
     }
 
-    // Plays the source (use only if the source is a video)
+    /**
+     * Plays the source, if it's a video
+     */
     playVideo() {
         ImageDisplay.playMedia(this._source)
     }
 
-    // Pauses the source (use only if the source is a video)
+    /**
+     * Pauses the source, if it's a video
+     */
     pauseVideo() {
         const source = this._source
         if (source instanceof HTMLVideoElement) source.pause()
     }
 
-    // Plays the source
+    /**
+     * Plays the provided video source
+     * @param {HTMLAudioElement | HTMLVideoElement} source: a video source
+     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, dataSrc, e?)=>
+     */
     static playMedia(source, errorCB) {
         if (source instanceof HTMLVideoElement || source instanceof HTMLAudioElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>source.play().catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE, source, e)})))
     }
     
-    // returns the natural size of the source
+    /**
+     * Returns the natural size of the source
+     * @param {HTMLElement} source: a usable source 
+     * @returns the size
+     */
     static getNaturalSize(source) {
         return [source?.displayWidth||source?.videoWidth||source?.width, source?.displayHeight||source?.videoHeight||source?.height]
     }
 
-    // returns a separate copy of this ImageDisplay instance
+    /**
+     * @returns a separate copy of this ImageDisplay instance (only if initialized)
+     */
     duplicate(source=this._source, pos=this.pos_, size=this.size_, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const imageDisplay = new ImageDisplay(
             source instanceof MediaStreamAudioSourceNode ? source.mediaStream.clone() : source.cloneNode(), 
@@ -258,12 +289,26 @@ class ImageDisplay extends _BaseObj {
         return this.initialized ? imageDisplay : null
     }
 
-    // returns whether the provided pos is in the image
+    /**
+     * Returns whether the provided pos is inside the display
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is inside the display
+     */
     isWithin(pos, padding, rotation, scale) {
         return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
     }
 
-    // returns whether the provided pos is in the image
+    /**
+     * Returns whether the provided pos is inside the display very accurately
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is inside the display
+     */
     isWithinAccurate(pos, padding, rotation, scale) {
         return this.ctx.isPointInPath(this.getBoundsAccurate(padding, rotation, scale), pos[0], pos[1])
     }
@@ -274,7 +319,13 @@ class ImageDisplay extends _BaseObj {
         return [pos, [pos[0]+size[0], pos[1]+size[1]]]
     }
 
-    // returns the accurate area containing all of the image
+    /**
+     * Returns the accurate area containing all of the display
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns a Path2D
+     */
     getBoundsAccurate(padding, rotation=this._rotation, scale=this._scale) {
         const path = new Path2D(), positions = this.#getRectBounds(), corners = super.getCorners(positions, padding, rotation, scale, super.getCenter(positions))
 
@@ -287,18 +338,28 @@ class ImageDisplay extends _BaseObj {
         return path
     }
 
-    // returns the center pos of the image
+    /**
+     * @returns the center pos of the image
+     */
     getCenter() {
         return super.getCenter(this.#getRectBounds())
     }
 
-    // returns the minimal rectangular area containing all of the image
+    /**
+     * Returns the minimal rectangular area containing all of the display
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(padding, rotation=this._rotation, scale=this._scale) {
         const positions = this.#getRectBounds()
         return super.getBounds(positions, padding, rotation, scale, super.getCenter(positions))
     }
 
-    // deletes the object from the canvas
+    /**
+     * Removes the display from the canvas
+     */
     remove() {
         if (this._source instanceof HTMLVideoElement) {
             this._source.pause()

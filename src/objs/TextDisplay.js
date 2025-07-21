@@ -3,12 +3,24 @@
 // Please don't use or credit this code as your own.
 //
 
-// Displays text as an object
 class TextDisplay extends _BaseObj {
     static MEASUREMENT_CTX = new OffscreenCanvas(1,1).getContext("2d")
     static DEFAULT_LINE_HEIGHT_PADDING = 10
 
     #lineCount = null
+
+    /**
+     * Displays text as an object
+     * @param {String} text: the text to display
+     * @param {Color | [r,g,b,a] ?} color: the color of the object
+     * @param {TextStyles | Function} textStyles: the text styles profile to use. Either a TextStyles instance or a function (render, this)=>{return TextStyles()}
+     * @param {Render.DRAW_METHODS?} drawMethod: the draw method
+     * @param {Number?} maxWidth: maximal width of the displayed text, in pixels
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     */
     constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
         this._text = text??""                // displayed text
@@ -58,12 +70,26 @@ class TextDisplay extends _BaseObj {
         super.draw(time, deltaTime)
     }
 
-    // Returns the width and height of the text, according to the textStyles, excluding the scale or rotation
+    /**
+     * Returns the width and height of the text, according to the textStyles, excluding the scale or rotation
+     * @param {TextStyles?} textStyles: the text profile to use 
+     * @param {String?} text: the text to calculate
+     * @param {Number?} lineHeightPadding: the line height padding
+     * @returns the size
+     */
     getSize(textStyles=this._textStyles, text=this.getTextValue(), lineHeightPadding) {
         return TextDisplay.getSize(textStyles, text, lineHeightPadding, this._maxWidth)
     }
 
-    // Returns the width and height of the given text, according to the textStyles, including potential scaling
+    /**
+     * Returns the width and height of the given text, according to the textStyles, including potential scaling
+     * @param {TextStyles} textStyles: the text profile to use 
+     * @param {String} text: the text to calculate
+     * @param {Number?} lineHeightPadding: the line height padding
+     * @param {Number?} maxWidth: maximal width of the displayed text, in pixels
+     * @param {[scaleX, scaleY]?} scale: the horizontal and vertical scale factors
+     * @returns 
+     */
     static getSize(textStyles, text, lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING, maxWidth, scale=[1,1]) {
         TextStyles.apply(TextDisplay.MEASUREMENT_CTX, ...textStyles.getStyles())
         const lines = text.replace(/./g,1).split("\n"), l_ll = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
@@ -83,12 +109,16 @@ class TextDisplay extends _BaseObj {
         return resultasda
     }
 
-    // Returns the current text value
+    /**
+     * @returns the current text value
+     */
     getTextValue() {
         return (CDEUtils.isFunction(this._text) ? this._text(this._parent, this) : this._text).trim()
     }
 
-    // returns a separate copy of this textDisplay instance
+    /**
+     * @returns a separate copy of this textDisplay instance (only if initialized)
+     */
     duplicate(text=this._text, pos=this.pos_, color=this._color, textStyles=this._textStyles, drawMethod=this._drawMethod, maxWidth=this._maxWidth, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const colorObject = color, colorRaw = colorObject.colorRaw, textDisplay = new TextDisplay(
             text,
@@ -109,12 +139,26 @@ class TextDisplay extends _BaseObj {
         return this.initialized ? textDisplay : null
     }
 
-    // returns whether the provided pos is in the text
+    /**
+     * Returns whether the provided pos is inside the text display
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is inside the text display
+     */
     isWithin(pos, padding, rotation, scale) {
         return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
     }
 
-    // returns whether the provided pos is in the text
+    /**
+     * Returns whether the provided pos is in the text
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number?} paddingX: the horizontal padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is inside the display
+     */
     isWithinAccurate(pos, paddingX, rotation, scale) {
         return this.ctx.isPointInPath(this.getBoundsAccurate(paddingX, rotation, scale), pos[0], pos[1])
     }
@@ -125,7 +169,15 @@ class TextDisplay extends _BaseObj {
         return [[pos[0]-size[0]/2, pos[1]-halfLine/2-3], [pos[0]+size[0]/2, pos[1]+size[1]-halfLine]]
     }
 
-    // returns the accurate area containing all of the text
+    /**
+     * Returns the accurate area containing all of the text
+     * @param {Number?} paddingX: the horizontal padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @param {Number?} lineHeightPadding: the line height padding to add
+     * @param {Number?} lineWidthOffset: the amount in pixels to substract from the line width 
+     * @returns a Path2D
+     */
     getBoundsAccurate(paddingX, rotation=this._rotation, scale=this._scale, lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING, lineWidthOffset=this.render.currentCtxStyles[0]) {
         const path = new Path2D(), sizes = this.#getAllSizes(), s_ll = sizes.length, top = this._pos[1]-(lineHeightPadding/4+this._lineHeight/4)-lineWidthOffset, cx = this._pos[0]-lineWidthOffset/2
         
@@ -156,12 +208,20 @@ class TextDisplay extends _BaseObj {
         return path
     }
 
-    // returns the center of the text
+    /**
+     * @returns the center of the text
+     */
     getCenter() {
         return super.getCenter(this.#getRectBounds())
     }
 
-    // returns the minimal rectangular area containing the text according to default text placements/parameters
+    /**
+     * Returns the minimal rectangular area containing the text according to default text placements/parameters
+    * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(padding, rotation=this._rotation, scale=this._scale) {
         return super.getBounds(this.#getRectBounds(), padding, rotation, scale, this._pos)
     }

@@ -3,7 +3,6 @@
 // Please don't use or credit this code as your own.
 //
 
-// Allows the creation of symbols/text based on specific source
 class Grid extends Shape {
     static DEFAULT_KEYS = ""
     static DEFAULT_GAPS = [10, 10]
@@ -13,13 +12,32 @@ class Grid extends Shape {
     static SAME_VALUE = undefined
 
     #symbolsReferences = []
+
+    /**
+     * Allows the creation of symbols/text using dots
+     * @param {String} keys: keys to convert to source's values as a string
+     * @param {[gapX, gapY]?} gaps: horizontal and vertical gaps within the dots, in pixels
+     * @param {Number?} spacing: gap size between symbols, in pixels
+     * @param {Object?} source: the source of the symbols
+     * @param {[x,y]?} pos: the pos of the object 
+     * @param {Number?} radius: the radius of the dots
+     * @param {Color | String | [r,g,b,a]?} color: the color of the dots
+     * @param {Number?} limit: the delimiter radius within which the drawEffectCB can take effect
+     * @param {Function?} drawEffectCB: a function called every frame for each dot of the shape, used to create effects. (render, dot, ratio, setupResults, mouse, distance, parent, isActive, rawRatio)=>
+     * @param {Function?} ratioPosCB: a function that returns a ratio pos target for calculating the dots ratio attribute. (this, dots)=>{return [x,y]}
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     * @param {Boolean?} fragile: (DEPRECATED) whether the shape resets on document visibility change 
+     */
     constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile) {
         super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile)
 
         this._keys = keys+""||Grid.DEFAULT_KEYS             // keys to convert to source's values as a string
         this._gaps = gaps??Grid.DEFAULT_GAPS                // [x, y] gap length within the dots
-        this._source = source?? Grid.DEFAULT_SOURCE         // symbols' source
         this._spacing = spacing??Grid.DEFAULT_SPACING(this) // gap length between symbols
+        this._source = source?? Grid.DEFAULT_SOURCE         // symbols' source
     }
 
     initialize() {
@@ -39,7 +57,15 @@ class Grid extends Shape {
         if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this?.parent)
     }
 
-    // Creates a formation of symbols
+    /**
+     * Creates a formation of symbols
+     * @param {String?} keys: keys to convert to source's values as a string
+     * @param {[x,y]?} pos: the pos of the object
+     * @param {[gapX, gapY]?} gaps: horizontal and vertical gaps within the dots, in pixels
+     * @param {Number?} spacing: gap size between symbols, in pixels
+     * @param {Object?} source: the source of the symbols
+     * @returns an array with all the symbols
+     */
     createGrid(keys=this._keys, pos=[0,0], gaps=this._gaps, spacing=this._spacing, source=this._source) {
         let [cx, cy] = pos, isNewLine=true, symbols=[], k_ll = keys.length
         for (let i=0;i<k_ll;i++) {
@@ -51,7 +77,13 @@ class Grid extends Shape {
         return symbols
     }
 
-    // Creates the dot based symbol at given pos, based on given source
+    /**
+     * Creates the dot based symbol at given pos, based on given source
+     * @param {String} key: a single character to convert 
+     * @param {[x,y]?} pos: the pos of the symbol
+     * @param {Object?} source: the source of the symbol
+     * @returns an array of dots
+     */
     createSymbol(key, pos=super.relativePos, source=this._source) {
         let dotGroup = [], xi=[0,0], yi=0, s = source[key], sourceRadius = Math.sqrt(source.width*source.height), places = GridAssets.D.places
 
@@ -78,7 +110,10 @@ class Grid extends Shape {
         }
     }
 
-    // deletes the symbol at the provided index
+    /**
+     * Deletes the symbol at the provided index
+     * @param {Number} i: the index of the key
+     */
     deleteKey(i) {
         if (typeof i=="number") i = this.getKey(i)
         
@@ -88,30 +123,39 @@ class Grid extends Shape {
         }
     }
 
-    // returns the dots composing the symbol at the provided index
+    /**
+     * Returns the dots composing the symbol at the provided index
+     * @param {Number} i: the index of the key
+     * @returns the dots group 
+     */
     getKey(i) {
         const ids = this.#symbolsReferences[i]??[], i_ll = ids.length, dots = new Array(i_ll), cvs = this.parent
         for (let i=0;i<i_ll;i++) dots[i] = cvs.get(ids[i])
         return dots
     }
 
-    // returns a separate copy of this Grid (only initialized for objects)
-    duplicate() {
-        const colorObject = this._color, colorRaw = colorObject.colorRaw, grid = new Grid(
-            this._keys,
-            CDEUtils.unlinkArr2(this._gaps),
-            this._spacing,
-            this._source,
-            this.pos_,
-            this._radius,
+    /** 
+     *  @returns a separate copy of this Grid (only if initialized)
+     */
+    duplicate(keys=this._keys, gaps=CDEUtils.unlinkArr2(this._gaps), spacing=this._spacing, source=this._source, pos=this.pos_, radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, fragile=this._fragile) {
+        const colorObject = color, colorRaw = colorObject.colorRaw, grid = new Grid(
+            keys,
+            gaps,
+            spacing,
+            source,
+            pos,
+            radius,
             (_,shape)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:shape):colorObject.duplicate(),
-            this._limit,
-            this._drawEffectCB,
-            this._ratioPosCB,
-            this._setupCB,
-            this._loopCB,
-            this._fragile
+            limit,
+            drawEffectCB,
+            ratioPosCB,
+            setupCB,
+            loopCB,
+            anchorPos,
+            activationMargin,
+            fragile
         )
+        grid._dots = this._dots.map(d=>d.duplicate())
         grid._scale = CDEUtils.unlinkArr2(this._scale)
         grid._rotation = this._rotation
         grid._visualEffects = this.visualEffects_

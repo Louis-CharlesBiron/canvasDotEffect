@@ -20,7 +20,7 @@ class FilledShape extends Shape {
      * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
      * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
      * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
-     * @param {Number | Boolean ?} activationMargin: The pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
      * @param {Boolean?} fragile: (DEPRECATED) whether the shape resets on document visibility change 
      */
     constructor(fillColor, dynamicUpdates=false, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile) {
@@ -71,22 +71,24 @@ class FilledShape extends Shape {
     }
 
     /**
-     * @returns a separate copy of this FilledShape (only for initialized objects)
+     * @returns a separate copy of this FilledShape (only if initialized)
      */
-    duplicate() {
-        const fillColorObject = this._fillColor, fillColorRaw = fillColorObject.colorRaw, colorObject = this._color, colorRaw = colorObject.colorRaw, filledShape = new FilledShape(
+    duplicate(fillColor=this._fillColor, dynamicUpdates=this._dynamicUpdates, pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, fragile=this._fragile) {
+        const fillColorObject = fillColor, fillColorRaw = fillColorObject.colorRaw, colorObject = color, colorRaw = colorObject.colorRaw, filledShape = new FilledShape(
             (_,shape)=>(fillColorRaw instanceof Gradient||fillColorRaw instanceof Pattern)?fillColorRaw.duplicate(Array.isArray(fillColorRaw.initPositions)?null:shape):fillColorObject.duplicate(),
-            this._dynamicUpdates,
-            this.pos_,
-            this._dots.map(d=>d.duplicate()),
-            this._radius,
+            dynamicUpdates,
+            pos,
+            dots,
+            radius,
             (_,shape)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:shape):colorObject.duplicate(),
-            this._limit,
-            this._drawEffectCB,
-            this._ratioPosCB,
-            this._setupCB,
-            this._loopCB,
-            this._fragile
+            limit,
+            drawEffectCB,
+            ratioPosCB,
+            setupCB,
+            loopCB,
+            anchorPos,
+            activationMargin,
+            fragile
         )
         filledShape._scale = CDEUtils.unlinkArr2(this._scale)
         filledShape._rotation = this._rotation

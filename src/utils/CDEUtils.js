@@ -8,17 +8,34 @@ class CDEUtils {
     static CIRC = 2*Math.PI
     static TO_DEGREES = Math.PI/180
 
-    // Returns the element at the specified index, starting from the end of the array
+    /**
+     * Returns the element at the specified index, starting from the end of the array
+     * @param {Array} arr: the array
+     * @param {Number?} index: the index
+     * @returns the element at index
+     */
     static getLast(arr, index=0) {
         return arr[arr.length-1-index]
     }
 
-    // Adds an element to the specified index of the array
+    /**
+     * Adds an element to the specified index of the array
+     * @param {Array} arr: the array 
+     * @param {*} el: the element to add
+     * @param {Number?} index: the index
+     * @returns the updated array
+     */
     static addAt(arr, el, index=0) {
         return arr.slice(0, index).concat(el, arr.slice(index))
     }
 
-    // returns a random number within the min and max range. Can generate decimals
+    /**
+     * Returns a random number within the min and max range
+     * @param {Number} min: the minimal possible value (included)
+     * @param {Number} max: the maximal possible value (excluded)
+     * @param {Number?} decimals: the decimal point. (Defaults to integers)
+     * @returns the generated number
+     */
     static random(min, max, decimals=0) {
         if (decimals) {
             const precision = decimals**10
@@ -26,116 +43,216 @@ class CDEUtils {
         } else return (Math.random()*(max-min)+min)>>0
     }
 
-    // clamps a numeric value between the min and max 
-    static clamp(value, min=Infinity, max=Infinity) {
-        return value < min ? min : value > max ? max : value
+    /**
+     * Clamps a number between the min and max 
+     * @param {Number} num: the number to clamp
+     * @param {Number?} min: the minimal value 
+     * @param {Number?} max: the maximal value
+     * @returns 
+     */
+    static clamp(num, min=Infinity, max=Infinity) {
+        return num < min ? min : num > max ? max : num
     }
 
-    // returns whether a value is defined
-    static isDefined(v) {
-        return v != null
+    /**
+     * Returns whether a value is defined
+     * @param {*} value: the value to check
+     * @returns whether the value is defined
+     */
+    static isDefined(value) {
+        return value != null
     }
 
-    // returns whether a value is a function
-    static isFunction(v) {
-        return typeof v == "function"
+    /**
+     * Returns whether a value is a function
+     * @param {*} value: the value to check
+     * @returns whether the value is a function
+     */
+    static isFunction(value) {
+        return typeof value == "function"
     }
 
-    // rounds a number to a specific decimal point
-    static round(num, decimals=1) {
+    /**
+     * Rounds a number to a specific decimal point
+     * @param {Number} num: the number to round
+     * @param {Number?} decimals: the decimal rounding point
+     * @returns 
+     */
+    static round(num, decimals=0) {
         const precision = 10**decimals
         return Math.round(num*precision)/precision
     }
 
-    // creates a copy of the provided array. (only for length 2)
+    /**
+     * Creates a copy of the provided array. (only length 2)
+     * @param {*} arr 
+     * @returns the array copy
+     */
     static unlinkArr2(arr) {
         return [arr[0], arr[1]]
     }
 
-    // creates a copy of the provided array. (only for length 3)
+    /**
+     * Creates a copy of the provided array. (only length 3)
+     * @param {*} arr 
+     * @returns the array copy
+     */
     static unlinkArr3(arr) {
         return [arr[0], arr[1], arr[2]]
     }
 
-    // creates a copy of the provided array. (input format: [ [x, y], [x, y] ], or [x, y])
+    /**
+     * Creates a copy of the provided array.
+     * @param {[ [x, y], [x2, y2] ] | [x,y]} arr 
+     * @returns the array copy
+     */
     static unlinkPositions(arr) {
         const isArray = Array.isArray, unlinkArr2 = CDEUtils.unlinkArr2,  o1 = arr?.[0], o2 = arr?.[1]
         return isArray(arr) ? [isArray(o1)?unlinkArr2(o1):o1, isArray(o2)?unlinkArr2(o2):o2] : arr
     }
 
-    // returns the rotated position 
+    /**
+     * Rotates the provided pos around a point
+     * @param {[x,y]?} pos: the pos to rotate
+     * @param {Number?} deg: the degrees to rotate
+     * @param {[x,y]?} centerPos: the center pos of the rotation
+     * @returns the rotated pos 
+     */
     static rotatePos(pos=[0,0], deg=0, centerPos=[0,0]) {
         const rad = CDEUtils.toRad(deg), cos=Math.cos(rad), sin=Math.sin(rad), sx = pos[0]-centerPos[0], sy = pos[1]-centerPos[1]
         return [sx*cos-sy*sin+centerPos[0], sx*sin+sy*cos+centerPos[1]]
     }
 
-    // returns the rotated position 
+    /**
+     * Scales the provided pos from a center point
+     * @param {[x,y]?} pos: the pos to scale
+     * @param {[scaleX, scaleY]?} scale: the x/y scale factors 
+     * @param {[x,y]?} centerPos: the center pos of the scaling
+     * @returns the scaled pos 
+     */
     static scalePos(pos=[0,0], scale=[1,1], centerPos=[0,0]) {
         const sx = pos[0]-centerPos[0], sy = pos[1]-centerPos[1]
         return [sx*scale[0]+centerPos[0], sy*scale[1]+centerPos[1]]
     }
 
-    // returns the center pos of the provided positions
+    /**
+     * Returns the center pos of the provided positions
+     * @param {[[x1,y1], [x2,y2]]} positions: a rectangular area defined by two corners
+     * @returns the center pos pos
+     */
     static getPositionsCenter(positions) {
         return [(positions[0][0]+positions[1][0])/2, (positions[0][1]+positions[1][1])/2]
     }
 
-    // Returns the pythagorian distance between 2 points
+    /**
+     * Returns the pythagorian distance between 2 points
+     * @param {Number} x1: the x value of the first point
+     * @param {Number} y1: the y value of the first point
+     * @param {Number} x2: the x value of the second point
+     * @param {Number} y2: the y value of the second point
+     * @returns 
+     */
     static getDist(x1, y1, x2, y2) {
         return Math.sqrt((x1-x2)**2 + (y1-y2)**2)
     }
 
-    // Returns the "a", "b" and "function" values formed by a line between 2 positions
+    /**
+     * Returns the "a", "b" and "function" values formed by a line between 2 positions
+     * @param {[x,y]} pos1: a point
+     * @param {[x,y]} pos2: another point
+     */
     static getLinearFn(pos1, pos2) {
         const a = (pos2[1]-pos1[1])/(pos2[0]-pos1[0]), b = -a*pos1[0]+pos1[1]
         return [a, b, (x)=>a*x+b, pos1]
     }
 
-    // Returns the "a", "b" and "function" values of the perpendicular line. 
+    /**
+     * Returns the "a", "b" and "function" values of the perpendicular line
+     * @param {Array} linearFnResult: the results of getLinearFn() 
+     */
     static getPerpendicularLinearFn(linearFnResult) {
         const a = -1/linearFnResult[0], pos = linearFnResult[3], b = -a*pos[0]+pos[1]
         return [a, b, (x)=>a*x+b, pos]
     }
 
-    // Returns a random value in a randomArray
+    /**
+     * Returns a random value in a range
+     * @param {[min, max]} minMax 
+     * @returns the random clamped value
+     */
     static getValueFromRange(minMax) {
         return Array.isArray(minMax) ? CDEUtils.random(minMax[0], minMax[1]) : minMax 
     }
 
-    // Shallow array equals
+    /**
+     * Shallow array equals
+     * @param {Array} arr1 
+     * @param {Array} arr2 
+     * @returns whether both array are equal
+     */
     static arrayEquals(arr1, arr2) {
         if (arr1.length !== arr2.length) return false
         return arr1.every((v, i)=>v==arr2[i])
     }
     
-    // adds a pos to another
+    /**
+     * Adds a pos to another
+     * @param {[x,y]} arr1: a pos array
+     * @param {[x,y]} arr2: another pos array
+     * @returns the resulting pos array
+     */
     static addPos(pos1, pos2) {
         return [pos1[0]+pos2[0], pos1[1]+pos2[1]]
     }
     
-    // substracts a pos to another
+    /**
+     * Substracts a pos to another
+     * @param {[x,y]} arr1: a pos array
+     * @param {[x,y]} arr2: another pos array
+     * @returns the resulting pos array
+     */
     static subPos(pos1, pos2) {
         return [pos1[0]-pos2[0], pos1[1]-pos2[1]]
     }
 
-    // substracts a pos to another
+    /**
+     * Multiplies a pos to another
+     * @param {[x,y]} arr1: a pos array
+     * @param {[x,y]} arr2: another pos array
+     * @returns the resulting pos array
+     */
     static mulPos(pos1, pos2) {
         return [pos1[0]*pos2[0], pos1[1]*pos2[1]]
     }
 
-    // substracts a pos to another
+    /**
+     * Divides a pos to another
+     * @param {[x,y]} arr1: a pos array
+     * @param {[x,y]} arr2: another pos array
+     * @returns the resulting pos array
+     */
     static divPos(pos1, pos2) {
         return [pos1[0]/pos2[0], pos1[1]/pos2[1]]
     }
 
-    // pos array equals
+    /**
+     * Pos array equals (or arr[2])
+     * @param {[x,y]} arr1: a pos array
+     * @param {[x,y]} arr2: another pos array 
+     * @returns whether both pos array are equal
+     */
     static posEquals(arr1, arr2) {
         return arr2 && arr1 && arr1[0]==arr2[0] && arr1[1]==arr2[1]
     }
 
-    // positions array equals
-    static positionsEquals(arr1, arr2) {
-        return arr1 && arr2 && arr1[0][0]==arr2[0][0] && arr1[0][1]==arr2[0][1] && arr1[1][0]==arr2[1][0] && arr1[1][1]==arr2[1][1]
+    /**
+     * Positions array equals
+     * @param {[[x1,y1], [x2,y2]]} positions1: a rectangular area defined by two corners
+     * @param {[[x1,y1], [x2,y2]]} positions2: another rectangular area defined by two corners
+     * @returns whether both positions array are equal
+     */
+    static positionsEquals(positions1, positions2) {
+        return positions1 && positions2 && positions1[0][0]==positions2[0][0] && positions1[0][1]==positions2[0][1] && positions1[1][0]==positions2[1][0] && positions1[1][1]==positions2[1][1]
     }
 
     /**
@@ -151,12 +268,20 @@ class CDEUtils {
         return max-ratio*range-(range<0)*max
     }
 
-    // returns converted given degrees into radians 
+    /**
+     * Returns converted given degrees into radians 
+     * @param {Number} deg: the degrees
+     * @returns the equivalent radians
+     */
     static toRad(deg) {
         return deg*CDEUtils.TO_DEGREES
     }
 
-    // returns converted given radians into degrees 
+    /**
+     * Returns converted given radians into degrees 
+     * @param {Number} rad: the radians
+     * @returns the equivalent degrees
+     */
     static toDeg(rad) {
         return rad/CDEUtils.TO_DEGREES
     }

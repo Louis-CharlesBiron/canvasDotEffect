@@ -26,7 +26,7 @@ class Pattern extends _DynamicColor {
     /**
      * Allows the creation of custom gradients
      * @param {Render} render: a render instance
-     * @param {ImageDisplay.SOURCE_TYPES} source: a media source, such as an image or a video
+     * @param {CanvasImageSource} source: a media source, such as an image or a video
      * @param {[[x1,y1], [x2,y2]]} positions: the rectangular area defined by two corners containing the pattern
      * @param {[[startX, startY], [endX, endY]]?} sourceCroppingPositions: source cropping positions delimiting a rectangle, cropping everything outside of it. (Defaults to no cropping)
      * @param {Boolean?} keepAspectRatio: Whether the media should resize by keeping the original aspect ratio
@@ -160,14 +160,14 @@ class Pattern extends _DynamicColor {
     }
 
     /**
-     * Plays the source (use only if the source is a video)
+     * Plays the source, if it's a video
      */
     playVideo() {
         ImageDisplay.playMedia(this._source)
     }
 
     /**
-     * Pauses the source (use only if the source is a video)
+     * Pauses the source, if it's a video
      */
     pauseVideo() {
         try {this._source.pause()}catch(e){}

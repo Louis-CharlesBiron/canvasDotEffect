@@ -15,7 +15,7 @@ class _Obj extends _BaseObj {
      * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
      * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
      * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
-     * @param {Number | Boolean ?} activationMargin: The pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
      */
     constructor(pos, radius, color, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, color, setupCB, loopCB, anchorPos, activationMargin)

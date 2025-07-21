@@ -32,13 +32,22 @@ class CanvasUtils {
         canvas.add(t_d2)
     }
 
-    // returns true if the provided dot is the first one of the shape
+    /**
+     * Returns true if the provided dot is the first one of the shape
+     * @param {Dot} dot: a Dot in a Shape
+     */
     static firstDotOnly(dot) {
         return dot.id==dot.parent.firstDot.id
     }
     
-    // Generic function to draw an outer ring around a dot (forceBatching allows to force batching even if a URL filter is defined)
-    static drawOuterRing(dot, renderStyles, radiusMultiplier, forceBatching) {
+    /**
+     * Generic function to draw an outer ring around a dot
+     * @param {Dot} dot: a Dot instance
+     * @param {RenderStyles | [r,g,b,a]} renderStyles: the style profile or color of the ring
+     * @param {Number?} radiusMultiplier: the ring radius is based on the dot's radius times the radius multiplier
+     * @param {Boolean?} forceBatching: allows to force batching even if a URL filter is defined
+     */
+    static drawOuterRing(dot, renderStyles, radiusMultiplier=1, forceBatching=false) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
 
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
@@ -47,7 +56,16 @@ class CanvasUtils {
         else dot.render.batchStroke(Render.getArc(dot.pos, (dot.radius||1)*radiusMultiplier), renderStyles)
     }
     
-    // Generic function to draw connection between the specified dot and a sourcePos (forceBatching allows to force batching even if a URL filter is defined)
+    /**
+     * Generic function to draw connection line between the specified dot and a sourcePos
+     * @param {Dot} dot: a Dot instance
+     * @param {Dot | [x,y]} target: a Dot instance or a pos array
+     * @param {RenderStyles | [r,g,b,a]} renderStyles: the style profile or color of the line
+     * @param {Number} radiusPaddingMultiplier: the padding around the dot based on the multiplication of its radius 
+     * @param {Render.LINE_TYPES} lineType: the line type to use
+     * @param {Number?} spread: a modifier value for the default control pos generation (for bezier and quadratic curves)
+     * @param {Boolean?} forceBatching: allows to force batching even if a URL filter is defined
+     */
     static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
         
@@ -63,7 +81,15 @@ class CanvasUtils {
         }
     }
 
-    // Generic function to draw connections between the specified dot and all the dots in its connections property (forceBatching allows to force batching even if a URL filter is defined)
+    /**
+     * Generic function to draw connection lines between the specified dot and all the dots in its connections property
+     * @param {Dot} dot: a Dot instance
+     * @param {RenderStyles | [r,g,b,a]} renderStyles: the style profile or color of the line
+     * @param {Number} radiusPaddingMultiplier: the padding around the dot based on the multiplication of its radius 
+     * @param {Render.LINE_TYPES} lineType: the line type to use
+     * @param {Number?} spread: a modifier value for the default control pos generation (for bezier and quadratic curves)
+     * @param {Boolean?} forceBatching: allows to force batching even if a URL filter is defined
+     */
     static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
         const render = dot.render, dotPos = dot.pos, dotConnections = dot.connections, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter, hasURLFilter = filter&&filter.indexOf("#")!==-1
 
@@ -86,7 +112,10 @@ class CanvasUtils {
         }
     }
 
-    // Generic function to get a callback that can make a dot draggable and throwable
+    /**
+     * Generic function to get a callback that can make a dot draggable and throwable. This function should only be called once, but the returned callback, every frame.
+     * @returns a callback to be called in the drawEffectCB of the shape containing the dot, only for the dot, giving the following parameters: (dot, mouse, dist, ratio, pickableRadius?)=>{...}
+     */
     static getDraggableDotCB() {
         let mouseup = false, dragAnim = null
         return (dot, mouse, dist, ratio, pickableRadius=50)=>{
@@ -102,17 +131,25 @@ class CanvasUtils {
         }
     }
 
-    // Returns a callback allowing a dot to have a custom trail effect
-    static getTrailEffectCB(canvas, obj, length=8, moveEffectCB=null, disableDefaultMovements=false) {
-        let trail = [], trailPos = new Array(length).fill(obj.pos), lastPos = null, equals = CDEUtils.posEquals, isDefaultMovements = !disableDefaultMovements
+    /**
+     * Returns a callback allowing a dot to have a custom trail effect. This function should only be called once, but the returned callback, every frame.
+     * @param {Canvas} canvas: canvas instance 
+     * @param {Dot} dot: a Dot instance
+     * @param {Number} length: the number of the trail elements (fake dots)
+     * @param {Function?} moveEffectCB: called on each movement for each trail element. (trailElement, ratio, isMoving, mouse, trailElementPos, trailElementIndex)=>
+     * @param {Boolean?} disableDefaultMovements: if true, disables default movements of the trail element. Useful custom movements are defined in the "moveEffectCB"
+     * @returns a callback to be called in the drawEffectCB of the shape containing the dot, only for the target dot, giving the following parameter: (mouse)=>{...}
+     */
+    static getTrailEffectCB(canvas, dot, length=8, moveEffectCB=null, disableDefaultMovements=false) {
+        let trail = [], trailPos = new Array(length).fill(dot.pos), lastPos = null, equals = CDEUtils.posEquals, isDefaultMovements = !disableDefaultMovements
         for (let i=0;i<length;i++) {
-            const trailObj = obj.duplicate()
+            const trailObj = dot.duplicate()
             trail.push(trailObj)
             canvas.add(trailObj)
         }
 
         return (mouse)=>{
-            let pos = CDEUtils.unlinkArr2(obj.pos), isMoving = false
+            let pos = CDEUtils.unlinkArr2(dot.pos), isMoving = false
             if (!equals(lastPos, pos)) {
                 trailPos.shift()
                 trailPos.push(pos)
@@ -126,29 +163,57 @@ class CanvasUtils {
         }
     }
 
-    // Generic function to rotate the gradient of an object
+    /**
+     * Generic function to rotate the gradient of an object
+     * @param {_BaseObj} obj: a _BaseObj inheritor instance
+     * @param {Number?} duration: the duration of a full animation cycle
+     * @param {Number?} speed: the speed modifier of the spin
+     * @param {Boolean} isFillColor: whether the fillColor or the color is to spin 
+     * @returns the created Anim instace
+     */
     static rotateGradient(obj, duration=1000, speed=1, isFillColor=false) {
         return obj.playAnim(new Anim((prog)=>obj[isFillColor?"fillColorRaw":"colorRaw"].rotation=-speed*360*prog, duration))
     }
 
-    // Rotates the provided obj for it to face the target. Offsets: top:90, right:0, bottom:270, left:180
+    /**
+     * Rotates the provided obj for it to face the target. 
+     * @param {_BaseObj} obj: a _BaseObj inheritor instance
+     * @param {[x,y] | _BaseObj} obtargetj: a pos array or a _BaseObj inheritor instance to rotate towards
+     * @param {Number?} offset: the rotation offset in degrees. (facing: top=90, right=0, bottom=270, left=180)
+     */
     static lookAt(obj, target, offset=0) {
         const t = target?.pos??target
         obj.rotation = offset-CDEUtils.toDeg(Math.atan2(obj.pos[1]-t[1], -(obj.pos[0]-t[0])))
     }
 
-    // Draws the minimal rectangular area fitting the provided object
+    /**
+     * Draws the minimal rectangular area fitting the provided object
+     * @param {Render} render: a Render instance to draw with
+     * @param {_BaseObj} obj: a _BaseObj inheritor instance
+     * @param {Color | [r,g,b,a] ?} color: the color of the outline
+     */
     static drawOutline(render, obj, color=[255,0,0,1]) {
         const bounds = obj.getBounds()
         render.batchStroke(Render.getPositionsRect(bounds[0], bounds[1]), color?.color||color)
     }
 
-    // Draws the minimal rectangular area fitting the provided object
+    /**
+     * Draws the accurate area fitting the provided object
+     * @param {Render} render: a Render instance to draw with
+     * @param {_BaseObj} obj: a _BaseObj inheritor instance
+     * @param {Color | [r,g,b,a] ?} color: the color of the outline
+     */
     static drawOutlineAccurate(render, obj, color=[0,50,255,1]) {
         render.batchStroke(obj.getBoundsAccurate(), color?.color||color)
     }
 
-    // Draws a dot at the provided pos
+    /**
+     * Draws a dot at the provided pos
+     * @param {Render} render: a Render instance to draw with
+     * @param {[x,y]} pos: the pos 
+     * @param {Color | [r,g,b,a] ?} color: the color of the dot
+     * @param {Number?} radius: the radius of the dot
+     */
     static drawPos(render, pos, color=[255,0,0,1], radius) {
         render.batchStroke(Render.getArc(pos, radius), color?.color||color)
     }
@@ -222,7 +287,9 @@ class CanvasUtils {
         return obj
     }
 
-    // Provides generic follow paths
+    /**
+     * Provides generic follow paths
+     */
     static FOLLOW_PATHS = {
         INFINITY_SIGN: (width, height, progressOffset)=>{
             width??=100

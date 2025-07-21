@@ -57,7 +57,7 @@ class AudioDisplay extends _BaseObj {
      * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
      * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
      * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
-     * @param {Number | Boolean ?} activationMargin: The pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
      */
     constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
@@ -132,7 +132,7 @@ class AudioDisplay extends _BaseObj {
     /**
      * (UNRELIABLE WITH AudioDisplay) Returns whether the provided pos is in the audio display
      * @param {[x,y]} pos: the pos to check 
-     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied validity area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
      * @param {Number?} rotation: the rotation in degrees of the area
      * @param {[scaleX, scaleY]?} scale: the scale of the area
      * @returns whether the provided pos is in the audio display
@@ -156,7 +156,7 @@ class AudioDisplay extends _BaseObj {
 
     /**
      * (UNRELIABLE WITH AudioDisplay) returns the minimal rectangular area containing all of the audio display
-     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied validity area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
      * @param {Number?} rotation: the rotation in degrees of the area
      * @param {[scaleX, scaleY]?} scale: the scale of the area
      * @returns the area positions [[x1,y1], [x2,y2]]
@@ -192,9 +192,9 @@ class AudioDisplay extends _BaseObj {
 
     /**
      * Initializes a AudioDisplay data source
-     * @param {AudioDisplay.SOURCE_TYPES?} dataSrc: the source of the audio 
+     * @param {AudioDisplay.SOURCE_TYPES} dataSrc: the source of the audio 
      * @param {Function?} loadCallback: a function called upon source load (audioElement, isStream)=>
-     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, e?)=>
+     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, dataSrc, e?)=>
      */
     static initializeDataSource(dataSrc, loadCallback, errorCB) {
         const types = AudioDisplay.SOURCE_TYPES
@@ -462,7 +462,7 @@ class AudioDisplay extends _BaseObj {
     }
 
     /**
-     * @returns a separate copy of this AudioDisplay instance
+     * @returns a separate copy of this AudioDisplay instance (only if initialized)
      */
     duplicate(source=this._source, pos=this.pos_, color=this._color, binCB=this._binCB, sampleCount=this._sampleCount, disableAudio=this._disableAudio, offsetPourcent=this._offsetPourcent, errorCB=this._errorCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const colorObject = color, colorRaw = colorObject.colorRaw, audioDisplay = new AudioDisplay(

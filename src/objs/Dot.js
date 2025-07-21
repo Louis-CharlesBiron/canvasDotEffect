@@ -12,7 +12,7 @@ class Dot extends _Obj {
      * @param {Color | [r,g,b,a] ?} color: the color of the object
      * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
      * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
-     * @param {Number | Boolean ?} activationMargin: The pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
      * @param {Boolean?} disablePathCaching: if true, disables path caching. Could be more performant if the Dot is highly dynamic
      */
     constructor(pos, radius, color, setupCB, anchorPos, activationMargin, disablePathCaching=false) {
@@ -158,7 +158,7 @@ class Dot extends _Obj {
     /**
      * Returns whether the provided pos is in the dot
      * @param {[x,y]} pos: the pos to check 
-     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied validity area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
      * @param {Number?} rotation: the rotation in degrees of the area
      * @param {[scaleX, scaleY]?} scale: the scale of the area
      * @returns whether the provided pos is inside the Dot
@@ -170,7 +170,7 @@ class Dot extends _Obj {
     /**
      * Returns whether the provided pos is inside the Dot very accurately
      * @param {[x,y]} pos: the pos to check 
-     * @param {Number | [paddingX, paddingY?] ?} padding: the padding applied validity area
+     * @param {Number | [paddingX, paddingY?] ?} axisPadding: the padding added to the validity area
      * @param {Number?} rotation: the rotation in degrees of the area
      * @param {[scaleX, scaleY]?} scale: the scale of the area
      * @returns whether the provided pos is inside the Dot
@@ -187,7 +187,7 @@ class Dot extends _Obj {
 
     /**
      * Returns the accurate area containing all of the Dot
-     * @param {Number | [paddingX, paddingY?] ?} axisPadding: the padding applied validity area
+     * @param {Number | [paddingX, paddingY?] ?} axisPadding: the padding added to the validity area
      * @param {Number?} rotation: the rotation in degrees of the area
      * @param {[scaleX, scaleY]?} scale: the scale of the area
      * @returns a Path2D
@@ -208,7 +208,7 @@ class Dot extends _Obj {
 
     /**
      * Returns the minimal rectangular area containing all of the Dot
-     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied validity area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
      * @param {Number?} rotation: the rotation in degrees of the area
      * @param {[scaleX, scaleY]?} scale: the scale of the area
      * @returns the area positions [[x1,y1], [x2,y2]]
