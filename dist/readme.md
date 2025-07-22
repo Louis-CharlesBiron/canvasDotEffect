@@ -121,7 +121,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.1.9"
+    "cdejs": "^1.2.0"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -343,7 +343,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
 - **limit** -> Defines the circular radius in which the dots' ratio is calculated. Each dot will have itself as its center to calculate the distance between it and the shape's *ratioPos*. (At the edges the ratio will be 0 and gradually gravitates to 1 at the center)
 - **drawEffectCB** -> A custom callback containing the effects to display. It is run by every dot of the shape, every frame. `(render, dot, ratio, parentSetupResults, mouse, distance, parent, isActive, rawRatio)=>{...}`.
 - **ratioPosCB**? -> References the mouse position by default. Can be used to set a custom *ratioPos* target `(Shape, dots)=>{... return [x, y]}`. Can be disabled if set to `null`.
-- **fragile**? -> Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused)
+- **fragile**? -> ***/!\\ DEPRACATED /!\\*** Whether the shape resets on document visibility change events. (Rarer, some continuous effects can break when the page is in the background due to the unusual deltaTime values sometimes occurring when the document is offscreen/unfocused)
 
 ### **To add one or many dots,** use the add() function:
 ###### - add(dots)
@@ -524,7 +524,7 @@ Effects are often ratio-based, meaning the *intensity* of the effect is based on
         // Accessing the dot
         const dot = shape.firstDot
         
-        // Adding an infinite anim that changes the radius size back and forth
+        // Adding a simple infinite anim that changes the radius size back and forth
         dot.playAnim(new Anim((progress, i)=>{
             dot.radius = i%2?25*(1-prog):25*prog
         }, -750, Anim.easeOutQuad))
@@ -1791,12 +1791,12 @@ The Mouse class is automatically created and accessible by any Canvas instance. 
 ```js
 
     // Adding a mouse down to a canvas object
-    const listenerId = CVS.mouse.addListener(someShape, Mouse.LISTENER_TYPES.DOWN, (obj, mousePos)=>{
+    const listenerId = CVS.mouse.addListener(someShape, Mouse.LISTENER_TYPES.DOWN, (mousePos, obj, mouse)=>{
         console.log("The shape was clicked!")
     })
 
     // Updating the previous listener's callback. (Setting newObj/newCallback to null doesn't update it)
-    CVS.mouse.updateListener(Mouse.LISTENER_TYPES.DOWN, listenerId, null, (obj, mousePos)=>{
+    CVS.mouse.updateListener(Mouse.LISTENER_TYPES.DOWN, listenerId, null, (mousePos, obj, mouse)=>{
         console.log("This is the new click callback!")
     })
 

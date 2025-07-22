@@ -99,11 +99,15 @@ class Canvas {
     // sets resize and visibility change listeners on the window
     #initWindowListeners() {
         const onresize=()=>{
-            const render = this._render, [lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = render.currentCtxStyles, [font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering] = render.currentCtxTextStyles, [color, filter, compositeOperation, alpha] = render.currentCtxVisuals
+            const render = this._render, ctx = this._ctx, [lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = render.currentCtxStyles, [font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering] = render.currentCtxTextStyles, [color, filter, compositeOperation, alpha] = render.currentCtxVisuals
             this.setSize()
-            this._ctx.strokeStyle = this._ctx.fillStyle = Color.getColorValue(color)
+            ctx.strokeStyle = ctx.fillStyle = Color.getColorValue(color)
+            render.currentCtxStyles[0] = ctx.lineWidth
+            render.currentCtxStyles[2] = ctx.lineDashOffset
+            render.currentCtxStyles[3] = ctx.lineJoin
+            render.currentCtxStyles[4] = ctx.lineCap
             RenderStyles.apply(render, null, filter, compositeOperation, alpha, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
-            TextStyles.apply(this._ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
+            TextStyles.apply(ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
             this.moveViewAt(this._viewPos)
             if (this.fpsLimit==Canvas.STATIC || this._state==Canvas.STATES.STOPPED) this.drawSingleFrame()
         },

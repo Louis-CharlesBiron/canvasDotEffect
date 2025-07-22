@@ -1,4 +1,4 @@
-const fpsCounter = new FPSCounter(), CVS = new Canvas(1?canvas:new OffscreenCanvas(1000, 1000), ()=>{//looping
+const _ = null, fpsCounter = new FPSCounter(), CVS = new Canvas(1?canvas:new OffscreenCanvas(1000, 1000), ()=>{//looping
     let fps = fpsCounter.getFps()+"\n"+fpsCounter.fpsRaw
     if (fpsDisplay.textContent !== fps) fpsDisplay.textContent = fps
     mouseSpeed.textContent = CVS?.mouse?.speed?.toFixed(2)+" px/sec"
@@ -7,20 +7,9 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(1?canvas:new OffscreenCanv
 
 // DECLARE OBJS
 
-const _ = null
-
-// new TextDisplay("test\n11231", CVS.getCenter())
-// new Dot(CVS.getCenter(), 50)
-
-// qy
 const someObj = new TextDisplay("TEST\n123\n1\n13\n120934781293791823", CVS.getResponsivePos([0.5, 0.35]), _, render=>render.textProfile1.update("16px Monospace"))
 
-
-//someObj = new ImageDisplay("./img/img2.jpg", [200, 200], ["25%", "25%"], (e,a)=>console.log(e,a))
-//someObj = new Dot(CVS.getCenter(), 50)
-//const someObj = new FilledShape([75,75,75,1], true, CVS.getCenter(), [new Dot([0,0]),new Dot([100,-50]),new Dot([300,50]),new Dot([100,80]),new Dot([270,-90]),new Dot([-70,-90]),new Dot([-150,190])], 3, [100, 100, 100, 1])
-
-someObj.setupCB = (obj)=>{
+/*someObj.setupCB = (obj)=>{
     setTimeout(()=>obj.playAnim(new Anim(prog=>obj.rotateAt(prog*360), -50000, Anim.easeInOutBounce)), 500)
     obj.playAnim(new Anim((prog, i)=>{
         obj.scaleAt([0.15+(i%2?prog:(1-prog)), 0.5+(i%2?prog:(1-prog))*4])
@@ -42,6 +31,8 @@ someObj.loopCB = (obj)=>{
     //CanvasUtils.drawOutlineAccurate(CVS.render, obj)
     CVS.render.batchStroke(obj.getBoundsAccurate(), [0,0,255,1])
     CVS.render.batchFill(obj.getBoundsAccurate(), [0,0,255,0.5])
+
+
 }
 
 CVS.enableAccurateMouseMoveListenersMode()
@@ -50,7 +41,53 @@ CVS.enableAccurateMouseMoveListenersMode()
 //CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.DOWN , ()=>console.log("FAST - click"))
 CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.ENTER, ()=>console.log("ACCURATE - enter"), true)
 CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.EXIT , ()=>console.log("ACCURATE - exit") , true)
-CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.DOWN , ()=>console.log("ACCURATE - click"), true)
+CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.DOWN , ()=>console.log("ACCURATE - click"), true)*/
+
+
+
+
+
+
+
+
+const random = CDEUtils.random, render = CVS.render
+function getBorderPaths() {
+    const periodCount = random(5, 15), height = random(40, 65), startY = random(5, 25)
+    return {
+        path1:Render.generate([0,startY], Render.Y_FUNCTIONS.SINUS(height, CVS.width/periodCount), CVS.width, 20),
+        path2:Render.generate([random(-3, 3),startY+random(-2, 2)], Render.Y_FUNCTIONS.SINUS(height, CVS.width/periodCount), CVS.width, 20),
+        path3:Render.generate([0,CVS.height-startY], Render.Y_FUNCTIONS.SINUS(height, CVS.width/periodCount), CVS.width, 20),
+        path4:Render.generate([random(-3, 3),CVS.height-(startY+random(-2, 2))], Render.Y_FUNCTIONS.SINUS(height, CVS.width/periodCount), CVS.width, 20),
+    }
+}
+
+// TODO FIX WHEN UPDATING CDE
+const loop1Obj = CVS.get(CanvasUtils.createEmptyObj(CVS, (obj)=>{
+    setInterval(()=>obj.setupResults = getBorderPaths(), 1050)
+
+    return getBorderPaths()
+}, (obj)=>{
+    const r = obj.setupResults
+
+    render.batchStroke(r.path2, render.profile2.update([255,0,0,1], _, _, _, 5))
+    render.batchStroke(r.path1, render.profile1.update([255,255,255,1], _, _, _,   5))
+    render.batchStroke(r.path4, render.profile2.update([255,0,0,1], _, _, _, 5))
+    render.batchStroke(r.path3, render.profile1.update([255,255,255,1], _, _, _,   5))
+}))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Adding the object to the canvas
 CVS.add(someObj)

@@ -132,7 +132,7 @@ class Mouse {
      * Adds a custom mouse event listener binded to an object/area
      * @param {canvas object - [[x1,y1],[x2,y2]]} obj: Either a canvas object or a positions array 
      * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
-     * @param {Function} callback: a custom function called upon event trigger. (obj, mousePos)=> 
+     * @param {Function} callback: a custom function called upon event trigger. (mousePos, obj, mouse)=> 
      * @param {Boolean} useAccurateBounds: If true, uses the obj's accurate bounds calculation
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
      * @returns The listener id
@@ -141,7 +141,7 @@ class Mouse {
         const hasAccurateBounds = useAccurateBounds&&obj.getBoundsAccurate, listener = [forceStaticPositions?(hasAccurateBounds?obj.getBoundsAccurate():obj.getBounds()):obj, callback, hasAccurateBounds, Mouse.#LISTENER_ID_GIVER++]
         if (!this._listeners[type]) this._listeners[type] = []
         this._listeners[type].push(listener)
-        return listener[2]
+        return listener[3]
     }
 
     // checks conditions for every listeners of a certain type, if valid, calls the listeners callback as such: (mousePos, obj, mouse)=>
@@ -190,7 +190,7 @@ class Mouse {
      * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
      * @param {Number} id: listener's id 
      * @param {canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
-     * @param {Function?} newCallback: if provided, updates the listeners's callback to this value
+     * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (mousePos, obj, mouse)=>
      * @param {Boolean} useAccurateBounds: If true, uses the obj's accurate bounds calculation
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
      */
@@ -211,7 +211,7 @@ class Mouse {
     }
 
     /**
-     * Remoevs all existing listeners
+     * Removes all existing listeners
      */
     removeAllListeners() {
         this._listeners = []

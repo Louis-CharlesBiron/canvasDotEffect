@@ -114,7 +114,7 @@ class CanvasUtils {
 
     /**
      * Generic function to get a callback that can make a dot draggable and throwable. This function should only be called once, but the returned callback, every frame.
-     * @returns a callback to be called in the drawEffectCB of the shape containing the dot, only for the dot, giving the following parameters: (dot, mouse, dist, ratio, pickableRadius?)=>{...}
+     * @returns a callback to be called in the drawEffectCB of the shape containing the dot, only for the dot, and giving the following parameters: (dot, mouse, dist, ratio, pickableRadius?)=>{...}
      */
     static getDraggableDotCB() {
         let mouseup = false, dragAnim = null
@@ -137,8 +137,8 @@ class CanvasUtils {
      * @param {Dot} dot: a Dot instance
      * @param {Number} length: the number of the trail elements (fake dots)
      * @param {Function?} moveEffectCB: called on each movement for each trail element. (trailElement, ratio, isMoving, mouse, trailElementPos, trailElementIndex)=>
-     * @param {Boolean?} disableDefaultMovements: if true, disables default movements of the trail element. Useful custom movements are defined in the "moveEffectCB"
-     * @returns a callback to be called in the drawEffectCB of the shape containing the dot, only for the target dot, giving the following parameter: (mouse)=>{...}
+     * @param {Boolean?} disableDefaultMovements: if true, disables default movements of trail elements. Useful if custom movements are defined in the "moveEffectCB"
+     * @returns a callback to be called in the drawEffectCB of the shape containing the dot, only for the target dot, and giving the following parameter: (mouse)=>{...}
      */
     static getTrailEffectCB(canvas, dot, length=8, moveEffectCB=null, disableDefaultMovements=false) {
         let trail = [], trailPos = new Array(length).fill(dot.pos), lastPos = null, equals = CDEUtils.posEquals, isDefaultMovements = !disableDefaultMovements
@@ -234,9 +234,9 @@ class CanvasUtils {
      * @param {Canvas} CVS: The Canvas instance to use
      * @param {[[x1, y1], [x2, y2]]?} borderPositions: The two corners delimiting the draw area
      * @param {RenderStyles | [r,g,b,a]?} renderStyles: The style profile / color of the drawings
-     * @param {Number?} newLineMoveThreshold: The number mouse events to wait before drawing a line
+     * @param {Number?} newLineMoveThreshold: The number of mouse events to wait before drawing a line
      * @param {Color | [r,g,b,a]?} borderColor: The color of the border
-     * @returns The create object
+     * @returns the created object and the mouse listeners ids
      */
     static createDrawingBoard(CVS, borderPositions=[[0,0], CVS.size], renderStyles=[255,0,0,1], newLineMoveThreshold=Math.min(1, (CVS.fpsLimit||60)/15), borderColor=Color.DEFAULT_RGBA) {
         let d_ll = 0, render = CVS.render, cvsStatic = Canvas.STATIC, thresholdAt=0, obj = new Shape(null, [new Dot(borderPositions[0]), new Dot(borderPositions[1], )], 0, null, 0, null, null, ()=>[], ()=>{
@@ -245,22 +245,22 @@ class CanvasUtils {
         }, null, true)
         CVS.add(obj)
 
-        CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.DOWN, (pos)=>{
+        const clickListenerId = CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.DOWN, (pos)=>{
             const path = new Path2D(), x = pos[0], y = pos[1]
             path.moveTo(x, y)
             path.arc(x, y, (renderStyles.lineWidth||render.defaultProfile.lineWidth)/4, 0, CDEUtils.CIRC)
             d_ll = obj.setupResults.push(path)
-        })
+        }),
 
-        CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.ENTER, (pos, mouse)=>{
+        enterListenerId = CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.ENTER, (pos, _, mouse)=>{
             if (mouse.clicked) {
                 const path = new Path2D(), x = pos[0], y = pos[1]
                 path.moveTo(x, y)
                 d_ll = obj.setupResults.push(path)
             }
-        })
+        }),
 
-        CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.MOVE, (pos,mouse)=>{
+        moveListenerId = CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.MOVE, (pos, _, mouse)=>{
             if ((++thresholdAt)==newLineMoveThreshold) {
                 const lastPos = mouse.lastPos, path = obj.setupResults[d_ll-1]
                 if (path && mouse.clicked && obj.isWithin(lastPos)) {
@@ -271,7 +271,7 @@ class CanvasUtils {
             }
         })
         
-        return obj
+        return {obj, mouseListeners:{click:clickListenerId, enter:enterListenerId, move:moveListenerId}}
     }
 
     /**

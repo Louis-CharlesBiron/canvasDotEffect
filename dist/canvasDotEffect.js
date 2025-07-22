@@ -9,17 +9,34 @@ class CDEUtils {
     static CIRC = 2*Math.PI
     static TO_DEGREES = Math.PI/180
 
-    // Returns the element at the specified index, starting from the end of the array
+    /**
+     * Returns the element at the specified index, starting from the end of the array
+     * @param {Array} arr: the array
+     * @param {Number?} index: the index
+     * @returns the element at index
+     */
     static getLast(arr, index=0) {
         return arr[arr.length-1-index]
     }
 
-    // Adds an element to the specified index of the array
+    /**
+     * Adds an element to the specified index of the array
+     * @param {Array} arr: the array 
+     * @param {*} el: the element to add
+     * @param {Number?} index: the index
+     * @returns the updated array
+     */
     static addAt(arr, el, index=0) {
         return arr.slice(0, index).concat(el, arr.slice(index))
     }
 
-    // returns a random number within the min and max range. Can generate decimals
+    /**
+     * Returns a random number within the min and max range
+     * @param {Number} min: the minimal possible value (included)
+     * @param {Number} max: the maximal possible value (excluded)
+     * @param {Number?} decimals: the decimal point. (Defaults to integers)
+     * @returns the generated number
+     */
     static random(min, max, decimals=0) {
         if (decimals) {
             const precision = decimals**10
@@ -27,116 +44,216 @@ class CDEUtils {
         } else return (Math.random()*(max-min)+min)>>0
     }
 
-    // clamps a numeric value between the min and max 
-    static clamp(value, min=Infinity, max=Infinity) {
-        return value < min ? min : value > max ? max : value
+    /**
+     * Clamps a number between the min and max 
+     * @param {Number} num: the number to clamp
+     * @param {Number?} min: the minimal value 
+     * @param {Number?} max: the maximal value
+     * @returns 
+     */
+    static clamp(num, min=Infinity, max=Infinity) {
+        return num < min ? min : num > max ? max : num
     }
 
-    // returns whether a value is defined
-    static isDefined(v) {
-        return v != null
+    /**
+     * Returns whether a value is defined
+     * @param {*} value: the value to check
+     * @returns whether the value is defined
+     */
+    static isDefined(value) {
+        return value != null
     }
 
-    // returns whether a value is a function
-    static isFunction(v) {
-        return typeof v == "function"
+    /**
+     * Returns whether a value is a function
+     * @param {*} value: the value to check
+     * @returns whether the value is a function
+     */
+    static isFunction(value) {
+        return typeof value == "function"
     }
 
-    // rounds a number to a specific decimal point
-    static round(num, decimals=1) {
+    /**
+     * Rounds a number to a specific decimal point
+     * @param {Number} num: the number to round
+     * @param {Number?} decimals: the decimal rounding point
+     * @returns 
+     */
+    static round(num, decimals=0) {
         const precision = 10**decimals
         return Math.round(num*precision)/precision
     }
 
-    // creates a copy of the provided array. (only for length 2)
+    /**
+     * Creates a copy of the provided array. (only length 2)
+     * @param {*} arr 
+     * @returns the array copy
+     */
     static unlinkArr2(arr) {
         return [arr[0], arr[1]]
     }
 
-    // creates a copy of the provided array. (only for length 3)
+    /**
+     * Creates a copy of the provided array. (only length 3)
+     * @param {*} arr 
+     * @returns the array copy
+     */
     static unlinkArr3(arr) {
         return [arr[0], arr[1], arr[2]]
     }
 
-    // creates a copy of the provided array. (input format: [ [x, y], [x, y] ], or [x, y])
+    /**
+     * Creates a copy of the provided array.
+     * @param {[ [x, y], [x2, y2] ] | [x,y]} arr 
+     * @returns the array copy
+     */
     static unlinkPositions(arr) {
         const isArray = Array.isArray, unlinkArr2 = CDEUtils.unlinkArr2,  o1 = arr?.[0], o2 = arr?.[1]
         return isArray(arr) ? [isArray(o1)?unlinkArr2(o1):o1, isArray(o2)?unlinkArr2(o2):o2] : arr
     }
 
-    // returns the rotated position 
+    /**
+     * Rotates the provided pos around a point
+     * @param {[x,y]?} pos: the pos to rotate
+     * @param {Number?} deg: the degrees to rotate
+     * @param {[x,y]?} centerPos: the center pos of the rotation
+     * @returns the rotated pos 
+     */
     static rotatePos(pos=[0,0], deg=0, centerPos=[0,0]) {
         const rad = CDEUtils.toRad(deg), cos=Math.cos(rad), sin=Math.sin(rad), sx = pos[0]-centerPos[0], sy = pos[1]-centerPos[1]
         return [sx*cos-sy*sin+centerPos[0], sx*sin+sy*cos+centerPos[1]]
     }
 
-    // returns the rotated position 
+    /**
+     * Scales the provided pos from a center point
+     * @param {[x,y]?} pos: the pos to scale
+     * @param {[scaleX, scaleY]?} scale: the x/y scale factors 
+     * @param {[x,y]?} centerPos: the center pos of the scaling
+     * @returns the scaled pos 
+     */
     static scalePos(pos=[0,0], scale=[1,1], centerPos=[0,0]) {
         const sx = pos[0]-centerPos[0], sy = pos[1]-centerPos[1]
         return [sx*scale[0]+centerPos[0], sy*scale[1]+centerPos[1]]
     }
 
-    // returns the center pos of the provided positions
+    /**
+     * Returns the center pos of the provided positions
+     * @param {[[x1,y1], [x2,y2]]} positions: a rectangular area defined by two corners
+     * @returns the center pos pos
+     */
     static getPositionsCenter(positions) {
         return [(positions[0][0]+positions[1][0])/2, (positions[0][1]+positions[1][1])/2]
     }
 
-    // Returns the pythagorian distance between 2 points
+    /**
+     * Returns the pythagorian distance between 2 points
+     * @param {Number} x1: the x value of the first point
+     * @param {Number} y1: the y value of the first point
+     * @param {Number} x2: the x value of the second point
+     * @param {Number} y2: the y value of the second point
+     * @returns 
+     */
     static getDist(x1, y1, x2, y2) {
         return Math.sqrt((x1-x2)**2 + (y1-y2)**2)
     }
 
-    // Returns the "a", "b" and "function" values formed by a line between 2 positions
+    /**
+     * Returns the "a", "b" and "function" values formed by a line between 2 positions
+     * @param {[x,y]} pos1: a point
+     * @param {[x,y]} pos2: another point
+     */
     static getLinearFn(pos1, pos2) {
         const a = (pos2[1]-pos1[1])/(pos2[0]-pos1[0]), b = -a*pos1[0]+pos1[1]
         return [a, b, (x)=>a*x+b, pos1]
     }
 
-    // Returns the "a", "b" and "function" values of the perpendicular line. 
+    /**
+     * Returns the "a", "b" and "function" values of the perpendicular line
+     * @param {Array} linearFnResult: the results of getLinearFn() 
+     */
     static getPerpendicularLinearFn(linearFnResult) {
         const a = -1/linearFnResult[0], pos = linearFnResult[3], b = -a*pos[0]+pos[1]
         return [a, b, (x)=>a*x+b, pos]
     }
 
-    // Returns a random value in a randomArray
+    /**
+     * Returns a random value in a range
+     * @param {[min, max]} minMax 
+     * @returns the random clamped value
+     */
     static getValueFromRange(minMax) {
         return Array.isArray(minMax) ? CDEUtils.random(minMax[0], minMax[1]) : minMax 
     }
 
-    // Shallow array equals
+    /**
+     * Shallow array equals
+     * @param {Array} arr1 
+     * @param {Array} arr2 
+     * @returns whether both array are equal
+     */
     static arrayEquals(arr1, arr2) {
         if (arr1.length !== arr2.length) return false
         return arr1.every((v, i)=>v==arr2[i])
     }
     
-    // adds a pos to another
+    /**
+     * Adds a pos to another
+     * @param {[x,y]} arr1: a pos array
+     * @param {[x,y]} arr2: another pos array
+     * @returns the resulting pos array
+     */
     static addPos(pos1, pos2) {
         return [pos1[0]+pos2[0], pos1[1]+pos2[1]]
     }
     
-    // substracts a pos to another
+    /**
+     * Substracts a pos to another
+     * @param {[x,y]} arr1: a pos array
+     * @param {[x,y]} arr2: another pos array
+     * @returns the resulting pos array
+     */
     static subPos(pos1, pos2) {
         return [pos1[0]-pos2[0], pos1[1]-pos2[1]]
     }
 
-    // substracts a pos to another
+    /**
+     * Multiplies a pos to another
+     * @param {[x,y]} arr1: a pos array
+     * @param {[x,y]} arr2: another pos array
+     * @returns the resulting pos array
+     */
     static mulPos(pos1, pos2) {
         return [pos1[0]*pos2[0], pos1[1]*pos2[1]]
     }
 
-    // substracts a pos to another
+    /**
+     * Divides a pos to another
+     * @param {[x,y]} arr1: a pos array
+     * @param {[x,y]} arr2: another pos array
+     * @returns the resulting pos array
+     */
     static divPos(pos1, pos2) {
         return [pos1[0]/pos2[0], pos1[1]/pos2[1]]
     }
 
-    // pos array equals
+    /**
+     * Pos array equals (or arr[2])
+     * @param {[x,y]} arr1: a pos array
+     * @param {[x,y]} arr2: another pos array 
+     * @returns whether both pos array are equal
+     */
     static posEquals(arr1, arr2) {
         return arr2 && arr1 && arr1[0]==arr2[0] && arr1[1]==arr2[1]
     }
 
-    // positions array equals
-    static positionsEquals(arr1, arr2) {
-        return arr1 && arr2 && arr1[0][0]==arr2[0][0] && arr1[0][1]==arr2[0][1] && arr1[1][0]==arr2[1][0] && arr1[1][1]==arr2[1][1]
+    /**
+     * Positions array equals
+     * @param {[[x1,y1], [x2,y2]]} positions1: a rectangular area defined by two corners
+     * @param {[[x1,y1], [x2,y2]]} positions2: another rectangular area defined by two corners
+     * @returns whether both positions array are equal
+     */
+    static positionsEquals(positions1, positions2) {
+        return positions1 && positions2 && positions1[0][0]==positions2[0][0] && positions1[0][1]==positions2[0][1] && positions1[1][0]==positions2[1][0] && positions1[1][1]==positions2[1][1]
     }
 
     /**
@@ -152,12 +269,20 @@ class CDEUtils {
         return max-ratio*range-(range<0)*max
     }
 
-    // returns converted given degrees into radians 
+    /**
+     * Returns converted given degrees into radians 
+     * @param {Number} deg: the degrees
+     * @returns the equivalent radians
+     */
     static toRad(deg) {
         return deg*CDEUtils.TO_DEGREES
     }
 
-    // returns converted given radians into degrees 
+    /**
+     * Returns converted given radians into degrees 
+     * @param {Number} rad: the radians
+     * @returns the equivalent degrees
+     */
     static toDeg(rad) {
         return rad/CDEUtils.TO_DEGREES
     }
@@ -208,24 +333,37 @@ class CDEUtils {
         } catch(e) {console.log(e, ...logs)}
     }
 }
-// Create an instance of the FPSCounter and run every frame: either getFpsRaw for raw fps AND/OR getFps for averaged fps
 class FPSCounter {
+
+    /**
+     * Allows to get the current frames per second.
+     * To use: either getFpsRaw for raw fps, AND/OR getFps for averaged fps
+     * @param {Number?} avgSampleSize: the sample size used to calculate the current fps average
+     */
     constructor(avgSampleSize) {
-        this._t = []
-        this._maxFps=0
         this._avgSampleSize = avgSampleSize||10
+        this._times = []
         this._avg = []
+        this._maxFps=0
     }
 
-    getFpsRaw() {//run in the loop
-        let n=performance.now(), fps
-        while (this._t.length>0 && this._t[0]<=n-1000) this._t.shift()
-        fps = this._t.push(n)
+    /**
+     * Run in a loop to get how many times per seconds it runs
+     * @returns the current amount of times ran in a second
+     */
+    getFpsRaw() {
+        let now=performance.now(), fps
+        while (this._times.length && this._times[0]<=now-1000) this._times.shift()
+        fps = this._times.push(now)
         if (this._maxFps < fps) this._maxFps = fps
         return fps
     }
 
-    getFps() {//or run in the loop
+    /**
+     * Run in a loop to get how many times per seconds it runs
+     * @returns the current averaged amount of times ran in a second
+     */
+    getFps() {
         this._avg.push(this.getFpsRaw())
         if (this._avg.length > this._avgSampleSize) this._avg.shift()
         return Math.floor(Math.min(this._avg.reduce((a, b)=>a+b,0)/this._avgSampleSize, this._maxFps))
@@ -233,7 +371,7 @@ class FPSCounter {
 
     get maxFps() {return this._maxFps-1}
     get avgSample() {return this._avgSampleSize}
-    get fpsRaw() {return this._t.length}
+    get fpsRaw() {return this._times.length}
     
     set avgSample(s) {this._avgSampleSize = s}
 }
@@ -271,13 +409,22 @@ class CanvasUtils {
         canvas.add(t_d2)
     }
 
-    // returns true if the provided dot is the first one of the shape
+    /**
+     * Returns true if the provided dot is the first one of the shape
+     * @param {Dot} dot: a Dot in a Shape
+     */
     static firstDotOnly(dot) {
         return dot.id==dot.parent.firstDot.id
     }
     
-    // Generic function to draw an outer ring around a dot (forceBatching allows to force batching even if a URL filter is defined)
-    static drawOuterRing(dot, renderStyles, radiusMultiplier, forceBatching) {
+    /**
+     * Generic function to draw an outer ring around a dot
+     * @param {Dot} dot: a Dot instance
+     * @param {RenderStyles | [r,g,b,a]} renderStyles: the style profile or color of the ring
+     * @param {Number?} radiusMultiplier: the ring radius is based on the dot's radius times the radius multiplier
+     * @param {Boolean?} forceBatching: allows to force batching even if a URL filter is defined
+     */
+    static drawOuterRing(dot, renderStyles, radiusMultiplier=1, forceBatching=false) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
 
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
@@ -286,7 +433,16 @@ class CanvasUtils {
         else dot.render.batchStroke(Render.getArc(dot.pos, (dot.radius||1)*radiusMultiplier), renderStyles)
     }
     
-    // Generic function to draw connection between the specified dot and a sourcePos (forceBatching allows to force batching even if a URL filter is defined)
+    /**
+     * Generic function to draw connection line between the specified dot and a sourcePos
+     * @param {Dot} dot: a Dot instance
+     * @param {Dot | [x,y]} target: a Dot instance or a pos array
+     * @param {RenderStyles | [r,g,b,a]} renderStyles: the style profile or color of the line
+     * @param {Number} radiusPaddingMultiplier: the padding around the dot based on the multiplication of its radius 
+     * @param {Render.LINE_TYPES} lineType: the line type to use
+     * @param {Number?} spread: a modifier value for the default control pos generation (for bezier and quadratic curves)
+     * @param {Boolean?} forceBatching: allows to force batching even if a URL filter is defined
+     */
     static drawLine(dot, target, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
         const color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter
         
@@ -302,7 +458,15 @@ class CanvasUtils {
         }
     }
 
-    // Generic function to draw connections between the specified dot and all the dots in its connections property (forceBatching allows to force batching even if a URL filter is defined)
+    /**
+     * Generic function to draw connection lines between the specified dot and all the dots in its connections property
+     * @param {Dot} dot: a Dot instance
+     * @param {RenderStyles | [r,g,b,a]} renderStyles: the style profile or color of the line
+     * @param {Number} radiusPaddingMultiplier: the padding around the dot based on the multiplication of its radius 
+     * @param {Render.LINE_TYPES} lineType: the line type to use
+     * @param {Number?} spread: a modifier value for the default control pos generation (for bezier and quadratic curves)
+     * @param {Boolean?} forceBatching: allows to force batching even if a URL filter is defined
+     */
     static drawDotConnections(dot, renderStyles, radiusPaddingMultiplier=0, lineType=Render.getLine, spread, forceBatching) {
         const render = dot.render, dotPos = dot.pos, dotConnections = dot.connections, dc_ll = dot.connections.length, color = renderStyles.colorObject??renderStyles, opacityThreshold = Color.OPACITY_VISIBILITY_THRESHOLD, filter = renderStyles._filter, hasURLFilter = filter&&filter.indexOf("#")!==-1
 
@@ -325,7 +489,10 @@ class CanvasUtils {
         }
     }
 
-    // Generic function to get a callback that can make a dot draggable and throwable
+    /**
+     * Generic function to get a callback that can make a dot draggable and throwable. This function should only be called once, but the returned callback, every frame.
+     * @returns a callback to be called in the drawEffectCB of the shape containing the dot, only for the dot, and giving the following parameters: (dot, mouse, dist, ratio, pickableRadius?)=>{...}
+     */
     static getDraggableDotCB() {
         let mouseup = false, dragAnim = null
         return (dot, mouse, dist, ratio, pickableRadius=50)=>{
@@ -341,17 +508,25 @@ class CanvasUtils {
         }
     }
 
-    // Returns a callback allowing a dot to have a custom trail effect
-    static getTrailEffectCB(canvas, obj, length=8, moveEffectCB=null, disableDefaultMovements=false) {
-        let trail = [], trailPos = new Array(length).fill(obj.pos), lastPos = null, equals = CDEUtils.posEquals, isDefaultMovements = !disableDefaultMovements
+    /**
+     * Returns a callback allowing a dot to have a custom trail effect. This function should only be called once, but the returned callback, every frame.
+     * @param {Canvas} canvas: canvas instance 
+     * @param {Dot} dot: a Dot instance
+     * @param {Number} length: the number of the trail elements (fake dots)
+     * @param {Function?} moveEffectCB: called on each movement for each trail element. (trailElement, ratio, isMoving, mouse, trailElementPos, trailElementIndex)=>
+     * @param {Boolean?} disableDefaultMovements: if true, disables default movements of trail elements. Useful if custom movements are defined in the "moveEffectCB"
+     * @returns a callback to be called in the drawEffectCB of the shape containing the dot, only for the target dot, and giving the following parameter: (mouse)=>{...}
+     */
+    static getTrailEffectCB(canvas, dot, length=8, moveEffectCB=null, disableDefaultMovements=false) {
+        let trail = [], trailPos = new Array(length).fill(dot.pos), lastPos = null, equals = CDEUtils.posEquals, isDefaultMovements = !disableDefaultMovements
         for (let i=0;i<length;i++) {
-            const trailObj = obj.duplicate()
+            const trailObj = dot.duplicate()
             trail.push(trailObj)
             canvas.add(trailObj)
         }
 
         return (mouse)=>{
-            let pos = CDEUtils.unlinkArr2(obj.pos), isMoving = false
+            let pos = CDEUtils.unlinkArr2(dot.pos), isMoving = false
             if (!equals(lastPos, pos)) {
                 trailPos.shift()
                 trailPos.push(pos)
@@ -365,29 +540,57 @@ class CanvasUtils {
         }
     }
 
-    // Generic function to rotate the gradient of an object
+    /**
+     * Generic function to rotate the gradient of an object
+     * @param {_BaseObj} obj: a _BaseObj inheritor instance
+     * @param {Number?} duration: the duration of a full animation cycle
+     * @param {Number?} speed: the speed modifier of the spin
+     * @param {Boolean} isFillColor: whether the fillColor or the color is to spin 
+     * @returns the created Anim instace
+     */
     static rotateGradient(obj, duration=1000, speed=1, isFillColor=false) {
         return obj.playAnim(new Anim((prog)=>obj[isFillColor?"fillColorRaw":"colorRaw"].rotation=-speed*360*prog, duration))
     }
 
-    // Rotates the provided obj for it to face the target. Offsets: top:90, right:0, bottom:270, left:180
+    /**
+     * Rotates the provided obj for it to face the target. 
+     * @param {_BaseObj} obj: a _BaseObj inheritor instance
+     * @param {[x,y] | _BaseObj} obtargetj: a pos array or a _BaseObj inheritor instance to rotate towards
+     * @param {Number?} offset: the rotation offset in degrees. (facing: top=90, right=0, bottom=270, left=180)
+     */
     static lookAt(obj, target, offset=0) {
         const t = target?.pos??target
         obj.rotation = offset-CDEUtils.toDeg(Math.atan2(obj.pos[1]-t[1], -(obj.pos[0]-t[0])))
     }
 
-    // Draws the minimal rectangular area fitting the provided object
+    /**
+     * Draws the minimal rectangular area fitting the provided object
+     * @param {Render} render: a Render instance to draw with
+     * @param {_BaseObj} obj: a _BaseObj inheritor instance
+     * @param {Color | [r,g,b,a] ?} color: the color of the outline
+     */
     static drawOutline(render, obj, color=[255,0,0,1]) {
         const bounds = obj.getBounds()
         render.batchStroke(Render.getPositionsRect(bounds[0], bounds[1]), color?.color||color)
     }
 
-    // Draws the minimal rectangular area fitting the provided object
+    /**
+     * Draws the accurate area fitting the provided object
+     * @param {Render} render: a Render instance to draw with
+     * @param {_BaseObj} obj: a _BaseObj inheritor instance
+     * @param {Color | [r,g,b,a] ?} color: the color of the outline
+     */
     static drawOutlineAccurate(render, obj, color=[0,50,255,1]) {
         render.batchStroke(obj.getBoundsAccurate(), color?.color||color)
     }
 
-    // Draws a dot at the provided pos
+    /**
+     * Draws a dot at the provided pos
+     * @param {Render} render: a Render instance to draw with
+     * @param {[x,y]} pos: the pos 
+     * @param {Color | [r,g,b,a] ?} color: the color of the dot
+     * @param {Number?} radius: the radius of the dot
+     */
     static drawPos(render, pos, color=[255,0,0,1], radius) {
         render.batchStroke(Render.getArc(pos, radius), color?.color||color)
     }
@@ -408,9 +611,9 @@ class CanvasUtils {
      * @param {Canvas} CVS: The Canvas instance to use
      * @param {[[x1, y1], [x2, y2]]?} borderPositions: The two corners delimiting the draw area
      * @param {RenderStyles | [r,g,b,a]?} renderStyles: The style profile / color of the drawings
-     * @param {Number?} newLineMoveThreshold: The number mouse events to wait before drawing a line
+     * @param {Number?} newLineMoveThreshold: The number of mouse events to wait before drawing a line
      * @param {Color | [r,g,b,a]?} borderColor: The color of the border
-     * @returns The create object
+     * @returns the created object and the mouse listeners ids
      */
     static createDrawingBoard(CVS, borderPositions=[[0,0], CVS.size], renderStyles=[255,0,0,1], newLineMoveThreshold=Math.min(1, (CVS.fpsLimit||60)/15), borderColor=Color.DEFAULT_RGBA) {
         let d_ll = 0, render = CVS.render, cvsStatic = Canvas.STATIC, thresholdAt=0, obj = new Shape(null, [new Dot(borderPositions[0]), new Dot(borderPositions[1], )], 0, null, 0, null, null, ()=>[], ()=>{
@@ -419,22 +622,22 @@ class CanvasUtils {
         }, null, true)
         CVS.add(obj)
 
-        CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.DOWN, (pos)=>{
+        const clickListenerId = CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.DOWN, (pos)=>{
             const path = new Path2D(), x = pos[0], y = pos[1]
             path.moveTo(x, y)
             path.arc(x, y, (renderStyles.lineWidth||render.defaultProfile.lineWidth)/4, 0, CDEUtils.CIRC)
             d_ll = obj.setupResults.push(path)
-        })
+        }),
 
-        CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.ENTER, (pos, mouse)=>{
+        enterListenerId = CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.ENTER, (pos, _, mouse)=>{
             if (mouse.clicked) {
                 const path = new Path2D(), x = pos[0], y = pos[1]
                 path.moveTo(x, y)
                 d_ll = obj.setupResults.push(path)
             }
-        })
+        }),
 
-        CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.MOVE, (pos,mouse)=>{
+        moveListenerId = CVS.mouse.addListener(obj, Mouse.LISTENER_TYPES.MOVE, (pos, _, mouse)=>{
             if ((++thresholdAt)==newLineMoveThreshold) {
                 const lastPos = mouse.lastPos, path = obj.setupResults[d_ll-1]
                 if (path && mouse.clicked && obj.isWithin(lastPos)) {
@@ -445,7 +648,7 @@ class CanvasUtils {
             }
         })
         
-        return obj
+        return {obj, mouseListeners:{click:clickListenerId, enter:enterListenerId, move:moveListenerId}}
     }
 
     /**
@@ -461,7 +664,9 @@ class CanvasUtils {
         return obj
     }
 
-    // Provides generic follow paths
+    /**
+     * Provides generic follow paths
+     */
     static FOLLOW_PATHS = {
         INFINITY_SIGN: (width, height, progressOffset)=>{
             width??=100
@@ -549,7 +754,6 @@ class CanvasUtils {
 // Please don't use or credit this code as your own.
 //
 
-// Represents a color value
 class Color {
     static DEFAULT_COLOR = "aliceblue"
     static DEFAULT_RGBA = [240, 248, 255, 1]
@@ -567,11 +771,17 @@ class Color {
     
     #rgba = null // cached rgba value
     #hsv = null  // cached hsv value
-    constructor(color, isChannel) {
-        this._color = color instanceof Color ? color._color : color||Color.DEFAULT_COLOR // the color value declaration, in any supported format
-        this._format = Color.getFormat(this._color) // the format of the color
-        this.#updateCache()
 
+    /**
+     * Represents a color value
+     * @param {String | [r,g,b,a] | Color} color: the color definition
+     * @param {Boolean?} isChannel: if true, this Color will be used as a channel and will not duplicate
+     */
+    constructor(color, isChannel=false) {
+        const format = Color.getFormat(color)
+        this._color = color instanceof Color ? color._color : (format&&color)||Color.DEFAULT_COLOR // the color value declaration, in any supported format
+        this._format = format||Color.getFormat(this._color) // the format of the color
+        this.#updateCache()
         this._isChannel = isChannel||false // if true, this instance will be used as a color channel and will not duplicate
     }
 
@@ -589,28 +799,39 @@ class Color {
         }
     }
 
-    // converts a color to another color format
+    /**
+     * Converts a color to another color format
+     * @param {String | [r,g,b,a] | Color} color: the color to convert
+     * @param {Color.CONVERTABLE_FORMATS} format 
+     * @returns the color in the provided format
+     */
     static convertTo(color, format=Color.CONVERTABLE_FORMATS.RGBA) {
         let inputFormat = Color.getFormat(color), convertedColor = color, formats = Color.CONVERTABLE_FORMATS, RGBA=formats.RGBA, HEX=formats.HEX, TEXT=formats.TEXT, HSV=formats.HSV
-
-        if (format==RGBA) {
-            if (inputFormat==HEX) convertedColor = Color.#hexToRgba(color)
-            else if (inputFormat==TEXT) convertedColor = Color.#unlinkRGBA(Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color])
-            else if (inputFormat==HSV) convertedColor = Color.#hsvToRgba(color)
-        } else if (format==HEX) {
-            if (inputFormat==RGBA) convertedColor = Color.#rgbaToHex(color)
-            else Color.#rgbaToHex(Color.convertTo(color, RGBA))
-        } else if (format==TEXT) {
-            if (inputFormat==RGBA) convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[color.toString()] ?? color
-            else convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[Color.convertTo(color, RGBA).toString()] ?? color
-        } else if (format==HSV) {
-            if (inputFormat==RGBA) convertedColor = Color.#rgbaToHsv(color)
-            else convertedColor = Color.#rgbaToHsv(Color.convertTo(color, RGBA))
+        if (inputFormat) {
+            if (format==RGBA) {
+                if (inputFormat==HEX) convertedColor = Color.#hexToRgba(color)
+                else if (inputFormat==TEXT) convertedColor = Color.#unlinkRGBA(Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color])
+                else if (inputFormat==HSV) convertedColor = Color.#hsvToRgba(color)
+            } else if (format==HEX) {
+                if (inputFormat==RGBA) convertedColor = Color.#rgbaToHex(color)
+                else convertedColor = Color.#rgbaToHex(Color.convertTo(color, RGBA))
+            } else if (format==TEXT) {
+                if (inputFormat==RGBA) convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[color.toString()] ?? color
+                else convertedColor = Color.RGBA_TO_CSS_COLOR_CONVERTIONS[Color.convertTo(color, RGBA).toString()] ?? color
+            } else if (format==HSV) {
+                if (inputFormat==RGBA) convertedColor = Color.#rgbaToHsv(color)
+                else convertedColor = Color.#rgbaToHsv(Color.convertTo(color, RGBA))
+            }
         }
 
         return convertedColor
     }
-    // instance version
+    /**
+     * Converts a color to another color format
+     * @param {String | [r,g,b,a] | Color} color: the color to convert
+     * @param {Color.CONVERTABLE_FORMATS} format 
+     * @returns the color in the provided format
+     */
     convertTo(color=this._color, format=Color.CONVERTABLE_FORMATS.RGBA) {
         return Color.convertTo(color, format)
     }
@@ -651,7 +872,7 @@ class Color {
 
     // create a separate copy of an RGBA array
     static #unlinkRGBA(rgba) {
-        return [rgba[0], rgba[1], rgba[2], rgba[3]]
+        return rgba ? [rgba[0], rgba[1], rgba[2], rgba[3]] : null
     }
 
     // converts hsv to rbga (without default alpha)
@@ -672,7 +893,8 @@ class Color {
     
     // converts rbga to hex
     static #rgbaToHex(rgba) {
-        return "#"+rgba.reduce((a,b,i)=>a+=(i&&!(i%3)?Math.round(b*255):b).toString(16).padStart(2,"0"),"")
+        const hex = "#"+rgba.reduce((a,b,i)=>a+=(i&&!(i%3)?Math.round(b*255):b).toString(16).padStart(2,"0"),"")
+        return rgba[3]==1 ? hex.slice(0,7) : hex
     }
 
     // converts hex to rgba
@@ -680,14 +902,19 @@ class Color {
         return hex.padEnd(9, "F").match(/[a-z0-9]{2}/gi).reduce((a,b,i)=>a.concat(parseInt(b, 16)/(i&&!(i%3)?255:1)),[])
     }
 
-    // returns the format of the provided color
+    /**
+     * Returns the format of the provided color
+     * @param {String | [r,g,b,a] | Color} color: the color definition
+     */
     static getFormat(color) {
-        return Array.isArray(color) ?
-            (color.length == 4 ? Color.FORMATS.RGBA : Color.FORMATS.HSV) :
-        color instanceof Color ? Color.FORMATS.COLOR :
-        color instanceof Gradient ? Color.FORMATS.GRADIENT :
-        color instanceof Pattern ? Color.FORMATS.PATTERN :
-        color.includes("#") ? Color.FORMATS.HEX : Color.FORMATS.TEXT
+        const formats = Color.FORMATS
+        if (!color) return null
+        return Array.isArray(color) ? (color.length == 4 ? formats.RGBA : formats.HSV) :
+        color instanceof Color ? formats.COLOR :
+        color instanceof Gradient ? formats.GRADIENT :
+        color instanceof Pattern ? formats.PATTERN :
+        color[0] == "#" ? formats.HEX :
+        Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color] ? formats.TEXT: null
     }
 
     // ajust color values to Color instances
@@ -695,18 +922,32 @@ class Color {
         return color instanceof Color ? color.isChannel?color:color.duplicate() : new Color(color)
     }
     
-    // formats a rgba array to a usable rgba value
+    /**
+     * Formats a rgba array to a usable rgba value
+     * @param {[r,g,b,a]} arrayRgba: the rgba array to format
+     * @returns a string containing the color as rgba format
+     */
     static formatRgba(arrayRgba) {
         return Array.isArray(arrayRgba) ? `rgba(${arrayRgba[0]}, ${arrayRgba[1]}, ${arrayRgba[2]}, ${arrayRgba[3]})` : null
     }
 
-    // creates an rgba array
+    /**
+     * Creates an rgba array
+     * @param {Number?} r: a number between 0 and 255 that represents the red value
+     * @param {Number?} g: a number between 0 and 255 that represents the green value
+     * @param {Number?} b: a number between 0 and 255 that represents the blue value
+     * @param {Number?} a: a number between 0 and 1 that represents the opacity
+     * @returns the created rgba array
+     */
     static rgba(r=255, g=255, b=255, a=1) {
         const round = CDEUtils.round, roundingPoint = Color.DEFAULT_DECIMAL_ROUNDING_POINT
         return [round(r, roundingPoint), round(g, roundingPoint), round(b, roundingPoint), round(a, roundingPoint)]
     }
 
-    // returns the usable value of a color from any supported format
+    /**
+     * Returns the usable value of a color from any supported format
+     * @param {String | [r,g,b,a] | Color} color: the color definition
+     */
     static getColorValue(color) {
         if (typeof color=="string" || color instanceof CanvasGradient || color instanceof CanvasPattern) return color
         else if (color instanceof _DynamicColor) return color.value
@@ -752,7 +993,10 @@ class Color {
         return null
     }
 
-    // returns a new instance of the same color
+    /**
+     * Returns a new instance of the same color
+     * @param {[pos1, pos2]} dynamicColorPositions: the positions if the color is a _DynamicColor instance
+     */
     duplicate(dynamicColorPositions) {
         const formats = Color.FORMATS, format = this._format
         if (format == formats.GRADIENT || format == formats.PATTERN) return new Color(this._color.duplicate(dynamicColorPositions))
@@ -784,9 +1028,12 @@ class Color {
     get brightness() {return this.#hsv[2]}
 
     set color(color) {
-        this._color = color?._color||color
-        this._format = Color.getFormat(this._color)
-        this.#updateCache()
+        const colorValue = color?._color||color, format = Color.getFormat(colorValue)
+        if (format) {
+            this._color = colorValue
+            this._format = format 
+            this.#updateCache()
+        }
     }
     set r(r) {this.#rgba[0] = CDEUtils.round(r, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
     set g(g) {this.#rgba[1] = CDEUtils.round(g, Color.DEFAULT_DECIMAL_ROUNDING_POINT)}
@@ -831,8 +1078,12 @@ for (let i=0;i<c_ll;i++) {
 // Please don't use or credit this code as your own.
 //
 
-// Abstract class, provides color attributes to other classes
 class _HasColor {
+
+    /**
+     * Abstract class, provides color attributes to other classes
+     * @param {String | [r,g,b,a] | Color | Function} color: the color definition
+     */
     constructor(color) {
         this._initColor = color       // declaration color value || (ctx, this)=>{return color value}
         this._color = this._initColor // the current color or gradient of the object
@@ -880,6 +1131,11 @@ class _HasColor {
     set brightness(brightness) {this._color.brightness = brightness}
     set initColor(initColor) {this._initColor = initColor}
 }
+// JS
+// Canvas Dot Effect by Louis-Charles Biron
+// Please don't use or credit this code as your own.
+//
+
 class GridAssets {
     static D = ["t","r","b","l","tr","br","bl","tl","i"].reduce((a,b,i)=>(a.places.push([a[b]=1<<i,(ar)=>{if(i==0){return -ar}else if(i==1){return 1}else if(i==2){return ar}else if(i==3){return -1}else if(i==4){return 1-ar}else if(i==5){return ar+1}else if(i==6){return ar-1}else if(i==7){return -ar-1}else if(i==8){return 0}}]),a),{places:[]})
     static DEFAULT_SOURCE = GridAssets.fontSource5x5
@@ -1420,10 +1676,12 @@ class GridAssets {
 // Please don"t use or credit this code as your own.
 //
 
-// Represents the user"s keyboard
 class TypingDevice {
     static KEYS = {A:"A", B:"B", C:"C", D:"D", E:"E", F:"F", G:"G", H:"H", I:"I", J:"J", K:"K", L:"L", M:"M", N:"N", O:"O", P:"P", Q:"Q", R:"R", S:"S", T:"T", U:"U", V:"V", W:"W", X:"X", Y:"Y", Z:"Z", DIGIT_0:"0", DIGIT_1:"1", DIGIT_2:"2", DIGIT_3:"3", DIGIT_4:"4", DIGIT_5:"5", DIGIT_6:"6", DIGIT_7:"7", DIGIT_8:"8", DIGIT_9:"9", SPACE:" ", ENTER:"ENTER", TAB:"TAB", BACKSPACE:"BACKSPACE", ESCAPE:"ESCAPE", SHIFT:"SHIFT", CONTROL:"CONTROL", ALT:"ALT", ALT_GRAPH:"ALTGRAPH", META:"META", CAPS_LOCK:"CAPSLOCK", CONTEXT_MENU:"CONTEXTMENU", ARROW_UP:"ARROWUP", ARROW_DOWN:"ARROWDOWN", ARROW_LEFT:"ARROWLEFT", ARROW_RIGHT:"ARROWRIGHT", HOME:"HOME", END:"END", PAGE_UP:"PAGEUP", PAGE_DOWN:"PAGEDOWN", INSERT:"INSERT", DELETE:"DELETE", F1:"F1", F2:"F2", F3:"F3", F4:"F4", F5:"F5", F6:"F6", F7:"F7", F8:"F8", F9:"F9", F10:"F10", F11:"F11", F12:"F12", F13:"F13", F14:"F14", F15:"F15", F16:"F16", F17:"F17", F18:"F18", F19:"F19", F20:"F20", F21:"F21", F22:"F22", F23:"F23", F24:"F24", NUMPAD_0:"NUMPAD0", NUMPAD_1:"NUMPAD1", NUMPAD_2:"NUMPAD2", NUMPAD_3:"NUMPAD3", NUMPAD_4:"NUMPAD4", NUMPAD_5:"NUMPAD5", NUMPAD_6:"NUMPAD6", NUMPAD_7:"NUMPAD7", NUMPAD_8:"NUMPAD8", NUMPAD_9:"NUMPAD9", NUMPAD_ADD:"NUMPADADD", NUMPAD_SUBTRACT:"NUMPADSUBTRACT", NUMPAD_MULTIPLY:"NUMPADMULTIPLY", NUMPAD_DIVIDE:"NUMPADDIVIDE", NUMPAD_DECIMAL:"NUMPADDECIMAL", NUMPAD_ENTER:"NUMPADENTER", PAUSE:"PAUSE", PRINT_SCREEN:"PRINTSCREEN", SCROLL_LOCK:"SCROLLLOCK", NUM_LOCK:"NUMLOCK", LAUNCH_APPLICATION_1:"LAUNCHAPPLICATION1", LAUNCH_APPLICATION_2:"LAUNCHAPPLICATION2", BRACKET_LEFT:"BRACKETLEFT", BRACKET_RIGHT:"BRACKETRIGHT", SEMICOLON:"SEMICOLON", QUOTE:"QUOTE", COMMA:"COMMA", PERIOD:"PERIOD", SLASH:"SLASH", BACKSLASH:"BACKSLASH", EQUAL:"EQUAL", MINUS:"MINUS", BACKQUOTE:"BACKQUOTE", AUDIO_VOLUME_UP:"AUDIOVOLUMEUP", AUDIO_VOLUME_DOWN:"AUDIOVOLUMEDOWN", AUDIO_VOLUME_MUTE:"AUDIOVOLUMEMUTE", MEDIA_PLAY_PAUSE:"MEDIAPLAYPAUSE", MEDIA_NEXT_TRACK:"MEDIANEXTTRACK", MEDIA_PREVIOUS_TRACK:"MEDIAPREVIOUSTRACK", MEDIA_STOP:"MEDIASTOP", BROWSER_BACK:"BROWSERBACK", BROWSER_FORWARD:"BROWSERFORWARD", BROWSER_REFRESH:"BROWSERREFRESH", BROWSER_STOP:"BROWSERSTOP", BROWSER_SEARCH:"BROWSERSEARCH", BROWSER_FAVORITES:"BROWSERFAVORITES", BROWSER_HOME:"BROWSERHOME"}
-
+   
+    /**
+     * Represents the user's keyboard. Automatically instantiated by a Canvas instance
+     */
     constructor() {
         this._keysPressed = [] // Current keys pressed (down)
     }
@@ -1440,7 +1698,11 @@ class TypingDevice {
         if (key && this.isDown(key)) this._keysPressed = this._keysPressed.filter(v=>v.key!==key)
     }
 
-    // returns whether the provided key, (any of, if keys is an array) is down
+    /**
+     * Checks if a key is pressed
+     * @param {String | Array} keys: the key or key group 
+     * @returns  whether (one of) the provided key(s) is down
+     */
     isDown(keys) {
         const isMultipleKeys = Array.isArray(keys), keysPressed = this.keysPressed
 
@@ -1456,7 +1718,9 @@ class TypingDevice {
         return false
     }
 
-    // returns whether any key is pressed
+    /**
+     * @returns whether any key is pressed
+     */
     hasKeysDown() {
         return Boolean(this._keysPressed.length)
     }
@@ -1472,7 +1736,6 @@ class TypingDevice {
 // Please don't use or credit this code as your own.
 //
 
-// Represents the user's mouse
 class Mouse {
     static DEFAULT_MOUSE_DECELERATION = 0.8
     static DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1
@@ -1483,6 +1746,11 @@ class Mouse {
     #lastX = null // previous x value of the mouse on the canvas, updated each frame
     #lastY = null // previous y value of the mouse on the canvas, updated each frame
     #wasWithin = []
+
+    /**
+     * Represents the user's mouse. Automatically instantiated by a Canvas instance
+     * @param {CanvasRenderingContext2D} ctx: the canvas context to link to
+     */
     constructor(ctx) {
         this._ctx = ctx                  // canvas 2d context
         this._valid = false              // whether the mouse pos is valid (is inside the canvas and initialized)
@@ -1551,7 +1819,9 @@ class Mouse {
         }
     }
 
-    // invalidates mouse position
+    /**
+     * Invalidates mouse position
+     */
     invalidate() {
         this._x = Infinity
         this._y = Infinity
@@ -1559,7 +1829,12 @@ class Mouse {
         this._rawY = Infinity
     }
     
-    // updates current mouse position considering page offsets
+    /**
+     * Updates current mouse position considering page offsets
+     * @param {Number} x: the new x value of the mouse
+     * @param {Number} y: the new y value of the mouse
+     * @param {[offsetX, offsetY]} offset: the x/y offset values
+     */
     updatePos(x, y, offset) {
         this._valid = true
         this._rawX = x
@@ -1577,7 +1852,10 @@ class Mouse {
         this.checkListeners(Mouse.LISTENER_TYPES.MOVE)
     }
 
-    // sets and returns whether the current mouse position is valid
+    /**
+     * Sets and returns whether the current mouse position is valid
+     * @returns whether the mouse pos is valid
+     */
     checkValid() {
         if (this._x == Infinity || this._x == null || this._y == Infinity || this._y == null) return this._valid = false
         else if (!this._valid) return this._valid = true
@@ -1587,7 +1865,7 @@ class Mouse {
      * Adds a custom mouse event listener binded to an object/area
      * @param {canvas object - [[x1,y1],[x2,y2]]} obj: Either a canvas object or a positions array 
      * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
-     * @param {Function} callback: a custom function called upon event trigger. (obj, mousePos)=> 
+     * @param {Function} callback: a custom function called upon event trigger. (mousePos, obj, mouse)=> 
      * @param {Boolean} useAccurateBounds: If true, uses the obj's accurate bounds calculation
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
      * @returns The listener id
@@ -1596,10 +1874,10 @@ class Mouse {
         const hasAccurateBounds = useAccurateBounds&&obj.getBoundsAccurate, listener = [forceStaticPositions?(hasAccurateBounds?obj.getBoundsAccurate():obj.getBounds()):obj, callback, hasAccurateBounds, Mouse.#LISTENER_ID_GIVER++]
         if (!this._listeners[type]) this._listeners[type] = []
         this._listeners[type].push(listener)
-        return listener[2]
+        return listener[3]
     }
 
-    // checks conditions for every listeners of a certain type, if valid, calls the listeners callback as such: (obj, mousePos)=>
+    // checks conditions for every listeners of a certain type, if valid, calls the listeners callback as such: (mousePos, obj, mouse)=>
     checkListeners(type) {
         const typedListeners = this._listeners[type], typedListeners_ll = typedListeners?.length
 
@@ -1615,15 +1893,15 @@ class Mouse {
                            nowWithin = ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))
                     
                     if (this._moveListenersOptimizationEnabled) {
-                        if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this._lastPos):obj.isWithin(this._lastPos))) || (isStaticBounds && this.isWithin(this._lastPos, obj, isPath2D)))==validation) callback(mousePos, this, obj)
+                        if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this._lastPos):obj.isWithin(this._lastPos))) || (isStaticBounds && this.isWithin(this._lastPos, obj, isPath2D)))==validation) callback(mousePos, obj, this)
                     } else {
                         const wasWithin = this.#wasWithin[typedListener[3]]
                         if (!wasWithin && nowWithin) {
                             this.#wasWithin[typedListener[3]] = true
-                            if (validation==2) callback(mousePos, this, obj)
+                            if (validation==2) callback(mousePos, obj, this)
                         } else if (!nowWithin && wasWithin) {
                             this.#wasWithin[typedListener[3]] = false
-                            if (validation==1) callback(mousePos, this, obj)
+                            if (validation==1) callback(mousePos, obj, this)
                         }
                     }
                 }
@@ -1634,7 +1912,7 @@ class Mouse {
 
                 for (let i=0;i<typedListeners_ll;i++) {
                     const [obj, callback, hasAccurateBounds] = typedListeners[i], isPath2D = obj instanceof Path2D, isStaticBounds = Array.isArray(obj)||isPath2D
-                    if (validation && ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))) callback(mousePos, this, obj)
+                    if (validation && ((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(mousePos):obj.isWithin(mousePos))) || (isStaticBounds && this.isWithin(mousePos, obj, isPath2D)))) callback(mousePos, obj, this)
                 }
             }
         }
@@ -1645,7 +1923,7 @@ class Mouse {
      * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
      * @param {Number} id: listener's id 
      * @param {canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
-     * @param {Function?} newCallback: if provided, updates the listeners's callback to this value
+     * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (mousePos, obj, mouse)=>
      * @param {Boolean} useAccurateBounds: If true, uses the obj's accurate bounds calculation
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
      */
@@ -1665,7 +1943,20 @@ class Mouse {
         this._listeners[type] = id=="*"?[]:this._listeners[type].filter(l=>l[3]!==(id?.[3]??id))
     }
 
-    // returns whether the provided pos is inside the provided positions
+    /**
+     * Removes all existing listeners
+     */
+    removeAllListeners() {
+        this._listeners = []
+    }
+
+    /**
+     * Returns whether the provided pos is inside the provided positions
+     * @param {[x,y]} pos: the pos to check
+     * @param {[[x1, y1], [x2, y2]] | Path2D} positions: the positions or path defining an area
+     * @param {Boolean} isPath2D: whether "positions" is a Path2D instance
+     * @returns whether "pos" is inside "positions"
+     */
     isWithin(pos, positions, isPath2D) {
         const [x,y]=pos
         if (isPath2D) return this._ctx.isPointInPath(positions, pos[0], pos[1])
@@ -1712,7 +2003,6 @@ class Mouse {
 // Please don't use or credit this code as your own.
 //
 
-// Drawing manager, centralises most context operation
 class Render {
     static PROFILE_ID_GIVER = -1
     static TEXT_PROFILE_ID_GIVER = -1
@@ -1729,6 +2019,11 @@ class Render {
     #currentCtxVisuals = [Color.DEFAULT_COLOR_VALUE, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA]
     #currentCtxStyles = RenderStyles.DEFAULT_PROFILE.getStyles()
     #currentCtxTextStyles = TextStyles.DEFAULT_PROFILE.getStyles()
+
+    /**
+     * Drawing manager, centralises most context operation. Automatically instantiated by a Canvas instance
+     * @param {CanvasRenderingContext2D} ctx: canvas context to link to
+     */
     constructor(ctx) {
         this._ctx = ctx               // Canvas context
         this._batchedStrokes = {}     // current batch of strokes
@@ -1752,7 +2047,12 @@ class Render {
         this._textProfiles = []                                              // list of custom text style profiles
     }
 
-    // instanciates and returns a path containing a line
+    /**
+     * Instanciates and returns a path containing a line
+     * @param {[x,y]} startPos: the start pos of the line
+     * @param {[x,y]} endPos: the end pos of the line
+     * @returns a Path2D instance
+     */
     static getLine(startPos, endPos) {
         const path = new Path2D()
         path.moveTo(startPos[0],startPos[1])
@@ -1760,8 +2060,14 @@ class Render {
         return path
     }
 
-    // instanciates and returns a path containing a quadratic curve
-    static getQuadCurve(startPos, endPos, controlPos) {
+    /**
+     * Instanciates and returns a path containing a quadratic curve
+     * @param {[x,y]} startPos: the start pos of the line
+     * @param {[x,y]} endPos: the end pos of the line
+     * @param {[x,y]?} controlPos: the control pos of the curve
+     * @returns a Path2D instance
+     */
+    static getQuadCurve(startPos, endPos, controlPos=null) {
         if (!Array.isArray(controlPos)) controlPos = Render.getDefaultQuadraticControlPos(startPos, endPos, controlPos||undefined)
 
         const path = new Path2D()
@@ -1770,13 +2076,26 @@ class Render {
         return path
     }
 
-    // returns a control pos to create a decent default quadratic curve
+    /**
+     * Returns a control pos to create a decent default quadratic curve
+     * @param {[x,y]} startPos: the start pos of the line
+     * @param {[x,y]} endPos: the end pos of the line
+     * @param {Number?} spread: a modifier value for the default control pos generation 
+     * @returns a control pos [x,y]
+     */
     static getDefaultQuadraticControlPos(startPos, endPos, spread=1) {
         return [endPos[0]*spread, startPos[1]*spread]
     }
 
-    // instanciates and returns a path containing a cubic bezier curve
-    static getBezierCurve(startPos, endPos, controlPos1, controlPos2) {
+    /**
+     * Instanciates and returns a path containing a cubic bezier curve
+     * @param {[x,y]} startPos: the start pos of the line
+     * @param {[x,y]} endPos: the end pos of the line
+     * @param {[x,y]?} controlPos1: the first control pos of the curve
+     * @param {[x,y]?} controlPos2: the second control pos of the curve
+     * @returns a Path2D instance
+     */
+    static getBezierCurve(startPos, endPos, controlPos1=null, controlPos2=null) {
         if (!controlPos2 || !controlPos1) {
             const controlPoses = Render.getDefaultBezierControlPos(startPos, endPos, controlPos1||undefined)
             controlPos1 = controlPoses[0]
@@ -1789,20 +2108,40 @@ class Render {
         return path
     }
 
-    // returns 2 control positions to create a decent default bezier curve
+    /**
+     * Returns 2 control positions to create a decent default bezier curve
+     * @param {[x,y]} startPos: the start pos of the line
+     * @param {[x,y]} endPos: the end pos of the line
+     * @param {Number?} spread: a modifier value for the default control pos generation 
+     * @returns a control pos [x,y]
+     */
     static getDefaultBezierControlPos(startPos, endPos, spread=0.75) {
         const [startX, startY] = startPos, [endX, endY] = endPos
         return [[startX+(endX-startX)*(1-spread), startY+(endY-startY)*spread], [endX-(endX-startX)*(1-spread), endY-(endY-startY)*spread]]
     }
 
-    // instanciates and returns a path containing an arc
-    static getArc(pos, radius=5, startRadian=0, endRadian=CDEUtils.CIRC) {
+    /**
+     * Instanciates and returns a path containing an arc
+     * @param {[x,y]} pos: the pos of the arc
+     * @param {Number?} radius: the radius in pixels of the arc
+     * @param {Number?} startAngleRadian: the start angle of the arc in radian
+     * @param {Number?} endAngleRadian: the end angle of the arc in radian
+     * @returns a Path2D instance
+     */
+    static getArc(pos, radius=5, startAngleRadian=0, endAngleRadian=CDEUtils.CIRC) {
         const path = new Path2D()
-        path.arc(pos[0], pos[1], radius, startRadian, endRadian)
+        path.arc(pos[0], pos[1], radius, startAngleRadian, endAngleRadian)
         return path
     }
 
-    // instanciates and returns a path containing an arcTo
+    /**
+     * Instanciates and returns a path containing an arcTo
+     * @param {[x,y]} startPos: the start pos of the line
+     * @param {[x,y]} controlPos1: the first control pos of the arc
+     * @param {[x,y]} controlPos2: the second control pos of the arc
+     * @param {Number} radius: the radius in pixels of the arc
+     * @returns a Path2D instance
+     */
     static getArcTo(startPos, controlPos1, controlPos2, radius) {
         const path = new Path2D()
         path.moveTo(startPos[0], startPos[1])
@@ -1810,56 +2149,103 @@ class Render {
         return path
     }
 
-    // instanciates and returns a path containing an ellipse
-    static getEllispe(centerPos, radiusX, radiusY, rotationRadian=0, startRadian=0, endRadian=CDEUtils.CIRC, counterclockwise=false) {
+    /**
+     * Instanciates and returns a path containing an ellipse
+     * @param {[x,y]} centerPos: the center pos of the ellipse
+     * @param {Number} radiusX: the horizontal radius
+     * @param {Number} radiusY: the vertical radius
+     * @param {Number?} rotationRadian: the rotation of the ellipse in radian
+     * @param {Number?} startAngleRadian: the start angle of the ellipse in radian
+     * @param {Number?} endAngleRadian: the end angle of the ellipse in radian
+     * @param {Boolean?} counterclockwise: the rotation side
+     * @returns a Path2D instance
+     */
+    static getEllispe(centerPos, radiusX, radiusY, rotationRadian=0, startAngleRadian=0, endAngleRadian=CDEUtils.CIRC, counterclockwise=false) {
         const path = new Path2D()
-        path.ellipse(centerPos[0], centerPos[1], radiusX, radiusY, rotationRadian, startRadian, endRadian, counterclockwise)
+        path.ellipse(centerPos[0], centerPos[1], radiusX, radiusY, rotationRadian, startAngleRadian, endAngleRadian, counterclockwise)
         return path
     }
 
-    // instanciates and returns a path containing an rectangle
+    /**
+     * Instanciates and returns a path containing an rectangle
+     * @param {[x,y]} pos: the top left pos
+     * @param {Number} width: the width of the rectangle
+     * @param {Number} height: the height of the rectangle
+     * @returns a Path2D instance
+     */
     static getRect(pos, width, height) {
         const path = new Path2D()
         path.rect(pos[0], pos[1], width, height)
         return path
     }
 
-    // instanciates and returns a path containing an rectangle
+    /**
+     * Instanciates and returns a path containing an rectangle
+     * @param {[x,y]} pos: the top left pos
+     * @param {[x,y]} pos2: the bottom right pos
+     * @returns a Path2D instance
+     */
     static getPositionsRect(pos, pos2) {
         const path = new Path2D(), x1 = pos[0], y1 = pos[1]
         path.rect(x1, y1, pos2[0]-x1, pos2[1]-y1)
         return path
     }
 
-    // instanciates and returns a path containing an rounded rectangle
-    static getRoundRect(pos, width, height, radius) {
+    /**
+     * Instanciates and returns a path containing an rounded rectangle
+     * @param {[x,y]} pos: the top left pos
+     * @param {Number} width: the width of the rectangle
+     * @param {Number} height: the height of the rectangle
+     * @param {Number?} cornerRadius: the corner radius 
+     * @returns a Path2D instance
+     */
+    static getRoundRect(pos, width, height, cornerRadius=5) {
         const path = new Path2D()
-        path.roundRect(pos[0], pos[1], width, height, radius)
+        path.roundRect(pos[0], pos[1], width, height, cornerRadius)
         return path
     }
 
-    // instanciates and returns a path containing an rounded rectangle
-    static getPositionsRoundRect(pos, pos2, radius=5) {
+    /**
+     * Instanciates and returns a path containing an rounded rectangle
+     * @param {[x,y]} pos: the top left pos
+     * @param {[x,y]} pos2: the bottom right pos
+     * @param {Number?} cornerRadius: the corner radius 
+     * @returns a Path2D instance
+     */
+    static getPositionsRoundRect(pos, pos2, cornerRadius=5) {
         const path = new Path2D(), x1 = pos[0], y1 = pos[1]
-        path.roundRect(x1, y1, pos2[0]-x1, pos2[1]-y1, radius)
+        path.roundRect(x1, y1, pos2[0]-x1, pos2[1]-y1, cornerRadius)
         return path
     }
 
-    // creates and adds a new custom RenderStyles profile base on a given base profile
+    /**
+     * Creates and adds a new custom RenderStyles profile base on a given base profile
+     * @param {RenderStyles} baseProfile: the RenderStyles instance to base the copy on
+     * @returns a RenderStyles instance
+     */
     createCustomStylesProfile(baseProfile=this._defaultProfile) {
         const profile = baseProfile.duplicate()
         this._profiles.push(profile)
         return profile
     }
 
-    // creates and adds a new custom TextStyles profile base on a given base profile
+    /**
+     * Creates and adds a new custom TextStyles profile base on a given base profile
+     * @param {TextStyles} baseTextProfile: the TextStyles instance to base the copy on
+     * @returns a TextStyles instance
+     */
     createCustomTextStylesProfile(baseTextProfile=this._defaultTextProfile) {
         const textProfile = baseTextProfile.duplicate()
         this._textProfiles.push(textProfile)
         return textProfile
     }
 
-    // Queues a path to be stroked in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
+    /**
+     * Queues a path to be stroked in batch at the end of the current frame
+     * @param {Path2D} path: the path to batch
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either be a rgba array or a RenderStyles instance
+     * @param {[filter, compositeOperation, opacity]?} forceVisualEffects: the filter, composite operation and opacity effects to apply
+     */
     batchStroke(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if ((renderStyles[3]??renderStyles.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const batch = this._batchedStrokes, filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.toString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.toString(renderStyles, filter, compositeOperation, opacity)
@@ -1868,7 +2254,12 @@ class Render {
         }
     }
 
-    // Queues a path to be filled in batch at the end of the current frame. RenderStyles can either be a strict color or a RenderStyle profile
+    /**
+     * Queues a path to be filled in batch at the end of the current frame
+     * @param {Path2D} path: the path to batch
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either be a rgba array or a RenderStyles instance
+     * @param {[filter, compositeOperation, opacity]?} forceVisualEffects: the filter, composite operation and opacity effects to apply
+     */
     batchFill(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if ((renderStyles[3]??renderStyles.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const batch = this._batchedFills, filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2], profileKey = renderStyles instanceof RenderStyles ? renderStyles.fillOptimizedToString(undefined, filter, compositeOperation, opacity) : this._defaultProfile.fillOptimizedToString(renderStyles, filter, compositeOperation, opacity)
@@ -1877,7 +2268,9 @@ class Render {
         } 
     }
 
-    // Fills and strokes all batched paths
+    /**
+     * Fills and strokes all batched paths
+     */
     drawBatched() {
         const strokes = Object.entries(this._batchedStrokes), s_ll = strokes.length,
               fills = Object.entries(this._batchedFills), f_ll = fills.length,
@@ -1926,7 +2319,12 @@ class Render {
         this._batchedFills = {}
     }
 
-    // directly strokes a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
+    /**
+     * Directly strokes a path on the canvas
+     * @param {Path2D} path: the path to batch
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either be a rgba array or a RenderStyles instance
+     * @param {[filter, compositeOperation, opacity]?} forceVisualEffects: the filter, composite operation and opacity effects to apply
+     */
     stroke(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if ((renderStyles[3]??renderStyles.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2]
@@ -1938,7 +2336,12 @@ class Render {
         }
     }
 
-    // directly fills a path on the canvas. RenderStyles can either be a strict color or a RenderStyle profile
+    /**
+     * Directly fills a path on the canvas
+     * @param {Path2D} path: the path to batch
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either be a rgba array or a RenderStyles instance
+     * @param {[filter, compositeOperation, opacity]?} forceVisualEffects: the filter, composite operation and opacity effects to apply
+     */
     fill(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
         if ((renderStyles[3]??renderStyles.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
             const filter = forceVisualEffects[0], compositeOperation = forceVisualEffects[1], opacity = forceVisualEffects[2]
@@ -1950,7 +2353,16 @@ class Render {
         }
     }
 
-    // directly strokes text on the canvas. TextStyles can either be a strict color or a TextStyles profile
+    /**
+     * Directly strokes text on the canvas
+     * @param {String} text: the text to draw
+     * @param {[x,y]} pos: the pos of the text 
+     * @param {Color | [r,g,b,a]} color: the color of the text 
+     * @param {TextStyles} textStyles: a TextStyles instance
+     * @param {Number?} maxWidth: the max width of the text
+     * @param {Number?} lineHeight: the line height in pixels if the text is multiline 
+     * @param {[filter, compositeOperation, opacity]?} visualEffects: the filter, composite operation and opacity effects to apply
+     */
     strokeText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=TextDisplay.DEFAULT_LINE_HEIGHT, visualEffects=[]) {
         if (text) {
             const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, ctx = this._ctx
@@ -1969,7 +2381,16 @@ class Render {
         }
     }
 
-    // directly fills text on the canvas. TextStyles can either be a strict color or a TextStyles profile
+    /**
+     * Directly fills text on the canvas
+     * @param {String} text: the text to draw
+     * @param {[x,y]} pos: the pos of the text 
+     * @param {Color | [r,g,b,a]} color: the color of the text 
+     * @param {TextStyles} textStyles: a TextStyles instance
+     * @param {Number?} maxWidth: the max width of the text
+     * @param {Number?} lineHeight: the line height in pixels if the text is multiline 
+     * @param {[filter, compositeOperation, opacity]?} visualEffects: the filter, composite operation and opacity effects to apply
+     */
     fillText(text, pos, color, textStyles, maxWidth=undefined, lineHeight=TextDisplay.DEFAULT_LINE_HEIGHT, visualEffects=[]) {
         if (text) {
             const colorValue = Color.getColorValue(color), currentCtxVisuals = this.#currentCtxVisuals, ctx = this._ctx
@@ -1988,7 +2409,14 @@ class Render {
         }
     }
 
-    // directly draws an image on the canvas
+    /**
+     * Directly draws an image on the canvas
+     * @param {CanvasImageSource} img: the img to draw
+     * @param {[x,y]} pos: the top left position of the image
+     * @param {[width,height]} size: the size of the image
+     * @param {[[startX, startY], [endX, endY]]?} croppingPositions: cropping positions delimiting a rectangle, cropping everything outside of it. (Defaults to no cropping)
+     * @param {[filter, compositeOperation, opacity]?} visualEffects: the filter, composite operation and opacity effects of the image
+     */
     drawImage(img, pos, size, croppingPositions, visualEffects=[]) {
         if (visualEffects?.length) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
 
@@ -2000,7 +2428,14 @@ class Render {
         RenderStyles.apply(this, null, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA)
     }
 
-    // directly draws an image on the canvas once everything else has been drawn
+    /**
+     * Directly draws an image on the canvas once everything batchded has been drawn
+     * @param {CanvasImageSource} img: the img to draw
+     * @param {[x,y]} pos: the top left position of the image
+     * @param {[width,height]} size: the size of the image
+     * @param {[[startX, startY], [endX, endY]]?} croppingPositions: cropping positions delimiting a rectangle, cropping everything outside of it. (Defaults to no cropping)
+     * @param {[filter, compositeOperation, opacity]?} visualEffects: the filter, composite operation and opacity effects of the image
+     */
     drawLateImage(img, pos, size, croppingPositions, visualEffects=[]) {
         this._bactchedStandalones.push(()=>{
             if (visualEffects?.length) RenderStyles.apply(this, null, visualEffects[0], visualEffects[1], visualEffects[2])
@@ -2285,7 +2720,6 @@ class Render {
 // Please don't use or credit this code as your own.
 //
 
-// Represents a styling profile for text
 class TextStyles {
     static CAPS_VARIANTS = {NORMAL:"normal", SMALL_CAPS:"small-caps", ALL_SMALL_CAPS:"all-small-caps", PETITE_CAPS:"petite-caps", ALL_PETITE_CAPS:"all-petite-caps", UNICASE:"unicase", TILTING_CAPS:"tilting-caps"}
     static DIRECTIONS = {LEFT_TO_RIGHT:"ltr", RIGHT_TO_LEFT:"rtl", INHERIT:"inherit"}
@@ -2309,6 +2743,21 @@ class TextStyles {
     static #FONTFACE_NAME_OFFSET = 1
 
     #ctx = null
+
+    /**
+     * Represents a styling profile for text
+     * @param {Render} render: the render instance to link to
+     * @param {String?} font: the text font-style, font-variant, font-weight, font-size, line-height and font-family to use
+     * @param {Number | String ?} letterSpacing: the gaps in px between letters
+     * @param {Number | String ?} wordSpacing: the gaps in px between words
+     * @param {TextStyles.CAPS_VARIANTS?} fontVariantCaps: specifies alternative capitalization
+     * @param {TextStyles.DIRECTIONS?} direction: the text direction
+     * @param {TextStyles.STRETCHES?} fontStretch: the text streching
+     * @param {TextStyles.KERNINGS?} fontKerning: whether the default spacing of certain letters is uniform
+     * @param {TextStyles.ALIGNMENTS?} textAlign: the text horizontal alignment
+     * @param {TextStyles.BASELINES?} textBaseline: the text vertical alignment
+     * @param {TextStyles.RENDERINGS?} textRendering: the text rendering method
+     */
     constructor(render, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         this._id = Render.TEXT_PROFILE_ID_GIVER++                                    // profile id
         this._render = render                                                        // Canvas render instance
@@ -2325,17 +2774,34 @@ class TextStyles {
         this._textRendering = textRendering??TextStyles.DEFAULT_TEXT_RENDERING       // text rendering optimization method
     }
 
-    // returns a separate copy of the profile
+    /**
+     * @returns a separate copy of the profile
+     */
     duplicate(render=this._render, font=this._font, letterSpacing=this._letterSpacing, wordSpacing=this._wordSpacing, fontVariantCaps=this._fontVariantCaps, direction=this._direction, fontStretch=this._fontStretch, fontKerning=this._fontKerning, textAlign=this._textAlign, textBaseline=this._textBaseline, textRendering=this._textRendering) {
         return new TextStyles(render, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
     }
 
-    // returns the profile's styles as an array
+    /**
+     * @returns the profile's styles as an array
+     */
     getStyles() {
         return [this._font, this._letterSpacing, this._wordSpacing, this._fontVariantCaps, this._direction, this._fontStretch, this._fontKerning, this._textAlign, this._textBaseline, this._textRendering]
     }
 
-    // updates a profile's attributes and returns the updated version
+    /**
+     * Updates a profile's attributes and returns the updated version
+     * @param {String?} font: the text font-style, font-variant, font-weight, font-size, line-height and font-family to use
+     * @param {Number | String ?} letterSpacing: the gaps in px between letters
+     * @param {Number | String ?} wordSpacing: the gaps in px between words
+     * @param {TextStyles.CAPS_VARIANTS?} fontVariantCaps: specifies alternative capitalization
+     * @param {TextStyles.DIRECTIONS?} direction: the text direction
+     * @param {TextStyles.STRETCHES?} fontStretch: the text streching
+     * @param {TextStyles.KERNINGS?} fontKerning: whether the default spacing of certain letters is uniform
+     * @param {TextStyles.ALIGNMENTS?} textAlign: the text horizontal alignment
+     * @param {TextStyles.BASELINES?} textBaseline: the text vertical alignment
+     * @param {TextStyles.RENDERINGS?} textRendering: the text rendering method
+     * @returns the updated TextStyles instance
+     */
     update(font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         if (font) this._font = font
         if (letterSpacing) this._letterSpacing = typeof letterSpacing=="number"?letterSpacing+"px":letterSpacing
@@ -2350,7 +2816,19 @@ class TextStyles {
         return this
     }
 
-    // directly applies the styles of the profile
+    /**
+     * Directly applies the styles of the profile
+     * @param {String?} font: the text font-style, font-variant, font-weight, font-size, line-height and font-family to use
+     * @param {Number | String ?} letterSpacing: the gaps in px between letters
+     * @param {Number | String ?} wordSpacing: the gaps in px between words
+     * @param {TextStyles.CAPS_VARIANTS?} fontVariantCaps: specifies alternative capitalization
+     * @param {TextStyles.DIRECTIONS?} direction: the text direction
+     * @param {TextStyles.STRETCHES?} fontStretch: the text streching
+     * @param {TextStyles.KERNINGS?} fontKerning: whether the default spacing of certain letters is uniform
+     * @param {TextStyles.ALIGNMENTS?} textAlign: the text horizontal alignment
+     * @param {TextStyles.BASELINES?} textBaseline: the text vertical alignment
+     * @param {TextStyles.RENDERINGS?} textRendering: the text rendering method
+     */
     apply(font=this._font, letterSpacing=this._letterSpacing, wordSpacing=this._wordSpacing, fontVariantCaps=this._fontVariantCaps, direction=this._direction, fontStretch=this._fontStretch, fontKerning=this._fontKerning, textAlign=this._textAlign, textBaseline=this._textBaseline, textRendering=this._textRendering) {
         const ctx = this.#ctx, currentTextStyles = this._render.currentCtxTextStyles
         if (font && currentTextStyles[0] !== font) currentTextStyles[0] = ctx.font = font
@@ -2365,7 +2843,19 @@ class TextStyles {
         if (textRendering && currentTextStyles[9] !== textRendering) currentTextStyles[9] = ctx.textRendering = textRendering
     }
 
-    // directly applies the styles of the profile
+    /**
+     * Directly applies the provided styles
+     * @param {String?} font: the text font-style, font-variant, font-weight, font-size, line-height and font-family to use
+     * @param {Number | String ?} letterSpacing: the gaps in px between letters
+     * @param {Number | String ?} wordSpacing: the gaps in px between words
+     * @param {TextStyles.CAPS_VARIANTS?} fontVariantCaps: specifies alternative capitalization
+     * @param {TextStyles.DIRECTIONS?} direction: the text direction
+     * @param {TextStyles.STRETCHES?} fontStretch: the text streching
+     * @param {TextStyles.KERNINGS?} fontKerning: whether the default spacing of certain letters is uniform
+     * @param {TextStyles.ALIGNMENTS?} textAlign: the text horizontal alignment
+     * @param {TextStyles.BASELINES?} textBaseline: the text vertical alignment
+     * @param {TextStyles.RENDERINGS?} textRendering: the text rendering method
+     */
     static apply(ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering) {
         const currentTextStyles = [ctx.font, ctx.letterSpacing, ctx.wordSpacing, ctx.fontVariantCaps, ctx.direction, ctx.fontStretch, ctx.fontKerning, ctx.textAlign, ctx.textBaseline, ctx.textRendering]
         if (font && currentTextStyles[0] !== font) currentTextStyles[0] = ctx.font = font
@@ -2450,7 +2940,6 @@ class TextStyles {
 // Please don't use or credit this code as your own.
 //
 
-// Represents a styling profile for paths
 class RenderStyles extends _HasColor {
     static JOIN_TYPES = {MITER:"miter", BEVEL:"bevel", ROUND:"round"} // spiky, flat, round
     static CAP_TYPES = {BUTT:"butt", SQUARE:"square", ROUND:"round"}  // short, long, round
@@ -2463,6 +2952,20 @@ class RenderStyles extends _HasColor {
     static DEFAULT_PROFILE = new RenderStyles(null, Color.DEFAULT_RGBA, Render.DEFAULT_FILTER, Render.DEFAULT_COMPOSITE_OPERATION, Render.DEFAULT_ALPHA, RenderStyles.DEFAULT_WIDTH, RenderStyles.DEFAULT_DASH, RenderStyles.DEFAULT_DASH_OFFSET, RenderStyles.DEFAULT_JOIN, RenderStyles.DEFAULT_CAP)
 
     #ctx = null
+
+    /**
+     * Represents a styling profile for paths
+     * @param {Render} render: the render instance to link to
+     * @param {Color | [r,g,b,a]?} color: the color to use
+     * @param {String?} filter: the filter value, as a CSS filter
+     * @param {Render.COMPOSITE_OPERATIONS?} compositeOperation: the composite operation used (/!\ Some composite operations are invasive)
+     * @param {Number?} opacity: the opacity level, as a number from 0..1
+     * @param {Number?} lineWidth: the width of stroked lines, in pixel
+     * @param {Number | Array ?} lineDash: the line dash distance(s), in pixel
+     * @param {Number?} lineDashOffset: the offset of line dashes, in pixel
+     * @param {RenderStyles.JOIN_TYPES?} lineJoin: the line join style
+     * @param {RenderStyles.CAP_TYPES?} lineCap: the line cap style
+     */
     constructor(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         super(color)
         if (render) this.color = this.getInitColor()
@@ -2479,31 +2982,53 @@ class RenderStyles extends _HasColor {
         this._lineCap = lineCap??RenderStyles.DEFAULT_CAP                                // determines the shape of line ends
     }
 
-    // returns a separate copy of the profile
+    /**
+     * @returns a separate copy of the profile
+     */
     duplicate(render=this._render, color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
         return new RenderStyles(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
     }
 
-    // returns the profile's styles as an array
+    /**
+     * @returns the profile's styles as an array
+     */
     getStyles() {
-        return [this._filter, this._compositeOperation, this._opacity, this._lineWidth, this._lineDash, this._lineDashOffset, this._lineJoin, this._lineCap]
+        return [this._lineWidth, this._lineDash, this._lineDashOffset, this._lineJoin, this._lineCap]
     }
 
-    // serializes the styles profile
+    /**
+     * Serializes the styles profile
+     * @returns the serialized profiled
+     */
     toString(color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
         let sep = RenderStyles.SERIALIZATION_SEPARATOR, colorValue = Color.getColorValue(color)
         if (colorValue instanceof CanvasGradient || colorValue instanceof CanvasPattern) colorValue = color.toString()
         return colorValue+sep+filter+sep+compositeOperation+sep+opacity+sep+lineWidth+sep+lineDash+sep+lineDashOffset+sep+lineJoin+sep+lineCap
     }
 
-    // serializes the styles profile, but only the color value and visual effects
+    /**
+     * Serializes the styles profile, but only the color value and visual effects
+     * @returns the serialized profiled
+     */
     fillOptimizedToString(color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity) {
         let sep = RenderStyles.SERIALIZATION_SEPARATOR, colorValue = Color.getColorValue(color)
         if (colorValue instanceof CanvasGradient || colorValue instanceof CanvasPattern) colorValue = color.toString()
         return colorValue+sep+filter+sep+compositeOperation+sep+opacity
     }
 
-    // updates a profile's attributes and returns the updated version
+    /**
+     * Updates a profile's attributes and returns the updated version
+     * @param {Color | [r,g,b,a]?} color: the color to use
+     * @param {String?} filter: the filter value, as a CSS filter
+     * @param {Render.COMPOSITE_OPERATIONS?} compositeOperation: the composite operation used (/!\ Some composite operations are invasive)
+     * @param {Number?} opacity: the opacity level, as a number from 0..1
+     * @param {Number?} lineWidth: the width of stroked lines, in pixel
+     * @param {Number | Array ?} lineDash: the line dash distance(s), in pixel
+     * @param {Number?} lineDashOffset: the offset of line dashes, in pixel
+     * @param {RenderStyles.JOIN_TYPES?} lineJoin: the line join style
+     * @param {RenderStyles.CAP_TYPES?} lineCap: the line cap style
+     * @returns the updated RenderStyles instance
+     */
     update(color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         if (color) this.color = color
         if (filter) this._filter = filter
@@ -2517,7 +3042,18 @@ class RenderStyles extends _HasColor {
         return this
     }
 
-    // directly applies the styles of the profile
+    /**
+     * Directly applies the styles of the profile
+     * @param {Color | [r,g,b,a]?} color: the color to use
+     * @param {String?} filter: the filter value, as a CSS filter
+     * @param {Render.COMPOSITE_OPERATIONS?} compositeOperation: the composite operation used (/!\ Some composite operations are invasive)
+     * @param {Number?} opacity: the opacity level, as a number from 0..1
+     * @param {Number?} lineWidth: the width of stroked lines, in pixel
+     * @param {Number | Array ?} lineDash: the line dash distance(s), in pixel
+     * @param {Number?} lineDashOffset: the offset of line dashes, in pixel
+     * @param {RenderStyles.JOIN_TYPES?} lineJoin: the line join style
+     * @param {RenderStyles.CAP_TYPES?} lineCap: the line cap style
+     */
     apply(color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
         const ctx = this.#ctx, colorValue = Color.getColorValue(color), currentStyles = this._render.currentCtxStyles, currentCtxVisuals = this._render.currentCtxVisuals
         if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
@@ -2537,7 +3073,18 @@ class RenderStyles extends _HasColor {
         if (lineCap && currentStyles[4] !== lineCap) currentStyles[4] = ctx.lineCap = lineCap
     }
 
-    // directly applies the provided styles
+    /**
+     * Directly applies the provided styles
+     * @param {Color | [r,g,b,a]?} color: the color to use
+     * @param {String?} filter: the filter value, as a CSS filter
+     * @param {Render.COMPOSITE_OPERATIONS?} compositeOperation: the composite operation used (/!\ Some composite operations are invasive)
+     * @param {Number?} opacity: the opacity level, as a number from 0..1
+     * @param {Number?} lineWidth: the width of stroked lines, in pixel
+     * @param {Number | Array ?} lineDash: the line dash distance(s), in pixel
+     * @param {Number?} lineDashOffset: the offset of line dashes, in pixel
+     * @param {RenderStyles.JOIN_TYPES?} lineJoin: the line join style
+     * @param {RenderStyles.CAP_TYPES?} lineCap: the line cap style
+     */
     static apply(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         const ctx = render.ctx, colorValue = color&&Color.getColorValue(color), currentStyles = render.currentCtxStyles, currentCtxVisuals = render.currentCtxVisuals
         if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
@@ -2583,7 +3130,6 @@ class RenderStyles extends _HasColor {
 
 const CDE_CANVAS_TIMEOUT_FUNCTION = window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.msRequestAnimationFrame||function(fn){window.setTimeout(()=>fn(performance.now()),1000/60)}
 
-// Represents a html canvas element
 class Canvas {
     static DOMParser = new DOMParser()
     static CANVAS_ID_GIVER = 0
@@ -2620,9 +3166,21 @@ class Canvas {
     #lastScrollValues = [window.scrollX, window.screenY] // last window scroll x/y values
     #mouseMoveCB = null      // the custom mouseMoveCB. Used for mobile adjustments
     #visibilityChangeLastState = null // stores the cvs state before document visibility change
+
+    /**
+     * Represents a html canvas element
+     * @param {HTMLCanvasElement | OffscreenCanvas} cvs: the html canvas element or an OffscreenCanvas instance to link to
+     * @param {Function?} loopingCB: a function called along with the loop() function. (deltatime)=>{...}
+     * @param {Number?} fpsLimit: the maximal frames per second cap. Defaults to V-Sync
+     * @param {Function?} visibilityChangeCB: a function called upon document visibility change. (isVisible)=>{...}
+     * @param {HTMLElement?} cvsFrame: if defined and if "cvs" is an HTML canvas, sets this element as the parent of the canvas element
+     * @param {Object?} settings: an object containing the canvas settings
+     * @param {Boolean} willReadFrequently: whether the getImageData optimizations are enabled
+     */
     constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
-        this._id = Canvas.CANVAS_ID_GIVER++                           // Canvas instance id
-        this._cvs = cvs                                               // html canvas element or an OffscreenCanvas instance
+        this._id = Canvas.CANVAS_ID_GIVER++                               // Canvas instance id
+        if (!cvs) throw new Error("The cvs (canvas) parameter is undefined")
+        this._cvs = cvs                                                   // html canvas element or an OffscreenCanvas instance
         if (!this.isOffscreenCanvas) {
             this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
             this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)       // set styles selector for canvas
@@ -2634,7 +3192,7 @@ class Canvas {
         this._els = {refs:[], defs:[]}                                // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
         this._state = 0                                               // canvas drawing loop state. 0:off, 1:on, 2:awaiting stop
         this._loopingCB = loopingCB                                   // custom callback called along with the loop() function
-        this.fpsLimit = fpsLimit                                      // delay between each frame to limit fps
+        this.fpsLimit = fpsLimit                                      // the max frames per second
         this._speedModifier = 1                                       // animation/drawing speed multiplier
         this.#maxTime = this.#getMaxTime(fpsLimit)                    // max time between frames
         this._deltaTime = null                                        // useable delta time in seconds
@@ -2643,8 +3201,8 @@ class Canvas {
         this._viewPos = [0,0]                                         // context view offset
         if (!this.isOffscreenCanvas) {
             const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
-            this.setSize(frameCBR.width, frameCBR.height)             // init size
-            this.#initStyles()                                        // init styles
+            this.setSize(frameCBR.width, frameCBR.height)              // init size
+            this.#initStyles()                                         // init styles
         } else this.#cachedSize = [this._cvs.width, this._cvs.height]
         this._typingDevice = new TypingDevice()                        // keyboard info
         this._mouse = new Mouse(this._ctx)                             // mouse info
@@ -2666,11 +3224,15 @@ class Canvas {
     // sets resize and visibility change listeners on the window
     #initWindowListeners() {
         const onresize=()=>{
-            const render = this._render, [lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = render.currentCtxStyles, [font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering] = render.currentCtxTextStyles, [color, filter, compositeOperation, alpha] = render.currentCtxVisuals
+            const render = this._render, ctx = this._ctx, [lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = render.currentCtxStyles, [font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering] = render.currentCtxTextStyles, [color, filter, compositeOperation, alpha] = render.currentCtxVisuals
             this.setSize()
-            this._ctx.strokeStyle = this._ctx.fillStyle = Color.getColorValue(color)
+            ctx.strokeStyle = ctx.fillStyle = Color.getColorValue(color)
+            render.currentCtxStyles[0] = ctx.lineWidth
+            render.currentCtxStyles[2] = ctx.lineDashOffset
+            render.currentCtxStyles[3] = ctx.lineJoin
+            render.currentCtxStyles[4] = ctx.lineCap
             RenderStyles.apply(render, null, filter, compositeOperation, alpha, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
-            TextStyles.apply(this._ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
+            TextStyles.apply(ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
             this.moveViewAt(this._viewPos)
             if (this.fpsLimit==Canvas.STATIC || this._state==Canvas.STATES.STOPPED) this.drawSingleFrame()
         },
@@ -2703,18 +3265,27 @@ class Canvas {
         }
     }
 
-    // sets the cursor style on the canvas
+    /**
+     * Modifies the canvas cursor appearance
+     * @param {Canvas.CURSOR_STYLES} cursorStyle: the cursor style to use
+     */
     setCursorStyle(cursorStyle=Canvas.CURSOR_STYLES.DEFAULT) {
         const frame = this._frame
         if (frame.style.cursor !== cursorStyle) frame.style.cursor = cursorStyle
     }
 
-    // adds a callback to be called once the document is loaded
+    /**
+     * Adds a callback to be called once the document is loaded
+     * @param {Function} callback: the callback to call 
+     */
     static addOnLoadCallback(callback) {
         if (CDEUtils.isFunction(callback) && Canvas.#ON_LOAD_CALLBACKS) Canvas.#ON_LOAD_CALLBACKS.push(callback)
     }
 
-    // adds a callback to be called once the document has been interacted with for the first time
+    /**
+     * Adds a callback to be called once the document has been interacted with for the first time
+     * @param {Function} callback: the callback to call 
+     */
     static addOnFirstInteractCallback(callback) {
         if (CDEUtils.isFunction(callback) && Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#ON_FIRST_INTERACT_CALLBACKS.push(callback)
     }
@@ -2742,12 +3313,18 @@ class Canvas {
         return id
     }
 
-    // returns the filter elements of a loaded svg filter
+    /**
+     * Returns the filter elements of a loaded svg filter
+     * @param {String} id: the identifier of the svg filter
+     */
     static getSVGFilter(id) {
         return Canvas.LOADED_SVG_FILTERS[id]
     }
 
-    // deletes a loaded svg filter
+    /**
+     * Deletes a loaded svg filter
+     * @param {String} id: the identifier of the svg filter
+     */
     static removeSVGFilter(id) {
         id = Canvas.DEFAULT_CUSTOM_SVG_FILTER_ID_PREFIX+id
         document.getElementById(id).remove()
@@ -2824,7 +3401,9 @@ class Canvas {
         if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(this.timeStamp, deltaTime)
     }
 
-    // starts the canvas drawing loop
+    /**
+     * Starts the canvas drawing loop
+     */
     startLoop() {
         if (this._state!=1) {
             if (this._state==2) return this._state = 1
@@ -2833,16 +3412,22 @@ class Canvas {
             this.#loop(this.#timeStamp||0, true)
         }
     }
-    // starts the canvas drawing loop
+    /**
+     * Starts the canvas drawing loop
+     */
     start() {
         this.startLoop()
     }
 
-    // stops the canvas drawing loop
+    /**
+     * Stops the canvas drawing loop
+     */
     stopLoop() {
         if (this._state) this._state = 2
     }
-    // stops the canvas drawing loop
+    /**
+     * Stops the canvas drawing loop
+     */
     stop() {
         this.stopLoop()
     }
@@ -2878,7 +3463,13 @@ class Canvas {
         }
     }
 
-    // clears the canvas
+    /**
+     * Clears the provided area of the canvas
+     * @param {Number?} x: the x value of the top-left corner
+     * @param {Number?} y: the y value of the top-left corner
+     * @param {Number?} x2: the x value of the bottom-right corner
+     * @param {Number?} y2: the y value of the bottom-right corner
+     */
     clear(x=0, y=0, x2=this.width, y2=this.height) {
         if (this._viewPos[0] || this._viewPos[1]) {
             this.save()
@@ -2888,7 +3479,9 @@ class Canvas {
         } else this._ctx.clearRect(x, y, x2, y2)
     }
 
-    // initializes the canvas as static
+    /**
+     * Initializes the canvas as static
+     */
     initializeStatic() {
         this.fpsLimit = 0
         this.draw()
@@ -2908,30 +3501,41 @@ class Canvas {
         }
     }
 
-    // draws a single frame (use with static canvas)
+    /**
+     * Draws a single frame (use with static canvas)
+     */
     drawStatic() {
         this.draw()
         this._render.drawBatched()
         if (CDEUtils.isFunction(this._loopingCB)) this._loopingCB()
     }
 
-    // clears the canvas and draws a single frame (use with static canvas)
+    /**
+     * Clears the canvas and draws a single frame (use with static canvas)
+     */
     cleanDrawStatic() {
         this.clear()
         this.drawStatic()
     }
 
-    // resets every fragile references
+    /**
+     * Resets every fragile references
+     */
     resetReferences() {
         this.refs.filter(ref=>ref.fragile).forEach(r=>r.reset())
     }
 
-    // discards all current context transformations
+    /**
+     * Discards all current context transformations
+     */
     resetTransformations() {
         this.ctx.setTransform(1,0,0,1,0,0)
     }
 
-    // moves the context to a specific x/y value
+    /**
+     * Moves the camera view to a specific x/y value
+     * @param {[x,y]} pos: the pos to move the camera view to
+     */
     moveViewAt(pos) {
         let [x, y] = pos
         this.resetTransformations()
@@ -2944,7 +3548,10 @@ class Canvas {
         this.#mouseMovements()
     }
 
-    // moves the context by specified x/y values
+    /**
+     * Moves the camera view by specified x/y values
+     * @param {[x,y]} pos: the x/y values to move the camera view by
+     */
     moveViewBy(pos) {
         let [x, y] = pos
         this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
@@ -2956,8 +3563,15 @@ class Canvas {
         this.#mouseMovements()
     }
 
-    // Smoothly moves to coords in set time
-    moveViewTo(pos, time, easing, initPos) {
+    /**
+     * Smoothly moves the camera view to the provided pos, in set time
+     * @param {[x,y]} pos: the pos to move the camera view to
+     * @param {Number?} time: the move time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {[x,y]} initPos: the pos to start the movement. Defaults to the current camera view pos 
+     * @returns the created Anim instance
+     */
+    moveViewTo(pos, time=null, easing=null, initPos=null) {
         time??=1000
         easing??=Anim.easeInOutQuad
         initPos??=this._viewPos
@@ -2984,7 +3598,11 @@ class Canvas {
         }
     }
 
-    // adds an animation to play
+    /**
+     * Adds an animation to play
+     * @param {Anim} anim: the Anim instance containing the animation
+     * @returns the provided Anim instance
+     */
     playAnim(anim) {
         const initEndCB = anim.endCB
         anim.endCB=()=>{
@@ -2995,7 +3613,12 @@ class Canvas {
         return anim
     }
 
-    // sets the width and height in px of the canvas element. If "forceCSSupdate" is true, it also force the resizes on the frame with css
+    /**
+     * Sets the width and height in pixels of the canvas element
+     * @param {Number?} forceWidth: if defined, forces the canvas to resize to this width in pixels
+     * @param {Number?} forceHeight: if defined, forces the canvas to resize to this height in pixels
+     * @param {Boolean?} forceCSSupdate if true, also force the resizes on the frame using CSS
+     */
     setSize(forceWidth, forceHeight, forceCSSupdate) {
         const {width, height} = this._frame.getBoundingClientRect(), w = forceWidth??width, h = forceHeight??height
 
@@ -3013,7 +3636,10 @@ class Canvas {
         this.#cachedSize = [this._cvs.width, this._cvs.height]
     }
 
-    // updates current canvas settings
+    /**
+     * Updates current canvas settings
+     * @param {Object?} settings: an object containing the canvas settings
+     */
     updateSettings(settings) {
         const st = settings||this._settings
         if (st) {
@@ -3022,7 +3648,12 @@ class Canvas {
         } else return null
     }
 
-    // add 1 or many objects, as a (def)inition or as a (ref)erence (source). if "inactive" is true, it only initializes the obj, without adding it to the canvas
+    /**
+     * Adds one or many objects to the canvas, either as a definition or as a reference/source
+     * @param {_BaseObj | Array[_BaseObj]} objs: the object(s) to add
+     * @param {Boolean?} inactive: if true, only initializes the object without adding it to the canvas
+     * @returns 
+     */
     add(objs, inactive=false) {
         const l = objs&&(objs.length??1)
         for (let i=0;i<l;i++) {
@@ -3037,7 +3668,10 @@ class Canvas {
         return objs
     }
 
-    // removes any element from the canvas by id
+    /**
+     * Removes an object from the canvas
+     * @param {Number} id: the id of the object to delete
+     */
     remove(id) {
         if (id=="*") this._els = {refs:[], defs:[]}
         else {
@@ -3047,12 +3681,18 @@ class Canvas {
         this.updateCachedAllEls()
     }
 
-    // removes all objects added to the canvas
+    /**
+     * Removes all objects added to the canvas
+     */
     removeAllObjects() {
         this.remove("*")
     }
 
-    // get any element from the canvas by id
+    /**
+     * Get an object from the canvas
+     * @param {Number} id: the id of the object to get
+     * @returns the desired object
+     */
     get(id) {
         const els = this.#cachedEls, e_ll = this.#cachedEls_ll
         for (let i=0;i<e_ll;i++) {
@@ -3062,17 +3702,25 @@ class Canvas {
         return null
     }
 
-    // removes any element from the canvas by instance type
-    getObjs(instance) {
-        return this.allEls.filter(x=>x instanceof instance)
+    /**
+     * Removes any element from the canvas by instance type
+     * @param {Class} instanceType: the class definition
+     * @returns any object matching the class definition
+     */
+    getObjs(instanceType) {
+        return this.allEls.filter(x=>x instanceof instanceType)
     }
 
-    // saves the context parameters
+    /**
+     * Saves the context parameters
+     */
     save() {
         this._ctx.save()
     }
     
-    // restore the saved context parameters
+    /**
+     * Restore the saved context parameters
+     */
     restore() {
         this._ctx.restore()
     }
@@ -3087,7 +3735,7 @@ class Canvas {
     }
 
     // called on mouse move
-    #mouseMovements(cb, e) {
+    #mouseMovements(callback, e) {
         // update ratioPos to mouse pos if not overwritten
         const refs = this.refs, r_ll = refs.length
         for (let i=0;i<r_ll;i++) {
@@ -3095,22 +3743,27 @@ class Canvas {
             if (!ref.ratioPosCB && ref.ratioPosCB !== false) ref.ratioPos = this._mouse.pos
         }
         this._mouse.checkValid()
-        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
+        if (CDEUtils.isFunction(callback)) callback(this._mouse, e)
     }
     
 
-    // defines the onmousemove listener
-    setMouseMove(cb, global) {
+    /**
+     * Defines the onmousemove listener
+     * @param {Function} callback: a function called on event. (mouse, event)=>{...}
+     * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
+     * @returns a callback which removes the listeners
+     */
+    setMouseMove(callback, global) {
         if (!this.isOffscreenCanvas) {
             let lastEventTime=0
-            this.#mouseMoveCB = cb
+            this.#mouseMoveCB = callback
             const onmousemove=e=>{
                 const time = this.timeStamp
                 if (time-lastEventTime > this._mouseMoveThrottlingDelay) {
                     lastEventTime = time
                     this._mouse.updatePos(e.x, e.y, this._offset)
                     this._mouse.calcAngle()         
-                    this.#mouseMovements(cb, e)
+                    this.#mouseMovements(callback, e)
                 }
             }, ontouchmove=e=>{
                 const touches = e.touches, time = this.timeStamp
@@ -3121,7 +3774,7 @@ class Canvas {
                     e.y = CDEUtils.round(touches[0].clientY, 1)
                     this._mouse.updatePos(e.x, e.y, this._offset)
                     this._mouse.calcAngle()            
-                    this.#mouseMovements(cb, e)
+                    this.#mouseMovements(callback, e)
                 }
             }, element = global ? document : this._frame
             element.addEventListener("mousemove", onmousemove)
@@ -3133,12 +3786,17 @@ class Canvas {
         } else return false
     }
 
-    // defines the onmouseleave listener
-    setMouseLeave(cb, global) {
+    /**
+     * Defines the onmouseleave listener
+     * @param {Function} callback: a function called on event. (mouse, event)=>{...}
+     * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
+     * @returns a callback which removes the listeners
+     */
+    setMouseLeave(callback, global) {
         if (!this.isOffscreenCanvas) {
             const onmouseleave=e=>{
                 this._mouse.invalidate()
-                this.#mouseMovements(cb, e)
+                this.#mouseMovements(callback, e)
             }, element = global ? document : this._frame
             element.addEventListener("mouseleave", onmouseleave)
             return ()=>element.removeEventListener("mouseleave", onmouseleave)            
@@ -3146,14 +3804,19 @@ class Canvas {
     }
 
     // called on any mouse clicks
-    #mouseClicks(cb, e, preventOnFirstInteractionTrigger) {
+    #mouseClicks(callback, e, preventOnFirstInteractionTrigger) {
         this._mouse.updateMouseClicks(e)
-        if (CDEUtils.isFunction(cb)) cb(this._mouse, e)
+        if (CDEUtils.isFunction(callback)) callback(this._mouse, e)
         if (!preventOnFirstInteractionTrigger && Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)
     }
 
-    // defines the onmousedown listener
-    setMouseDown(cb, global) {
+    /**
+     * Defines the onmousedown listener
+     * @param {Function} callback: a function called on event. (mouse, event)=>{...}
+     * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
+     * @returns a callback which removes the listeners
+     */
+    setMouseDown(callback, global) {
         if (!this.isOffscreenCanvas) {
             let isTouch = false
             const ontouchstart=e=>{
@@ -3167,10 +3830,10 @@ class Canvas {
                     this._mouse.updatePos(e.x, e.y, this._offset)
                     this._mouse.calcAngle()            
                     this.#mouseMovements(this.#mouseMoveCB, e)
-                    this.#mouseClicks(cb, e, true)
+                    this.#mouseClicks(callback, e, true)
                 }
             }, onmousedown=e=>{
-                if (!isTouch) this.#mouseClicks(cb, e)
+                if (!isTouch) this.#mouseClicks(callback, e)
                 isTouch = false
             }, element = global ? document : this._frame
             element.addEventListener("touchstart", ontouchstart)
@@ -3182,8 +3845,13 @@ class Canvas {
         } else return false
     }
 
-    // defines the onmouseup listener
-    setMouseUp(cb, global) {
+    /**
+     * Defines the onmouseup listener
+     * @param {Function} callback: a function called on event. (mouse, event)=>{...}
+     * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
+     * @returns a callback which removes the listeners
+     */
+    setMouseUp(callback, global) {
         if (!this.isOffscreenCanvas) {
             let isTouch = false
             const ontouchend=e=>{
@@ -3194,15 +3862,15 @@ class Canvas {
                     e.x = CDEUtils.round(changedTouches[0].clientX, 1)
                     e.y = CDEUtils.round(changedTouches[0].clientY, 1)
                     e.button = 0
-                    this.#mouseClicks(cb, e)
+                    this.#mouseClicks(callback, e)
 
                     this._mouse.invalidate()
                     e.x = Infinity
                     e.y = Infinity
-                    this.#mouseMovements(cb, e)
+                    this.#mouseMovements(callback, e)
                 }     
             }, onmouseup=e=>{
-                if (!isTouch) this.#mouseClicks(cb, e)
+                if (!isTouch) this.#mouseClicks(callback, e)
                 isTouch = false
             }, element = global ? document : this._frame
             element.addEventListener("touchend", ontouchend)
@@ -3214,12 +3882,17 @@ class Canvas {
         } else return false
     }
 
-    // defines the onkeydown listener
-    setKeyDown(cb, global) {
+    /**
+     * Defines the onkeydown listener
+     * @param {Function} callback: a function called on event. (typingDevice, event)=>{...}
+     * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
+     * @returns a callback which removes the listeners
+     */
+    setKeyDown(callback, global) {
         if (!this.isOffscreenCanvas) {
             const onkeydown=e=>{
                 this._typingDevice.setDown(e)
-                if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
+                if (CDEUtils.isFunction(callback)) callback(this._typingDevice, e)
             }, globalFirstInteractOnKeyDown=e=>{if (Canvas.#ON_FIRST_INTERACT_CALLBACKS) Canvas.#onFirstInteraction(e)}, element = global ? document : this._frame
             element.addEventListener("keydown", onkeydown)
             document.addEventListener("keydown", globalFirstInteractOnKeyDown)
@@ -3227,45 +3900,68 @@ class Canvas {
         } else return false
     }
 
-    // defines the onkeyup listener
-    setKeyUp(cb, global) {
+    /**
+     * Defines the onkeyup listener
+     * @param {Function} callback: a function called on event. (typingDevice, event)=>{...}
+     * @param {Boolean?} global: whether the events are dispatched only on the canvas or the whole window
+     * @returns a callback which removes the listeners
+     */
+    setKeyUp(callback, global) {
         if (!this.isOffscreenCanvas) {
             const onkeyup=e=>{
                 this._typingDevice.setUp(e)
-                if (CDEUtils.isFunction(cb)) cb(this._typingDevice, e)
+                if (CDEUtils.isFunction(callback)) callback(this._typingDevice, e)
             }, element = global ? document : this._frame
             element.addEventListener("keyup", onkeyup)
             return ()=>element.removeEventListener("keyup", onkeyup)            
         } else return false
     }
 
-    // returns the center [x,y] of the canvas
+    /**
+     * @returns the center [x,y] of the canvas
+     */
     getCenter() {
         return [this.width/2, this.height/2]
     }
 
-    // returns whether the provided position is within the canvas bounds
+    /**
+     * Returns whether the provided position is within the canvas bounds
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the results
+     */
     isWithin(pos, padding=0) {
         const viewPos = this._viewPos
         return pos[0] >= -padding-viewPos[0] && pos[0] <= this.#cachedSize[0]+padding-viewPos[0] && pos[1] >= -padding-viewPos[1] && pos[1] <= this.#cachedSize[1]+padding-viewPos[1]
     }
 
-    // returns the px value of the provided pourcent value. PourcentileValue should be a number between 0 and 1. UseWidth determines whether the width or height should be used.
+    /**
+     * Returns the pixel value of the provided pourcent value
+     * @param {Number} pourcentileValue: a number between 0 and 1 representing a pourcentile
+     * @param {Boolean?} useWidth: whether the width or height should be used
+     */
     pct(pourcentileValue, useWidth=true) {
         return useWidth ? this.width*pourcentileValue : this.height*pourcentileValue
     }
 
-    // Returns the px values of the provided pourcent values. PourcentilePos should be an array(2) of numbers between 0 and 1. ReferenceDims is the reference dimensions used to calculate the values
+    /**
+     * Returns the px values of the provided pourcent values.
+     * @param {[x%, y%]} pourcentilePos: the x/y pourcentiles as numbers between 0 and 1
+     * @param {[width,height]?} referenceDims: the reference dimensions used to calculate the values
+     */
     getResponsivePos(pourcentilePos, referenceDims=this.size) {
         return [pourcentilePos[0]*referenceDims[0], pourcentilePos[1]*referenceDims[1]]
     }
 
-    // Enables checks for mouse enter/leave listeners every frame
+    /**
+     * Enables checks for mouse enter/leave listeners every frame
+     */
     enableAccurateMouseMoveListenersMode() {
         this.mouseMoveListenersOptimizationEnabled = false
     }
 
-    // Disables checks for mouse enter/leave listeners every frame (only checks on mouse movements)
+    /**
+     * Disables checks for mouse enter/leave listeners every frame (only checks on mouse movements)
+     */
     disableAccurateMouseMoveListenersMode() {
         this.mouseMoveListenersOptimizationEnabled = true
     }
@@ -3348,17 +4044,23 @@ class Canvas {
 // Please don't use or credit this code as your own.
 //
 
-// Allows the creation of smooth progress based animations 
 class Anim {
     static #ANIM_ID_GIVER = 0
     static DEFAULT_DURATION = 1000
 
-    constructor(animation, duration, easing, endCB) {
-        this._id = Anim.#ANIM_ID_GIVER++                  // animation id
-        this._animation = animation                      // the main animation (clampedProgress, playCount, progress)=>
+    /**
+     * Allows the creation of smooth progress based animations 
+     * @param {Function} animationCB: a function called each frame containing the animation code. (clampedProgress, playCount, progress)=>{...}
+     * @param {Number?} duration: the animation duration in miliseconds. Negative numbers make the animation loop infinitely
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {Function?} endCB: a function called upon the anim end
+     */
+    constructor(animationCB, duration, easing, endCB) {
+        this._id = Anim.#ANIM_ID_GIVER++                 // animation id
+        this._animation = animationCB                    // the main animation (clampedProgress, playCount, progress)=>
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
         this._easing = easing||Anim.linear               // easing function (x)=>
-        this._endCB = endCB                  // function called when animation is over
+        this._endCB = endCB                              // function called when animation is over
 
         this._startTime = null // start time
         this._progress = 0     // animation progress
@@ -3460,13 +4162,22 @@ class Anim {
 // Please don't use or credit this code as your own.
 //
 
-// Abstract canvas obj class
 class _BaseObj extends _HasColor {
     static DEFAULT_POS = [0,0]
     static ABSOLUTE_ANCHOR = [0,0]
     static POSITION_PRECISION = 6
 
     #lastAnchorPos = [0,0]
+
+    /**
+     * Abstract canvas obj class
+     * @param {[x,y]?} pos: the [x,y] pos of the object
+     * @param {Color | [r,g,b,a] ?} color: the color of the object
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     */
     constructor(pos, color, setupCB, loopCB, anchorPos, activationMargin) {
         super(color)
         this._id = Canvas.ELEMENT_ID_GIVER++     // canvas obj id
@@ -3476,7 +4187,7 @@ class _BaseObj extends _HasColor {
         this._loopCB = loopCB                    // called each frame for this object (this)=>
         this._setupResults = null                // return value of the setupCB call
         this._anchorPos = anchorPos              // current reference point from which the object's pos will be set
-        this._activationMargin = activationMargin??Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING // the px margin amount where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+        this._activationMargin = activationMargin??Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING // the px margin amount where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active
         
         this._parent = null                      // the object's parent
         this._rotation = 0                       // the object's rotation in degrees 
@@ -3509,12 +4220,16 @@ class _BaseObj extends _HasColor {
         if (a_ll) for (let i=0;i<a_ll;i++) anims[i].getFrame(time, deltaTime)
     }
 
-    // returns the value of the inital color declaration
+    /**
+     * @returns the value of the inital color declaration
+     */
     getInitColor() {
         return CDEUtils.isFunction(this._initColor) ? this._initColor(this.render??this.parent.render, this) : this._initColor||null
     }
 
-    // returns the value of the inital pos declaration
+    /**
+     * @returns the value of the inital pos declaration
+     */
     getInitPos() {
         return CDEUtils.isFunction(this._initPos) ? CDEUtils.unlinkArr2(this._initPos(this._parent instanceof Canvas?this:this._parent, this)) : CDEUtils.unlinkArr2(this.adjustPos(this._initPos))
     }
@@ -3523,28 +4238,42 @@ class _BaseObj extends _HasColor {
     setAnchoredPos() {
         const anchorPos = this.hasAnchorPosChanged
         if (anchorPos) {
-            const [anchorPosX, anchorPosY] = anchorPos
-            this.relativeX += anchorPosX-this.#lastAnchorPos[0]
-            this.relativeY += anchorPosY-this.#lastAnchorPos[1]
+            this.relativeX += anchorPos[0]-this.#lastAnchorPos[0]
+            this.relativeY += anchorPos[1]-this.#lastAnchorPos[1]
             this.#lastAnchorPos = anchorPos
         }
     }
 
-    // Teleports to given coords
+    /**
+     * Instantly moves the object to the given pos
+     * @param {[x,y]} pos: the pos to move to 
+     */
     moveAt(pos) {
         const [x, y] = pos
         if (CDEUtils.isDefined(x) && isFinite(x)) this.x = x
         if (CDEUtils.isDefined(y) && isFinite(y)) this.y = y
     }
 
-    // Teleports to incremented coords
+    /**
+     * Instantly moves the object by the increments provided
+     * @param {[x,y]} pos: the x/y values to increment by
+     */
     moveBy(pos) {
         const [x, y] = pos
         if (CDEUtils.isDefined(x) && isFinite(x)) this.x += x
         if (CDEUtils.isDefined(y) && isFinite(y)) this.y += y
     }
 
-    // Smoothly moves to coords in set time
+    /**
+     * Smoothly moves to a pos in set time
+     * @param {[x,y]} pos: the pos to move to 
+     * @param {Number?} time: the move time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {[x,y]?} initPos: the pos to start the movement. Defaults to object's current pos 
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} force: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the created Anim instance
+     */
     moveTo(pos, time, easing, initPos, isUnique, force) {
         time??=1000
         easing??=Anim.easeInOutQuad
@@ -3559,23 +4288,40 @@ class _BaseObj extends _HasColor {
         }, time, easing), isUnique, force)
     }
 
-    // Rotates the object clock-wise by a specified degree increment around its pos
+    /**
+     * Rotates the object clock-wise by a specified degree increment around its pos
+     * @param {Number} deg: the degrees to rotate by
+     */
     rotateBy(deg) {
         this.rotation = (this._rotation+deg)%360
     }
 
-    // Rotates the object to a specified degree around its pos
+    /**
+     * Rotates the object to a specified degree around its pos
+     * @param {Number} deg: the degrees to rotate to
+     */
     rotateAt(deg) {
         this.rotation = deg%360
     }
 
-    // Smoothly rotates the object to a specified degree around its pos
+    /**
+     * Smoothly rotates the object to a specified degree around its pos
+     * @param {Number} deg: the degrees to rotate to
+     * @param {Number?} time: the rotate time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} force: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the created Anim instance
+     */
     rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, isUnique=false, force=false) {
         const ir = this._rotation, dr = deg-this._rotation
         return this.playAnim(new Anim((prog)=>this.rotateAt(ir+dr*prog), time, easing), isUnique, force)
     }
 
-    // Scales the object by a specified amount [scaleX, scaleY] from its pos
+    /**
+     * Scales the object by a specified amount [scaleX, scaleY] from its pos
+     * @param {[scaleX, scaleY]} scale: the x/y values to scale the object by
+     */
     scaleBy(scale) {
         let [scaleX, scaleY] = scale
         if (!CDEUtils.isDefined(scaleX)) scaleX = this._scale[0]
@@ -3584,12 +4330,24 @@ class _BaseObj extends _HasColor {
         this.scale[1] *= scaleY
     }
 
-    // Scales the object to a specified amount [scaleX, scaleY] from its pos
+    /**
+     * Scales the object to a specified amount [scaleX, scaleY] from its pos
+     * @param {[scaleX, scaleY]} scale: the x/y values to scale the object to
+     */
     scaleAt(scale) {
         this.scale = scale
     }
 
-    // Smoothly scales the text to a specified amount [scaleX, scaleY] from its pos
+    /**
+     * Smoothly scales the text to a specified amount [scaleX, scaleY] from its pos
+     * @param {[scaleX, scaleY]} scale: the x/y values to scale the object to
+     * @param {Number?} time: the scale time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {[x,y]} centerPos: the center pos used for scaling
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} force: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the created Anim instance
+     */
     scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.pos, isUnique=false, force=false) {
         const is = CDEUtils.unlinkArr2(this._scale), dsX = scale[0]-is[0], dsY = scale[1]-is[1]
         return this.playAnim(new Anim(prog=>this.scaleAt([is[0]+dsX*prog, is[1]+dsY*prog], centerPos), time, easing), isUnique, force)
@@ -3621,9 +4379,18 @@ class _BaseObj extends _HasColor {
         }, duration, easing))
     }
 
-    // moves the obj in specified direction at specified distance(force)
-    addForce(distance, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
-        let rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
+    /**
+     * Moves the object in the specified direction, at the specified distance/force
+     * @param {Number} distance: the distance in pixels
+     * @param {Number} deg: the degree representing the direction of the movement
+     * @param {Number?} time: the move time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} animForce: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the created Anim instance
+     */
+    addForce(distance, deg, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
+        let rDir = CDEUtils.toRad(deg), ix = this.x, iy = this.y,
             dx = CDEUtils.getAcceptableDiff(distance*Math.cos(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE),
             dy = CDEUtils.getAcceptableDiff(distance*Math.sin(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE)
         
@@ -3633,7 +4400,13 @@ class _BaseObj extends _HasColor {
         }, time, easing), isUnique, animForce)
     }
 
-    // adds an animation to play. "isUnique" makes it so the animation gets queue in the backlog. "force" terminates the current backlog animation and replaces it with the specified "anim"
+    /**
+     * Adds an animation to play on the object
+     * @param {Anim} anim: the Anim instance containing the animation
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} force: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the provided Anim instance
+     */
     playAnim(anim, isUnique, force) {
         if (isUnique && this.currentBacklogAnim && force) {
             this.currentBacklogAnim.end()
@@ -3650,13 +4423,20 @@ class _BaseObj extends _HasColor {
         return anim
     }
 
-    // clears all blacklog and currents anim
+    /**
+     * Clears all blacklog and currents anim
+     */
     clearAnims() {
         this._anims.backlog = []
         this._anims.currents = []
     }
 
-    // allows flexible pos declarations
+    // 
+    /**
+     * Allows flexible pos declarations, if a x/y value is null, it gets adjusted to the current corresponding object's value
+     * @param {[x,y]} pos: a pos array
+     * @returns the adjusted pos array
+     */
     adjustPos(pos) {
         let [x, y] = pos
         if (!CDEUtils.isDefined(x)) x = this.x??0
@@ -3664,23 +4444,40 @@ class _BaseObj extends _HasColor {
         return [x, y]
     }
 
-    // deletes the object from the canvas
+    /**
+     * Deletes the object from the canvas
+     */
     remove() {
         this._parent.remove(this._id)
     }
 
-    // returns whether the provided pos is in the provided positions
+    /**
+     * Returns whether the provided pos is in the provided area
+     * @param {[x,y]} pos: the pos to check 
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos representing the recangular area
+     */
     isWithin(pos, positions) {
         return pos[0] >= positions[0][0] && pos[0] <= positions[1][0] && pos[1] >= positions[0][1] && pos[1] <= positions[1][1]
     }
 
-    // returns the center pos of the provided positions
+    /**
+     * Returns the center pos of the provided positions
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos represencting the recangular area
+     */
     getCenter(positions) {
         return CDEUtils.getPositionsCenter(positions)
     }
 
-    // returns the 4 corners of the provided positions accounting for rotation and scale. corners -> [TOP-LEFT, BOTTOM-RIGHT, TOP-RIGHT, BOTTOM-LEFT]
-    getCorners(positions, padding=0, rotation, scale, centerPos=this.getCenter(positions)) {
+    /**
+     * Returns the 4 corners of the provided positions accounting for rotation and scale
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos represencting the recangular area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the results
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @param {[x,y]?} centerPos: the center pos used for rotation/scale
+     * @returns corners -> [TO:-LEFT, BOTTOM-RIGHT, TOP-RIGHT, BOTTOM-LEFT]
+     */
+    getCorners(positions, padding=0, rotation=null, scale=null, centerPos=this.getCenter(positions)) {
         const rotatePos = CDEUtils.rotatePos, scalePos = CDEUtils.scalePos
 
         positions[2] = [positions[1][0], positions[0][1]]
@@ -3702,7 +4499,6 @@ class _BaseObj extends _HasColor {
         padding??=0
         if (padding) {
             padding = typeof padding=="number" ? [padding, padding, padding, padding] : [padding[0],padding[1]??padding[0], padding[2]??padding[0], padding[3]??padding[1]]
-
             positions[0][0] -= padding[3]
             positions[0][1] -= padding[0]
             positions[2][0] += padding[1]
@@ -3716,7 +4512,15 @@ class _BaseObj extends _HasColor {
         return positions
     }
 
-    // returns the minimal rectangular area defined by the provided positions
+    /**
+     * Returns the minimal rectangular area defined by the provided positions
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos represencting the recangular area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the results
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @param {[x,y]?} centerPos: the center pos used for rotation/scale
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(positions, padding, rotation, scale, centerPos=this.getCenter(positions)) {
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
 
@@ -3836,7 +4640,6 @@ class _BaseObj extends _HasColor {
 // Please don't use or credit this code as your own.
 //
 
-// Displays audio as an object
 class AudioDisplay extends _BaseObj {
     static LOADED_IR_BUFFERS = []
     static SUPPORTED_AUDIO_FORMATS = ["mp3", "wav", "ogg", "aac", "m4a", "opus", "flac"]
@@ -3877,6 +4680,22 @@ class AudioDisplay extends _BaseObj {
     #buffer_ll = null // the length of data
     #data = null      // the fft data values (raw bins)
     #fft = null       // the fftSize
+
+    /**
+     * Displays audio as an object
+     * @param {AudioDisplay.SOURCE_TYPES?} source: the source of the audio 
+     * @param {[x,y]?} pos: the pos of the object 
+     * @param {Color | String | [r,g,b,a]?} color: the color of the object
+     * @param {Function?} binCB: a function called for each bin of the audio, used to create the display. (render, bin, atPos, audioDisplay, accumulator, i, sampleCount, rawBin)=>{... return? [ [newX, newY], newAccumulatorValue ]}
+     * @param {Number?} sampleCount: the max count of bins, (fftSize is calculated by the nearest valid value). Ex: if sampleCount is "32" and the display style is "BARS", 32 bars will be displayed
+     * @param {Boolean?} disableAudio: whether the audio output is disabled or not (does not affect the visual display)
+     * @param {Number?} offsetPourcent: the offset pourcent (0..1) in the bins order when calling binCB
+     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, e?)=>
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     */
     constructor(source, pos, color, binCB, sampleCount, disableAudio, offsetPourcent, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source??""                                         // the source of the audio
@@ -3940,30 +4759,45 @@ class AudioDisplay extends _BaseObj {
         super.draw(time, deltaTime)
     }
 
-    // updates the "transformable" attribute according to whether any rotation/scale are setted
+    // updates the "transformable" attribute according to whether any rotation/scale are set
     #updateTransformable() {
         const hasTransforms = this._rotation || this._scale[0]!=1 || this._scale[1]!=1
         if (hasTransforms && this._transformable < 2) this._transformable = 2
         else if (!hasTransforms && this._transformable) this._transformable--
     }
 
-    // (NOT ALWAYS RELIABLE) returns whether the provided pos is in the audio display
+    /**
+     * (UNRELIABLE WITH AudioDisplay) Returns whether the provided pos is in the audio display
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is in the audio display
+     */
     isWithin(pos, padding, rotation, scale) {
         return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
     }
 
-    // (NOT ALWAYS RELIABLE) returns the raw a minimal rectangular area containing all of the audio display (no scale/rotation)
+    // (UNRELIABLE WITH AudioDisplay) returns the raw a minimal rectangular area containing all of the audio display (no scale/rotation)
     #getRectBounds(binWidth=2, binHeight=100, binSpacing=5) {
         const pos = this._pos, sizeX = this._sampleCount*(binWidth*binSpacing)/2
         return [[pos[0],pos[1]], [pos[0]+sizeX,pos[1]+binHeight*2]]
     }
 
-    // (NOT ALWAYS RELIABLE) returns the center pos of the audio display
+    /**
+     * (UNRELIABLE WITH AudioDisplay) returns the center pos of the audio display
+     */
     getCenter() {
         return super.getCenter(this.#getRectBounds())
     }
 
-    // (NOT ALWAYS RELIABLE) returns the minimal rectangular area containing all of the audio display
+    /**
+     * (UNRELIABLE WITH AudioDisplay) returns the minimal rectangular area containing all of the audio display
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(padding, rotation=this._rotation, scale=this._scale) {
         const positions = this.#getRectBounds()
         return super.getBounds(positions, padding, rotation, scale, this._pos)
@@ -3993,7 +4827,12 @@ class AudioDisplay extends _BaseObj {
         }, this._errorCB)
     }
 
-    // Initializes a AudioDisplay data source
+    /**
+     * Initializes a AudioDisplay data source
+     * @param {AudioDisplay.SOURCE_TYPES} dataSrc: the source of the audio 
+     * @param {Function?} loadCallback: a function called upon source load (audioElement, isStream)=>
+     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, dataSrc, e?)=>
+     */
     static initializeDataSource(dataSrc, loadCallback, errorCB) {
         const types = AudioDisplay.SOURCE_TYPES
         if (typeof dataSrc==types.FILE_PATH) {
@@ -4036,7 +4875,13 @@ class AudioDisplay extends _BaseObj {
         else if (CDEUtils.isFunction(errorCB)) errorCB(AudioDisplay.ERROR_TYPES.NOT_AVAILABLE, settings)
     }
 
-    // Returns a usable video source
+    /**
+     * Returns a usable audio source
+     * @param {String} src: the source of the audio
+     * @param {Boolean?} looping: whether the audio loops
+     * @param {Boolean?} autoPlay: whether the audio autoplays
+     * @returns a Audio instance
+     */
     static loadAudio(path, looping=true, autoPlay=true) {
         const audio = new Audio(path)
         audio.preload = "auto"
@@ -4048,7 +4893,17 @@ class AudioDisplay extends _BaseObj {
         return audio
     }
 
-    // returns a usable microphone capture source
+    /**
+     * Returns a usable microphone capture source
+     * @param {Boolean?} autoGainControl: whether the auto gain control is enabled
+     * @param {Boolean?} echoCancellation: whether the echo cancellation is enabled
+     * @param {Boolean?} noiseSuppression: whether the noise suppression is enabled
+     * @param {Boolean?} isStereo: whether the microphone is mono or stereo
+     * @param {Number?} delay: the delay of the microphone
+     * @param {Number?} sampleRate: the sample rate
+     * @param {Number?} sampleSize: the sample size
+     * @returns an object containing microphone settings, usable as a source
+     */
     static loadMicrophone(autoGainControl, echoCancellation, noiseSuppression, isStereo, delay, sampleRate, sampleSize) {
         autoGainControl??=AudioDisplay.DEFAULT_MICROPHONE_AUTO_GAIN_CONTROL
         echoCancellation??=AudioDisplay.DEFAULT_MICROPHONE_ECHO_CANCELLATION
@@ -4071,7 +4926,17 @@ class AudioDisplay extends _BaseObj {
         }
     }
 
-    // returns a usable screen audio capture source 
+    /**
+     * Returns a usable screen audio capture source
+     * @param {Boolean?} autoGainControl: whether the auto gain control is enabled
+     * @param {Boolean?} echoCancellation: whether the echo cancellation is enabled
+     * @param {Boolean?} noiseSuppression: whether the noise suppression is enabled
+     * @param {Boolean?} isStereo: whether the screen audio is mono or stereo
+     * @param {Number?} delay: the delay of the screen audio
+     * @param {Number?} sampleRate: the sample rate
+     * @param {Number?} sampleSize: the sample size
+     * @returns an object containing screen audio settings, usable as a source
+     */
     static loadScreenAudio(autoGainControl, echoCancellation, noiseSuppression, isStereo, delay, sampleRate, sampleSize) {
         autoGainControl??=AudioDisplay.DEFAULT_MICROPHONE_AUTO_GAIN_CONTROL
         echoCancellation??=AudioDisplay.DEFAULT_MICROPHONE_ECHO_CANCELLATION
@@ -4094,54 +4959,83 @@ class AudioDisplay extends _BaseObj {
         }
     }
 
-    // provides a generic customizable distortion curve to use with the waveShaperNode.curve (based on https://stackoverflow.com/questions/22312841/waveshaper-node-in-webaudio-how-to-emulate-distortion)
-    static getDistortionCurve(intensity) {
+    /**
+     * Provides a generic customizable distortion curve to use with the waveShaperNode.curve (based on https://stackoverflow.com/questions/22312841/waveshaper-node-in-webaudio-how-to-emulate-distortion)
+     * @param {Number} intensity: the intensity of the distortion curve
+     * @param {Number?} sampleCount: the distortion curve size
+     * @returns the generated distortion curve 
+     */
+    static getDistortionCurve(intensity, sampleCount=44100) {
         if (!intensity) return null
-        let n_samples = 44100, curve = new Float32Array(n_samples), i=0
-        for (;i<n_samples;i++) {
-            const x = i*2/n_samples-1
-            curve[i] = (3+intensity)*x*20*CDEUtils.TO_DEGREES/(Math.PI+intensity*Math.abs(x))
+
+        let curve = new Float32Array(sampleCount), i=0, PI = Math.PI, abs = Math.abs, TO_DEGREES = CDEUtils.TO_DEGREES
+        for (;i<sampleCount;i++) {
+            const x = i*2/sampleCount-1
+            curve[i] = (3+intensity)*x*20*TO_DEGREES/(PI+intensity*abs(x))
         }
         return curve
     }
 
-    // connects the convolverNode to the audio chain
+    /**
+     * Connects the convolverNode to the audio chain
+     */
     connectConvolver() {
         this._biquadFilterNode.disconnect(0)
         this._biquadFilterNode.connect(this._convolverNode)
         this._convolverNode.connect(this._dynamicsCompressorNode)
     }
 
-    // disconnects the convolverNode from the audio chain
+    /**
+     * Disconnects the convolverNode from the audio chain
+     */
     disconnectConvolver() {
         this._biquadFilterNode.disconnect(0)
         this._biquadFilterNode.connect(this._dynamicsCompressorNode)
     }
 
-    // loads a impulse response file into a usable buffer
-    loadImpulseResponse(filePath, readyCallback=buffer=>{this.setReverb(buffer);this.connectConvolver()}) {
-        fetch(filePath).then(res=>res.arrayBuffer()).then(data=>this._audioCtx.decodeAudioData(data)).then(buffer=>{
+    /**
+     * Loads a impulse response file into a usable buffer
+     * @param {String} src: the source of the impulse response file 
+     * @param {Function?} readyCallback: a function called once the file is loaded
+     */
+    loadImpulseResponse(src, readyCallback=buffer=>{this.setReverb(buffer);this.connectConvolver()}) {
+        fetch(src).then(res=>res.arrayBuffer()).then(data=>this._audioCtx.decodeAudioData(data)).then(buffer=>{
             AudioDisplay.LOADED_IR_BUFFERS.push(buffer)
             if (CDEUtils.isFunction(readyCallback)) readyCallback(buffer)
         })
     }
 
-    // sets the gain value of the audio 
+    /**
+     * Sets the volume of the audio 
+     * @param {Number?} gain: the gain value
+     */
     setVolume(gain=1) {
         this._gainNode.gain.value = gain
     }
 
-    // sets the filter type of the biquadFilterNode
+    /**
+     * Sets the filter type of the biquadFilterNode
+     * @param {AudioDisplay.BIQUAD_FILTER_TYPES} filterType: the type of filter to use
+     */
     setBiquadFilterType(filterType=AudioDisplay.BIQUAD_FILTER_TYPES.DEFAULT) {
         this._biquadFilterNode.type = filterType
     }
 
-    // sets the distortion curve of the waveShaperNode
+    /**
+     * Sets the distortion curve of the waveShaperNode
+     * @param {Number?} intensity: the intensity of the distortion curve. Defaults to no distortion
+     */
     setDistortionCurve(intensity=null) {
         this._waveShaperNode.curve = typeof intensity=="number" ? AudioDisplay.getDistortionCurve(intensity) : intensity
     }
 
-    // sets the 3D position of the audio's origin
+    /**
+     * Sets the 3D position of the audio's origin
+     * @param {Number?} x: the x position
+     * @param {Number?} y: the y position
+     * @param {Number?} z: the z position
+     * @param {Number?} secondsOffset: the time offset in seconds
+     */
     setOriginPos(x=0, y=0, z=0, secondsOffset=0) {
         const time = this._audioCtx.currentTime
         if (x!=null) this._pannerNode.positionX.setValueAtTime(x, time+secondsOffset)
@@ -4149,18 +5043,26 @@ class AudioDisplay extends _BaseObj {
         if (z!=null) this._pannerNode.positionZ.setValueAtTime(z, time+secondsOffset)
     }
 
-    // sets the audio feedback delay (in seconds)
+    /**
+     * Sets the audio feedback delay
+     * @param {Number?} seconds: the delay value
+     */
     setDelay(seconds=0) {
         this._delayNode.delayTime.value = seconds > AudioDisplay.MAX_DELAY_TIME ? AudioDisplay.MAX_DELAY_TIME : seconds
     }
 
-    // sets the convolverNode impulse response buffer
+    /**
+     * Sets the convolverNode impulse response buffer
+     * @param {AudioBuffer} buffer: the impulse response buffer to use
+     */
     setReverb(buffer=null) {
         if (buffer) this._convolverNode.buffer = buffer
         else this.disconnectConvolver()
     }
     
-    // resets all audio modifiers to their default values (-> no audio changes)
+    /**
+     * resets all audio modifiers to their default values (no audio changes)
+     */
     resetAudioModifiers() {
         this.setVolume()
         this.setBiquadFilterType()
@@ -4196,7 +5098,9 @@ class AudioDisplay extends _BaseObj {
         return Object.keys(AudioDisplay.ERROR_TYPES)[errorCode]
     }
 
-    // returns a separate copy of this AudioDisplay instance
+    /**
+     * @returns a separate copy of this AudioDisplay instance (only if initialized)
+     */
     duplicate(source=this._source, pos=this.pos_, color=this._color, binCB=this._binCB, sampleCount=this._sampleCount, disableAudio=this._disableAudio, offsetPourcent=this._offsetPourcent, errorCB=this._errorCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const colorObject = color, colorRaw = colorObject.colorRaw, audioDisplay = new AudioDisplay(
             source instanceof MediaStreamAudioSourceNode ? source.mediaStream.clone() : source.cloneNode(), 
@@ -4219,8 +5123,15 @@ class AudioDisplay extends _BaseObj {
         return this.initialized ? audioDisplay : null
     }
 
-    // GENERIC DISPLAYS
-    // generic binCB for waveform display
+    /**
+     * Generic binCB for a waveform display
+     * @param {Number?} maxHeight: the maximal height in pixels of the bars
+     * @param {Number?} minHeight: the minimal height in pixels of the bars
+     * @param {Number?} spacing: the horizontal space in pixels between each bar
+     * @param {Number?} barWidth: the width in pixels of each bar
+     * @param {Boolean?} transformable: whether the binCB accpets visual effects
+     * @returns a usable binCB
+     */
     static BARS(maxHeight, minHeight, spacing, barWidth, transformable) {
         maxHeight??=100
         minHeight??=0
@@ -4247,7 +5158,14 @@ class AudioDisplay extends _BaseObj {
         }
     }
 
-    // generic binCB for circular display
+    /**
+     * Generic binCB for a circular display
+     * @param {Number?} maxRadius: the maximal radius in pixels
+     * @param {Number?} minRadius: the minimal radius in pixels
+     * @param {Boolean?} transformable: whether the binCB accpets visual effects
+     * @param {Number?} precision: how many bins to skip before drawing a bin. The lower, the prettier, the higher, the most performant.
+     * @returns a usable binCB
+     */
     static CIRCLE(maxRadius, minRadius, transformable, precision) {
         maxRadius??=100
         minRadius??=0
@@ -4267,7 +5185,15 @@ class AudioDisplay extends _BaseObj {
         }
     }
 
-    // generic binCB for sin-ish wave display
+    /**
+     * Generic binCB for sin-ish wave display
+     * @param {Number?} maxHeight: the maximal height in pixels of the bina
+     * @param {Number?} minHeight: the minimal height in pixels of the bina
+     * @param {Number?} spacing: the horizontal space in pixels between each bin
+     * @param {Boolean?} transformable: whether the binCB accpets visual effects
+     * @param {Number?} precision: how many bins to skip before drawing a bin. The lower, the prettier, the higher, the most performant.
+     * @returns a usable binCB
+     */
     static TOP_WAVE(maxHeight, minHeight, spacing, transformable, precision) {
         maxHeight??=100
         minHeight??=0
@@ -4306,7 +5232,16 @@ class AudioDisplay extends _BaseObj {
         }
     }
 
-    // generic binCB for spiral particle cloud display
+    /**
+     * Generic binCB for spiral particle cloud display
+     * @param {Number?} maxRadius: the maximal radius in pixels
+     * @param {Number?} minRadius: the minimal radius in pixels
+     * @param {Number?} particleRadius: the radius of each particle 
+     * @param {Boolean?} transformable: whether the binCB accpets visual effects
+     * @param {Number?} precision: how many bins to skip before drawing a bin. The lower, the prettier, the higher, the most performant.
+     * @param {Number?} angleStep: the circular distance between each particle, in radian 
+     * @returns a usable binCB
+     */
     static CLOUD(maxRadius, minRadius, particleRadius, transformable, precision, angleStep) {
         maxRadius??=100
         minRadius??=0
@@ -4350,7 +5285,9 @@ class AudioDisplay extends _BaseObj {
     get data() {return this.#data}
     get fft() {return this.#fft}
     get bufferLength() {return this.#buffer_ll}
-    get transformable() {return this._transformable}
+    get transformableRaw() {return this._transformable}
+    get transformable() {return Boolean(this._transformable)}
+    get instanceOf() {return "AudioDisplay"}
 
     get video() {return this._source}
     get image() {return this._source}
@@ -4389,7 +5326,7 @@ class AudioDisplay extends _BaseObj {
     }
 	set offsetPourcent(_offsetPourcent) {this._offsetPourcent = _offsetPourcent}
 	set errorCB(_errorCB) {this._errorCB = _errorCB}
-    set transformable(transformable) {this._transformable = transformable}
+    set transformable(transformable) {this._transformable = +transformable}
     set rotation(rotation) {
         super.rotation = rotation
         this.#updateTransformable()
@@ -4404,7 +5341,6 @@ class AudioDisplay extends _BaseObj {
 // Please don't use or credit this code as your own.
 //
 
-// Displays an image or a video as an object
 class ImageDisplay extends _BaseObj {
     static SUPPORTED_IMAGE_FORMATS = ["jpg","jpeg","png","gif","svg","webp","bmp","tiff","ico","heif","heic"]
     static SUPPORTED_VIDEO_FORMATS = ["mp4","webm","ogv","mov","avi","mkv","flv","wmv","3gp","m4v"]
@@ -4432,6 +5368,18 @@ class ImageDisplay extends _BaseObj {
     static IS_SCREEN_RECORD_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
 
     #naturalSize = null
+    
+    /**
+     * Displays an image or a video as an object
+     * @param {CanvasImageSource} source: a media source, such as an image or a video
+     * @param {[x,y]?} pos: the [x,y] pos of the top left of the object
+     * @param {[width, height]?} size: the width and height of the display. Either as pixels or as pourcentiles (ex: ["50%", 200])
+     * @param {Function?} errorCB: function called upon any error loading the media
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     */
     constructor(source, pos, size, errorCB, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, null, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source               // the data source
@@ -4478,6 +5426,12 @@ class ImageDisplay extends _BaseObj {
         super.draw(time, deltaTime)
     }
 
+    /**
+     * Initializes a ImageDisplay data source
+     * @param {ImageDisplay.SOURCE_TYPES} dataSrc: the source of the media 
+     * @param {Function?} loadCallback: a function called upon source load (mediaElement, size)=>
+     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, dataSrc, e?)=>
+     */
     static initializeDataSource(dataSrc, loadCallback, errorCB) {
         const types = ImageDisplay.SOURCE_TYPES
         if (typeof dataSrc==types.FILE_PATH) {
@@ -4534,7 +5488,13 @@ class ImageDisplay extends _BaseObj {
         else if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE, settings)
     }
 
-    // Returns a usable image source
+    /**
+     * Create a usable image source
+     * @param {String} path: the source path
+     * @param {Function?} errorCB: function called upon any error loading the media
+     * @param {Boolean?} forceLoad: whether to force the reloading of the image if the image is being reused
+     * @returns an HTML image element
+     */
     static loadImage(src, errorCB=null, forceLoad=false) {
         const image = new Image()
         image.src = src
@@ -4543,7 +5503,13 @@ class ImageDisplay extends _BaseObj {
         return image
     }
 
-    // Returns a usable video source
+    /**
+     * Returns a usable video source
+     * @param {String | File} src: the source of the video, either a path or a File
+     * @param {Boolean?} looping: whether the video loops
+     * @param {Boolean?} autoPlay: whether the video autoplays
+     * @returns a HTML video element
+     */
     static loadVideo(src, looping=true, autoPlay=true) {
         const video = document.createElement("video")
         video.src = src instanceof File ? URL.createObjectURL(src) : src
@@ -4557,8 +5523,14 @@ class ImageDisplay extends _BaseObj {
         return video
     }
 
-    // Returns a usable camera capture source
-    static loadCamera(resolution, facingMode, frameRate) {
+    /**
+     * Returns a usable camera capture source
+     * @param {[resolutionX, resolutionY]?} resolution: the camera resolution
+     * @param {ImageDisplay.CAMERA_FACING_MODES?} facingMode: which camera to use
+     * @param {Number?} frameRate: how many times the camera feed updates per seconds
+     * @returns an object containing camera settings, usable as a source
+     */
+    static loadCamera(resolution=null, facingMode=null, frameRate=null) {
         resolution??=ImageDisplay.DEFAULT_CAMERA_RESOLUTION
         return {
             type:ImageDisplay.SOURCE_TYPES.CAMERA,
@@ -4571,8 +5543,15 @@ class ImageDisplay extends _BaseObj {
         }
     }
 
-    // Returns a usable screen capture source
-    static loadCapture(resolution, cursor, frameRate, mediaSource) {
+    /**
+     * Returns a usable screen capture source
+     * @param {[resolutionX, resolutionY]?} resolution: the screen capture resolution
+     * @param {ImageDisplay.CAPTURE_CURSOR?} cursor: how the cursor is captured
+     * @param {Number?} frameRate: how many times the screen capture feed updates per seconds
+     * @param {ImageDisplay.CAPTURE_MEDIA_SOURCES?} mediaSource: the default screen source to capture
+     * @returns an object containing screen capture settings, usable as a source
+     */
+    static loadCapture(resolution=null, cursor=null, frameRate=null, mediaSource=null) {
         resolution??=ImageDisplay.DEFAULT_CAPTURE_RESOLUTION
         return {
             type:ImageDisplay.SOURCE_TYPES.CAPTURE,
@@ -4595,28 +5574,42 @@ class ImageDisplay extends _BaseObj {
         return Object.keys(ImageDisplay.ERROR_TYPES)[errorCode]
     }
 
-    // Plays the source (use only if the source is a video)
+    /**
+     * Plays the source, if it's a video
+     */
     playVideo() {
         ImageDisplay.playMedia(this._source)
     }
 
-    // Pauses the source (use only if the source is a video)
+    /**
+     * Pauses the source, if it's a video
+     */
     pauseVideo() {
         const source = this._source
         if (source instanceof HTMLVideoElement) source.pause()
     }
 
-    // Plays the source
+    /**
+     * Plays the provided video source
+     * @param {HTMLAudioElement | HTMLVideoElement} source: a video source
+     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, dataSrc, e?)=>
+     */
     static playMedia(source, errorCB) {
         if (source instanceof HTMLVideoElement || source instanceof HTMLAudioElement) source.play().catch(()=>Canvas.addOnFirstInteractCallback(()=>source.play().catch(e=>{if (CDEUtils.isFunction(errorCB)) errorCB(ImageDisplay.ERROR_TYPES.NOT_AVAILABLE, source, e)})))
     }
     
-    // returns the natural size of the source
+    /**
+     * Returns the natural size of the source
+     * @param {HTMLElement} source: a usable source 
+     * @returns the size
+     */
     static getNaturalSize(source) {
         return [source?.displayWidth||source?.videoWidth||source?.width, source?.displayHeight||source?.videoHeight||source?.height]
     }
 
-    // returns a separate copy of this ImageDisplay instance
+    /**
+     * @returns a separate copy of this ImageDisplay instance (only if initialized)
+     */
     duplicate(source=this._source, pos=this.pos_, size=this.size_, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const imageDisplay = new ImageDisplay(
             source instanceof MediaStreamAudioSourceNode ? source.mediaStream.clone() : source.cloneNode(), 
@@ -4634,12 +5627,26 @@ class ImageDisplay extends _BaseObj {
         return this.initialized ? imageDisplay : null
     }
 
-    // returns whether the provided pos is in the image
+    /**
+     * Returns whether the provided pos is inside the display
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is inside the display
+     */
     isWithin(pos, padding, rotation, scale) {
         return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
     }
 
-    // returns whether the provided pos is in the image
+    /**
+     * Returns whether the provided pos is inside the display very accurately
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is inside the display
+     */
     isWithinAccurate(pos, padding, rotation, scale) {
         return this.ctx.isPointInPath(this.getBoundsAccurate(padding, rotation, scale), pos[0], pos[1])
     }
@@ -4650,7 +5657,13 @@ class ImageDisplay extends _BaseObj {
         return [pos, [pos[0]+size[0], pos[1]+size[1]]]
     }
 
-    // returns the accurate area containing all of the image
+    /**
+     * Returns the accurate area containing all of the display
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns a Path2D
+     */
     getBoundsAccurate(padding, rotation=this._rotation, scale=this._scale) {
         const path = new Path2D(), positions = this.#getRectBounds(), corners = super.getCorners(positions, padding, rotation, scale, super.getCenter(positions))
 
@@ -4663,18 +5676,28 @@ class ImageDisplay extends _BaseObj {
         return path
     }
 
-    // returns the center pos of the image
+    /**
+     * @returns the center pos of the image
+     */
     getCenter() {
         return super.getCenter(this.#getRectBounds())
     }
 
-    // returns the minimal rectangular area containing all of the image
+    /**
+     * Returns the minimal rectangular area containing all of the display
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(padding, rotation=this._rotation, scale=this._scale) {
         const positions = this.#getRectBounds()
         return super.getBounds(positions, padding, rotation, scale, super.getCenter(positions))
     }
 
-    // deletes the object from the canvas
+    /**
+     * Removes the display from the canvas
+     */
     remove() {
         if (this._source instanceof HTMLVideoElement) {
             this._source.pause()
@@ -4756,6 +5779,7 @@ class ImageDisplay extends _BaseObj {
     get source() {return this._source}
 	get sourceCroppingPositions() {return this._sourceCroppingPositions}
     get errorCB() {return this._errorCB}
+    get instanceOf() {return "ImageDisplay"}
 
     get paused() {return this._source?.paused}
     get playbackRate() {return this._source?.playbackRate}
@@ -4810,12 +5834,24 @@ class ImageDisplay extends _BaseObj {
 // Please don't use or credit this code as your own.
 //
 
-// Displays text as an object
 class TextDisplay extends _BaseObj {
     static MEASUREMENT_CTX = new OffscreenCanvas(1,1).getContext("2d")
     static DEFAULT_LINE_HEIGHT_PADDING = 10
 
     #lineCount = null
+
+    /**
+     * Displays text as an object
+     * @param {String} text: the text to display
+     * @param {Color | [r,g,b,a] ?} color: the color of the object
+     * @param {TextStyles | Function} textStyles: the text styles profile to use. Either a TextStyles instance or a function (render, this)=>{return TextStyles()}
+     * @param {Render.DRAW_METHODS?} drawMethod: the draw method
+     * @param {Number?} maxWidth: maximal width of the displayed text, in pixels
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     */
     constructor(text, pos, color, textStyles, drawMethod, maxWidth, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
         this._text = text??""                // displayed text
@@ -4865,12 +5901,26 @@ class TextDisplay extends _BaseObj {
         super.draw(time, deltaTime)
     }
 
-    // Returns the width and height of the text, according to the textStyles, excluding the scale or rotation
+    /**
+     * Returns the width and height of the text, according to the textStyles, excluding the scale or rotation
+     * @param {TextStyles?} textStyles: the text profile to use 
+     * @param {String?} text: the text to calculate
+     * @param {Number?} lineHeightPadding: the line height padding
+     * @returns the size
+     */
     getSize(textStyles=this._textStyles, text=this.getTextValue(), lineHeightPadding) {
         return TextDisplay.getSize(textStyles, text, lineHeightPadding, this._maxWidth)
     }
 
-    // Returns the width and height of the given text, according to the textStyles, including potential scaling
+    /**
+     * Returns the width and height of the given text, according to the textStyles, including potential scaling
+     * @param {TextStyles} textStyles: the text profile to use 
+     * @param {String} text: the text to calculate
+     * @param {Number?} lineHeightPadding: the line height padding
+     * @param {Number?} maxWidth: maximal width of the displayed text, in pixels
+     * @param {[scaleX, scaleY]?} scale: the horizontal and vertical scale factors
+     * @returns 
+     */
     static getSize(textStyles, text, lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING, maxWidth, scale=[1,1]) {
         TextStyles.apply(TextDisplay.MEASUREMENT_CTX, ...textStyles.getStyles())
         const lines = text.replace(/./g,1).split("\n"), l_ll = lines.length, longestText = l_ll>1?lines.reduce((a,b)=>a.length<b.length?b:a):text,
@@ -4890,12 +5940,16 @@ class TextDisplay extends _BaseObj {
         return resultasda
     }
 
-    // Returns the current text value
+    /**
+     * @returns the current text value
+     */
     getTextValue() {
         return (CDEUtils.isFunction(this._text) ? this._text(this._parent, this) : this._text).trim()
     }
 
-    // returns a separate copy of this textDisplay instance
+    /**
+     * @returns a separate copy of this textDisplay instance (only if initialized)
+     */
     duplicate(text=this._text, pos=this.pos_, color=this._color, textStyles=this._textStyles, drawMethod=this._drawMethod, maxWidth=this._maxWidth, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin) {
         const colorObject = color, colorRaw = colorObject.colorRaw, textDisplay = new TextDisplay(
             text,
@@ -4916,12 +5970,26 @@ class TextDisplay extends _BaseObj {
         return this.initialized ? textDisplay : null
     }
 
-    // returns whether the provided pos is in the text
+    /**
+     * Returns whether the provided pos is inside the text display
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is inside the text display
+     */
     isWithin(pos, padding, rotation, scale) {
         return super.isWithin(pos, this.getBounds(padding, rotation, scale), padding)
     }
 
-    // returns whether the provided pos is in the text
+    /**
+     * Returns whether the provided pos is in the text
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number?} paddingX: the horizontal padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is inside the display
+     */
     isWithinAccurate(pos, paddingX, rotation, scale) {
         return this.ctx.isPointInPath(this.getBoundsAccurate(paddingX, rotation, scale), pos[0], pos[1])
     }
@@ -4932,7 +6000,15 @@ class TextDisplay extends _BaseObj {
         return [[pos[0]-size[0]/2, pos[1]-halfLine/2-3], [pos[0]+size[0]/2, pos[1]+size[1]-halfLine]]
     }
 
-    // returns the accurate area containing all of the text
+    /**
+     * Returns the accurate area containing all of the text
+     * @param {Number?} paddingX: the horizontal padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @param {Number?} lineHeightPadding: the line height padding to add
+     * @param {Number?} lineWidthOffset: the amount in pixels to substract from the line width 
+     * @returns a Path2D
+     */
     getBoundsAccurate(paddingX, rotation=this._rotation, scale=this._scale, lineHeightPadding=TextDisplay.DEFAULT_LINE_HEIGHT_PADDING, lineWidthOffset=this.render.currentCtxStyles[0]) {
         const path = new Path2D(), sizes = this.#getAllSizes(), s_ll = sizes.length, top = this._pos[1]-(lineHeightPadding/4+this._lineHeight/4)-lineWidthOffset, cx = this._pos[0]-lineWidthOffset/2
         
@@ -4963,12 +6039,20 @@ class TextDisplay extends _BaseObj {
         return path
     }
 
-    // returns the center of the text
+    /**
+     * @returns the center of the text
+     */
     getCenter() {
         return super.getCenter(this.#getRectBounds())
     }
 
-    // returns the minimal rectangular area containing the text according to default text placements/parameters
+    /**
+     * Returns the minimal rectangular area containing the text according to default text placements/parameters
+    * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(padding, rotation=this._rotation, scale=this._scale) {
         return super.getBounds(this.#getRectBounds(), padding, rotation, scale, this._pos)
     }
@@ -4999,6 +6083,7 @@ class TextDisplay extends _BaseObj {
     get lineCount() {return this.#lineCount}
     get width() {return this.trueSize[0]}
     get height() {return this.trueSize[1]}
+    get instanceOf() {return "TextDisplay"}
 
 	set text(text) {
         const lastYScale = this._scale[1]
@@ -5023,11 +6108,15 @@ class TextDisplay extends _BaseObj {
 // Please don't use or credit this code as your own.
 //
 
-// Abstract dynamic color class
 class _DynamicColor {
     static PLACEHOLDER = "PLACEHOLDER" // can be used to instantiate a dynamic color without positions, and apply that of the object, on assignement
     static PLACEHOLDER_COLOR = "transparent"
 
+    /**
+     * Abstract dynamic color class
+     * @param {[[x1,y1], [x2,y2]]} positions: the rectangular area defined by two corners
+     * @param {Number?} rotation: the rotation in degrees 
+     */
     constructor(positions, rotation) {
         this._initPositions = positions // initial positions declaration
         this._positions = positions     // current positions value
@@ -5060,7 +6149,6 @@ class _DynamicColor {
 // Please don't use or credit this code as your own.
 //
 
-// Allows the creation of custom gradients
 class Pattern extends _DynamicColor {
     static #ID_GIVER = 0
     static #CROPPING_CTX = new OffscreenCanvas(1,1).getContext("2d")
@@ -5080,9 +6168,24 @@ class Pattern extends _DynamicColor {
 
     #lastUpdateTime = null
     #initialized = false
+
+    /**
+     * Allows the creation of custom gradients
+     * @param {Render} render: a render instance
+     * @param {CanvasImageSource} source: a media source, such as an image or a video
+     * @param {[[x1,y1], [x2,y2]]} positions: the rectangular area defined by two corners containing the pattern
+     * @param {[[startX, startY], [endX, endY]]?} sourceCroppingPositions: source cropping positions delimiting a rectangle, cropping everything outside of it. (Defaults to no cropping)
+     * @param {Boolean?} keepAspectRatio: Whether the media should resize by keeping the original aspect ratio
+     * @param {Pattern.FORCE_UPDATE_LEVELS?} forcedUpdates: whether/how the pattern forces updates
+     * @param {Number?} rotation: the rotation in degrees 
+     * @param {Function?} errorCB: function called upon any error loading the media
+     * @param {Function?} readyCB: function called when the media is loaded
+     * @param {Number?} frameRate: how many times per seconds should the media update (mostly used for videos)
+     * @param {Pattern.REPETITION_MODES} repeatMode: the repetition mode used for displaying the media at a larger size than what it's covering
+     */
     constructor(render, source, positions, sourceCroppingPositions, keepAspectRatio, forcedUpdates, rotation, errorCB, readyCB, frameRate, repeatMode) {
         super(
-            positions, // [ [x1, y1], [x2, y2] ] | instance of _Obj
+            positions, // [ [x1, y1], [x2, y2] ] | instance of _BaseObj
             rotation   // rotation of the pattern
         )
         this._id = Pattern.#ID_GIVER++                                         // instance id
@@ -5144,7 +6247,10 @@ class Pattern extends _DynamicColor {
         } else return false
     }
 
-    // tries to update the curent pattern. Succeeds if forced, or if the last update's elapsed time corresponds to the frame rate 
+    /**
+     * Tries to update the curent pattern. Succeeds if forced, or if the last update's elapsed time corresponds to the frame rate
+     * @param {Pattern.FORCE_UPDATE_LEVELS} forceLevel: the force level used
+     */
     update(forceLevel=this._forcedUpdates) {
         if (this.#initialized) {
             const source = this._source, ctx = this._render.ctx, isCanvas = source instanceof HTMLCanvasElement, forceLevels = Pattern.FORCE_UPDATE_LEVELS, time = (isCanvas||forceLevel==forceLevels.RESPECT_FRAME_RATE)?performance.now()/1000:source.currentTime
@@ -5199,17 +6305,23 @@ class Pattern extends _DynamicColor {
         return this._id+Pattern.SERIALIZATION_SEPARATOR
     }
 
-    // Plays the source (use only if the source is a video)
+    /**
+     * Plays the source, if it's a video
+     */
     playVideo() {
         ImageDisplay.playMedia(this._source)
     }
 
-    // Pauses the source (use only if the source is a video)
+    /**
+     * Pauses the source, if it's a video
+     */
     pauseVideo() {
         try {this._source.pause()}catch(e){}
     }
 
-    // returns a separate copy of this Pattern instance
+    /**
+     * Returns a separate copy of this Pattern instance
+     */
     duplicate(positions=this._positions, render=this._render, source=this._source, sourceCroppingPositions=this._sourceCroppingPositions, keepAspectRatio=this._keepAspectRatio, forcedUpdates=this._forcedUpdates, rotation=this._rotation, errorCB=this._errorCB, frameRate=this._frameRate, repeatMode=this._repeatMode) {
         if (source instanceof HTMLElement && !source.getAttribute("permaLoad") && !(source instanceof HTMLCanvasElement)) {
             source = source.cloneNode()
@@ -5218,23 +6330,48 @@ class Pattern extends _DynamicColor {
         return new Pattern(render, source, CDEUtils.unlinkPositions(positions), CDEUtils.unlinkPositions(sourceCroppingPositions), keepAspectRatio, forcedUpdates, rotation, errorCB, null, frameRate, repeatMode)
     }
 
-    // Returns a usable image source
-    static loadImage(path) {
-        return ImageDisplay.loadImage(path)
+    /**
+     * Create a usable image source
+     * @param {String} path: the source path
+     * @param {Function?} errorCB: function called upon any error loading the media
+     * @param {Boolean?} forceLoad: whether to force the reloading of the image if the image is being reused
+     * @returns an HTML image element
+     */
+    static loadImage(path, errorCB=null, forceLoad=false) {
+        return ImageDisplay.loadImage(path, errorCB, forceLoad)
     }
 
-    // Returns a usable video source
-    static loadVideo(path, looping=true, autoPlay=true) {
-        return ImageDisplay.loadVideo(path, looping, autoPlay)
+    /**
+     * Returns a usable video source
+     * @param {String | File} src: the source of the video, either a path or a File
+     * @param {Boolean?} looping: whether the video loops
+     * @param {Boolean?} autoPlay: whether the video autoplays
+     * @returns a HTML video element
+     */
+    static loadVideo(src, looping=true, autoPlay=true) {
+        return ImageDisplay.loadVideo(src, looping, autoPlay)
     }
 
-    // Returns a usable camera capture source
-    static loadCamera(resolution, facingMode, frameRate=this._frameRate) {
+    /**
+     * Returns a usable camera capture source
+     * @param {[resolutionX, resolutionY]?} resolution: the camera resolution
+     * @param {ImageDisplay.CAMERA_FACING_MODES?} facingMode: which camera to use
+     * @param {Number?} frameRate: how many times the camera feed updates per seconds
+     * @returns an object containing camera settings, usable as a source
+     */
+    static loadCamera(resolution=null, facingMode=null, frameRate=this._frameRate) {
         return ImageDisplay.loadCamera(resolution, facingMode, frameRate)
     }
 
-    // Returns a usable screen capture source
-    static loadCapture(resolution, cursor, frameRate=this.frameRate, mediaSource) {
+    /**
+     * Returns a usable screen capture source
+     * @param {[resolutionX, resolutionY]?} resolution: the screen capture resolution
+     * @param {ImageDisplay.CAPTURE_CURSOR?} cursor: how the cursor is captured
+     * @param {Number?} frameRate: how many times the screen capture feed updates per seconds
+     * @param {ImageDisplay.CAPTURE_MEDIA_SOURCES?} mediaSource: the default screen source to capture
+     * @returns an object containing screen capture settings, usable as a source
+     */
+    static loadCapture(resolution=null, cursor=null, frameRate=this.frameRate, mediaSource=null) {
         return ImageDisplay.loadCapture(resolution, cursor, frameRate, mediaSource)
     }
 
@@ -5320,11 +6457,20 @@ class Pattern extends _DynamicColor {
 // Please don't use or credit this code as your own.
 //
 
-// Abstract canvas obj class, with radius
 class _Obj extends _BaseObj {
     static DEFAULT_RADIUS = 5
     static RADIUS_PRECISION = 4
 
+    /**
+     * Abstract canvas obj class, with radius
+     * @param {[x,y]?} pos: the [x,y] pos of the object
+     * @param {Number?} radius: the radius of the object 
+     * @param {Color | [r,g,b,a] ?} color: the color of the object
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     */
     constructor(pos, radius, color, setupCB, loopCB, anchorPos, activationMargin) {
         super(pos, color, setupCB, loopCB, anchorPos, activationMargin)
         this._initRadius = radius       // initial object's radius delcaration
@@ -5337,22 +6483,40 @@ class _Obj extends _BaseObj {
         super.initialize()
     }
 
-    // returns the value of the inital radius declaration
+    /**
+     * @returns the value of the inital radius declaration
+     */
     getInitRadius() {
         return CDEUtils.isFunction(this._initRadius) ? this._initRadius(this._parent instanceof Canvas?this:this._parent, this) : this._initRadius??null
     }
 
-    // returns whether the provided pos is inside the obj
+    /**
+     * Returns whether the provided pos is inside the obj
+     * @param {[x,y]} pos: the pos to check 
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos representing the recangular area
+     */
     isWithin(pos, positions) {
         return super.isWithin(pos, positions)
     }
 
-    // returns the center pos of the provided positions
+    /**
+     * Returns the center pos of the provided positions
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos representing the recangular area
+     * @returns the center pos
+     */
     getCenter(positions) {
         return super.getCenter(positions)
     }
 
-    // returns the minimal rectangular area defined by the provided positions
+    /**
+     * Returns the minimal rectangular area defined by the provided positions
+     * @param {[[x1,y1], [x2,y2]]} positions: the two pos represencting the recangular area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the results
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @param {[x,y]?} centerPos: the center pos used for rotation/scale
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(positions, padding, rotation, scale, centerPos) {
         return super.getBounds(positions, padding, rotation, scale, centerPos)
     }
@@ -5368,18 +6532,33 @@ class _Obj extends _BaseObj {
 // Please don't use or credit this code as your own.
 //
 
-// Contains and controls a group of dots
 class Shape extends _Obj {
     static DEFAULT_LIMIT = 100
+    static DEFAULT_RATIO_POS = [Infinity, Infinity]
 
+    /**
+     * Contains and controls a group of dots
+     * @param {[x,y]?} pos: the pos of the object 
+     * @param {Dot | Dot[] ?} dots: array containing current dots in the shape
+     * @param {Number?} radius: the radius of the dots
+     * @param {Color | String | [r,g,b,a]?} color: the color of the dots
+     * @param {Number?} limit: the delimiter radius within which the drawEffectCB can take effect
+     * @param {Function?} drawEffectCB: a function called every frame for each dot of the shape, used to create effects. (render, dot, ratio, setupResults, mouse, distance, parent, isActive, rawRatio)=>
+     * @param {Function?} ratioPosCB: a function that returns a ratio pos target for calculating the dots ratio attribute. (this, dots)=>{return [x,y]}
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     * @param {Boolean?} fragile: (DEPRECATED) whether the shape resets on document visibility change 
+     */
     constructor(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile) {
         super(pos, radius??_Obj.DEFAULT_RADIUS, color||Color.DEFAULT_COLOR, setupCB, loopCB, anchorPos, activationMargin)
-        this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffect can take Effect
+        this._limit = limit||Shape.DEFAULT_LIMIT // the delimiter radius within which the drawEffectCB can take effect
         this._initDots = dots                    // initial dots declaration
         this._dots = []                          // array containing current dots in the shape
-        this._ratioPos = [Infinity,Infinity]     // position of ratio target object 
+        this._ratioPos = [...Shape.DEFAULT_RATIO_POS]// position of ratio target object 
         this._drawEffectCB = drawEffectCB        // (render, Dot, ratio, setupResults, mouse, distance, parent, isActive, rawRatio)=>
-        this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>
+        this._ratioPosCB = ratioPosCB            // custom ratio pos target (Shape, dots)=>{return [x,y]}
         this._fragile = fragile||false           // whether the shape resets on document visibility change
     }
 
@@ -5406,9 +6585,12 @@ class Shape extends _Obj {
         if (CDEUtils.isFunction(this._ratioPosCB)) this._ratioPos = this._ratioPosCB(this)
     }
 
-    // adds one or many dots to the shape
-    add(dot) {
-        this._dots.push(...[dot].flat().filter(dot=>dot).map(dot=>{
+    /**
+     * Adds one or many dots to the shape
+     * @param {Dot | Dot[]} dots: one or many dots to add
+     */
+    add(dots) {
+        this._dots.push(...[dots].flat().filter(dot=>dot).map(dot=>{
             if (dot.initColor==null) dot.initColor = this.colorRaw
             if (dot.initRadius==null) dot.initRadius = this._radius
             if (dot.activationMargin==Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING) dot.activationMargin = this._activationMargin
@@ -5420,9 +6602,12 @@ class Shape extends _Obj {
         this._parent.updateCachedAllEls()
     }
 
-    // remove the shape and all its dots, or a single dot if id is specified
-    remove(id=null) {
-        if (id) this._dots = this._dots.filter(dot=>dot.id!=id)
+    /**
+     * Remove the shape and all its dots, or a single dot if id is specified
+     * @param {Dot | Number?} dotId: the dot to delete 
+     */
+    remove(dotId=null) {
+        if (dotId) this._dots = this._dots.filter(dot=>dot.id!=(dotId?.id??dotId))
         else this._parent.remove(this._id)
         this._parent.updateCachedAllEls()
     }
@@ -5475,7 +6660,11 @@ class Shape extends _Obj {
         return dots
     }
  
-    // updates the radius of all the shape's dots. If "onlyReplaceDefaults" is true, it only sets the dot's radius if it was not initialy set
+    /**
+     * Updates the radius of all the shape's dots
+     * @param {Number?} radius: the new radius
+     * @param {Boolean?} onlyReplaceDefaults: if true, only sets the dots' radius if it was not initialy set
+     */
     setRadius(radius=this._radius, onlyReplaceDefaults) {
         this._radius = radius
         const d_ll = this._dots.length
@@ -5492,7 +6681,11 @@ class Shape extends _Obj {
         }
     }
 
-    // updates the color of all the shape's dots. If "onlyReplaceDefaults" is true, it only sets the dot's color if it was not initialy set
+    /**
+     * Updates the color of all the shape's dots
+     * @param {Color | String | [r,g,b,a] ?} color: the new color
+     * @param {Boolean?} onlyReplaceDefaults: if true, only sets the dots' color if it was not initialy set
+     */
     setColor(color=this._color, onlyReplaceDefaults) {
         this.color = color
         const d_ll = this._dots.length
@@ -5508,7 +6701,11 @@ class Shape extends _Obj {
         }
     }
 
-    // updates the visualEffects of all the shape's dots. If "onlyReplaceDefaults" is true, it only sets the dot's visualEffects if it was not initialy set
+    /**
+     * Updates the visualEffects of all the shape's dots
+     * @param {[filter, compositeOperation, opacity]?} visualEffects: the filter, composite operation and opacity effects to use
+     * @param {Boolean?} onlyReplaceDefaults: is true, it only sets the dots' visualEffects if it was not initialy set
+     */
     setVisualEffects(visualEffects=this._visualEffects, onlyReplaceDefaults) {
         this._visualEffects = visualEffects
         const d_ll = this._dots.length
@@ -5519,19 +6716,32 @@ class Shape extends _Obj {
         }
     }
 
-    // moves the shape and all its dots in specified direction at specified distance(force)
-    addForce(force, dir, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
-        const rDir = CDEUtils.toRad(dir), ix = this.x, iy = this.y,
-            dx = CDEUtils.getAcceptableDiff(force*Math.cos(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE),
-            dy = CDEUtils.getAcceptableDiff(force*Math.sin(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE)
+    /**
+     * Moves the shape and all its dots in specified direction at specified distance(force)
+     * @param {Number} distance: the distance in pixels
+     * @param {Number} deg: the degree representing the direction of the movement
+     * @param {Number?} time: the move time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} animForce: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the created Anim instance
+     */
+    addForce(distance, deg, time=1000, easing=Anim.easeInOutQuad, isUnique=true, animForce=true) {
+        const rDir = CDEUtils.toRad(deg), ix = this.x, iy = this.y,
+            dx = CDEUtils.getAcceptableDiff(distance*Math.cos(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE),
+            dy = CDEUtils.getAcceptableDiff(distance*Math.sin(rDir), CDEUtils.DEFAULT_ACCEPTABLE_DIFFERENCE)
         
         return this.playAnim(new Anim((prog)=>{
             this.moveAt([ix+dx*prog, iy-dy*prog])
         }, time, easing), isUnique, animForce)
     }
 
-    // Rotates the dots by a specified degree increment around a specified center point
-    rotateBy(deg, centerPos=this.getCenter()) {// clock-wise, from the top
+    /**
+     * Rotates the dots by a specified degree increment around a specified center point,clock-wise, from the top
+     * @param {Number} deg: the degrees to rotate by
+     * @param {[x,y]?} centerPos: the center pos of the rotation
+     */
+    rotateBy(deg, centerPos=this.getCenter()) {
         const [cx, cy] = centerPos
         this._dots.forEach(dot=>{
             const x = dot.x-cx, y = dot.y-cy,
@@ -5544,12 +6754,25 @@ class Shape extends _Obj {
         this._rotation = (this._rotation+deg)%360
     }
 
-    // Rotates the dots to a specified degree around a specified center point
+    /**
+     * Rotates the dots to a specified degree around a specified center point
+     * @param {Number} deg: the degrees to rotate to
+     * @param {[x,y]?} centerPos: the center pos of the rotation
+     */
     rotateAt(deg, centerPos=this.getCenter()) {
         this.rotateBy(360-(this._rotation-deg), centerPos)
     }
 
-    // Smoothly rotates the dots to a specified degree around a specified center point
+    /**
+     * Smoothly rotates the dots to a specified degree around a specified center point
+     * @param {Number} deg: the degrees to rotate to
+     * @param {Number?} time: the rotate time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {[x,y]?} centerPos: the center pos of the rotation
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} force: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the created Anim instance
+     */
     rotateTo(deg, time=1000, easing=Anim.easeInOutQuad, centerPos=this.getCenter(), isUnique=true, force=true) {
         const ir = this._rotation, dr = deg-this._rotation
 
@@ -5558,7 +6781,11 @@ class Shape extends _Obj {
         }, time, easing), isUnique, force)
     }
 
-    // Scales the dots by a specified amount [scaleX, scaleY] from a specified center point
+    /**
+     * Scales the dots distances by a specified amount [scaleX, scaleY], from a specified center point
+     * @param {[scaleX, scaleY]} scale: the x/y values to scale the distances by
+     * @param {[x,y]?} centerPos: the center pos of the scaling
+     */
     scaleBy(scale, centerPos=this.getCenter()) {
         const [scaleX, scaleY] = scale, [cx, cy] = centerPos, dots = this._dots, dots_ll = dots.length
         for (let i=0;i<dots_ll;i++) {
@@ -5569,13 +6796,26 @@ class Shape extends _Obj {
         this._scale = [this._scale[0]*scaleX, this._scale[1]*scaleY]
     }
 
-    // Scales the dots to a specified amount [scaleX, scaleY] from a specified center point
+    /**
+     * Scales the dots distances to a specified amount [scaleX, scaleY] from a specified center point
+     * @param {[scaleX, scaleY]} scale: the x/y values to scale the distances to
+     * @param {[x,y]?} centerPos: the center pos of the scaling
+     */
     scaleAt(scale, centerPos=this.getCenter()) {
         const dsX = scale[0]/this._scale[0], dsY = scale[1]/this._scale[1]
         this.scaleBy([dsX||1, dsY||1], centerPos)
     }
 
-    // Smoothly scales the dots by a specified amount [scaleX, scaleY] from a specified center point
+    /**
+     * Smoothly scales the dots distances by a specified amount [scaleX, scaleY] from a specified center point
+     * @param {[scaleX, scaleY]} scale: the x/y values to scale the object to
+     * @param {Number?} time: the scale time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @param {[x,y]} centerPos: the center pos used for scaling
+     * @param {Boolean?} isUnique: if true, the animation gets queue in the object's animation backlog. 
+     * @param {Boolean?} force: if true, terminates the current backlog animation and replaces it with this animation
+     * @returns the created Anim instance
+     */
     scaleTo(scale, time=1000, easing=Anim.easeInOutQuad, centerPos=this.getCenter(), isUnique=true, force=true) {
         const is = this._scale, dsX = scale[0]-this._scale[0], dsY = scale[1]-this._scale[1]
 
@@ -5584,12 +6824,21 @@ class Shape extends _Obj {
         }, time, easing), isUnique, force)
     }
 
-    // returns whether the provided pos is inside the minimal rectangular area containing all of the shape's dots
+    /**
+     * Returns whether the provided pos is inside the minimal rectangular area containing all of the shape's dots
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @returns whether the provided pos is inside the Shape
+     */
     isWithin(pos, padding) {
         return super.isWithin(pos, this.getBounds(padding), padding)
     }
 
-    // returns whether the provided pos is inside the area delimited by the dots perimeter
+    /**
+     * Returns whether the provided pos is inside the area delimited by the dots perimeter
+     * @param {[x,y]} pos: the pos to check 
+     * @returns whether the provided pos is inside the Shape
+     */
     isWithinAccurate(pos) {
         const dots = this._dots, d_ll = dots.length
         if (d_ll > 2) return this.ctx.isPointInPath(this.getBoundsAccurate(), pos[0], pos[1])
@@ -5602,7 +6851,9 @@ class Shape extends _Obj {
         return [[rangeX[0],rangeY[0]], [rangeX[1],rangeY[1]]]
     }
 
-    // returns the accurate area delimited by the dots perimeter
+    /**
+     * @returns the accurate area delimited by the dots perimeter
+     */
     getBoundsAccurate() {
         const dots = this._dots, d_ll = dots.length, perimeter = new Path2D(), firstDotPos = dots[0].pos
         perimeter.moveTo(firstDotPos[0], firstDotPos[1])
@@ -5614,24 +6865,37 @@ class Shape extends _Obj {
         return perimeter
     }
 
-    // returns the center pos of the shape
+    /**
+     * @returns the center pos of the shape
+     */
     getCenter() {
         return super.getCenter(this.#getRectBounds())
     }
 
-    // returns the minimal rectangular area containing all of the shape
+    /**
+     * Returns the minimal rectangular area containing all of the shape
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @param {[x,y]} centerPos: the center pos of the scaling
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(padding=this._radius, rotation, scale, centerPos) {
         const positions = this.#getRectBounds()
         return super.getBounds(positions, padding, rotation, scale, centerPos)
     }
 
-    // Empties the shapes of all its dots
+    /**
+     * Empties the shapes of all its dots
+     */
     clear() {
         this._dots = []
         this._parent.updateCachedAllEls()
     }
 
-    // Rerenders the shape to its original form
+    /**
+     * (DEPRECATED) Rerenders the shape to its original form
+     */
     reset() {
         if (this._initDots) {
             this.clear()
@@ -5639,19 +6903,25 @@ class Shape extends _Obj {
         }
     }
 
-    // enables path caching for all dots of this shape
+    /**
+     * Enables path caching for all dots of this shape
+     */
     enableDotsPathCaching() {
         const dots = this._dots, d_ll = dots.length
         for (let i=0;i<d_ll;i++) dots[i].updateCachedPath()
     }
 
-    // disables path caching for all dots of this shape
+    /**
+     * Disables path caching for all dots of this shape
+     */
     disableDotsPathCaching() {
         const dots = this._dots, d_ll = dots.length
         for (let i=0;i<d_ll;i++) dots[i].disablePathCaching()
     }
 
-    // returns a separate copy of this Shape (only initialized for objects)
+    /**
+     * @returns a separate copy of this Shape (only if initialized)
+     */
     duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, fragile=this._fragile) {
         const colorObject = color, colorRaw = colorObject.colorRaw, shape = new Shape(
             pos,
@@ -5694,7 +6964,9 @@ class Shape extends _Obj {
     get thirdDot() {return this._dots[2]}
     get lastDot() {return CDEUtils.getLast(this._dots, 0)}
     get asSource() {return this._dots}
+    get instanceOf() {return "Shape"}
 
+    set dots(ratioPos) {this._ratioPos = ratioPos}
     set ratioPos(ratioPos) {this._ratioPos = ratioPos}
     set drawEffectCB(cb) {this._drawEffectCB = cb}
     set ratioPosCB(cb) {this._ratioPosCB = cb}
@@ -5706,7 +6978,6 @@ class Shape extends _Obj {
 // Please don't use or credit this code as your own.
 //
 
-// Allows the creation of custom gradients
 class Gradient extends _DynamicColor {
     static TYPES = {LINEAR:"Linear", RADIAL:"Radial", CONIC:"Conic"}
     static DEFAULT_TYPE = Gradient.TYPES.LINEAR
@@ -5715,6 +6986,15 @@ class Gradient extends _DynamicColor {
 
     #lastRotation = null
     #lastType = null
+
+    /**
+     * Allows the creation of custom gradients
+     * @param {CanvasRenderingContext2D} ctx: canvas context to use
+     * @param {[[x1,y1], [x2,y2]]} positions: the rectangular area defined by two corners containing the gradient
+     * @param {Array[[0..1, Color]]} colorStops: an array containing all colors stop. The 1st index of a color stop is a number between 0 and 1 representing the pourcentile and the 2nd is the color. ex: [0.5, Color]
+     * @param {Gradient.TYPES?} type: the type of gradient
+     * @param {Number?} rotation: the rotation in degrees 
+     */
     constructor(ctx, positions, colorStops, type, rotation) {
         super(
             positions, // linear:[[x1,y1],[x2,y2]] | radial:[[x1, y1, r1],[x2,y2,r2]] | conic:[x,y] | instance of _Obj
@@ -5728,7 +7008,7 @@ class Gradient extends _DynamicColor {
 
     /**
      * Given an canvas object, returns automatic positions values for linear, radial or conic gradients
-     * @param {Shape|Dot|TextDisplay} obj: Inheritor of _Obj
+     * @param {_BaseObj} obj: Inheritor of _BaseObj
      * @returns the new calculated positions or the current value of this._positions if the parameter 'obj' isn't an instance of a canvas object
      */
     getAutomaticPositions(obj=this._initPositions) {
@@ -5803,7 +7083,11 @@ class Gradient extends _DynamicColor {
         } else return false
     }
 
-    // Creates and returns the gradient. Updates it if the initPositions is a Shape/Dot/TextDisplay instance
+    /**
+     * Creates and returns the gradient. Updates it if the initPositions is a _BaseObj inheritor
+     * @param {Boolean} force: whether to force the update even if the positions haven't changed
+     * @returns the gradient or null
+     */
     update(force) {
         if (this._initPositions != _DynamicColor.PLACEHOLDER) {
             const positions = this.getAutomaticPositions()
@@ -5813,7 +7097,9 @@ class Gradient extends _DynamicColor {
         }
     }
 
-    // returns a separate copy of the Gradient
+    /**
+     * @returns a separate copy of the Gradient
+     */
     duplicate(positions=this._positions, ctx=this._ctx, colorStops=this._colorStops, type=this._type, rotation=this._rotation) {
         return new Gradient(ctx, CDEUtils.unlinkPositions(positions), [...colorStops], type, rotation)
     }
@@ -5859,15 +7145,32 @@ class Gradient extends _DynamicColor {
 // Please don't use or credit this code as your own.
 //
 
-// Regular shape with a filled area defined by its dots
 class FilledShape extends Shape {
     #lastDotsPos = null
+
+    /**
+     * Regular shape with a filled area defined by its dots
+     * @param {Color | String | [r,g,b,a]?} fillColor: the color of the area's filling
+     * @param {Boolean?} dynamicUpdates: whether the shape's filling checks for updates every frame
+     * @param {[x,y]?} pos: the pos of the object 
+     * @param {Dot | Dot[] ?} dots: array containing current dots in the shape
+     * @param {Number?} radius: the radius of the dots
+     * @param {Color | String | [r,g,b,a]?} color: the color of the dots
+     * @param {Number?} limit: the delimiter radius within which the drawEffectCB can take effect
+     * @param {Function?} drawEffectCB: a function called every frame for each dot of the shape, used to create effects. (render, dot, ratio, setupResults, mouse, distance, parent, isActive, rawRatio)=>
+     * @param {Function?} ratioPosCB: a function that returns a ratio pos target for calculating the dots ratio attribute. (this, dots)=>{return [x,y]}
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     * @param {Boolean?} fragile: (DEPRECATED) whether the shape resets on document visibility change 
+     */
     constructor(fillColor, dynamicUpdates=false, pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile) {
         super(pos, dots, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile)
         this._initFillColor = fillColor       // declaration color fill value
         this._fillColor = this._initFillColor // the current color or gradient of the filled shape
-        this._path = null                     // path perimeter delimiting the surface to fill
         this._dynamicUpdates = dynamicUpdates // whether the shape's filling checks for updates every frame
+        this._path = null                     // path perimeter delimiting the surface to fill
     }
 
     // initializes the filled shape and creates its path
@@ -5888,7 +7191,9 @@ class FilledShape extends Shape {
         }
     }
 
-    // updates the path perimeter if the dots pos have changed
+    /**
+     * Updates the path perimeter if the dots pos have changed
+     */
     updatePath() {
         const d_ll = this.dots.length
         if (d_ll) {
@@ -5907,21 +7212,25 @@ class FilledShape extends Shape {
         }
     }
 
-    // returns a separate copy of this FilledShape (only initialized for objects)
-    duplicate() {
-        const fillColorObject = this._fillColor, fillColorRaw = fillColorObject.colorRaw, colorObject = this._color, colorRaw = colorObject.colorRaw, filledShape = new FilledShape(
+    /**
+     * @returns a separate copy of this FilledShape (only if initialized)
+     */
+    duplicate(fillColor=this._fillColor, dynamicUpdates=this._dynamicUpdates, pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, fragile=this._fragile) {
+        const fillColorObject = fillColor, fillColorRaw = fillColorObject.colorRaw, colorObject = color, colorRaw = colorObject.colorRaw, filledShape = new FilledShape(
             (_,shape)=>(fillColorRaw instanceof Gradient||fillColorRaw instanceof Pattern)?fillColorRaw.duplicate(Array.isArray(fillColorRaw.initPositions)?null:shape):fillColorObject.duplicate(),
-            this._dynamicUpdates,
-            this.pos_,
-            this._dots.map(d=>d.duplicate()),
-            this._radius,
+            dynamicUpdates,
+            pos,
+            dots,
+            radius,
             (_,shape)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:shape):colorObject.duplicate(),
-            this._limit,
-            this._drawEffectCB,
-            this._ratioPosCB,
-            this._setupCB,
-            this._loopCB,
-            this._fragile
+            limit,
+            drawEffectCB,
+            ratioPosCB,
+            setupCB,
+            loopCB,
+            anchorPos,
+            activationMargin,
+            fragile
         )
         filledShape._scale = CDEUtils.unlinkArr2(this._scale)
         filledShape._rotation = this._rotation
@@ -5936,6 +7245,8 @@ class FilledShape extends Shape {
     get initFillColor() {return this._initFillColor}
 	get path() {return this._path}
 	get dynamicUpdates() {return this._dynamicUpdates}
+    get instanceOf() {return "FilledShape"}
+
 
     set fillColor(fillColor) {
         const fc = this._fillColor
@@ -5959,7 +7270,6 @@ class FilledShape extends Shape {
 // Please don't use or credit this code as your own.
 //
 
-// Allows the creation of symbols/text based on specific source
 class Grid extends Shape {
     static DEFAULT_KEYS = ""
     static DEFAULT_GAPS = [10, 10]
@@ -5969,13 +7279,32 @@ class Grid extends Shape {
     static SAME_VALUE = undefined
 
     #symbolsReferences = []
+
+    /**
+     * Allows the creation of symbols/text using dots
+     * @param {String} keys: keys to convert to source's values as a string
+     * @param {[gapX, gapY]?} gaps: horizontal and vertical gaps within the dots, in pixels
+     * @param {Number?} spacing: gap size between symbols, in pixels
+     * @param {Object?} source: the source of the symbols
+     * @param {[x,y]?} pos: the pos of the object 
+     * @param {Number?} radius: the radius of the dots
+     * @param {Color | String | [r,g,b,a]?} color: the color of the dots
+     * @param {Number?} limit: the delimiter radius within which the drawEffectCB can take effect
+     * @param {Function?} drawEffectCB: a function called every frame for each dot of the shape, used to create effects. (render, dot, ratio, setupResults, mouse, distance, parent, isActive, rawRatio)=>
+     * @param {Function?} ratioPosCB: a function that returns a ratio pos target for calculating the dots ratio attribute. (this, dots)=>{return [x,y]}
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     * @param {Boolean?} fragile: (DEPRECATED) whether the shape resets on document visibility change 
+     */
     constructor(keys, gaps, spacing, source, pos, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile) {
         super(pos, null, radius, color, limit, drawEffectCB, ratioPosCB, setupCB, loopCB, anchorPos, activationMargin, fragile)
 
         this._keys = keys+""||Grid.DEFAULT_KEYS             // keys to convert to source's values as a string
         this._gaps = gaps??Grid.DEFAULT_GAPS                // [x, y] gap length within the dots
-        this._source = source?? Grid.DEFAULT_SOURCE         // symbols' source
         this._spacing = spacing??Grid.DEFAULT_SPACING(this) // gap length between symbols
+        this._source = source?? Grid.DEFAULT_SOURCE         // symbols' source
     }
 
     initialize() {
@@ -5995,7 +7324,15 @@ class Grid extends Shape {
         if (CDEUtils.isFunction(this._setupCB)) this._setupResults = this._setupCB(this, this?.parent)
     }
 
-    // Creates a formation of symbols
+    /**
+     * Creates a formation of symbols
+     * @param {String?} keys: keys to convert to source's values as a string
+     * @param {[x,y]?} pos: the pos of the object
+     * @param {[gapX, gapY]?} gaps: horizontal and vertical gaps within the dots, in pixels
+     * @param {Number?} spacing: gap size between symbols, in pixels
+     * @param {Object?} source: the source of the symbols
+     * @returns an array with all the symbols
+     */
     createGrid(keys=this._keys, pos=[0,0], gaps=this._gaps, spacing=this._spacing, source=this._source) {
         let [cx, cy] = pos, isNewLine=true, symbols=[], k_ll = keys.length
         for (let i=0;i<k_ll;i++) {
@@ -6007,7 +7344,13 @@ class Grid extends Shape {
         return symbols
     }
 
-    // Creates the dot based symbol at given pos, based on given source
+    /**
+     * Creates the dot based symbol at given pos, based on given source
+     * @param {String} key: a single character to convert 
+     * @param {[x,y]?} pos: the pos of the symbol
+     * @param {Object?} source: the source of the symbol
+     * @returns an array of dots
+     */
     createSymbol(key, pos=super.relativePos, source=this._source) {
         let dotGroup = [], xi=[0,0], yi=0, s = source[key], sourceRadius = Math.sqrt(source.width*source.height), places = GridAssets.D.places
 
@@ -6034,7 +7377,10 @@ class Grid extends Shape {
         }
     }
 
-    // deletes the symbol at the provided index
+    /**
+     * Deletes the symbol at the provided index
+     * @param {Number} i: the index of the key
+     */
     deleteKey(i) {
         if (typeof i=="number") i = this.getKey(i)
         
@@ -6044,30 +7390,39 @@ class Grid extends Shape {
         }
     }
 
-    // returns the dots composing the symbol at the provided index
+    /**
+     * Returns the dots composing the symbol at the provided index
+     * @param {Number} i: the index of the key
+     * @returns the dots group 
+     */
     getKey(i) {
         const ids = this.#symbolsReferences[i]??[], i_ll = ids.length, dots = new Array(i_ll), cvs = this.parent
         for (let i=0;i<i_ll;i++) dots[i] = cvs.get(ids[i])
         return dots
     }
 
-    // returns a separate copy of this Grid (only initialized for objects)
-    duplicate() {
-        const colorObject = this._color, colorRaw = colorObject.colorRaw, grid = new Grid(
-            this._keys,
-            CDEUtils.unlinkArr2(this._gaps),
-            this._spacing,
-            this._source,
-            this.pos_,
-            this._radius,
+    /** 
+     *  @returns a separate copy of this Grid (only if initialized)
+     */
+    duplicate(keys=this._keys, gaps=CDEUtils.unlinkArr2(this._gaps), spacing=this._spacing, source=this._source, pos=this.pos_, radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, fragile=this._fragile) {
+        const colorObject = color, colorRaw = colorObject.colorRaw, grid = new Grid(
+            keys,
+            gaps,
+            spacing,
+            source,
+            pos,
+            radius,
             (_,shape)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:shape):colorObject.duplicate(),
-            this._limit,
-            this._drawEffectCB,
-            this._ratioPosCB,
-            this._setupCB,
-            this._loopCB,
-            this._fragile
+            limit,
+            drawEffectCB,
+            ratioPosCB,
+            setupCB,
+            loopCB,
+            anchorPos,
+            activationMargin,
+            fragile
         )
+        grid._dots = this._dots.map(d=>d.duplicate())
         grid._scale = CDEUtils.unlinkArr2(this._scale)
         grid._rotation = this._rotation
         grid._visualEffects = this.visualEffects_
@@ -6079,6 +7434,7 @@ class Grid extends Shape {
 	get gaps() {return this._gaps}
 	get spacing() {return this._spacing}
 	get source() {return this._source}
+    get instanceOf() {return "Grid"}
 
 	set keys(keys) {
         const n_ll = keys.length>this._keys.length?keys.length:this._keys.length, newKeys = new Array(n_ll)
@@ -6125,8 +7481,18 @@ class Grid extends Shape {
 // Please don't use or credit this code as your own.
 //
 
-// The main component to create Effect, can be used on it's own, but designed to be contained by a Shape instance
 class Dot extends _Obj {
+
+    /**
+     * Important object component to create effects, can be used on it's own, but designed to be contained by a Shape instance
+     * @param {[x,y]?} pos: the [x,y] pos of the object
+     * @param {Number?} radius: the radius of the object 
+     * @param {Color | [r,g,b,a] ?} color: the color of the object
+     * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
+     * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     * @param {Boolean?} disablePathCaching: if true, disables path caching. Could be more performant if the Dot is highly dynamic
+     */
     constructor(pos, radius, color, setupCB, anchorPos, activationMargin, disablePathCaching=false) {
         super(pos, radius, color, setupCB, null, anchorPos, activationMargin)
         this._connections = []  // array of Dot to eventually draw a connecting line to
@@ -6167,27 +7533,44 @@ class Dot extends _Obj {
         super.draw(time, deltaTime)
     }
 
-    // returns pythagorian distance between the ratio defining position and the dot
-    getDistance(fx=this.ratioPos[0], fy=this.ratioPos[1]) {
-        return CDEUtils.getDist(fx, fy, this.x, this.y)
+    /**
+     * Returns pythagorian distance between the dot and another pos. (Defaults to the ratio defining pos)
+     * @param {[x,y]?} pos: the pos to get the distance between
+     * @returns the distance
+     */
+    getDistance(pos=this.ratioPos) {
+        const dotPos = this._pos
+        return CDEUtils.getDist(pos[0], pos[1], dotPos[0], dotPos[1])
     }
 
-    // calculates the ratio based on distance and parent's limit
+    /**
+     * Calculates the ratio based on distance and parent's limit
+     * @param {Number} dist: the distance 
+     * @returns the ratio
+     */
     getRatio(dist) {
         return dist / this.limit
     }
 
-    // adds a dot to the connection array
+    /**
+     * Adds a dot to the connection array
+     * @param {Dot} dot: the Dot instance to add
+     */
     addConnection(dot) {
         if (dot instanceof Dot) this._connections.push(dot)
     }
 
-    // removes a dot from the connection array
+    /**
+     * Removes a dot from the connection array
+     * @param {Dot | id} dotOrId: the Dot instance or id of, to remove from the connection array 
+     */
     removeConnection(dotOrId) {
         this._connections = this._connections.filter(d=>typeof dotOrId=="number"?d.id!==dotOrId:d.id!==dotOrId.id)
     }
 
-    // deletes the dot
+    /**
+     * Deletes the dot
+     */
     remove() {
         this._parent.remove(this._id)
     }
@@ -6216,17 +7599,23 @@ class Dot extends _Obj {
         return [[[s_x1, s_y1], [s_x2, s_y2]], [[t_x2, t_y2], [t_x1, t_y1]]]
     }
 
-    // activates path caching and updates the cached path
+    /**
+     * Activates path caching and updates the cached path
+     */
     updateCachedPath() {
         this._cachedPath = Render.getArc(this._pos, this._radius)
     }
 
-    // disables path caching
+    /**
+     * Disables path caching
+     */
     disablePathCaching() {
         this._cachedPath = null
     }
 
-    // returns a separate copy of this Dot
+    /**
+     * Returns a separate copy of this Dot
+     */
     duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color, setupCB=this._setupCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, disablePathCaching=!this._cachedPath) {
         const colorObject = color, colorRaw = colorObject.colorRaw, dot = new Dot(
             pos,
@@ -6244,23 +7633,43 @@ class Dot extends _Obj {
         return dot
     }
 
-    // returns whether the provided pos is in the dot pos, positions, padding,
+    /**
+     * Returns whether the provided pos is in the dot
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is inside the Dot
+     */
     isWithin(pos, padding, rotation, scale) {
         return super.isWithin(pos, this.getBounds(padding, rotation, scale))
     }
 
-    // returns whether the provided pos is in the image
+    /**
+     * Returns whether the provided pos is inside the Dot very accurately
+     * @param {[x,y]} pos: the pos to check 
+     * @param {Number | [paddingX, paddingY?] ?} axisPadding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns whether the provided pos is inside the Dot
+     */
     isWithinAccurate(pos, axisPadding, rotation, scale) {
         return this.ctx.isPointInPath(this.getBoundsAccurate(axisPadding, rotation, scale), pos[0], pos[1])
     }
 
-    // returns the raw a minimal rectangular area containing all of the dot (no scale/rotation)
+    // returns the raw a minimal rectangular area containing all of the Dot (no scale/rotation)
     #getRectBounds() {
         const pos = this._pos, radius = this._radius
         return [[pos[0]-radius, pos[1]-radius], [pos[0]+radius, pos[1]+radius]]
     }
 
-    // returns the accurate area containing all of the dot
+    /**
+     * Returns the accurate area containing all of the Dot
+     * @param {Number | [paddingX, paddingY?] ?} axisPadding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns a Path2D
+     */
     getBoundsAccurate(axisPadding, rotation=this._rotation, scale=this._scale) {
         const radius = this._radius
         axisPadding??=0
@@ -6268,12 +7677,20 @@ class Dot extends _Obj {
         return Render.getEllispe(this._pos, radius*scale[0]+axisPadding[0], radius*scale[1]+axisPadding[1], CDEUtils.toRad(rotation))
     }
 
-    // returns the center pos of the image
+    /**
+     * @returns the center pos of the Dot
+     */
     getCenter() {
         return this._pos
     }
 
-    // returns the minimal rectangular area containing all of the dot
+    /**
+     * Returns the minimal rectangular area containing all of the Dot
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding added to the validity area
+     * @param {Number?} rotation: the rotation in degrees of the area
+     * @param {[scaleX, scaleY]?} scale: the scale of the area
+     * @returns the area positions [[x1,y1], [x2,y2]]
+     */
     getBounds(padding, rotation=this._rotation, scale=this._scale) {
         const positions = this.#getRectBounds()
         return super.getBounds(positions, padding, (scale[0]!=scale[1]&&(scale[0]!=1||scale[1]!=1))?rotation:0, scale, super.getCenter(positions))
@@ -6302,7 +7719,7 @@ class Dot extends _Obj {
     get relativePos() {return super.relativePos}
     get radius() {return this._radius}
     get cachedPath() {return this._cachedPath}
-
+    get instanceOf() {return "Dot"}
 
     set x(x) {
         x = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)

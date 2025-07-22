@@ -56,7 +56,7 @@ class RenderStyles extends _HasColor {
      * @returns the profile's styles as an array
      */
     getStyles() {
-        return [this._filter, this._compositeOperation, this._opacity, this._lineWidth, this._lineDash, this._lineDashOffset, this._lineJoin, this._lineCap]
+        return [this._lineWidth, this._lineDash, this._lineDashOffset, this._lineJoin, this._lineCap]
     }
 
     /**

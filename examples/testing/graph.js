@@ -3,7 +3,7 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(1?canvas:new OffscreenCanv
     if (fpsDisplay.textContent !== fps) fpsDisplay.textContent = fps
     mouseSpeed.textContent = CVS?.mouse?.speed?.toFixed(2)+" px/sec"
     mouseAngle.textContent = CVS?.mouse?.dir?.toFixed(2)+" deg"
-}, 239)
+}, 60)
 
 
 // DECLARE OBJS
