@@ -11,7 +11,7 @@ const _ = null
 
 
 // TODO LINK CLASS
-function createButton(text="Test yo man big button", pos=[500, 100], onClickCallback, fillColor="aliceblue", textColor="red", padding=[20, 30]) {
+function createButton(text="Test yo man big button", pos=[500, 100], onClickCB, fillColor="aliceblue", textColor="red", padding=[20, 30]) {
 
     // Creating the button's text
     const textDisplay = new TextDisplay(text, [0,0], textColor, _, _, _, (self)=>{// setupCB
@@ -30,7 +30,7 @@ function createButton(text="Test yo man big button", pos=[500, 100], onClickCall
         clickHandler=(click)=>{
             // Updating the button's opacity and calling the custom click callback
             button.fillColorObject.a = click ? opacity.click : opacity.hover
-            if (click && CDEUtils.isFunction(onClickCallback)) onClickCallback(button, self)
+            if (click && CDEUtils.isFunction(onClickCB)) onClickCB(button, self)
         }
 
         // Button listeners

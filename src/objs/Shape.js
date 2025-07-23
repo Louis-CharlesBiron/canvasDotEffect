@@ -391,6 +391,22 @@ class Shape extends _Obj {
     }
 
     /**
+     * Disables the object by setting its and all its dots' activation margin to 0
+     */
+    disable() {
+        const dots = this._dots, d_ll = dots.length
+        for (let i=0;i<d_ll;i++) dots[i].disable()
+    }
+
+    /**
+     * Enables the object by setting its and all its dots' activation margin to what it was before disabling
+     */
+    enable() {
+        const dots = this._dots, d_ll = dots.length
+        for (let i=0;i<d_ll;i++) dots[i].enable()
+    }
+
+    /**
      * @returns a separate copy of this Shape (only if initialized)
      */
     duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, fragile=this._fragile) {

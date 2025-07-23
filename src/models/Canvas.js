@@ -29,6 +29,7 @@ class Canvas {
     static #ON_LOAD_CALLBACKS = []
     static #ON_FIRST_INTERACT_CALLBACKS = []
     static DEFAULT_MOUSE_MOVE_THROTTLE_DELAY = 10
+    static ACTIVATION_MARGIN_DISABLED = 0
 
     #lastFrame = 0           // default last frame time
     #lastLimitedFrame = 0    // last frame time for limited fps
@@ -333,7 +334,7 @@ class Canvas {
         const els = this.#cachedEls, els_ll = this.#cachedEls_ll, render = this._render, deltaTime = this._deltaTime*this._speedModifier, timeStamp = this.timeStamp
         for (let i=0;i<els_ll;i++) {
             const el = els[i], margin = el.activationMargin
-            if (!(margin===true) && el.initialized && !this.isWithin(el.pos, margin) || !el.draw) continue
+            if (!margin || (!(margin===true) && el.initialized && !this.isWithin(el.pos, margin)) || !el.draw) continue
             el.draw(render, timeStamp, deltaTime)
         }
     }

@@ -234,6 +234,7 @@ The _Obj class is the template class of most canvas object. **It should not be d
 - Movements functions (`moveBy`, `addForce`, `follow`, ...)
 - Informative functions (`isWithin`, `getInitPos`, `getBounds`, ...)
 - Access to the object's animations (`playAnim`, `clearAnims`, ...)
+- Visibility functions (`enable`, `disable`, ...)
 
 **The follow function:** use `follow()` to make an object follow a custom path:
 ###### - `follow(duration, easing, action, progressSeparations)`

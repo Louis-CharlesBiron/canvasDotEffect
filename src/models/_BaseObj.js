@@ -5,10 +5,13 @@
 
 class _BaseObj extends _HasColor {
     static DEFAULT_POS = [0,0]
+    static DEFAULT_ACTIVATION_MARGIN = Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING
+    static ACTIVATION_MARGIN_DISABLED = Canvas.ACTIVATION_MARGIN_DISABLED
     static ABSOLUTE_ANCHOR = [0,0]
     static POSITION_PRECISION = 6
 
     #lastAnchorPos = [0,0]
+    #lastActivationMargin = null
 
     /**
      * Abstract canvas obj class
@@ -382,6 +385,24 @@ class _BaseObj extends _HasColor {
         return [[minX-padding[3], minY-padding[0]],[maxX+padding[1], maxY+padding[2]]]
     }
 
+    /**
+     * Disables the object by setting its activation margin to 0
+     */
+    disable() {
+        this.#lastActivationMargin = this._activationMargin
+        this._activationMargin = Canvas.ACTIVATION_MARGIN_DISABLED
+    }
+
+    /**
+     * Enables the object by setting its activation margin back to what it was before disabling
+     */
+    enable() {
+        if (this.#lastActivationMargin) {
+            this._activationMargin = this.#lastActivationMargin
+            this.#lastActivationMargin = null
+        }
+    }
+
 	get id() {return this._id}
     get x() {return this._pos[0]}
     get y() {return this._pos[1]}
@@ -427,6 +448,9 @@ class _BaseObj extends _HasColor {
     get compositeOperation() {return this._visualEffects?.[1]??Render.DEFAULT_COMPOSITE_OPERATION}
     get opacity() {return this._visualEffects?.[2]??Render.DEFAULT_ALPHA}
     get safeColorObject() {return this.initialized&&this._color}
+    get lastActivationMargin() {return this.#lastActivationMargin}
+    get enabled() {return !this.#lastActivationMargin}
+    get disabled() {return Boolean(this.#lastActivationMargin)}
 
 
     set x(x) {this._pos[0] = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)}
