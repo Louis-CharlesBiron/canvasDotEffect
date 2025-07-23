@@ -48,12 +48,11 @@ class Canvas {
      * @param {HTMLCanvasElement | OffscreenCanvas} cvs: the html canvas element or an OffscreenCanvas instance to link to
      * @param {Function?} loopingCB: a function called along with the loop() function. (deltatime)=>{...}
      * @param {Number?} fpsLimit: the maximal frames per second cap. Defaults to V-Sync
-     * @param {Function?} visibilityChangeCB: a function called upon document visibility change. (isVisible)=>{...}
      * @param {HTMLElement?} cvsFrame: if defined and if "cvs" is an HTML canvas, sets this element as the parent of the canvas element
      * @param {Object?} settings: an object containing the canvas settings
      * @param {Boolean} willReadFrequently: whether the getImageData optimizations are enabled
      */
-    constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
+    constructor(cvs, loopingCB, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._id = Canvas.CANVAS_ID_GIVER++                               // Canvas instance id
         if (!cvs) throw new Error("The cvs (canvas) parameter is undefined")
         this._cvs = cvs                                                   // html canvas element or an OffscreenCanvas instance
@@ -61,7 +60,9 @@ class Canvas {
             this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
             this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)       // set styles selector for canvas
             this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true)// set styles selector for parent
-            this.visibilityChangeCB = visibilityChangeCB                  // callback with the actions to be taken on document visibility change (isVisible, CVS, e)=>
+            this.onVisibilityChangeCB = null                              // callback with the actions to be taken on document visibility change (isVisible, CVS, e)=>
+            this._onResizeCB = null                                       // callback with the actions to be taken on document resize (newCanvasSize, CVS, e)=>
+            this._onScrollCB = null                                       // callback with the actions to be taken on document scroll ([pageScrollX, pageScrollY], CVS, e)=>
         }
         this._ctx = this._cvs.getContext("2d", {willReadFrequently})  // canvas context
         this._settings = this.updateSettings(settings||Canvas.DEFAULT_CTX_SETTINGS)// set context settings
@@ -79,10 +80,10 @@ class Canvas {
             const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
             this.setSize(frameCBR.width, frameCBR.height)              // init size
             this.#initStyles()                                         // init styles
+            this._offset = this.updateOffset()                         // cvs page offset
         } else this.#cachedSize = [this._cvs.width, this._cvs.height]
         this._typingDevice = new TypingDevice()                        // keyboard info
         this._mouse = new Mouse(this._ctx)                             // mouse info
-        if (!this.isOffscreenCanvas) this._offset = this.updateOffset()// cvs page offset
         this._render = new Render(this._ctx)                           // render instance
         this._anims = []                                               // current animations
         this._mouseMoveThrottlingDelay = Canvas.DEFAULT_MOUSE_MOVE_THROTTLE_DELAY// mouse move throttling delay
@@ -99,7 +100,7 @@ class Canvas {
 
     // sets resize and visibility change listeners on the window
     #initWindowListeners() {
-        const onresize=()=>{
+        const onresize=e=>{
             const render = this._render, ctx = this._ctx, [lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = render.currentCtxStyles, [font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering] = render.currentCtxTextStyles, [color, filter, compositeOperation, alpha] = render.currentCtxVisuals
             this.setSize()
             ctx.strokeStyle = ctx.fillStyle = Color.getColorValue(color)
@@ -111,15 +112,17 @@ class Canvas {
             TextStyles.apply(ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
             this.moveViewAt(this._viewPos)
             if (this.fpsLimit==Canvas.STATIC || this._state==Canvas.STATES.STOPPED) this.drawSingleFrame()
+            if (CDEUtils.isFunction(this._onResizeCB)) this._onResizeCB(this.size, this, e)
         },
-        onvisibilitychange=e=>this._visibilityChangeCB(!document.hidden, this, e),
-        onscroll=()=>{
+        onvisibilitychange=e=>this._onVisibilityChangeCB(!document.hidden, this, e),
+        onscroll=e=>{
           const scrollX = window.scrollX, scrollY = window.scrollY
           this.updateOffset()
           this._mouse.updatePos(this._mouse.x+(scrollX-this.#lastScrollValues[0]), this._mouse.y+(scrollY-this.#lastScrollValues[1]), [0,0])
           this.#mouseMovements()
           this.#lastScrollValues[0] = scrollX
           this.#lastScrollValues[1] = scrollY
+          if (CDEUtils.isFunction(this._onScrollCB)) this._onScrollCB([scrollX, scrollY], this, e)
         },
         onLoad=e=>{
           const callbacks = Canvas.#ON_LOAD_CALLBACKS, cb_ll = callbacks?.length
@@ -879,7 +882,9 @@ class Canvas {
         const isStatic = !isFinite(this._fpsLimit)
         return this._fpsLimit==null||isStatic ? isStatic ? "static" : null : 1/(this._fpsLimit/1000)
     }
-    get visibilityChangeCB() {return this._visibilityChangeCB}
+    get onVisibilityChangeCB() {return this._onVisibilityChangeCB}
+    get onResizeCB() {return this._onResizeCB}
+    get onScrollCB() {return this._onScrollCB}
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
     get render() {return this._render}
@@ -888,6 +893,7 @@ class Canvas {
     get mouseMoveListenersOptimizationEnabled() {return this._mouse._moveListenersOptimizationEnabled}
     get isOffscreenCanvas() {return this._cvs instanceof OffscreenCanvas} 
     get mouseMoveThrottlingDelay() {return this._mouseMoveThrottlingDelay}
+    get dimensions() {return [[0,0],this.size]}
 
 	set id(id) {this._id = id}
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
@@ -898,9 +904,9 @@ class Canvas {
         this._fpsLimit = CDEUtils.isDefined(fpsLimit)&&isFinite(fpsLimit) ? 1000/Math.max(fpsLimit, 0) : null
         this.#maxTime = this.#getMaxTime(fpsLimit)
     }
-    set visibilityChangeCB(visibilityChangeCB) {
+    set onVisibilityChangeCB(onVisibilityChangeCB) {
         this.#visibilityChangeLastState = this._state
-        this._visibilityChangeCB = (isVisible, CVS, e)=>{
+        this._onVisibilityChangeCB = (isVisible, CVS, e)=>{
             if (!isVisible) this.#visibilityChangeLastState = this._state
             if (this.#visibilityChangeLastState==1) {
                 if (isVisible) {
@@ -908,9 +914,11 @@ class Canvas {
                     this.resetReferences()
                 } else this.stopLoop()
             }
-            if (CDEUtils.isFunction(visibilityChangeCB)) visibilityChangeCB(isVisible, CVS, e)
+            if (CDEUtils.isFunction(onVisibilityChangeCB)) onVisibilityChangeCB(isVisible, CVS, e)
         }
     }
+    set onResizeCB(onResize) {this._onResizeCB = onResize}
+    set onScrollCB(onScrollCB) {this._onScrollCB = onScrollCB}
     set speedModifier(speedModifier) {this._speedModifier = speedModifier}
     set mouseMoveListenersOptimizationEnabled(enabled) {this._mouse._moveListenersOptimizationEnabled = enabled}
     set mouseMoveThrottlingDelay(mouseMoveThrottlingDelay) {this._mouseMoveThrottlingDelay = mouseMoveThrottlingDelay}

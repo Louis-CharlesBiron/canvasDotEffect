@@ -22,9 +22,9 @@ import {Canvas, CDEUtils} from "cdejs"
  * - declarations -> A callback containing the setup/declaration of all canvas obj and if applicable, adding them to the canvas. (CVS)=>{...}
  * - interactions -> A callback containing the desired built-in input device listeners. (CVS)=>{...}
  * - isStatic -> If true, initializes the canvas as static.
- * - loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently -> see https://github.com/Louis-CharlesBiron/canvasDotEffect?#canvas
+ * - loopingCB, fpsLimit, cvsFrame, settings, willReadFrequently -> see https://github.com/Louis-CharlesBiron/canvasDotEffect?#canvas
  */
-export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently}, ref)=>{
+export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loopingCB, fpsLimit, cvsFrame, settings, willReadFrequently}, ref)=>{
     const htmlElementCanvasRef = useRef(null), cvsInstanceRef = useRef(null)
 
     // Utility canvas functions
@@ -34,7 +34,7 @@ export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loop
     }))
 
     useEffect(()=>{
-        const CVS = new Canvas(htmlElementCanvasRef.current, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently)
+        const CVS = new Canvas(htmlElementCanvasRef.current, loopingCB, fpsLimit, cvsFrame, settings, willReadFrequently)
         cvsInstanceRef.current = CVS
 
         // Setup canvas objects and listeners
