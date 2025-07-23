@@ -34,7 +34,7 @@ class FilledShape extends Shape {
     // initializes the filled shape and creates its path
     initialize() {
         super.initialize()
-        if (CDEUtils.isFunction(this._initFillColor)) this.fillColor = this._initFillColor(this.render, this)
+        if (CDEUtils.isFunction(this._initFillColor) && this._dots.length) this.fillColor = this._initFillColor(this.render, this)
         else this.fillColor = this._initFillColor
         this.updatePath()
     }
