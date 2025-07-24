@@ -90,7 +90,7 @@ class Shape extends _Obj {
      * @param {Number} length: the width in pixels of the generation result
      * @param {Number} gapX: the gap in pixel skipped between each generation
      * @param {[Number, Number]} yModifier: a range allowing random Y offsets
-     * @param {Function?} generationCallback: custom callback called on each generation (this, lastDot)=>
+     * @param {Function?} generationCallback: custom callback called on each generation (dot, lastDot?)=>
      * @returns The generated Dots
      */
     static generate(yFn, startOffset, length, gapX, yModifier, generationCallback) {
@@ -103,7 +103,7 @@ class Shape extends _Obj {
         let dots = [], lastDot = null, isGenCB = CDEUtils.isFunction(generationCallback)
         for (let x=0;x<=length;x+=CDEUtils.getValueFromRange(gapX)) {
             const dot = new Dot([startOffset[0]+x, startOffset[1]+CDEUtils.getValueFromRange(yModifier)+yFn(x)])
-            if (lastDot && isGenCB) generationCallback(dot, lastDot)
+            if ((lastDot||dot) && isGenCB) generationCallback(dot, lastDot)
             dots.push(dot)
             lastDot = dot
         }
@@ -391,7 +391,7 @@ class Shape extends _Obj {
     }
 
     /**
-     * Disables the object by setting its and all its dots' activation margin to 0
+     * Disables the object by setting its and allf its dots' activation margin to 0
      */
     disable() {
         const dots = this._dots, d_ll = dots.length

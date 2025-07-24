@@ -32,11 +32,12 @@ class CDEUtils {
     /**
      * Returns a random number within the min and max range
      * @param {Number} min: the minimal possible value (included)
-     * @param {Number} max: the maximal possible value (excluded)
+     * @param {Number} max: the maximal possible value (included)
      * @param {Number?} decimals: the decimal point. (Defaults to integers)
      * @returns the generated number
      */
     static random(min, max, decimals=0) {
+        max++
         if (decimals) {
             const precision = decimals**10
             return Math.round((Math.random()*(max-min)+min)*precision)/precision

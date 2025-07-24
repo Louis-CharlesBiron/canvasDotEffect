@@ -33,7 +33,7 @@ class Mouse {
         this._scrollClicked = false      // whether the scroll button of the mouse is active (pressed)
         this._extraForwardClicked = false// whether the extra foward button of the mouse is active (not present on every mouse)
         this._extraBackClicked = false   // whether the extra back button of the mouse is active (not present on every mouse)
-        this._holdValue = null           // a custom manual value. Ex: can be used to easily reference an object the mouse is holding
+        this._holdValue = {}             // a custom manual value. Ex: can be used to easily reference an object the mouse is holding
         this._listeners = []             // list of all current listeners
 
         this._moveListenersOptimizationEnabled = true // when true, only checks move listeners on mouse move, else checks every frame

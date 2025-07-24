@@ -21,10 +21,10 @@ class CanvasUtils {
 
     // DEBUG // Create dots at provided intersection points
     static showIntersectionPoints(canvas, res) {
-        const s_d1 = new Dot(res.source.inner, 3, [255,0,0,1]),
-            s_d2 = new Dot(res.source.outer, 3, [255,0,0,0.45]),
-            t_d1 = new Dot(res.target.outer, 3, [255,0,0,0.45]),
-            t_d2 = new Dot(res.target.inner, 3, [255,0,0,1])
+        const s_d1 = new Dot(res[0][0], 3, [255,0,0,1]),
+            s_d2 = new Dot(res[0][1], 3, [255,0,0,0.45]),
+            t_d1 = new Dot(res[1][1], 3, [255,0,0,0.45]),
+            t_d2 = new Dot(res[1][0], 3, [255,0,0,1])
         
         canvas.add(s_d1)
         canvas.add(s_d2)
@@ -72,7 +72,7 @@ class CanvasUtils {
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
-            const res = dot.getLinearIntersectPoints(target, (target.radius??_Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
+            const res = dot.getLinearIntersectPoints(target, Math.max((target.radius??_Obj.DEFAULT_RADIUS), .1)*radiusPaddingMultiplier, dot, Math.max(dot.radius*radiusPaddingMultiplier, .1))
             if (filter&&filter.indexOf("#")!==-1 && !forceBatching) dot.render.stroke(lineType(res[0][0], res[1][0], spread), renderStyles)
             else dot.render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
         } else {
@@ -112,13 +112,28 @@ class CanvasUtils {
         }
     }
 
+
     /**
      * Generic function to get a callback that can make a dot draggable and throwable. This function should only be called once, but the returned callback, every frame.
+     * @param {Boolean?} disableMultipleDrag: if true, disables dragging multiple objects at once
      * @returns a callback to be called in the drawEffectCB of the shape containing the dot, only for the dot, and giving the following parameters: (dot, mouse, dist, ratio, pickableRadius?)=>{...}
      */
-    static getDraggableDotCB() {
+    static getDraggableDotCB(disableMultipleDrag=true) {
         let mouseup = false, dragAnim = null
-        return (dot, mouse, dist, ratio, pickableRadius=50)=>{
+        return disableMultipleDrag ? (dot, mouse, dist, ratio, pickableRadius=20)=>{
+            const draggedObjId = mouse.holdValue.draggedObjId
+            if (mouse.clicked && ((!draggedObjId && dist < pickableRadius) || draggedObjId == dot.id)) {
+                mouse.holdValue.draggedObjId = dot.id
+                mouseup = true
+                if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
+                dot.x = mouse.x
+                dot.y = mouse.y
+            } else if (mouseup) {
+                mouse.holdValue.draggedObjId = null
+                mouseup = false
+                dragAnim = dot.addForce(Math.min(CDEUtils.mod(Math.min(mouse.speed,3000), ratio)/4, 300), mouse.dir, 750+ratio*1200, Anim.easeOutQuad)
+            } else if (!mouse.clicked && draggedObjId) mouse.holdValue.draggedObjId = null
+        } : (dot, mouse, dist, ratio, pickableRadius=50)=>{
             if (mouse.clicked && dist < pickableRadius) {
                 mouseup = true
                 if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()

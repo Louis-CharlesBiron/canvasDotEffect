@@ -254,7 +254,7 @@ class _BaseObj extends _HasColor {
     playAnim(anim, isUnique, force) {
         if (isUnique && this.currentBacklogAnim && force) {
             this.currentBacklogAnim.end()
-            CDEUtils.addAt(this._anims.backlog, anim, 0)
+            this._anims.backlog = CDEUtils.addAt(this._anims.backlog, anim, 0)
         }
         const initEndCB = anim.endCB
         anim.endCB=()=>{

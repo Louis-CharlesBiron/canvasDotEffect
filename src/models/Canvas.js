@@ -218,20 +218,22 @@ class Canvas {
 
     // main loop, runs every frame
     #loop(time, wasRestarted) {
-        const frameTime = (time-this.#lastFrame)*this._speedModifier, fpsLimit = this._fpsLimit
+        const frameTime = (time-this.#lastFrame)*this._speedModifier, fpsLimit = this._fpsLimit, state = this._state
 
-        if (fpsLimit) {
-            const timeDiff = time-this.#lastLimitedFrame
-            if (timeDiff >= fpsLimit) {
+        if (state != 2) {
+            if (fpsLimit) {
+                const timeDiff = time-this.#lastLimitedFrame
+                if (timeDiff >= fpsLimit) {
+                    this._fixedTimeStamp = ((this.#timeStamp += frameTime)-this.#fixedTimeStampOffset)
+                    if (!wasRestarted) this.#loopCore(time)
+                    this.#lastFrame = time
+                    this.#lastLimitedFrame = time-(timeDiff%fpsLimit)
+                }
+            } else {
                 this._fixedTimeStamp = ((this.#timeStamp += frameTime)-this.#fixedTimeStampOffset)
                 if (!wasRestarted) this.#loopCore(time)
                 this.#lastFrame = time
-                this.#lastLimitedFrame = time-(timeDiff%fpsLimit)
             }
-        } else {
-            this._fixedTimeStamp = ((this.#timeStamp += frameTime)-this.#fixedTimeStampOffset)
-            if (!wasRestarted) this.#loopCore(time)
-            this.#lastFrame = time
         }
 
         if (this._state==1) CDE_CANVAS_TIMEOUT_FUNCTION(this.#loop.bind(this))
@@ -806,7 +808,7 @@ class Canvas {
     /**
      * Returns whether the provided position is within the canvas bounds
      * @param {[x,y]} pos: the pos to check 
-     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the results
+     * @param {Number?} padding: the padding applied to the results
      */
     isWithin(pos, padding=0) {
         const viewPos = this._viewPos

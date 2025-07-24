@@ -104,22 +104,22 @@ class Dot extends _Obj {
      * @param {Dot | pos} source: a Dot or a pos [x,y] (Defaults to this object)
      * @param {Number} sourcePadding: the padding radius of the source (Defaults to the source radius if it's a Dot, or 5)
      * @returns {
-     *      source: [ [x, y], [x, y] ]
-     *      target: [ [x, y], [x, y] ]
-     * } The 2 intersection points for the target and for the source
-     */
-    getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {
-        const [tx, ty] = target.pos??target, [sx, sy] = source.pos??source,
-            [a, b, lfn] = CDEUtils.getLinearFn([sx,sy], [tx,ty]), t_r = targetPadding**2, s_r = sourcePadding**2,
-            qA = (1+a**2)*2,
-            s_qB = -(2*a*(b-sy)-2*sx),
-            s_qD = Math.sqrt(s_qB**2-(4*(qA/2)*((b-sy)**2+sx**2-s_r))),
-            t_qB = -(2*a*(b-ty)-2*tx),
-            t_qD = Math.sqrt(t_qB**2-(4*(qA/2)*((b-ty)**2+tx**2-t_r))),
-            s_x1 = (s_qB+s_qD)/qA, s_x2 = (s_qB-s_qD)/qA, t_x1 = (t_qB+t_qD)/qA, t_x2 = (t_qB-t_qD)/qA,
-            s_y1 = lfn(s_x1), s_y2 = lfn(s_x2), t_y1 = lfn(t_x1), t_y2 = lfn(t_x2)
-        return [[[s_x1, s_y1], [s_x2, s_y2]], [[t_x2, t_y2], [t_x1, t_y1]]]
-    }
+    *      source: [ [x, y], [x, y] ]
+    *      target: [ [x, y], [x, y] ]
+    * } The 2 intersection points for the target and for the source
+    */
+   getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {
+       const [tx, ty] = target.pos??target, [sx, sy] = source.pos??source,
+           [a, b, lfn] = CDEUtils.getLinearFn([sx,sy], [tx,ty]), t_r = targetPadding**2, s_r = sourcePadding**2,
+           qA = (1+a**2)*2,
+           s_qB = -(2*a*(b-sy)-2*sx),
+           s_qD = Math.sqrt(s_qB**2-(4*(qA/2)*((b-sy)**2+sx**2-s_r))),
+           t_qB = -(2*a*(b-ty)-2*tx),
+           t_qD = Math.sqrt(t_qB**2-(4*(qA/2)*((b-ty)**2+tx**2-t_r))),
+           s_x1 = (s_qB+s_qD)/qA, s_x2 = (s_qB-s_qD)/qA, t_x1 = (t_qB+t_qD)/qA, t_x2 = (t_qB-t_qD)/qA,
+           s_y1 = lfn(s_x1), s_y2 = lfn(s_x2), t_y1 = lfn(t_x1), t_y2 = lfn(t_x2)
+       return CDEUtils.getDist(s_x1, s_y1, t_x2, t_y2) < CDEUtils.getDist(s_x2, s_y2, t_x1, t_y1) ? [[[s_x1, s_y1], [s_x2, s_y2]], [[t_x2, t_y2], [t_x1, t_y1]]] : [[[s_x2, s_y2], [s_x1, s_y1]], [[t_x1, t_y1], [t_x2, t_y2]]]
+   }
 
     /**
      * Activates path caching and updates the cached path
@@ -139,7 +139,7 @@ class Dot extends _Obj {
      * Returns a separate copy of this Dot
      */
     duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color, setupCB=this._setupCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, disablePathCaching=!this._cachedPath) {
-        const colorObject = color, colorRaw = colorObject.colorRaw, dot = new Dot(
+        const colorObject = color, colorRaw = colorObject?.colorRaw, dot = new Dot(
             pos,
             radius,
             (colorRaw instanceof Gradient||colorRaw instanceof Pattern) && colorRaw._initPositions.id != null && this._parent.id != null && colorRaw._initPositions.id == this._parent.id ? null:(_,dot)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:dot):colorObject.duplicate(),
