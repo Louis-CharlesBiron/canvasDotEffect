@@ -111,7 +111,7 @@ class Canvas {
             RenderStyles.apply(render, null, filter, compositeOperation, alpha, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
             TextStyles.apply(ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
             this.moveViewAt(this._viewPos)
-            if (this.fpsLimit==Canvas.STATIC || this._state==Canvas.STATES.STOPPED) this.drawSingleFrame()
+            if (this.hasBeenStarted && (this._fpsLimit >= 25 || this._state==Canvas.STATES.STOPPED)) this.drawSingleFrame()
             if (CDEUtils.isFunction(this._onResizeCB)) this._onResizeCB(this.size, this, e)
         },
         onvisibilitychange=e=>this._onVisibilityChangeCB(!document.hidden, this, e),
@@ -896,6 +896,7 @@ class Canvas {
     get isOffscreenCanvas() {return this._cvs instanceof OffscreenCanvas} 
     get mouseMoveThrottlingDelay() {return this._mouseMoveThrottlingDelay}
     get dimensions() {return [[0,0],this.size]}
+    get hasBeenStarted() {return Boolean(this.timeStamp)}
 
 	set id(id) {this._id = id}
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}

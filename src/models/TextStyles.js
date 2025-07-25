@@ -190,6 +190,22 @@ class TextStyles {
         }
     }
 
+    /**
+     * Formats possible font styling parameters into a valid font string
+     * @param {String} family: the font-family value
+     * @param {String} size: the font-size value
+     * @param {String?} weight: the font-weight value
+     * @param {String?} style: the font-style value
+     * @param {String?} variant: the font-variant value
+     * @param {String?} lineHeight: the line-height value
+     * @returns a string usable for the canvas context "font" property 
+     */
+    static getFontStyleDeclaration(family, size, weight=null, style=null, variant=null, lineHeight=null) {
+        if (lineHeight) size = `${size}/${lineHeight}`
+        family = family.split(",").map(f=>((f=f.trim()).includes(" ") && !f.match(/['"`]/g)) ? `'${f}'` : f).join(", ")
+        return [style, variant, weight, size, family].filter(Boolean).join(" ")
+    }
+
     get id() {return this.id}
     get render() {return this._render}
 	get font() {return this._font}

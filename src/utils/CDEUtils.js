@@ -203,7 +203,7 @@ class CDEUtils {
      * @returns the resulting pos array
      */
     static addPos(pos1, pos2) {
-        return [pos1[0]+pos2[0], pos1[1]+pos2[1]]
+        return [(pos1[0]||0)+(pos2[0]||0), (pos1[1]||0)+(pos2[1]||0)]
     }
     
     /**
@@ -213,7 +213,7 @@ class CDEUtils {
      * @returns the resulting pos array
      */
     static subPos(pos1, pos2) {
-        return [pos1[0]-pos2[0], pos1[1]-pos2[1]]
+        return [(pos1[0]||0)-(pos2[0]||0), (pos1[1]||0)-(pos2[1]||0)]
     }
 
     /**
@@ -223,7 +223,7 @@ class CDEUtils {
      * @returns the resulting pos array
      */
     static mulPos(pos1, pos2) {
-        return [pos1[0]*pos2[0], pos1[1]*pos2[1]]
+        return [(pos1[0]||0)*(pos2[0]||0), (pos1[1]||0)*(pos2[1]||0)]
     }
 
     /**
@@ -233,7 +233,7 @@ class CDEUtils {
      * @returns the resulting pos array
      */
     static divPos(pos1, pos2) {
-        return [pos1[0]/pos2[0], pos1[1]/pos2[1]]
+        return [(pos1[0]||0)/(pos2[0]||0), (pos1[1]||0)/(pos2[1]||0)]
     }
 
     /**
