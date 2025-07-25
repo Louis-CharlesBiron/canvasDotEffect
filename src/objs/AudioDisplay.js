@@ -39,6 +39,7 @@ class AudioDisplay extends _BaseObj {
     static BIQUAD_FILTER_TYPES = {DEFAULT:"allpass", ALLPASS:"allpass", BANDPASS:"bandpass", HIGHPASS:"highpass", HIGHSHELF:"highshelf", LOWPASS:"lowpass", LOWSHELF:"lowshelf", NOTCH:"notch", PEAKING:"peaking"}
     static IS_MICROPHONE_SUPPORTED = ()=>!!navigator?.mediaDevices?.getUserMedia
     static IS_SCREEN_ADUIO_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
+    static DEFAULT_MEDIA_ERROR_CALLBACK = (errorCode, media)=>console.warn("Error while loading media:", AudioDisplay.getErrorFromCode(errorCode), "("+media+")")
 
     #buffer_ll = null // the length of data
     #data = null      // the fft data values (raw bins)
@@ -53,7 +54,7 @@ class AudioDisplay extends _BaseObj {
      * @param {Number?} sampleCount: the max count of bins, (fftSize is calculated by the nearest valid value). Ex: if sampleCount is "32" and the display style is "BARS", 32 bars will be displayed
      * @param {Boolean?} disableAudio: whether the audio output is disabled or not (does not affect the visual display)
      * @param {Number?} offsetPourcent: the offset pourcent (0..1) in the bins order when calling binCB
-     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, e?)=>
+     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, source, e?)=>
      * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
      * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
      * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
@@ -66,7 +67,7 @@ class AudioDisplay extends _BaseObj {
         this._sampleCount = sampleCount??AudioDisplay.DEFAULT_SAMPLE_COUNT// the max count of bins, (fftSize is calculated by the nearest valid value). Ex: if sampleCount is "32" and the display style is "BARS", 32 bars will be displayed
         this._disableAudio = disableAudio??false                          // whether the audio output is disabled or not (does not affect the visual display) 
         this._offsetPourcent = offsetPourcent??0                          // the offset pourcent (0..1) in the bins when calling binCB. 
-        this._errorCB = errorCB                                           // a callback called if there is an error with the source (errorType, e?)=>
+        this._errorCB = errorCB||AudioDisplay.DEFAULT_MEDIA_ERROR_CALLBACK// a callback called if there is an error with the source (errorType, source, e?)=>
         this._transformable = 0                                           // if above 0, allows transformations with non batched canvas operations
 
         // audio stuff

@@ -28,6 +28,7 @@ class ImageDisplay extends _BaseObj {
     static ERROR_TYPES = {NO_PERMISSION:0, DEVICE_IN_USE:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3, NOT_AVAILABLE:4, NOT_SUPPORTED:5}
     static IS_CAMERA_SUPPORTED = ()=>!!navigator?.mediaDevices?.getUserMedia
     static IS_SCREEN_RECORD_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
+    static DEFAULT_MEDIA_ERROR_CALLBACK = (errorCode, media)=>console.warn("Error while loading media:", ImageDisplay.getErrorFromCode(errorCode), "("+media+")")
 
     #naturalSize = null
     
@@ -36,7 +37,7 @@ class ImageDisplay extends _BaseObj {
      * @param {CanvasImageSource} source: a media source, such as an image or a video
      * @param {[x,y]?} pos: the [x,y] pos of the top left of the object
      * @param {[width, height]?} size: the width and height of the display. Either as pixels or as pourcentiles (ex: ["50%", 200])
-     * @param {Function?} errorCB: function called upon any error loading the media
+     * @param {Function?} errorCB: function called upon any error loading the media (errorType, source, e?)=>
      * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
      * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
      * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
@@ -46,7 +47,7 @@ class ImageDisplay extends _BaseObj {
         super(pos, null, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source               // the data source
         this._size = size||[]               // the display size of the image (resizes)
-        this._errorCB = errorCB             // a callback called if there is an error with the source (errorType, e?)=>
+        this._errorCB = errorCB||ImageDisplay.DEFAULT_MEDIA_ERROR_CALLBACK// a callback called if there is an error with the source (errorType, source, e?)=>
         this._sourceCroppingPositions = null// data source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
     }
 

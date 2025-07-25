@@ -1,3 +1,4 @@
+// CanvasDotEffect ESM - v1.2.1
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
 // Please don't use or credit this code as your own.
@@ -32,11 +33,12 @@ export class CDEUtils {
     /**
      * Returns a random number within the min and max range
      * @param {Number} min: the minimal possible value (included)
-     * @param {Number} max: the maximal possible value (excluded)
+     * @param {Number} max: the maximal possible value (included)
      * @param {Number?} decimals: the decimal point. (Defaults to integers)
      * @returns the generated number
      */
     static random(min, max, decimals=0) {
+        max++
         if (decimals) {
             const precision = decimals**10
             return Math.round((Math.random()*(max-min)+min)*precision)/precision
@@ -202,7 +204,7 @@ export class CDEUtils {
      * @returns the resulting pos array
      */
     static addPos(pos1, pos2) {
-        return [pos1[0]+pos2[0], pos1[1]+pos2[1]]
+        return [(pos1[0]||0)+(pos2[0]||0), (pos1[1]||0)+(pos2[1]||0)]
     }
     
     /**
@@ -212,7 +214,7 @@ export class CDEUtils {
      * @returns the resulting pos array
      */
     static subPos(pos1, pos2) {
-        return [pos1[0]-pos2[0], pos1[1]-pos2[1]]
+        return [(pos1[0]||0)-(pos2[0]||0), (pos1[1]||0)-(pos2[1]||0)]
     }
 
     /**
@@ -222,7 +224,7 @@ export class CDEUtils {
      * @returns the resulting pos array
      */
     static mulPos(pos1, pos2) {
-        return [pos1[0]*pos2[0], pos1[1]*pos2[1]]
+        return [(pos1[0]||0)*(pos2[0]||0), (pos1[1]||0)*(pos2[1]||0)]
     }
 
     /**
@@ -232,7 +234,7 @@ export class CDEUtils {
      * @returns the resulting pos array
      */
     static divPos(pos1, pos2) {
-        return [pos1[0]/pos2[0], pos1[1]/pos2[1]]
+        return [(pos1[0]||0)/(pos2[0]||0), (pos1[1]||0)/(pos2[1]||0)]
     }
 
     /**
@@ -397,10 +399,10 @@ export class CanvasUtils {
 
     // DEBUG // Create dots at provided intersection points
     static showIntersectionPoints(canvas, res) {
-        const s_d1 = new Dot(res.source.inner, 3, [255,0,0,1]),
-            s_d2 = new Dot(res.source.outer, 3, [255,0,0,0.45]),
-            t_d1 = new Dot(res.target.outer, 3, [255,0,0,0.45]),
-            t_d2 = new Dot(res.target.inner, 3, [255,0,0,1])
+        const s_d1 = new Dot(res[0][0], 3, [255,0,0,1]),
+            s_d2 = new Dot(res[0][1], 3, [255,0,0,0.45]),
+            t_d1 = new Dot(res[1][1], 3, [255,0,0,0.45]),
+            t_d2 = new Dot(res[1][0], 3, [255,0,0,1])
         
         canvas.add(s_d1)
         canvas.add(s_d2)
@@ -448,7 +450,7 @@ export class CanvasUtils {
         if (color[3]<opacityThreshold || color.a<opacityThreshold) return;
 
         if (radiusPaddingMultiplier) {// also, only if sourcePos is Dot
-            const res = dot.getLinearIntersectPoints(target, (target.radius??_Obj.DEFAULT_RADIUS)*radiusPaddingMultiplier, dot, dot.radius*radiusPaddingMultiplier)
+            const res = dot.getLinearIntersectPoints(target, Math.max((target.radius??_Obj.DEFAULT_RADIUS), .1)*radiusPaddingMultiplier, dot, Math.max(dot.radius*radiusPaddingMultiplier, .1))
             if (filter&&filter.indexOf("#")!==-1 && !forceBatching) dot.render.stroke(lineType(res[0][0], res[1][0], spread), renderStyles)
             else dot.render.batchStroke(lineType(res[0][0], res[1][0], spread), renderStyles)
         } else {
@@ -488,13 +490,28 @@ export class CanvasUtils {
         }
     }
 
+
     /**
      * Generic function to get a callback that can make a dot draggable and throwable. This function should only be called once, but the returned callback, every frame.
+     * @param {Boolean?} disableMultipleDrag: if true, disables dragging multiple objects at once
      * @returns a callback to be called in the drawEffectCB of the shape containing the dot, only for the dot, and giving the following parameters: (dot, mouse, dist, ratio, pickableRadius?)=>{...}
      */
-    static getDraggableDotCB() {
+    static getDraggableDotCB(disableMultipleDrag=true) {
         let mouseup = false, dragAnim = null
-        return (dot, mouse, dist, ratio, pickableRadius=50)=>{
+        return disableMultipleDrag ? (dot, mouse, dist, ratio, pickableRadius=20)=>{
+            const draggedObjId = mouse.holdValue.draggedObjId
+            if (mouse.clicked && ((!draggedObjId && dist < pickableRadius) || draggedObjId == dot.id)) {
+                mouse.holdValue.draggedObjId = dot.id
+                mouseup = true
+                if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
+                dot.x = mouse.x
+                dot.y = mouse.y
+            } else if (mouseup) {
+                mouse.holdValue.draggedObjId = null
+                mouseup = false
+                dragAnim = dot.addForce(Math.min(CDEUtils.mod(Math.min(mouse.speed,3000), ratio)/4, 300), mouse.dir, 750+ratio*1200, Anim.easeOutQuad)
+            } else if (!mouse.clicked && draggedObjId) mouse.holdValue.draggedObjId = null
+        } : (dot, mouse, dist, ratio, pickableRadius=50)=>{
             if (mouse.clicked && dist < pickableRadius) {
                 mouseup = true
                 if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
@@ -1765,7 +1782,7 @@ export class Mouse {
         this._scrollClicked = false      // whether the scroll button of the mouse is active (pressed)
         this._extraForwardClicked = false// whether the extra foward button of the mouse is active (not present on every mouse)
         this._extraBackClicked = false   // whether the extra back button of the mouse is active (not present on every mouse)
-        this._holdValue = null           // a custom manual value. Ex: can be used to easily reference an object the mouse is holding
+        this._holdValue = {}             // a custom manual value. Ex: can be used to easily reference an object the mouse is holding
         this._listeners = []             // list of all current listeners
 
         this._moveListenersOptimizationEnabled = true // when true, only checks move listeners on mouse move, else checks every frame
@@ -2005,7 +2022,7 @@ export class Mouse {
 export class Render {
     static PROFILE_ID_GIVER = -1
     static TEXT_PROFILE_ID_GIVER = -1
-    static COMPOSITE_OPERATIONS = {SOURCE_OVER: "source-over", SOURCE_IN: "source-in", SOURCE_OUT: "source-out", SOURCE_ATOP: "source-atop", DESTINATION_OVER: "destination-over", DESTINATION_IN: "destination-in", DESTINATION_OUT: "destination-out", DESTINATION_ATOP: "destination-atop", LIGHTER: "lighter", COPY: "copy", XOR: "xor", MULTIPLY: "multiply", SCREEN: "screen", OVERLAY: "overlay", DARKEN: "darken", LIGHTEN: "lighten", COLOR_DODGE: "color-dodge", COLOR_BURN: "color-burn", HARD_LIGHT: "hard-light", SOFT_LIGHT: "soft-light", DIFFERENCE: "difference", EXCLUSION: "exclusion", HUE: "hue", SATURATION: "saturation", COLOR: "color", LUMINOSITY: "luminosity"}
+    static COMPOSITE_OPERATIONS = {UNDER:"destionation-over", OVER:"source-over", SOURCE_OVER: "source-over", SOURCE_IN: "source-in", SOURCE_OUT: "source-out", SOURCE_ATOP: "source-atop", DESTINATION_OVER: "destination-over", DESTINATION_IN: "destination-in", DESTINATION_OUT: "destination-out", DESTINATION_ATOP: "destination-atop", LIGHTER: "lighter", COPY: "copy", XOR: "xor", MULTIPLY: "multiply", SCREEN: "screen", OVERLAY: "overlay", DARKEN: "darken", LIGHTEN: "lighten", COLOR_DODGE: "color-dodge", COLOR_BURN: "color-burn", HARD_LIGHT: "hard-light", SOFT_LIGHT: "soft-light", DIFFERENCE: "difference", EXCLUSION: "exclusion", HUE: "hue", SATURATION: "saturation", COLOR: "color", LUMINOSITY: "luminosity"}
     static FILTERS = {BLUR:v=>`blur(${v}px)`,BRIGHTNESS:v=>`brightness(${v})`,CONTRAST:v=>`contrast(${v})`,DROPSHADOW:(value)=>`drop-shadow(${value})`,GRAYSCALE:v=>`grayscale(${v})`,HUE_ROTATE:v=>`hue-rotate(${v}deg)`,INVERT:v=>`invert(${v})`,OPACITY:v=>`opacity(${v})`,SATURATE:v=>`saturate(${v})`,SEPIA:v=>`sepia(${v})`,URL:v=>`url(${v})`}
     static DEFAULT_COMPOSITE_OPERATION = Render.COMPOSITE_OPERATIONS.SOURCE_OVER
     static DEFAULT_FILTER = "none"
@@ -2906,6 +2923,22 @@ export class TextStyles {
         }
     }
 
+    /**
+     * Formats possible font styling parameters into a valid font string
+     * @param {String} family: the font-family value
+     * @param {String} size: the font-size value
+     * @param {String?} weight: the font-weight value
+     * @param {String?} style: the font-style value
+     * @param {String?} variant: the font-variant value
+     * @param {String?} lineHeight: the line-height value
+     * @returns a string usable for the canvas context "font" property 
+     */
+    static getFontStyleDeclaration(family, size, weight=null, style=null, variant=null, lineHeight=null) {
+        if (lineHeight) size = `${size}/${lineHeight}`
+        family = family.split(",").map(f=>((f=f.trim()).includes(" ") && !f.match(/['"`]/g)) ? `'${f}'` : f).join(", ")
+        return [style, variant, weight, size, family].filter(Boolean).join(" ")
+    }
+
     get id() {return this.id}
     get render() {return this._render}
 	get font() {return this._font}
@@ -3153,6 +3186,7 @@ export class Canvas {
     static #ON_LOAD_CALLBACKS = []
     static #ON_FIRST_INTERACT_CALLBACKS = []
     static DEFAULT_MOUSE_MOVE_THROTTLE_DELAY = 10
+    static ACTIVATION_MARGIN_DISABLED = 0
 
     #lastFrame = 0           // default last frame time
     #lastLimitedFrame = 0    // last frame time for limited fps
@@ -3171,12 +3205,11 @@ export class Canvas {
      * @param {HTMLCanvasElement | OffscreenCanvas} cvs: the html canvas element or an OffscreenCanvas instance to link to
      * @param {Function?} loopingCB: a function called along with the loop() function. (deltatime)=>{...}
      * @param {Number?} fpsLimit: the maximal frames per second cap. Defaults to V-Sync
-     * @param {Function?} visibilityChangeCB: a function called upon document visibility change. (isVisible)=>{...}
      * @param {HTMLElement?} cvsFrame: if defined and if "cvs" is an HTML canvas, sets this element as the parent of the canvas element
      * @param {Object?} settings: an object containing the canvas settings
      * @param {Boolean} willReadFrequently: whether the getImageData optimizations are enabled
      */
-    constructor(cvs, loopingCB, fpsLimit=null, visibilityChangeCB, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
+    constructor(cvs, loopingCB, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._id = Canvas.CANVAS_ID_GIVER++                               // Canvas instance id
         if (!cvs) throw new Error("The cvs (canvas) parameter is undefined")
         this._cvs = cvs                                                   // html canvas element or an OffscreenCanvas instance
@@ -3184,7 +3217,9 @@ export class Canvas {
             this._frame = cvsFrame??cvs?.parentElement                    // html parent of canvas element
             this._cvs.setAttribute(Canvas.DEFAULT_CVSDE_ATTR, true)       // set styles selector for canvas
             this._frame.setAttribute(Canvas.DEFAULT_CVSFRAMEDE_ATTR, true)// set styles selector for parent
-            this.visibilityChangeCB = visibilityChangeCB                  // callback with the actions to be taken on document visibility change (isVisible, CVS, e)=>
+            this.onVisibilityChangeCB = null                              // callback with the actions to be taken on document visibility change (isVisible, CVS, e)=>
+            this._onResizeCB = null                                       // callback with the actions to be taken on document resize (newCanvasSize, CVS, e)=>
+            this._onScrollCB = null                                       // callback with the actions to be taken on document scroll ([pageScrollX, pageScrollY], CVS, e)=>
         }
         this._ctx = this._cvs.getContext("2d", {willReadFrequently})  // canvas context
         this._settings = this.updateSettings(settings||Canvas.DEFAULT_CTX_SETTINGS)// set context settings
@@ -3202,10 +3237,10 @@ export class Canvas {
             const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
             this.setSize(frameCBR.width, frameCBR.height)              // init size
             this.#initStyles()                                         // init styles
+            this._offset = this.updateOffset()                         // cvs page offset
         } else this.#cachedSize = [this._cvs.width, this._cvs.height]
         this._typingDevice = new TypingDevice()                        // keyboard info
         this._mouse = new Mouse(this._ctx)                             // mouse info
-        if (!this.isOffscreenCanvas) this._offset = this.updateOffset()// cvs page offset
         this._render = new Render(this._ctx)                           // render instance
         this._anims = []                                               // current animations
         this._mouseMoveThrottlingDelay = Canvas.DEFAULT_MOUSE_MOVE_THROTTLE_DELAY// mouse move throttling delay
@@ -3222,7 +3257,7 @@ export class Canvas {
 
     // sets resize and visibility change listeners on the window
     #initWindowListeners() {
-        const onresize=()=>{
+        const onresize=e=>{
             const render = this._render, ctx = this._ctx, [lineWidth, lineDash, lineDashOffset, lineJoin, lineCap] = render.currentCtxStyles, [font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering] = render.currentCtxTextStyles, [color, filter, compositeOperation, alpha] = render.currentCtxVisuals
             this.setSize()
             ctx.strokeStyle = ctx.fillStyle = Color.getColorValue(color)
@@ -3233,16 +3268,18 @@ export class Canvas {
             RenderStyles.apply(render, null, filter, compositeOperation, alpha, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
             TextStyles.apply(ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
             this.moveViewAt(this._viewPos)
-            if (this.fpsLimit==Canvas.STATIC || this._state==Canvas.STATES.STOPPED) this.drawSingleFrame()
+            if (this.hasBeenStarted && (this._fpsLimit >= 25 || this._state==Canvas.STATES.STOPPED)) this.drawSingleFrame()
+            if (CDEUtils.isFunction(this._onResizeCB)) this._onResizeCB(this.size, this, e)
         },
-        onvisibilitychange=e=>this._visibilityChangeCB(!document.hidden, this, e),
-        onscroll=()=>{
+        onvisibilitychange=e=>this._onVisibilityChangeCB(!document.hidden, this, e),
+        onscroll=e=>{
           const scrollX = window.scrollX, scrollY = window.scrollY
           this.updateOffset()
           this._mouse.updatePos(this._mouse.x+(scrollX-this.#lastScrollValues[0]), this._mouse.y+(scrollY-this.#lastScrollValues[1]), [0,0])
           this.#mouseMovements()
           this.#lastScrollValues[0] = scrollX
           this.#lastScrollValues[1] = scrollY
+          if (CDEUtils.isFunction(this._onScrollCB)) this._onScrollCB([scrollX, scrollY], this, e)
         },
         onLoad=e=>{
           const callbacks = Canvas.#ON_LOAD_CALLBACKS, cb_ll = callbacks?.length
@@ -3338,20 +3375,22 @@ export class Canvas {
 
     // main loop, runs every frame
     #loop(time, wasRestarted) {
-        const frameTime = (time-this.#lastFrame)*this._speedModifier, fpsLimit = this._fpsLimit
+        const frameTime = (time-this.#lastFrame)*this._speedModifier, fpsLimit = this._fpsLimit, state = this._state
 
-        if (fpsLimit) {
-            const timeDiff = time-this.#lastLimitedFrame
-            if (timeDiff >= fpsLimit) {
+        if (state != 2) {
+            if (fpsLimit) {
+                const timeDiff = time-this.#lastLimitedFrame
+                if (timeDiff >= fpsLimit) {
+                    this._fixedTimeStamp = ((this.#timeStamp += frameTime)-this.#fixedTimeStampOffset)
+                    if (!wasRestarted) this.#loopCore(time)
+                    this.#lastFrame = time
+                    this.#lastLimitedFrame = time-(timeDiff%fpsLimit)
+                }
+            } else {
                 this._fixedTimeStamp = ((this.#timeStamp += frameTime)-this.#fixedTimeStampOffset)
                 if (!wasRestarted) this.#loopCore(time)
                 this.#lastFrame = time
-                this.#lastLimitedFrame = time-(timeDiff%fpsLimit)
             }
-        } else {
-            this._fixedTimeStamp = ((this.#timeStamp += frameTime)-this.#fixedTimeStampOffset)
-            if (!wasRestarted) this.#loopCore(time)
-            this.#lastFrame = time
         }
 
         if (this._state==1) CDE_CANVAS_TIMEOUT_FUNCTION(this.#loop.bind(this))
@@ -3457,7 +3496,7 @@ export class Canvas {
         const els = this.#cachedEls, els_ll = this.#cachedEls_ll, render = this._render, deltaTime = this._deltaTime*this._speedModifier, timeStamp = this.timeStamp
         for (let i=0;i<els_ll;i++) {
             const el = els[i], margin = el.activationMargin
-            if (!(margin===true) && el.initialized && !this.isWithin(el.pos, margin) || !el.draw) continue
+            if (!margin || (!(margin===true) && el.initialized && !this.isWithin(el.pos, margin)) || !el.draw) continue
             el.draw(render, timeStamp, deltaTime)
         }
     }
@@ -3926,7 +3965,7 @@ export class Canvas {
     /**
      * Returns whether the provided position is within the canvas bounds
      * @param {[x,y]} pos: the pos to check 
-     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the results
+     * @param {Number?} padding: the padding applied to the results
      */
     isWithin(pos, padding=0) {
         const viewPos = this._viewPos
@@ -4002,7 +4041,9 @@ export class Canvas {
         const isStatic = !isFinite(this._fpsLimit)
         return this._fpsLimit==null||isStatic ? isStatic ? "static" : null : 1/(this._fpsLimit/1000)
     }
-    get visibilityChangeCB() {return this._visibilityChangeCB}
+    get onVisibilityChangeCB() {return this._onVisibilityChangeCB}
+    get onResizeCB() {return this._onResizeCB}
+    get onScrollCB() {return this._onScrollCB}
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
     get render() {return this._render}
@@ -4011,6 +4052,8 @@ export class Canvas {
     get mouseMoveListenersOptimizationEnabled() {return this._mouse._moveListenersOptimizationEnabled}
     get isOffscreenCanvas() {return this._cvs instanceof OffscreenCanvas} 
     get mouseMoveThrottlingDelay() {return this._mouseMoveThrottlingDelay}
+    get dimensions() {return [[0,0],this.size]}
+    get hasBeenStarted() {return Boolean(this.timeStamp)}
 
 	set id(id) {this._id = id}
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
@@ -4021,9 +4064,9 @@ export class Canvas {
         this._fpsLimit = CDEUtils.isDefined(fpsLimit)&&isFinite(fpsLimit) ? 1000/Math.max(fpsLimit, 0) : null
         this.#maxTime = this.#getMaxTime(fpsLimit)
     }
-    set visibilityChangeCB(visibilityChangeCB) {
+    set onVisibilityChangeCB(onVisibilityChangeCB) {
         this.#visibilityChangeLastState = this._state
-        this._visibilityChangeCB = (isVisible, CVS, e)=>{
+        this._onVisibilityChangeCB = (isVisible, CVS, e)=>{
             if (!isVisible) this.#visibilityChangeLastState = this._state
             if (this.#visibilityChangeLastState==1) {
                 if (isVisible) {
@@ -4031,9 +4074,11 @@ export class Canvas {
                     this.resetReferences()
                 } else this.stopLoop()
             }
-            if (CDEUtils.isFunction(visibilityChangeCB)) visibilityChangeCB(isVisible, CVS, e)
+            if (CDEUtils.isFunction(onVisibilityChangeCB)) onVisibilityChangeCB(isVisible, CVS, e)
         }
     }
+    set onResizeCB(onResize) {this._onResizeCB = onResize}
+    set onScrollCB(onScrollCB) {this._onScrollCB = onScrollCB}
     set speedModifier(speedModifier) {this._speedModifier = speedModifier}
     set mouseMoveListenersOptimizationEnabled(enabled) {this._mouse._moveListenersOptimizationEnabled = enabled}
     set mouseMoveThrottlingDelay(mouseMoveThrottlingDelay) {this._mouseMoveThrottlingDelay = mouseMoveThrottlingDelay}
@@ -4163,10 +4208,13 @@ export class Anim {
 
 export class _BaseObj extends _HasColor {
     static DEFAULT_POS = [0,0]
+    static DEFAULT_ACTIVATION_MARGIN = Canvas.DEFAULT_CANVAS_ACTIVE_AREA_PADDING
+    static ACTIVATION_MARGIN_DISABLED = Canvas.ACTIVATION_MARGIN_DISABLED
     static ABSOLUTE_ANCHOR = [0,0]
     static POSITION_PRECISION = 6
 
     #lastAnchorPos = [0,0]
+    #lastActivationMargin = null
 
     /**
      * Abstract canvas obj class
@@ -4409,7 +4457,7 @@ export class _BaseObj extends _HasColor {
     playAnim(anim, isUnique, force) {
         if (isUnique && this.currentBacklogAnim && force) {
             this.currentBacklogAnim.end()
-            CDEUtils.addAt(this._anims.backlog, anim, 0)
+            this._anims.backlog = CDEUtils.addAt(this._anims.backlog, anim, 0)
         }
         const initEndCB = anim.endCB
         anim.endCB=()=>{
@@ -4540,6 +4588,24 @@ export class _BaseObj extends _HasColor {
         return [[minX-padding[3], minY-padding[0]],[maxX+padding[1], maxY+padding[2]]]
     }
 
+    /**
+     * Disables the object by setting its activation margin to 0
+     */
+    disable() {
+        this.#lastActivationMargin = this._activationMargin
+        this._activationMargin = Canvas.ACTIVATION_MARGIN_DISABLED
+    }
+
+    /**
+     * Enables the object by setting its activation margin back to what it was before disabling
+     */
+    enable() {
+        if (this.#lastActivationMargin) {
+            this._activationMargin = this.#lastActivationMargin
+            this.#lastActivationMargin = null
+        }
+    }
+
 	get id() {return this._id}
     get x() {return this._pos[0]}
     get y() {return this._pos[1]}
@@ -4585,6 +4651,9 @@ export class _BaseObj extends _HasColor {
     get compositeOperation() {return this._visualEffects?.[1]??Render.DEFAULT_COMPOSITE_OPERATION}
     get opacity() {return this._visualEffects?.[2]??Render.DEFAULT_ALPHA}
     get safeColorObject() {return this.initialized&&this._color}
+    get lastActivationMargin() {return this.#lastActivationMargin}
+    get enabled() {return !this.#lastActivationMargin}
+    get disabled() {return Boolean(this.#lastActivationMargin)}
 
 
     set x(x) {this._pos[0] = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)}
@@ -4675,6 +4744,7 @@ export class AudioDisplay extends _BaseObj {
     static BIQUAD_FILTER_TYPES = {DEFAULT:"allpass", ALLPASS:"allpass", BANDPASS:"bandpass", HIGHPASS:"highpass", HIGHSHELF:"highshelf", LOWPASS:"lowpass", LOWSHELF:"lowshelf", NOTCH:"notch", PEAKING:"peaking"}
     static IS_MICROPHONE_SUPPORTED = ()=>!!navigator?.mediaDevices?.getUserMedia
     static IS_SCREEN_ADUIO_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
+    static DEFAULT_MEDIA_ERROR_CALLBACK = (errorCode, media)=>console.warn("Error while loading media:", AudioDisplay.getErrorFromCode(errorCode), "("+media+")")
 
     #buffer_ll = null // the length of data
     #data = null      // the fft data values (raw bins)
@@ -4689,7 +4759,7 @@ export class AudioDisplay extends _BaseObj {
      * @param {Number?} sampleCount: the max count of bins, (fftSize is calculated by the nearest valid value). Ex: if sampleCount is "32" and the display style is "BARS", 32 bars will be displayed
      * @param {Boolean?} disableAudio: whether the audio output is disabled or not (does not affect the visual display)
      * @param {Number?} offsetPourcent: the offset pourcent (0..1) in the bins order when calling binCB
-     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, e?)=>
+     * @param {Function?} errorCB: a function called if there is an error with the source (errorType, source, e?)=>
      * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
      * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
      * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
@@ -4702,7 +4772,7 @@ export class AudioDisplay extends _BaseObj {
         this._sampleCount = sampleCount??AudioDisplay.DEFAULT_SAMPLE_COUNT// the max count of bins, (fftSize is calculated by the nearest valid value). Ex: if sampleCount is "32" and the display style is "BARS", 32 bars will be displayed
         this._disableAudio = disableAudio??false                          // whether the audio output is disabled or not (does not affect the visual display) 
         this._offsetPourcent = offsetPourcent??0                          // the offset pourcent (0..1) in the bins when calling binCB. 
-        this._errorCB = errorCB                                           // a callback called if there is an error with the source (errorType, e?)=>
+        this._errorCB = errorCB||AudioDisplay.DEFAULT_MEDIA_ERROR_CALLBACK// a callback called if there is an error with the source (errorType, source, e?)=>
         this._transformable = 0                                           // if above 0, allows transformations with non batched canvas operations
 
         // audio stuff
@@ -5365,6 +5435,7 @@ export class ImageDisplay extends _BaseObj {
     static ERROR_TYPES = {NO_PERMISSION:0, DEVICE_IN_USE:1, SOURCE_DISCONNECTED:2, FILE_NOT_FOUND:3, NOT_AVAILABLE:4, NOT_SUPPORTED:5}
     static IS_CAMERA_SUPPORTED = ()=>!!navigator?.mediaDevices?.getUserMedia
     static IS_SCREEN_RECORD_SUPPORTED = ()=>!!navigator?.mediaDevices?.getDisplayMedia
+    static DEFAULT_MEDIA_ERROR_CALLBACK = (errorCode, media)=>console.warn("Error while loading media:", ImageDisplay.getErrorFromCode(errorCode), "("+media+")")
 
     #naturalSize = null
     
@@ -5373,7 +5444,7 @@ export class ImageDisplay extends _BaseObj {
      * @param {CanvasImageSource} source: a media source, such as an image or a video
      * @param {[x,y]?} pos: the [x,y] pos of the top left of the object
      * @param {[width, height]?} size: the width and height of the display. Either as pixels or as pourcentiles (ex: ["50%", 200])
-     * @param {Function?} errorCB: function called upon any error loading the media
+     * @param {Function?} errorCB: function called upon any error loading the media (errorType, source, e?)=>
      * @param {Function?} setupCB: function called on object's initialization (this, parent)=>{...}
      * @param {Function?} loopCB: function called each frame for this object (this)=>{...}
      * @param {[x,y] | Function | _BaseObj ?} anchorPos: reference point from which the object's pos will be set. Either a pos array, a callback (this, parent)=>{return [x,y] | _baseObj} or a _BaseObj inheritor
@@ -5383,7 +5454,7 @@ export class ImageDisplay extends _BaseObj {
         super(pos, null, setupCB, loopCB, anchorPos, activationMargin)
         this._source = source               // the data source
         this._size = size||[]               // the display size of the image (resizes)
-        this._errorCB = errorCB             // a callback called if there is an error with the source (errorType, e?)=>
+        this._errorCB = errorCB||ImageDisplay.DEFAULT_MEDIA_ERROR_CALLBACK// a callback called if there is an error with the source (errorType, source, e?)=>
         this._sourceCroppingPositions = null// data source cropping positions delimiting a rectangle, [ [startX, startY], [endX, endY] ] (Defaults to no cropping)
     }
 
@@ -6177,7 +6248,7 @@ export class Pattern extends _DynamicColor {
      * @param {Boolean?} keepAspectRatio: Whether the media should resize by keeping the original aspect ratio
      * @param {Pattern.FORCE_UPDATE_LEVELS?} forcedUpdates: whether/how the pattern forces updates
      * @param {Number?} rotation: the rotation in degrees 
-     * @param {Function?} errorCB: function called upon any error loading the media
+     * @param {Function?} errorCB: function called upon any error loading the media. (errorType, source, e?)=>
      * @param {Function?} readyCB: function called when the media is loaded
      * @param {Number?} frameRate: how many times per seconds should the media update (mostly used for videos)
      * @param {Pattern.REPETITION_MODES} repeatMode: the repetition mode used for displaying the media at a larger size than what it's covering
@@ -6195,7 +6266,7 @@ export class Pattern extends _DynamicColor {
         this._forcedUpdates = forcedUpdates??Pattern.DEFAULT_FORCE_UPDATE_LEVEL// whether/how the pattern forces updates
         const rawFrameRate = frameRate??Pattern.DEFAULT_FRAME_RATE
         this._frameRate = (rawFrameRate%1) ? rawFrameRate : 1/Math.max(rawFrameRate, 0) // update frequency of video/canvas sources
-        this._errorCB = errorCB                                                // a callback called if there is an error with the source (errorType, e?)=>
+        this._errorCB = errorCB||ImageDisplay.DEFAULT_MEDIA_ERROR_CALLBACK     // a callback called if there is an error with the source (errorType, source, e?)=>
         this._readyCB = readyCB                                                // custom callback ran upon source load
         this._repeatMode = repeatMode??Pattern.DEFAULT_REPETITION_MODE         // whether the pattern repeats horizontally/vertically
 
@@ -6618,7 +6689,7 @@ export class Shape extends _Obj {
      * @param {Number} length: the width in pixels of the generation result
      * @param {Number} gapX: the gap in pixel skipped between each generation
      * @param {[Number, Number]} yModifier: a range allowing random Y offsets
-     * @param {Function?} generationCallback: custom callback called on each generation (this, lastDot)=>
+     * @param {Function?} generationCallback: custom callback called on each generation (dot, lastDot?)=>
      * @returns The generated Dots
      */
     static generate(yFn, startOffset, length, gapX, yModifier, generationCallback) {
@@ -6631,7 +6702,7 @@ export class Shape extends _Obj {
         let dots = [], lastDot = null, isGenCB = CDEUtils.isFunction(generationCallback)
         for (let x=0;x<=length;x+=CDEUtils.getValueFromRange(gapX)) {
             const dot = new Dot([startOffset[0]+x, startOffset[1]+CDEUtils.getValueFromRange(yModifier)+yFn(x)])
-            if (lastDot && isGenCB) generationCallback(dot, lastDot)
+            if ((lastDot||dot) && isGenCB) generationCallback(dot, lastDot)
             dots.push(dot)
             lastDot = dot
         }
@@ -6919,6 +6990,22 @@ export class Shape extends _Obj {
     }
 
     /**
+     * Disables the object by setting its and allf its dots' activation margin to 0
+     */
+    disable() {
+        const dots = this._dots, d_ll = dots.length
+        for (let i=0;i<d_ll;i++) dots[i].disable()
+    }
+
+    /**
+     * Enables the object by setting its and all its dots' activation margin to what it was before disabling
+     */
+    enable() {
+        const dots = this._dots, d_ll = dots.length
+        for (let i=0;i<d_ll;i++) dots[i].enable()
+    }
+
+    /**
      * @returns a separate copy of this Shape (only if initialized)
      */
     duplicate(pos=this.pos_, dots=this._dots.map(d=>d.duplicate()), radius=this._radius, color=this._color, limit=this._limit, drawEffectCB=this._drawEffectCB, ratioPosCB=this._ratioPosCB, setupCB=this._setupCB, loopCB=this._loopCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, fragile=this._fragile) {
@@ -7175,7 +7262,7 @@ export class FilledShape extends Shape {
     // initializes the filled shape and creates its path
     initialize() {
         super.initialize()
-        if (CDEUtils.isFunction(this._initFillColor)) this.fillColor = this._initFillColor(this.render, this)
+        if (CDEUtils.isFunction(this._initFillColor) && this._dots.length) this.fillColor = this._initFillColor(this.render, this)
         else this.fillColor = this._initFillColor
         this.updatePath()
     }
@@ -7581,22 +7668,22 @@ export class Dot extends _Obj {
      * @param {Dot | pos} source: a Dot or a pos [x,y] (Defaults to this object)
      * @param {Number} sourcePadding: the padding radius of the source (Defaults to the source radius if it's a Dot, or 5)
      * @returns {
-     *      source: [ [x, y], [x, y] ]
-     *      target: [ [x, y], [x, y] ]
-     * } The 2 intersection points for the target and for the source
-     */
-    getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {
-        const [tx, ty] = target.pos??target, [sx, sy] = source.pos??source,
-            [a, b, lfn] = CDEUtils.getLinearFn([sx,sy], [tx,ty]), t_r = targetPadding**2, s_r = sourcePadding**2,
-            qA = (1+a**2)*2,
-            s_qB = -(2*a*(b-sy)-2*sx),
-            s_qD = Math.sqrt(s_qB**2-(4*(qA/2)*((b-sy)**2+sx**2-s_r))),
-            t_qB = -(2*a*(b-ty)-2*tx),
-            t_qD = Math.sqrt(t_qB**2-(4*(qA/2)*((b-ty)**2+tx**2-t_r))),
-            s_x1 = (s_qB+s_qD)/qA, s_x2 = (s_qB-s_qD)/qA, t_x1 = (t_qB+t_qD)/qA, t_x2 = (t_qB-t_qD)/qA,
-            s_y1 = lfn(s_x1), s_y2 = lfn(s_x2), t_y1 = lfn(t_x1), t_y2 = lfn(t_x2)
-        return [[[s_x1, s_y1], [s_x2, s_y2]], [[t_x2, t_y2], [t_x1, t_y1]]]
-    }
+    *      source: [ [x, y], [x, y] ]
+    *      target: [ [x, y], [x, y] ]
+    * } The 2 intersection points for the target and for the source
+    */
+   getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {
+       const [tx, ty] = target.pos??target, [sx, sy] = source.pos??source,
+           [a, b, lfn] = CDEUtils.getLinearFn([sx,sy], [tx,ty]), t_r = targetPadding**2, s_r = sourcePadding**2,
+           qA = (1+a**2)*2,
+           s_qB = -(2*a*(b-sy)-2*sx),
+           s_qD = Math.sqrt(s_qB**2-(4*(qA/2)*((b-sy)**2+sx**2-s_r))),
+           t_qB = -(2*a*(b-ty)-2*tx),
+           t_qD = Math.sqrt(t_qB**2-(4*(qA/2)*((b-ty)**2+tx**2-t_r))),
+           s_x1 = (s_qB+s_qD)/qA, s_x2 = (s_qB-s_qD)/qA, t_x1 = (t_qB+t_qD)/qA, t_x2 = (t_qB-t_qD)/qA,
+           s_y1 = lfn(s_x1), s_y2 = lfn(s_x2), t_y1 = lfn(t_x1), t_y2 = lfn(t_x2)
+       return CDEUtils.getDist(s_x1, s_y1, t_x2, t_y2) < CDEUtils.getDist(s_x2, s_y2, t_x1, t_y1) ? [[[s_x1, s_y1], [s_x2, s_y2]], [[t_x2, t_y2], [t_x1, t_y1]]] : [[[s_x2, s_y2], [s_x1, s_y1]], [[t_x1, t_y1], [t_x2, t_y2]]]
+   }
 
     /**
      * Activates path caching and updates the cached path
@@ -7616,7 +7703,7 @@ export class Dot extends _Obj {
      * Returns a separate copy of this Dot
      */
     duplicate(pos=this.getInitPos(), radius=this._radius, color=this._color, setupCB=this._setupCB, anchorPos=this._anchorPos, activationMargin=this._activationMargin, disablePathCaching=!this._cachedPath) {
-        const colorObject = color, colorRaw = colorObject.colorRaw, dot = new Dot(
+        const colorObject = color, colorRaw = colorObject?.colorRaw, dot = new Dot(
             pos,
             radius,
             (colorRaw instanceof Gradient||colorRaw instanceof Pattern) && colorRaw._initPositions.id != null && this._parent.id != null && colorRaw._initPositions.id == this._parent.id ? null:(_,dot)=>(colorRaw instanceof Gradient||colorRaw instanceof Pattern)?colorRaw.duplicate(Array.isArray(colorRaw.initPositions)?null:dot):colorObject.duplicate(),

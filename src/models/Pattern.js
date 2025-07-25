@@ -32,7 +32,7 @@ class Pattern extends _DynamicColor {
      * @param {Boolean?} keepAspectRatio: Whether the media should resize by keeping the original aspect ratio
      * @param {Pattern.FORCE_UPDATE_LEVELS?} forcedUpdates: whether/how the pattern forces updates
      * @param {Number?} rotation: the rotation in degrees 
-     * @param {Function?} errorCB: function called upon any error loading the media
+     * @param {Function?} errorCB: function called upon any error loading the media. (errorType, source, e?)=>
      * @param {Function?} readyCB: function called when the media is loaded
      * @param {Number?} frameRate: how many times per seconds should the media update (mostly used for videos)
      * @param {Pattern.REPETITION_MODES} repeatMode: the repetition mode used for displaying the media at a larger size than what it's covering
@@ -50,7 +50,7 @@ class Pattern extends _DynamicColor {
         this._forcedUpdates = forcedUpdates??Pattern.DEFAULT_FORCE_UPDATE_LEVEL// whether/how the pattern forces updates
         const rawFrameRate = frameRate??Pattern.DEFAULT_FRAME_RATE
         this._frameRate = (rawFrameRate%1) ? rawFrameRate : 1/Math.max(rawFrameRate, 0) // update frequency of video/canvas sources
-        this._errorCB = errorCB                                                // a callback called if there is an error with the source (errorType, e?)=>
+        this._errorCB = errorCB||ImageDisplay.DEFAULT_MEDIA_ERROR_CALLBACK     // a callback called if there is an error with the source (errorType, source, e?)=>
         this._readyCB = readyCB                                                // custom callback ran upon source load
         this._repeatMode = repeatMode??Pattern.DEFAULT_REPETITION_MODE         // whether the pattern repeats horizontally/vertically
 

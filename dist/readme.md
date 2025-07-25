@@ -121,7 +121,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cdejs": "^1.2.0"
+    "cdejs": "^1.2.1"
   },
   "devDependencies": {
     "vite": "^6.2.2"
@@ -139,12 +139,11 @@ The following sections are short documentations of each class, basically what it
 
 The Canvas class is the core of the project. It manages the main loop, the window listeners, the delta time, the HTML canvas element, all the canvas objects, and much more.
 #### **The Canvas constructor takes the following parameters:**
-###### - `new Canvas(cvs, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently)`
+###### - `new Canvas(cvs, loopingCB, fpsLimit, cvsFrame, settings, willReadFrequently)`
 - *id* -> The identifier of the canvas instance.
 - **cvs** -> The HTML canvas element to link to.
 - **loopingCB**? -> A callback ran each frame. `(Canvas)=>`
 - **fpsLimit**? -> The maximum fps cap. Defaults and caps to V-Sync.
-- **visibilityChangeCB**? -> A callback called on document visibility change. `(isVisible, cvs, event)=>`
 - **cvsFrame**? -> If you don't want the canvas to take the size of its direct parent, you can provide another custom HTML element here.
 - **settings**? -> The custom canvas settings (leave `null` for prebuilt default settings).
 - **willReadFrequently**? -> If `true`, optimizes the canvas context for frequent readings. (Defaults to `false`)
@@ -234,6 +233,7 @@ The _Obj class is the template class of most canvas object. **It should not be d
 - Movements functions (`moveBy`, `addForce`, `follow`, ...)
 - Informative functions (`isWithin`, `getInitPos`, `getBounds`, ...)
 - Access to the object's animations (`playAnim`, `clearAnims`, ...)
+- Visibility functions (`enable`, `disable`, ...)
 
 **The follow function:** use `follow()` to make an object follow a custom path:
 ###### - `follow(duration, easing, action, progressSeparations)`
@@ -2280,9 +2280,9 @@ import {Canvas, CDEUtils} from "cdejs"
  * - declarations -> A callback containing the setup/declaration of all canvas obj and if applicable, adding them to the canvas. (CVS)=>{...}
  * - interactions -> A callback containing the desired built-in input device listeners. (CVS)=>{...}
  * - isStatic -> If true, initializes the canvas as static.
- * - loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently -> see https://github.com/Louis-CharlesBiron/canvasDotEffect?#canvas
+ * - loopingCB, fpsLimit, cvsFrame, settings, willReadFrequently -> see https://github.com/Louis-CharlesBiron/canvasDotEffect?#canvas
  */
-export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently}, ref)=>{
+export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loopingCB, fpsLimit, cvsFrame, settings, willReadFrequently}, ref)=>{
     const htmlElementCanvasRef = useRef(null), cvsInstanceRef = useRef(null)
 
     // Utility canvas functions
@@ -2292,7 +2292,7 @@ export const CDECanvas = forwardRef(({declarations, interactions, isStatic, loop
     }))
 
     useEffect(()=>{
-        const CVS = new Canvas(htmlElementCanvasRef.current, loopingCB, fpsLimit, visibilityChangeCB, cvsFrame, settings, willReadFrequently)
+        const CVS = new Canvas(htmlElementCanvasRef.current, loopingCB, fpsLimit, cvsFrame, settings, willReadFrequently)
         cvsInstanceRef.current = CVS
 
         // Setup canvas objects and listeners

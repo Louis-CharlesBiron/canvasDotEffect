@@ -46,8 +46,8 @@ $mergedCode = "'use strict';`n$($mergedCode.Trim())"
 $mergedCodeESM = $mergedCodeESM.Trim()
 
 #CREATE MERGED FILE
-$toMinifyPath = New-Item "$dist\canvasDotEffect.js" -Value $mergedCode -Force
-$toMinifyPathESM = New-Item "$dist\cde.js" -Value $mergedCodeESM -Force
+$toMinifyPath = New-Item "$dist\canvasDotEffect.js" -Value "// CanvasDotEffect UMD - v$version`n$mergedCode" -Force
+$toMinifyPathESM = New-Item "$dist\cde.js" -Value "// CanvasDotEffect ESM - v$version`n$mergedCodeESM" -Force
 
 #CREATE MINIFIED MERGED FILE
 if (-not (Test-Path $terser)) {
