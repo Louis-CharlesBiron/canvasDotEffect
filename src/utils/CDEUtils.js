@@ -56,6 +56,17 @@ class CDEUtils {
     }
 
     /**
+     * Returns the average of an array of numbers
+     * @param {Number[]} arr: an array of numbers
+     * @returns the average
+     */
+    static avg(arr) {
+        let a_ll = arr.length, total=0
+        for (let i=0;i<a_ll;i++) total+=arr[i]
+        return total/a_ll
+    }
+
+    /**
      * Returns whether a value is defined
      * @param {*} value: the value to check
      * @returns whether the value is defined
