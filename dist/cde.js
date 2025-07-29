@@ -1,4 +1,4 @@
-// CanvasDotEffect ESM - v1.2.1
+// CanvasDotEffect ESM - v1.3.0
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
 // Please don't use or credit this code as your own.
@@ -57,6 +57,17 @@ export class CDEUtils {
     }
 
     /**
+     * Returns the average of an array of numbers
+     * @param {Number[]} arr: an array of numbers
+     * @returns the average
+     */
+    static avg(arr) {
+        let a_ll = arr.length, total=0
+        for (let i=0;i<a_ll;i++) total+=arr[i]
+        return total/a_ll
+    }
+
+    /**
      * Returns whether a value is defined
      * @param {*} value: the value to check
      * @returns whether the value is defined
@@ -83,6 +94,61 @@ export class CDEUtils {
     static round(num, decimals=0) {
         const precision = 10**decimals
         return Math.round(num*precision)/precision
+    }
+
+    /**
+     * Fades a numeric value according to Anim progress and playCount
+     * @param {Number} prog: an Anim instance's progress
+     * @param {Number?} i: an Anin instance's play count. (Controls the direction of the fading animation)
+     * @param {Number?} minValue: the minimal value to reach
+     * @param {Number?} maxValue: the maximal value to reach
+     * @returns the calculated number
+     */
+    static fade(prog, i=0, minValue=0, maxValue=5) {
+        maxValue -= minValue
+        return i%2?minValue+maxValue*(1-prog):minValue+maxValue*prog
+    }
+
+    /**
+     * Returns an array of a shape's dots ordered by the distance between them and the specified dot
+     * @param {Dot} dot: a Dot instance
+     * @param {Shape?} shape: a Shape instance. (Defaults to the shape containing "dot")
+     * @returns an ordered list of all dots [[dot, distance], ...]
+     */
+    static getNearestDots(dot, shape=dot.parent) {
+        let dots = shape.dots, d_ll = dots.length, dotX = dot.x, dotY = dot.y, res = []
+        for (let i=0;i<d_ll;i++) {
+            const atDot = dots[i]
+            if (atDot.id != dot.id) res.push([atDot, CDEUtils.getDist(dotX, dotY, atDot.pos[0], atDot.pos[1])])
+        }
+        return res.toSorted((d1, d2)=>d1[1]-d2[1])
+    }
+
+    /**
+     * Makes a callback only called after a certain amount of time without 'interaction'.
+     * This function returns a 'regulation callback' that will call the provided "callback" only after the provided amount of time has passed without it getting called.
+     * For example, calling the 'regulation callback', with a timeout of 1000ms, everytime a key is pressed will make it so the provided "callback" will be called only after no keys were pressed for 1 seconds.
+     * @param {Function} callback: a function to be called after "timeout" amount of time has passed with no 'interaction'
+     * @param {Number?} timeout: the minimal time window, in miliseconds, before calling callback after an 'interaction'
+     * @returns the 'regulation callback'
+     */
+    static getInputRegulationCB(callback, timeout=1000) {
+        let timeoutId
+        return (...params)=>{
+            clearTimeout(timeoutId)
+            timeoutId = setTimeout(()=>callback(...params), timeout)
+        }
+    }
+
+    /**
+     * Basically regular setInterval, but without the initial timeout on the first call
+     * @param {Function} callback: a function to be called
+     * @param {Number?} timeout: the timeout value in miliseconds
+     * @returns the setInteraval id
+     */
+    static noTimeoutInterval(callback, timeout=1000) {
+        callback()
+        return setInterval(callback, timeout)
     }
 
     /**
@@ -335,16 +401,18 @@ export class CDEUtils {
     }
 }
 export class FPSCounter {
+    static COMMON_REFRESH_RATES = [30, 60, 75, 90, 120, 144, 165, 240, 360, 480, 500]
+    static ABNORMAL_FLUCTUATION_THRESHOLD = 20
 
     /**
      * Allows to get the current frames per second.
      * To use: either getFpsRaw for raw fps, AND/OR getFps for averaged fps
-     * @param {Number?} avgSampleSize: the sample size used to calculate the current fps average
+     * @param {Number?} averageSampleSize: the sample size used to calculate the current fps average
      */
-    constructor(avgSampleSize) {
-        this._avgSampleSize = avgSampleSize||10
+    constructor(averageSampleSize) {
+        this._averageSampleSize = averageSampleSize||10
         this._times = []
-        this._avg = []
+        this._averageSample = []
         this._maxFps=0
     }
 
@@ -365,16 +433,57 @@ export class FPSCounter {
      * @returns the current averaged amount of times ran in a second
      */
     getFps() {
-        this._avg.push(this.getFpsRaw())
-        if (this._avg.length > this._avgSampleSize) this._avg.shift()
-        return Math.floor(Math.min(this._avg.reduce((a, b)=>a+b,0)/this._avgSampleSize, this._maxFps))
+        const avgSample = this._averageSample
+        avgSample.push(this.getFpsRaw())
+        if (avgSample.length > this._averageSampleSize) avgSample.shift()
+        return Math.min(CDEUtils.avg(avgSample), this._maxFps)|0
+    }
+
+
+    /**
+     * Tries to calculate the most stable fps based on the current amount of lag, device performance / capabilities. Results will fluctuate over time. (This function only works while 'getFps()' is running in a loop)
+     * @param {Boolean?} prioritizeStability: whether the recommended value prioritizes a lower but, more stable fps value over a higher, but less stable fps value 
+     * @param {Number?} stabilityThreshold: the stability threshold used when prioritizeStability is enabled. The higher this is, the more inclined it is to return a higher fps value when close to the next fps threshold
+     * @returns the recommended fps value
+     */
+    getRecommendedFPS(prioritizeStability=true, stabilityThreshold=8) {
+        if (performance.now() > 1000) {
+            const refreshRates = FPSCounter.COMMON_REFRESH_RATES, avgFps = this._averageSample.reduce((a,b)=>a+b,0)/this._averageSampleSize
+
+            if (avgFps && prioritizeStability) return refreshRates[refreshRates.indexOf(refreshRates.reduce((a,b)=>a<(avgFps+stabilityThreshold)?b:a,null))-1]||refreshRates[0]
+            else return this.getApproximatedUserRefreshRate(avgFps)
+        } else return null
+    }
+
+    /**
+     * Runs getRecommendedFPS multiple times over a period of time to figure out what is the recommended fps value in a specific environment.
+     * @param {Function} resultCB: a function called once the evaluation ends, containing the recommended value and statistics. (results)=>
+     * @param {Number?} duration: the evalution duration in miliseconds. (The evaluation will last exactly 1 second longer than this value)
+     * @param {Number?} sampleCount: how many getRecommendedFPS samples to take in order to recommend a fps value
+     * @param {Boolean?} prioritizeStability: whether the recommended value prioritizes a lower but, more stable fps value over a higher, but less stable fps value 
+     * @param {Number?} stabilityThreshold: the stability threshold used when prioritizeStability is enabled. The higher this is, the more inclined it is to return a higher fps value when close to the next fps threshold
+     */
+    runRecommendedFPSEvaluation(resultCB, duration=10000, sampleCount=10, prioritizeStability=true, stabilityThreshold=8) {
+        sampleCount = sampleCount ? sampleCount|=0 : 10
+        if (duration < sampleCount) duration = sampleCount
+        const delay = duration/sampleCount, rawResults = []
+        for (let i=delay;i<=duration;i+=delay) {
+            const time = 1000+i
+            setTimeout(()=>{
+                rawResults.push(this.getRecommendedFPS(prioritizeStability, stabilityThreshold))
+                if (i>=duration && CDEUtils.isFunction(resultCB)) {
+                    const [min, max] = CDEUtils.getMinMax(rawResults), avg = CDEUtils.avg(rawResults), recommendedValue = this.getApproximatedUserRefreshRate(avg-stabilityThreshold)
+                    resultCB({recommendedValue, stats:{rawResults, min, max, avg}})
+                }
+            }, time)
+        }
     }
 
     get maxFps() {return this._maxFps-1}
-    get avgSample() {return this._avgSampleSize}
+    get averageSampleSize() {return this._averageSampleSize}
     get fpsRaw() {return this._times.length}
     
-    set avgSample(s) {this._avgSampleSize = s}
+    set averageSampleSize(averageSampleSize) {this._averageSampleSize = averageSampleSize}
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -783,7 +892,7 @@ export class Color {
     static SEARCH_STARTS = {TOP_LEFT:"TOP_LEFT", BOTTOM_RIGHT:"BOTTOM_RIGHT"}
     static DEFAULT_SEARCH_START = Color.SEARCH_STARTS.TOP_LEFT
     static DEFAULT_DECIMAL_ROUNDING_POINT = 3
-    static OPACITY_VISIBILITY_THRESHOLD = 0.05
+    static OPACITY_VISIBILITY_THRESHOLD = 0.029
     
     #rgba = null // cached rgba value
     #hsv = null  // cached hsv value

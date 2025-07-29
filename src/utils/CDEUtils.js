@@ -96,6 +96,61 @@ class CDEUtils {
     }
 
     /**
+     * Fades a numeric value according to Anim progress and playCount
+     * @param {Number} prog: an Anim instance's progress
+     * @param {Number?} i: an Anin instance's play count. (Controls the direction of the fading animation)
+     * @param {Number?} minValue: the minimal value to reach
+     * @param {Number?} maxValue: the maximal value to reach
+     * @returns the calculated number
+     */
+    static fade(prog, i=0, minValue=0, maxValue=5) {
+        maxValue -= minValue
+        return i%2?minValue+maxValue*(1-prog):minValue+maxValue*prog
+    }
+
+    /**
+     * Returns an array of a shape's dots ordered by the distance between them and the specified dot
+     * @param {Dot} dot: a Dot instance
+     * @param {Shape?} shape: a Shape instance. (Defaults to the shape containing "dot")
+     * @returns an ordered list of all dots [[dot, distance], ...]
+     */
+    static getNearestDots(dot, shape=dot.parent) {
+        let dots = shape.dots, d_ll = dots.length, dotX = dot.x, dotY = dot.y, res = []
+        for (let i=0;i<d_ll;i++) {
+            const atDot = dots[i]
+            if (atDot.id != dot.id) res.push([atDot, CDEUtils.getDist(dotX, dotY, atDot.pos[0], atDot.pos[1])])
+        }
+        return res.toSorted((d1, d2)=>d1[1]-d2[1])
+    }
+
+    /**
+     * Makes a callback only called after a certain amount of time without 'interaction'.
+     * This function returns a 'regulation callback' that will call the provided "callback" only after the provided amount of time has passed without it getting called.
+     * For example, calling the 'regulation callback', with a timeout of 1000ms, everytime a key is pressed will make it so the provided "callback" will be called only after no keys were pressed for 1 seconds.
+     * @param {Function} callback: a function to be called after "timeout" amount of time has passed with no 'interaction'
+     * @param {Number?} timeout: the minimal time window, in miliseconds, before calling callback after an 'interaction'
+     * @returns the 'regulation callback'
+     */
+    static getInputRegulationCB(callback, timeout=1000) {
+        let timeoutId
+        return (...params)=>{
+            clearTimeout(timeoutId)
+            timeoutId = setTimeout(()=>callback(...params), timeout)
+        }
+    }
+
+    /**
+     * Basically regular setInterval, but without the initial timeout on the first call
+     * @param {Function} callback: a function to be called
+     * @param {Number?} timeout: the timeout value in miliseconds
+     * @returns the setInteraval id
+     */
+    static noTimeoutInterval(callback, timeout=1000) {
+        callback()
+        return setInterval(callback, timeout)
+    }
+
+    /**
      * Creates a copy of the provided array. (only length 2)
      * @param {*} arr 
      * @returns the array copy
