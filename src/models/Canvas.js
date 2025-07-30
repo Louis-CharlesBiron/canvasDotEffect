@@ -30,6 +30,7 @@ class Canvas {
     static #ON_FIRST_INTERACT_CALLBACKS = []
     static DEFAULT_MOUSE_MOVE_THROTTLE_DELAY = 10
     static ACTIVATION_MARGIN_DISABLED = 0
+    static MOBILE_SCROLLING_STATES = {DISABLED:0, IF_CANVAS_STOPPED:1, ALWAYS:2}
 
     #lastFrame = 0           // default last frame time
     #lastLimitedFrame = 0    // last frame time for limited fps
@@ -42,6 +43,7 @@ class Canvas {
     #lastScrollValues = [window.scrollX, window.screenY] // last window scroll x/y values
     #mouseMoveCB = null      // the custom mouseMoveCB. Used for mobile adjustments
     #visibilityChangeLastState = null // stores the cvs state before document visibility change
+    #mobileScrollingState = Canvas.MOBILE_SCROLLING_STATES.IF_CANVAS_STOPPED // Whether to prevent the default action taken by ontouchstart
 
     /**
      * Represents a html canvas element
@@ -650,7 +652,6 @@ class Canvas {
                 const touches = e.touches, time = this.timeStamp
                 if (time-lastEventTime > this._mouseMoveThrottlingDelay && touches.length==1) {
                     lastEventTime = time
-                    e.preventDefault()
                     e.x = CDEUtils.round(touches[0].clientX, 1)
                     e.y = CDEUtils.round(touches[0].clientY, 1)
                     this._mouse.updatePos(e.x, e.y, this._offset)
@@ -704,7 +705,8 @@ class Canvas {
                 isTouch = true
                 const touches = e.touches
                 if (touches.length==1) {
-                    e.preventDefault()
+                    const scrollState = this.#mobileScrollingState
+                    if (e.cancelable && (!scrollState || (scrollState==1 && this._state == Canvas.STATES.LOOPING))) e.preventDefault()
                     e.x = CDEUtils.round(touches[0].clientX, 1)
                     e.y = CDEUtils.round(touches[0].clientY, 1)
                     e.button = 0
@@ -739,7 +741,6 @@ class Canvas {
                 isTouch = true
                 const changedTouches = e.changedTouches
                 if (!e.touches.length) {
-                    e.preventDefault()
                     e.x = CDEUtils.round(changedTouches[0].clientX, 1)
                     e.y = CDEUtils.round(changedTouches[0].clientY, 1)
                     e.button = 0
@@ -894,6 +895,7 @@ class Canvas {
     get mouseMoveThrottlingDelay() {return this._mouseMoveThrottlingDelay}
     get dimensions() {return [[0,0],this.size]}
     get hasBeenStarted() {return Boolean(this.timeStamp)}
+    get mobileScrollingState() {return this.#mobileScrollingState}
 
 	set id(id) {this._id = id}
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
@@ -922,4 +924,5 @@ class Canvas {
     set speedModifier(speedModifier) {this._speedModifier = speedModifier}
     set mouseMoveListenersOptimizationEnabled(enabled) {this._mouse._moveListenersOptimizationEnabled = enabled}
     set mouseMoveThrottlingDelay(mouseMoveThrottlingDelay) {this._mouseMoveThrottlingDelay = mouseMoveThrottlingDelay}
+    set mobileScrollingState(state) {this.#mobileScrollingState = state}
 }
