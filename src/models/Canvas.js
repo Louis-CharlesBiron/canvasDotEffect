@@ -744,11 +744,8 @@ class Canvas {
                     e.y = CDEUtils.round(changedTouches[0].clientY, 1)
                     e.button = 0
                     this.#mouseClicks(callback, e)
-
-                    this._mouse.invalidate()
-                    e.x = Infinity
-                    e.y = Infinity
                     this.#mouseMovements(callback, e)
+                    setTimeout(()=>this._mouse.invalidate())
                 }     
             }, onmouseup=e=>{
                 if (!isTouch) this.#mouseClicks(callback, e)
