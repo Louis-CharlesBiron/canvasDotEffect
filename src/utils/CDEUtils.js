@@ -109,6 +109,18 @@ class CDEUtils {
     }
 
     /**
+     * Calculates a 0..1 ratio based on the distance between two object and a limit/threshold
+     * @param {[x,y] | _BaseObj} pos1: a pos or _BaseObj inheritor instance
+     * @param {[x,y] | _BaseObj} pos2: another pos or _BaseObj inheritor instance
+     * @param {Number?} limit: the distance threshold use to calculate the ratio
+     * @returns a number between 0 and 1
+     */
+    static getRatio(pos1, pos2, limit=100) {
+        let p1 = pos1.pos||pos1, p2 = pos2.pos||pos2
+        return Math.min(1, CDEUtils.getDist(p1[0], p1[1], p2[0], p2[1])/limit)
+    }
+
+    /**
      * Returns an array of a shape's dots ordered by the distance between them and the specified dot
      * @param {Dot} dot: a Dot instance
      * @param {Shape?} shape: a Shape instance. (Defaults to the shape containing "dot")
@@ -131,7 +143,7 @@ class CDEUtils {
      * @param {Number?} timeout: the minimal time window, in miliseconds, before calling callback after an 'interaction'
      * @returns the 'regulation callback'
      */
-    static getInputRegulationCB(callback, timeout=1000) {
+    static getRegulationCB(callback, timeout=1000) {
         let timeoutId
         return (...params)=>{
             clearTimeout(timeoutId)

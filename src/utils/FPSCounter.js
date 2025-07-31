@@ -37,6 +37,14 @@ class FPSCounter {
         return Math.min(CDEUtils.avg(avgSample), this._maxFps)|0
     }
 
+    /**
+     * Compares the max acheive fps and a chart of common refresh rates. (This function only works while either 'getFpsRaw()' or 'getFps' is running in a loop)
+     * @param {Number?} forceFPS: if defined, returns the probable refresh rate for this fps value. Defaults to the user's max fps.
+     * @returns the probable refresh rate of the user or null if not enough time has passed
+     */
+    getApproximatedUserRefreshRate(forceFPS=this.maxFps) {
+        return performance.now() > 1000 ? FPSCounter.COMMON_REFRESH_RATES.reduce((a,b)=>a<(forceFPS-1)?b:a,null) : null
+    }
 
     /**
      * Tries to calculate the most stable fps based on the current amount of lag, device performance / capabilities. Results will fluctuate over time. (This function only works while 'getFps()' is running in a loop)

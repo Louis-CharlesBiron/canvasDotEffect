@@ -208,3 +208,55 @@ CVS.setMouseUp()
 
 // START
 CVS.start()
+
+
+
+
+
+CanvasUtils.createEmptyObj(CVS, obj=>{// setupCB
+
+    // Defining some graph properties
+    const startPos = [50, 700],
+    amplitude = 20,
+    finalWidth = CVS.width,
+    animDuration = 10000,
+    yFn = Render.Y_FUNCTIONS.SINUS(amplitude, 40)
+
+  // Creating an anim to smoothly generate it over 5 seconds
+  obj.playAnim(new Anim((prog)=>{
+
+      // Generating and updating the drawn path
+      obj.setupResults = Render.generate(
+          startPos,        // The start pos of the generation
+          yFn,             // The function providing a Y value depanding on a given X value. (x)=>{... return y}
+          finalWidth*prog, // The width of the generation. Will be 400px at the end
+          animDuration/4   // The precision in segments of the generated result
+      )
+  }, animDuration, _, ()=>{// endCB
+
+        // Defining some graph properties for the 2nd sine wave
+        const startPos2 = Render.getGenerationEndPos(startPos, yFn, finalWidth),
+              yFn2 = Render.Y_FUNCTIONS.SINUS(-amplitude, 40)
+
+        obj.playAnim(new Anim((prog)=>{
+
+            // Generating and updating the drawn path
+            obj.setupResults = Render.generate(
+                startPos2,        // The start pos of the 2nd generation (here it's the end pos of the 1st generation)      
+                yFn2,             // Same Y function as the 1st generation, but with inverted amplitude
+                -finalWidth*prog, // Same width as the 1st generation, but inverted (negative)
+                animDuration/4,   // The precision in segments of the generated result
+                ()=>Render.generate(startPos, yFn, finalWidth, animDuration/4) // The callback defining the base path. (Exact same as 1st generation)
+            )
+
+        }, animDuration))
+
+    })
+)
+}, obj=>{// loopCB
+
+    // Receiving the path through the obj's setupResults, and drawing it in red
+    const path = obj.setupResults
+    if (path) CVS.render.batchStroke(path, [255,0,0,1])
+
+})
