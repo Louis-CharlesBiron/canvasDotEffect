@@ -79,7 +79,7 @@ function getBorderPaths() {
 
 
 let animTester = new Shape([400,200],[
-    new Dot([0,50], null, null, (dot, shape)=>{
+    new Dot([0,50], null, null, (dot, obj)=>{
 
         // overriding
         //let distance = 150, ix = dot.x
@@ -90,16 +90,24 @@ let animTester = new Shape([400,200],[
 
         // additive
         let distance = 150, ix = dot.x, ax = 0
-        dot.playAnim(new Anim((prog, i) => {
-            const dx = ((i%2)||-1)*distance*prog-ax
-            dot.x += dx
-            ax += dx
-        
-            if (prog == 1) {
-                ix = dot.x
-                ax = 0
-            }
-        }, -1000, Anim.linear))
+        //dot.playAnim(new Anim((prog, i) => {
+        //    const dx = ((i%2)||-1)*distance*prog-ax
+        //    dot.x += dx
+        //    ax += dx
+        //
+        //    if (prog == 1) {
+        //        ix = dot.x
+        //        ax = 0
+        //    }
+        //}, -10000, Anim.linear))
+
+        const effectCenterPos = [500, 300]
+        obj.playAnim(new Anim((prog, i)=>{
+            //console.log(prog)
+
+            obj.rotateAt(prog*360, effectCenterPos)
+            //obj.scaleAt([CDEUtils.fade(prog, i, 1, 2), CDEUtils.fade(prog, i, 1, 2)], effectCenterPos)
+        }, -5000))
         
 
     })

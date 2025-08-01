@@ -34,9 +34,11 @@ class Anim {
             if (!startTime) this._startTime = time
             // PLAY ANIMATION
             else if (deltaTime >= 0 && time < startTime+duration) {
+                console.log(time, startTime, Math.abs(time-startTime), this._easing(Math.abs(time-startTime)/duration))
                 this._progress = this._easing(Math.abs(time-startTime)/duration)
                 this._animation(this._progress, this._playCount, deltaTime, this.progress)
             } else if (deltaTime < 0 && time > startTime-duration) {
+                console.log(time, startTime, Math.abs(startTime-time), this._easing(Math.abs(startTime-time)/duration))
                 this._progress = this._easing((Math.abs(startTime-time))/duration)
                 this._animation(this._progress, this._playCount, deltaTime, this.progress)
             }
@@ -55,6 +57,7 @@ class Anim {
 
     // resets the animation
     reset(isInfiniteReset, deltaTime) {
+        console.log("reset")
         if (isInfiniteReset) this._animation(1, this._playCount++, deltaTime, 1)
         else this._playCount = 0
         this._progress = 0
