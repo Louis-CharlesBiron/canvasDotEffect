@@ -62,7 +62,7 @@ function getBorderPaths() {
 }
 
 // TODO FIX WHEN UPDATING CDE
-const loop1Obj = CVS.get(CanvasUtils.createEmptyObj(CVS, (obj)=>{
+/*const loop1Obj = CVS.get(CanvasUtils.createEmptyObj(CVS, (obj)=>{
     setInterval(()=>obj.setupResults = getBorderPaths(), 1050)
 
     return getBorderPaths()
@@ -73,12 +73,41 @@ const loop1Obj = CVS.get(CanvasUtils.createEmptyObj(CVS, (obj)=>{
     render.batchStroke(r.path1, render.profile1.update([255,255,255,1], _, _, _,   5))
     render.batchStroke(r.path4, render.profile2.update([255,0,0,1], _, _, _, 5))
     render.batchStroke(r.path3, render.profile1.update([255,255,255,1], _, _, _,   5))
-}))
+}))*/
 
 
 
 
+let animTester = new Shape([400,200],[
+    new Dot([0,50], null, null, (dot, shape)=>{
 
+        // overriding
+        //let distance = 150, ix = dot.x
+        //dot.playAnim(new Anim((progress, playCount)=>{
+        //    dot.x = ix + ((playCount%2)||-1) * distance * progress
+        //    if (progress==1) ix = dot.x
+        //}, -1000, Anim.easeOutBack))
+
+        // additive
+        let distance = 150, ix = dot.x, ax = 0
+        dot.playAnim(new Anim((prog, i) => {
+            const dx = ((i%2)||-1)*distance*prog-ax
+            dot.x += dx
+            ax += dx
+        
+            if (prog == 1) {
+                ix = dot.x
+                ax = 0
+            }
+        }, -1000, Anim.linear))
+        
+
+    })
+], null, null, 25, (render, dot, ratio)=>{
+    CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)
+}, null, null, null, null, true)
+
+CVS.add(animTester)
 
 
 
@@ -90,7 +119,7 @@ const loop1Obj = CVS.get(CanvasUtils.createEmptyObj(CVS, (obj)=>{
 
 
 // Adding the object to the canvas
-CVS.add(someObj)
+//CVS.add(someObj)
 
 // USER ACTIONS
 const mMove=m=>mouseInfo.textContent = "("+m.x+", "+m.y+")"

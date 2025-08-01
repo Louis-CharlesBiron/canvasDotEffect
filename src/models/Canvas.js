@@ -43,6 +43,7 @@ class Canvas {
     #lastFrame = 0           // default last frame time
     #lastLimitedFrame = 0    // last frame time for limited fps
     #fixedTimeStampOffset = 0// fixed requestanimationframe timestamp in ms
+    #rawTimeStamp = null     // the raw requestanimationframe timestamp in ms
     #maxTime = null          // max time between frames
     #timeStamp = null        // requestanimationframe timestamp in ms
     #cachedEls = []          // cached canvas elements to draw
@@ -243,6 +244,7 @@ class Canvas {
 
     // main loop, runs every frame
     #loop(time, wasRestarted) {
+        this.#rawTimeStamp = time
         const frameTime = (time-this.#lastFrame)*this._speedModifier, fpsLimit = this._fpsLimit, state = this._state
 
         if (state != 2) {
@@ -668,16 +670,16 @@ class Canvas {
             let lastEventTime=0
             this.#mouseMoveCB = callback
             const onmousemove=e=>{
-                const time = this.timeStamp
-                if (time-lastEventTime > this._mouseMoveThrottlingDelay) {
+                const time = this.#rawTimeStamp
+                if (time-lastEventTime > Math.abs(this._mouseMoveThrottlingDelay*this._speedModifier)) {
                     lastEventTime = time
                     this._mouse.updatePos(e.x, e.y, this._offset)
                     this._mouse.calcAngle()         
                     this.#mouseMovements(callback, e)
                 }
             }, ontouchmove=e=>{
-                const touches = e.touches, time = this.timeStamp
-                if (time-lastEventTime > this._mouseMoveThrottlingDelay && touches.length==1) {
+                const touches = e.touches, time = Math.abs(this.#rawTimeStamp)
+                if (time-lastEventTime > Math.abs(this._mouseMoveThrottlingDelay*this._speedModifier) && touches.length==1) {
                     lastEventTime = time
                     e.x = CDEUtils.round(touches[0].clientX, 1)
                     e.y = CDEUtils.round(touches[0].clientY, 1)
@@ -908,7 +910,8 @@ class Canvas {
 	get deltaTime() {return this._deltaTime}
 	get windowListeners() {return this._windowListeners}
 	get timeStamp() {return this._fixedTimeStamp||this.#timeStamp}
-	get timeStampRaw() {return this.#timeStamp}
+	get timeStampNotFixed() {return this.#timeStamp}
+	get timeStampRaw() {return this.#rawTimeStamp}
 	get els() {return this._els}
 	get mouse() {return this._mouse}
 	get typingDevice() {return this._typingDevice}

@@ -109,8 +109,8 @@ class Dot extends _Obj {
     * } The 2 intersection points for the target and for the source
     */
    getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {
-       const [tx, ty] = target.pos??target, [sx, sy] = source.pos??source,
-           [a, b, lfn] = CDEUtils.getLinearFn([sx,sy], [tx,ty]), t_r = targetPadding**2, s_r = sourcePadding**2,
+       const pos1 = target.pos??target, tx = pos1[0], ty = pos1[1], pos2 = source.pos??source, sx = pos2[0], sy = pos2[1],
+           res = CDEUtils.getLinearFn_coords(sx, sy, tx, ty), a = res[0], b = res[1], lfn = res[2], t_r = targetPadding**2, s_r = sourcePadding**2,
            qA = (1+a**2)*2,
            s_qB = -(2*a*(b-sy)-2*sx),
            s_qD = Math.sqrt(s_qB**2-(4*(qA/2)*((b-sy)**2+sx**2-s_r))),

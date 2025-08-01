@@ -37,9 +37,9 @@ class CDEUtils {
      * @returns the generated number
      */
     static random(min, max, decimals=0) {
-        max++
+        max+=(decimals?0:1)
         if (decimals) {
-            const precision = decimals**10
+            const precision = 10**decimals
             return Math.round((Math.random()*(max-min)+min)*precision)/precision
         } else return (Math.random()*(max-min)+min)>>0
     }
@@ -229,10 +229,24 @@ class CDEUtils {
      * @param {Number} y1: the y value of the first point
      * @param {Number} x2: the x value of the second point
      * @param {Number} y2: the y value of the second point
-     * @returns 
+     * @returns the distance
      */
     static getDist(x1, y1, x2, y2) {
-        return Math.sqrt((x1-x2)**2 + (y1-y2)**2)
+        const dx = x1-x2, dy = y1-y2
+        return Math.sqrt(dx*dx+dy*dy)
+    }
+
+    /**
+     * Returns the pythagorian distance between 2 points
+     * @param {Number} x1: the x value of the first point
+     * @param {Number} y1: the y value of the first point
+     * @param {Number} x2: the x value of the second point
+     * @param {Number} y2: the y value of the second point
+     * @returns the distance
+     */
+    static getDist_pos(pos1, pos2) {
+        const dx = pos1[0]-pos2[0], dy = pos1[1]-pos2[1]
+        return Math.sqrt(dx*dx+dy*dy)
     }
 
     /**
@@ -243,6 +257,18 @@ class CDEUtils {
     static getLinearFn(pos1, pos2) {
         const a = (pos2[1]-pos1[1])/(pos2[0]-pos1[0]), b = -a*pos1[0]+pos1[1]
         return [a, b, (x)=>a*x+b, pos1]
+    }
+
+    /**
+    * Returns the "a", "b" and "function" values formed by a line between 2 positions
+     * @param {Number} x1: the x value of a point
+     * @param {Number} y1: the y value of a point
+     * @param {Number} x2: the x value of another point
+     * @param {Number} y2: the y value of another point
+     */
+    static getLinearFn_coords(x1, y1, x2, y2) {
+        const a = (y2-y1)/(x2-x1), b = -a*x1+y1
+        return [a, b, (x)=>a*x+b, [x1, y1]]
     }
 
     /**

@@ -33,8 +33,11 @@ class Anim {
             // SET START TIME
             if (!startTime) this._startTime = time
             // PLAY ANIMATION
-            else if (time<startTime+duration) {
-                this._progress = this._easing((time-startTime)/duration)
+            else if (deltaTime >= 0 && time < startTime+duration) {
+                this._progress = this._easing(Math.abs(time-startTime)/duration)
+                this._animation(this._progress, this._playCount, deltaTime, this.progress)
+            } else if (deltaTime < 0 && time > startTime-duration) {
+                this._progress = this._easing((Math.abs(startTime-time))/duration)
                 this._animation(this._progress, this._playCount, deltaTime, this.progress)
             }
             // REPEAT IF NEGATIVE DURATION
