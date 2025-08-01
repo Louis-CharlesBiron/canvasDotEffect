@@ -118,10 +118,11 @@ class Canvas {
             this.setSize()
             ctx.strokeStyle = ctx.fillStyle = Color.getColorValue(color)
             render.currentCtxStyles[0] = ctx.lineWidth
+            if (typeof lineDash=="string") render.currentCtxStyles[1] = lineDash.split(",")
             render.currentCtxStyles[2] = ctx.lineDashOffset
             render.currentCtxStyles[3] = ctx.lineJoin
             render.currentCtxStyles[4] = ctx.lineCap
-            RenderStyles.apply(render, null, filter, compositeOperation, alpha, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
+            RenderStyles.apply(render, null, filter, compositeOperation, alpha, lineWidth, typeof lineDash=="string"?lineDash.split(","):lineDash, lineDashOffset, lineJoin, lineCap)
             TextStyles.apply(ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
             this.moveViewAt(this._viewPos)
             if (this.hasBeenStarted && (this._fpsLimit >= 25 || this._state==Canvas.STATES.STOPPED)) this.drawSingleFrame()
