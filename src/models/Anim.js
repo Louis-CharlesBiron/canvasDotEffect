@@ -24,26 +24,59 @@ class Anim {
         this._startTime = null // start time
         this._progress = 0     // animation progress
         this._playCount = 0    // how many time the animation has played
+        this._isReversed = false
     }
     
-    // progresses the animation 1 frame fowards (loops each frame) 
+    // progresses the animation 1 frame (loops each frame) 
     getFrame(time, deltaTime) {
-        const isInfinite = this._duration<0, duration = isInfinite?-this._duration:this._duration, startTime = this._startTime
+        const isInfinite = this._duration<0, duration = isInfinite?-this._duration:this._duration, startTime = this._startTime, reversed = this._isReversed
         if (!this._playCount || isInfinite) {
             // SET START TIME
             if (!startTime) this._startTime = time
             // PLAY ANIMATION
             else if (deltaTime >= 0 && time < startTime+duration) {
-                console.log(time, startTime, Math.abs(time-startTime), this._easing(Math.abs(time-startTime)/duration))
-                this._progress = this._easing(Math.abs(time-startTime)/duration)
+
+                let elapsed = time-startTime
+                if (reversed && elapsed > 0 && isInfinite) this._isReversed = false
+                
+
+                console.log(this._easing(Math.abs(elapsed)/duration), time, startTime, elapsed)
+                //this._progress = this._easing(Math.abs(time-startTime)/duration)
+                this._progress = this._isReversed ? 1-this._easing((Math.abs(elapsed))/duration) : this._easing((Math.abs(elapsed))/duration)
+
+
                 this._animation(this._progress, this._playCount, deltaTime, this.progress)
             } else if (deltaTime < 0 && time > startTime-duration) {
-                console.log(time, startTime, Math.abs(startTime-time), this._easing(Math.abs(startTime-time)/duration))
-                this._progress = this._easing((Math.abs(startTime-time))/duration)
+
+
+                let reversedElapsed = startTime-time
+
+                if (!this._isReversed && reversedElapsed > 0 && isInfinite) {
+                    this._isReversed = true
+                    //console.log("RESETEDDDDDDDDDDDDDDD REVERSED", this._isReversed ? 1-this._easing((Math.abs(reversedElapsed))/duration) : this._easing((Math.abs(reversedElapsed))/duration))
+                    console.log("RESETEDDDDDDDDDDD")
+                    this.reset(true, deltaTime)
+                }
+
+                                
+                //if (this._easing((Math.abs(startTime-(time+deltaTime*1000)))/duration) > 1) {
+                //    console.log("YOOOOOOOOO")
+                //    this.reset(true, deltaTime, true)
+                //}
+
+
+                console.log("!", this._easing(Math.abs(startTime-time)/duration), time, startTime,  startTime-time, this._easing((Math.abs(startTime-(time+deltaTime*1000)))/duration))
+                this._progress = this._isReversed ? 1-this._easing((Math.abs(reversedElapsed))/duration) : this._easing((Math.abs(reversedElapsed))/duration)
+
+
                 this._animation(this._progress, this._playCount, deltaTime, this.progress)
+
+
             }
             // REPEAT IF NEGATIVE DURATION
-            else if (isInfinite) this.reset(true, deltaTime)
+            else if (isInfinite) {console.log("natural RESTE")
+                this.reset(true, deltaTime)
+            }
             // END
             else this.end(deltaTime)
         }
@@ -52,13 +85,16 @@ class Anim {
     // ends the animation
     end(deltaTime) {
         this._animation(1, this._playCount++, deltaTime, 1)
-        if (CDEUtils.isFunction(this._endCB)) this._endCB()
+        if (CDEUtils.isFunction(this._endCB)) this._endCB(this)
     }
 
     // resets the animation
-    reset(isInfiniteReset, deltaTime) {
+    reset(isInfiniteReset, deltaTime, a) {// TODO
         console.log("reset")
-        if (isInfiniteReset) this._animation(1, this._playCount++, deltaTime, 1)
+        if (isInfiniteReset){
+            if (a) this._animation(0, this._playCount++, deltaTime, 0.123)
+            else this._animation(1, this._playCount++, deltaTime, 1)
+        } 
         else this._playCount = 0
         this._progress = 0
         this._startTime = null

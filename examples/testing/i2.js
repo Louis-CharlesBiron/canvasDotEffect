@@ -3,7 +3,7 @@ const _ = null, fpsCounter = new FPSCounter(), CVS = new Canvas(1?canvas:new Off
     if (fpsDisplay.textContent !== fps) fpsDisplay.textContent = fps
     mouseSpeed.textContent = CVS?.mouse?.speed?.toFixed(2)+" px/sec"
     mouseAngle.textContent = CVS?.mouse?.dir?.toFixed(2)+" deg"
-}, null)
+}, 30)
 
 // DECLARE OBJS
 
@@ -88,9 +88,11 @@ let animTester = new Shape([400,200],[
         //    if (progress==1) ix = dot.x
         //}, -1000, Anim.easeOutBack))
 
+
         // additive
         let distance = 150, ix = dot.x, ax = 0
         //dot.playAnim(new Anim((prog, i) => {
+        //    console.log("----",prog)
         //    const dx = ((i%2)||-1)*distance*prog-ax
         //    dot.x += dx
         //    ax += dx
@@ -99,15 +101,16 @@ let animTester = new Shape([400,200],[
         //        ix = dot.x
         //        ax = 0
         //    }
-        //}, -10000, Anim.linear))
+        //}, -3000, Anim.linear))
+
+        CVS.add(new Dot(dot.pos, 3, "red"))
 
         const effectCenterPos = [500, 300]
         obj.playAnim(new Anim((prog, i)=>{
             //console.log(prog)
-
             obj.rotateAt(prog*360, effectCenterPos)
             //obj.scaleAt([CDEUtils.fade(prog, i, 1, 2), CDEUtils.fade(prog, i, 1, 2)], effectCenterPos)
-        }, -5000))
+        }, -5000, null, ()=>{console.log("END")}))
         
 
     })
