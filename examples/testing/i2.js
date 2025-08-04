@@ -75,48 +75,74 @@ function getBorderPaths() {
     render.batchStroke(r.path3, render.profile1.update([255,255,255,1], _, _, _,   5))
 }))*/
 
+function getSmoothMovementCB(obj, distances=[100,100], isAdditive) {
+    // TODO, make it start not at the end
+
+    const distanceX = distances[0], distanceY = distances[1], ix = obj.x, iy = obj.y
+    return (prog, i)=>{
+        const dirProg = i%2 ? prog : 1-prog
+        if (distanceX) obj.x = ix + distanceX*dirProg
+        if (distanceY) obj.y = iy + distanceY*dirProg
+    }
+}
+
+function getSmoothMovementCB2(obj, distances=[100,100]) {
+    const distanceX = distances[0], distanceY = distances[1], ix = obj.x, iy = obj.y
+    let prevProgX, prevProgY = null
+
+    return (prog, i)=>{
+        const dirProg = i%2 ? prog : 1-prog
+        if (prevProgX == null) prevProgX = dirProg
+        if (prevProgY == null) prevProgY = dirProg
+
+        obj.x += (distanceX||0)*(dirProg-prevProgX)
+        obj.y += (distanceY||0)*(dirProg-prevProgY)
+
+        prevProgX = dirProg
+        prevProgY = dirProg
+    }
+}
+
 
 
 
 let animTester = new Shape([400,200],[
     new Dot([0,50], null, null, (dot, obj)=>{
 
-        // overriding
-        //let distance = 150, ix = dot.x
-        //dot.playAnim(new Anim((progress, playCount)=>{
-        //    dot.x = ix + ((playCount%2)||-1) * distance * progress
-        //    if (progress==1) ix = dot.x
-        //}, -1000, Anim.easeOutBack))
-
-
         // additive
-        let distance = 150, ix = dot.x, ax = 0
+        //let distance = 150, ax = 0
         //dot.playAnim(new Anim((prog, i) => {
-        //    console.log("----",prog)
         //    const dx = ((i%2)||-1)*distance*prog-ax
+        //    console.log("----",prog.toFixed(3), i, dx.toFixed(1), ax.toFixed(1))
         //    dot.x += dx
         //    ax += dx
         //
         //    if (prog == 1) {
-        //        ix = dot.x
         //        ax = 0
+        //    } else if (prog == 0) {
+        //        ax = -((i%2)||-1)*distance
         //    }
-        //}, -3000, Anim.linear))
+        //}, -2000, Anim.linear))
+
+        const testtest = getSmoothMovementCB(dot, [150, 400])
+        dot.playAnim(new Anim((prog, i)=>{
+            console.log("----",prog.toFixed(3), i)
+            testtest(prog, i)
+        }, -2000))
 
         CVS.add(new Dot(dot.pos, 3, "red"))
 
         const effectCenterPos = [500, 300]
-        obj.playAnim(new Anim((prog, i)=>{
-            //console.log(prog)
-            obj.rotateAt(prog*360, effectCenterPos)
-            //obj.scaleAt([CDEUtils.fade(prog, i, 1, 2), CDEUtils.fade(prog, i, 1, 2)], effectCenterPos)
-        }, -5000, null, ()=>{console.log("END")}))
+        //obj.playAnim(new Anim((prog, i)=>{
+        //    //console.log(prog)
+        //    obj.rotateAt(prog*360, effectCenterPos)
+        //    //console.log("----",prog.toFixed(3), i)
+        //    //obj.scaleAt([CDEUtils.fade(prog, i, 1, 2), CDEUtils.fade(prog, i, 1, 2)], effectCenterPos)
+        //}, -2000, null, ()=>{console.log("END")}))
         
 
     })
-], null, null, 25, (render, dot, ratio)=>{
-    CanvasUtils.drawOuterRing(dot, [dot.a*255,dot.a*255,dot.a*255,CDEUtils.mod(0.5, ratio)], 3)
-}, null, null, null, null, true)
+], null, null, 25, null, null, null, null, null, true)
 
 CVS.add(animTester)
 
