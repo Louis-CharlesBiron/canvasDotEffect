@@ -179,6 +179,37 @@ class CanvasUtils {
     }
 
     /**
+     * Returns a callback allowing an object to move between it's current pos and a pos at a specific distance. This function should only be called once, but the returned callback, every frame inside a animation callback.
+     * @param {_BaseObj} obj: a _BaseObj inheritor instance
+     * @param {[distanceX, distanceY]?} distances: the X/Y distances to move the object to
+     * @param {Boolean?} isAdditive: whether the pos of the object is set in a relative or absolute manner 
+     * @returns a callback to be called by an animation
+     */
+    static getMovementOscillatorCB(obj, distances=[100,100], isAdditive=true) {
+        const distanceX = distances[0], distanceY = distances[1]
+
+        if (isAdditive) {
+            let lastProg
+            return (prog, i)=>{
+                const dirProg = i%2 ? 1-prog : prog
+                if (lastProg==null) lastProg = dirProg
+                
+                const newProg = dirProg-lastProg
+                if (distanceX) obj.x += distanceX*newProg
+                if (distanceY) obj.y += distanceY*newProg
+                lastProg = dirProg
+            }
+        } else {
+            const ix = obj.x, iy = obj.y
+            return (prog, i)=>{
+                const dirProg = i%2 ? 1-prog : prog
+                if (distanceX) obj.x = ix+distanceX*dirProg
+                if (distanceY) obj.y = iy+distanceY*dirProg
+            }
+        }
+    }
+
+    /**
      * Generic function to rotate the gradient of an object
      * @param {_BaseObj} obj: a _BaseObj inheritor instance
      * @param {Number?} duration: the duration of a full animation cycle

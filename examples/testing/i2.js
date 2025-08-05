@@ -3,7 +3,7 @@ const _ = null, fpsCounter = new FPSCounter(), CVS = new Canvas(1?canvas:new Off
     if (fpsDisplay.textContent !== fps) fpsDisplay.textContent = fps
     mouseSpeed.textContent = CVS?.mouse?.speed?.toFixed(2)+" px/sec"
     mouseAngle.textContent = CVS?.mouse?.dir?.toFixed(2)+" deg"
-}, 30)
+}, 60)
 
 // DECLARE OBJS
 
@@ -25,16 +25,13 @@ ${"YOO".repeat(CDEUtils.random(0, 1))}
 Y${"O".repeat(i)}`
     }, 750)
 }
-
 someObj.loopCB = (obj)=>{
     CanvasUtils.drawOutline(CVS.render, obj)
     //CanvasUtils.drawOutlineAccurate(CVS.render, obj)
     CVS.render.batchStroke(obj.getBoundsAccurate(), [0,0,255,1])
-    CVS.render.batchFill(obj.getBoundsAccurate(), [0,0,255,0.5])
-
+    CVS.render.batchFill(obj.getBoundsAccurate(), [0,0,255,0.5]
 
 }
-
 CVS.enableAccurateMouseMoveListenersMode()
 //CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.ENTER, ()=>console.log("FAST - enter"))
 //CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.EXIT , ()=>console.log("FAST - exit"))
@@ -42,11 +39,6 @@ CVS.enableAccurateMouseMoveListenersMode()
 CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.ENTER, ()=>console.log("ACCURATE - enter"), true)
 CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.EXIT , ()=>console.log("ACCURATE - exit") , true)
 CVS.mouse.addListener(someObj, Mouse.LISTENER_TYPES.DOWN , ()=>console.log("ACCURATE - click"), true)*/
-
-
-
-
-
 
 
 
@@ -75,34 +67,6 @@ function getBorderPaths() {
     render.batchStroke(r.path3, render.profile1.update([255,255,255,1], _, _, _,   5))
 }))*/
 
-function getSmoothMovementCB(obj, distances=[100,100], isAdditive) {
-    // TODO, make it start not at the end
-
-    const distanceX = distances[0], distanceY = distances[1], ix = obj.x, iy = obj.y
-    return (prog, i)=>{
-        const dirProg = i%2 ? prog : 1-prog
-        if (distanceX) obj.x = ix + distanceX*dirProg
-        if (distanceY) obj.y = iy + distanceY*dirProg
-    }
-}
-
-function getSmoothMovementCB2(obj, distances=[100,100]) {
-    const distanceX = distances[0], distanceY = distances[1], ix = obj.x, iy = obj.y
-    let prevProgX, prevProgY = null
-
-    return (prog, i)=>{
-        const dirProg = i%2 ? prog : 1-prog
-        if (prevProgX == null) prevProgX = dirProg
-        if (prevProgY == null) prevProgY = dirProg
-
-        obj.x += (distanceX||0)*(dirProg-prevProgX)
-        obj.y += (distanceY||0)*(dirProg-prevProgY)
-
-        prevProgX = dirProg
-        prevProgY = dirProg
-    }
-}
-
 
 
 
@@ -124,21 +88,21 @@ let animTester = new Shape([400,200],[
         //    }
         //}, -2000, Anim.linear))
 
-        const testtest = getSmoothMovementCB(dot, [150, 400])
+        const testtest = CanvasUtils.getMovementOscillatorCB(dot, [150, 200], true)
         dot.playAnim(new Anim((prog, i)=>{
-            console.log("----",prog.toFixed(3), i)
+            //console.log("----",prog.toFixed(3), i)
             testtest(prog, i)
-        }, -2000))
+        }, -1000, null, ()=>{console.log("END2")}))
 
         CVS.add(new Dot(dot.pos, 3, "red"))
+        CVS.add(new Dot(CDEUtils.addPos(dot.pos, [150, 200]), 3, "blue"))
 
         const effectCenterPos = [500, 300]
-        //obj.playAnim(new Anim((prog, i)=>{
-        //    //console.log(prog)
-        //    obj.rotateAt(prog*360, effectCenterPos)
-        //    //console.log("----",prog.toFixed(3), i)
-        //    //obj.scaleAt([CDEUtils.fade(prog, i, 1, 2), CDEUtils.fade(prog, i, 1, 2)], effectCenterPos)
-        //}, -2000, null, ()=>{console.log("END")}))
+        obj.playAnim(new Anim((prog, i)=>{
+            obj.rotateAt(prog*360, effectCenterPos)
+            //console.log("----",prog.toFixed(3), i)
+            obj.scaleAt([CDEUtils.fade(prog, i, 1, 2), CDEUtils.fade(prog, i, 1, 2)], effectCenterPos)
+        }, -10000, null, ()=>{console.log("END")}))
         
 
     })

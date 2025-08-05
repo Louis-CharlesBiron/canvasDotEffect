@@ -31,9 +31,7 @@ class Anim {
     getFrame(time, deltaTime) {
         const isInfinite = this._duration<0, duration = isInfinite?-this._duration:this._duration, startTime = this._startTime, reversed = this._isReversed
         if (!this._playCount || isInfinite) {
-            // SET START TIME
             if (!startTime) this._startTime = time
-            // PLAY ANIMATION
             else if (deltaTime >= 0 && time < startTime+duration) {
                 let elapsed = time-startTime, prog = this._easing((Math.abs(elapsed))/duration)
                 this._progress = reversed ? 1-prog : prog
@@ -57,9 +55,13 @@ class Anim {
                     this._animation(this._progress, this._playCount, deltaTime, this.progress)
                 }
             }
-            // REPEAT IF NEGATIVE DURATION
-            else if (isInfinite && !this._isReversed) this.reset(true, deltaTime)
-            // END
+            else if (isInfinite) {
+                if (!this._isReversed) this.reset(true, deltaTime)
+                else {
+                    this._startTime=null
+                    this._playCount++
+                }
+            }
             else this.end(deltaTime)
         }
     }
@@ -72,7 +74,7 @@ class Anim {
 
     // resets the animation
     reset(isInfiniteReset, deltaTime) {
-        if (isInfiniteReset)this._animation(1, this._playCount++, deltaTime, 1)
+        if (isInfiniteReset) this._animation(1, this._playCount++, deltaTime, 1)
         else this._playCount = 0
         this._progress = 0
         this._startTime = null

@@ -38,9 +38,9 @@ export class CDEUtils {
      * @returns the generated number
      */
     static random(min, max, decimals=0) {
-        max++
+        max+=(decimals?0:1)
         if (decimals) {
-            const precision = decimals**10
+            const precision = 10**decimals
             return Math.round((Math.random()*(max-min)+min)*precision)/precision
         } else return (Math.random()*(max-min)+min)>>0
     }
@@ -110,6 +110,18 @@ export class CDEUtils {
     }
 
     /**
+     * Calculates a 0..1 ratio based on the distance between two object and a limit/threshold
+     * @param {[x,y] | _BaseObj} pos1: a pos or _BaseObj inheritor instance
+     * @param {[x,y] | _BaseObj} pos2: another pos or _BaseObj inheritor instance
+     * @param {Number?} limit: the distance threshold use to calculate the ratio
+     * @returns a number between 0 and 1
+     */
+    static getRatio(pos1, pos2, limit=100) {
+        let p1 = pos1.pos||pos1, p2 = pos2.pos||pos2
+        return Math.min(1, CDEUtils.getDist(p1[0], p1[1], p2[0], p2[1])/limit)
+    }
+
+    /**
      * Returns an array of a shape's dots ordered by the distance between them and the specified dot
      * @param {Dot} dot: a Dot instance
      * @param {Shape?} shape: a Shape instance. (Defaults to the shape containing "dot")
@@ -132,7 +144,7 @@ export class CDEUtils {
      * @param {Number?} timeout: the minimal time window, in miliseconds, before calling callback after an 'interaction'
      * @returns the 'regulation callback'
      */
-    static getInputRegulationCB(callback, timeout=1000) {
+    static getRegulationCB(callback, timeout=1000) {
         let timeoutId
         return (...params)=>{
             clearTimeout(timeoutId)
@@ -218,10 +230,24 @@ export class CDEUtils {
      * @param {Number} y1: the y value of the first point
      * @param {Number} x2: the x value of the second point
      * @param {Number} y2: the y value of the second point
-     * @returns 
+     * @returns the distance
      */
     static getDist(x1, y1, x2, y2) {
-        return Math.sqrt((x1-x2)**2 + (y1-y2)**2)
+        const dx = x1-x2, dy = y1-y2
+        return Math.sqrt(dx*dx+dy*dy)
+    }
+
+    /**
+     * Returns the pythagorian distance between 2 points
+     * @param {Number} x1: the x value of the first point
+     * @param {Number} y1: the y value of the first point
+     * @param {Number} x2: the x value of the second point
+     * @param {Number} y2: the y value of the second point
+     * @returns the distance
+     */
+    static getDist_pos(pos1, pos2) {
+        const dx = pos1[0]-pos2[0], dy = pos1[1]-pos2[1]
+        return Math.sqrt(dx*dx+dy*dy)
     }
 
     /**
@@ -232,6 +258,18 @@ export class CDEUtils {
     static getLinearFn(pos1, pos2) {
         const a = (pos2[1]-pos1[1])/(pos2[0]-pos1[0]), b = -a*pos1[0]+pos1[1]
         return [a, b, (x)=>a*x+b, pos1]
+    }
+
+    /**
+    * Returns the "a", "b" and "function" values formed by a line between 2 positions
+     * @param {Number} x1: the x value of a point
+     * @param {Number} y1: the y value of a point
+     * @param {Number} x2: the x value of another point
+     * @param {Number} y2: the y value of another point
+     */
+    static getLinearFn_coords(x1, y1, x2, y2) {
+        const a = (y2-y1)/(x2-x1), b = -a*x1+y1
+        return [a, b, (x)=>a*x+b, [x1, y1]]
     }
 
     /**
@@ -439,6 +477,14 @@ export class FPSCounter {
         return Math.min(CDEUtils.avg(avgSample), this._maxFps)|0
     }
 
+    /**
+     * Compares the max acheive fps and a chart of common refresh rates. (This function only works while either 'getFpsRaw()' or 'getFps' is running in a loop)
+     * @param {Number?} forceFPS: if defined, returns the probable refresh rate for this fps value. Defaults to the user's max fps.
+     * @returns the probable refresh rate of the user or null if not enough time has passed
+     */
+    getApproximatedUserRefreshRate(forceFPS=this.maxFps) {
+        return performance.now() > 1000 ? FPSCounter.COMMON_REFRESH_RATES.reduce((a,b)=>a<(forceFPS-1)?b:a,null) : null
+    }
 
     /**
      * Tries to calculate the most stable fps based on the current amount of lag, device performance / capabilities. Results will fluctuate over time. (This function only works while 'getFps()' is running in a loop)
@@ -662,6 +708,37 @@ export class CanvasUtils {
                 isMoving = true
             }
             if (moveEffectCB) for (let i=0;i<length;i++) moveEffectCB(trail[i], (i+1)/length, isMoving, mouse, trailPos[i], i)
+        }
+    }
+
+    /**
+     * Returns a callback allowing an object to move between it's current pos and a pos at a specific distance. This function should only be called once, but the returned callback, every frame inside a animation callback.
+     * @param {_BaseObj} obj: a _BaseObj inheritor instance
+     * @param {[distanceX, distanceY]?} distances: the X/Y distances to move the object to
+     * @param {Boolean?} isAdditive: whether the pos of the object is set in a relative or absolute manner 
+     * @returns a callback to be called by an animation
+     */
+    static getMovementOscillatorCB(obj, distances=[100,100], isAdditive=true) {
+        const distanceX = distances[0], distanceY = distances[1]
+
+        if (isAdditive) {
+            let lastProg
+            return (prog, i)=>{
+                const dirProg = i%2 ? 1-prog : prog
+                if (lastProg==null) lastProg = dirProg
+                
+                const newProg = dirProg-lastProg
+                if (distanceX) obj.x += distanceX*newProg
+                if (distanceY) obj.y += distanceY*newProg
+                lastProg = dirProg
+            }
+        } else {
+            const ix = obj.x, iy = obj.y
+            return (prog, i)=>{
+                const dirProg = i%2 ? 1-prog : prog
+                if (distanceX) obj.x = ix+distanceX*dirProg
+                if (distanceY) obj.y = iy+distanceY*dirProg
+            }
         }
     }
 
@@ -3296,10 +3373,20 @@ export class Canvas {
     static #ON_FIRST_INTERACT_CALLBACKS = []
     static DEFAULT_MOUSE_MOVE_THROTTLE_DELAY = 10
     static ACTIVATION_MARGIN_DISABLED = 0
+    static MOBILE_SCROLLING_STATES = {DISABLED:0, IF_CANVAS_STOPPED:1, ALWAYS:2}
+    static #DOM_CANVAS_LINKS = new Map()
+    static #DOM_CANVAS_INTERSECTION_OBSERVER = new IntersectionObserver((entries)=>{
+        const e_ll = entries.length
+        for (let i=0;i<e_ll;i++) {
+            const entry = entries[i], CVS = Canvas.getFromHTMLCanvas(entry.target)
+            if (CDEUtils.isFunction(CVS._onIntersectionChangeCB)) CVS._onIntersectionChangeCB(entry.intersectionRatio > 0, CVS, entry)
+        }
+    })
 
     #lastFrame = 0           // default last frame time
     #lastLimitedFrame = 0    // last frame time for limited fps
     #fixedTimeStampOffset = 0// fixed requestanimationframe timestamp in ms
+    #rawTimeStamp = null     // the raw requestanimationframe timestamp in ms
     #maxTime = null          // max time between frames
     #timeStamp = null        // requestanimationframe timestamp in ms
     #cachedEls = []          // cached canvas elements to draw
@@ -3307,7 +3394,8 @@ export class Canvas {
     #cachedSize = null       // cached canvas size
     #lastScrollValues = [window.scrollX, window.screenY] // last window scroll x/y values
     #mouseMoveCB = null      // the custom mouseMoveCB. Used for mobile adjustments
-    #visibilityChangeLastState = null // stores the cvs state before document visibility change
+    #visibilityChangeLastState = [] // stores the cvs state before document visibility change and canvas viewport visibility change
+    #mobileScrollingState = Canvas.MOBILE_SCROLLING_STATES.IF_CANVAS_STOPPED // Whether to prevent the default action taken by ontouchstart
 
     /**
      * Represents a html canvas element
@@ -3329,6 +3417,9 @@ export class Canvas {
             this.onVisibilityChangeCB = null                              // callback with the actions to be taken on document visibility change (isVisible, CVS, e)=>
             this._onResizeCB = null                                       // callback with the actions to be taken on document resize (newCanvasSize, CVS, e)=>
             this._onScrollCB = null                                       // callback with the actions to be taken on document scroll ([pageScrollX, pageScrollY], CVS, e)=>
+            this.onIntersectionChangeCB = null                            // callback with the actions to be taken on intersection change / canvas visibility change. (isVisible, CVS, e)=>
+            Canvas.#DOM_CANVAS_INTERSECTION_OBSERVER.observe(this._cvs)
+            Canvas.#DOM_CANVAS_LINKS.set(this._cvs, this)
         }
         this._ctx = this._cvs.getContext("2d", {willReadFrequently})  // canvas context
         this._settings = this.updateSettings(settings||Canvas.DEFAULT_CTX_SETTINGS)// set context settings
@@ -3371,10 +3462,11 @@ export class Canvas {
             this.setSize()
             ctx.strokeStyle = ctx.fillStyle = Color.getColorValue(color)
             render.currentCtxStyles[0] = ctx.lineWidth
+            if (typeof lineDash=="string") render.currentCtxStyles[1] = lineDash.split(",")
             render.currentCtxStyles[2] = ctx.lineDashOffset
             render.currentCtxStyles[3] = ctx.lineJoin
             render.currentCtxStyles[4] = ctx.lineCap
-            RenderStyles.apply(render, null, filter, compositeOperation, alpha, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
+            RenderStyles.apply(render, null, filter, compositeOperation, alpha, lineWidth, typeof lineDash=="string"?lineDash.split(","):lineDash, lineDashOffset, lineJoin, lineCap)
             TextStyles.apply(ctx, font, letterSpacing, wordSpacing, fontVariantCaps, direction, fontStretch, fontKerning, textAlign, textBaseline, textRendering)
             this.moveViewAt(this._viewPos)
             if (this.hasBeenStarted && (this._fpsLimit >= 25 || this._state==Canvas.STATES.STOPPED)) this.drawSingleFrame()
@@ -3382,10 +3474,12 @@ export class Canvas {
         },
         onvisibilitychange=e=>this._onVisibilityChangeCB(!document.hidden, this, e),
         onscroll=e=>{
-          const scrollX = window.scrollX, scrollY = window.scrollY
+          const scrollX = window.scrollX, scrollY = window.scrollY, mouseX =  this._mouse.x, mouseY = this._mouse.y
           this.updateOffset()
-          this._mouse.updatePos(this._mouse.x+(scrollX-this.#lastScrollValues[0]), this._mouse.y+(scrollY-this.#lastScrollValues[1]), [0,0])
-          this.#mouseMovements()
+          if (mouseX != null && mouseY != null) {
+            this._mouse.updatePos(this._mouse.x+(scrollX-this.#lastScrollValues[0]), this._mouse.y+(scrollY-this.#lastScrollValues[1]), [0,0])
+            this.#mouseMovements()
+          }
           this.#lastScrollValues[0] = scrollX
           this.#lastScrollValues[1] = scrollY
           if (CDEUtils.isFunction(this._onScrollCB)) this._onScrollCB([scrollX, scrollY], this, e)
@@ -3408,6 +3502,15 @@ export class Canvas {
             removeOnscrollListener:()=>window.removeEventListener("scroll", onscroll),
             removeOnloadListener:()=>window.removeEventListener("load", onLoad)
         }
+    }
+
+    /**
+     * Returns the Canvas instance linked to the provided HTML canvas element
+     * @param {HTMLCanvasElement} cvs: an HTML canvas element
+     * @returns the Canvas instance linked, if any
+     */
+    static getFromHTMLCanvas(cvs) {
+        return Canvas.#DOM_CANVAS_LINKS.get(cvs)
     }
 
     /**
@@ -3484,6 +3587,7 @@ export class Canvas {
 
     // main loop, runs every frame
     #loop(time, wasRestarted) {
+        this.#rawTimeStamp = time
         const frameTime = (time-this.#lastFrame)*this._speedModifier, fpsLimit = this._fpsLimit, state = this._state
 
         if (state != 2) {
@@ -3691,8 +3795,10 @@ export class Canvas {
         this._viewPos[1] = y
         
         this.updateOffset()
-        this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-        this.#mouseMovements()
+        if (this._mouse.x != null && this._mouse.y != null) {
+            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
+            this.#mouseMovements()
+        }
     }
 
     /**
@@ -3706,8 +3812,10 @@ export class Canvas {
         this._viewPos[1] += y
 
         this.updateOffset()
-        this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-        this.#mouseMovements()
+        if (this._mouse.x != null && this._mouse.y != null) {
+            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
+            this.#mouseMovements()
+        }
     }
 
     /**
@@ -3905,18 +4013,17 @@ export class Canvas {
             let lastEventTime=0
             this.#mouseMoveCB = callback
             const onmousemove=e=>{
-                const time = this.timeStamp
-                if (time-lastEventTime > this._mouseMoveThrottlingDelay) {
+                const time = this.#rawTimeStamp
+                if (time-lastEventTime > Math.abs(this._mouseMoveThrottlingDelay*this._speedModifier)) {
                     lastEventTime = time
                     this._mouse.updatePos(e.x, e.y, this._offset)
                     this._mouse.calcAngle()         
                     this.#mouseMovements(callback, e)
                 }
             }, ontouchmove=e=>{
-                const touches = e.touches, time = this.timeStamp
-                if (time-lastEventTime > this._mouseMoveThrottlingDelay && touches.length==1) {
+                const touches = e.touches, time = Math.abs(this.#rawTimeStamp)
+                if (time-lastEventTime > Math.abs(this._mouseMoveThrottlingDelay*this._speedModifier) && touches.length==1) {
                     lastEventTime = time
-                    e.preventDefault()
                     e.x = CDEUtils.round(touches[0].clientX, 1)
                     e.y = CDEUtils.round(touches[0].clientY, 1)
                     this._mouse.updatePos(e.x, e.y, this._offset)
@@ -3970,7 +4077,8 @@ export class Canvas {
                 isTouch = true
                 const touches = e.touches
                 if (touches.length==1) {
-                    e.preventDefault()
+                    const scrollState = this.#mobileScrollingState
+                    if (e.cancelable && (!scrollState || (scrollState==1 && this.looping))) e.preventDefault()
                     e.x = CDEUtils.round(touches[0].clientX, 1)
                     e.y = CDEUtils.round(touches[0].clientY, 1)
                     e.button = 0
@@ -4005,16 +4113,12 @@ export class Canvas {
                 isTouch = true
                 const changedTouches = e.changedTouches
                 if (!e.touches.length) {
-                    e.preventDefault()
                     e.x = CDEUtils.round(changedTouches[0].clientX, 1)
                     e.y = CDEUtils.round(changedTouches[0].clientY, 1)
                     e.button = 0
                     this.#mouseClicks(callback, e)
-
-                    this._mouse.invalidate()
-                    e.x = Infinity
-                    e.y = Infinity
                     this.#mouseMovements(callback, e)
+                    setTimeout(()=>this._mouse.invalidate())
                 }     
             }, onmouseup=e=>{
                 if (!isTouch) this.#mouseClicks(callback, e)
@@ -4119,6 +4223,20 @@ export class Canvas {
     disableMouseMoveThrottling() {
         this._mouseMoveThrottlingDelay = 0
     }
+
+    /**
+     * Disables all on intersection change actions
+     */
+    disableViewportIntersectionOptimizations() {
+        this.onIntersectionChangeCB = undefined
+    }
+
+    /**
+     * Sets the on interaction change actions to be the default optimizations
+     */
+    enableDefaultViewportIntersectionOptimizations() {
+        this.onIntersectionChangeCB = null
+    }
     
 	get id() {return this._id}
 	get cvs() {return this._cvs}
@@ -4129,13 +4247,14 @@ export class Canvas {
 	get size() {return this.#cachedSize}
 	get settings() {return this._settings}
 	get loopingCB() {return this._loopingCB}
-	get looping() {return this._state==1}
-	get stopped() {return this._state==0}
+	get looping() {return this._state==Canvas.STATES.LOOPING}
+	get stopped() {return this._state==Canvas.STATES.STOPPED}
     get state() {return this._state}
 	get deltaTime() {return this._deltaTime}
 	get windowListeners() {return this._windowListeners}
 	get timeStamp() {return this._fixedTimeStamp||this.#timeStamp}
-	get timeStampRaw() {return this.#timeStamp}
+	get timeStampNotFixed() {return this.#timeStamp}
+	get timeStampRaw() {return this.#rawTimeStamp}
 	get els() {return this._els}
 	get mouse() {return this._mouse}
 	get typingDevice() {return this._typingDevice}
@@ -4151,6 +4270,7 @@ export class Canvas {
         return this._fpsLimit==null||isStatic ? isStatic ? "static" : null : 1/(this._fpsLimit/1000)
     }
     get onVisibilityChangeCB() {return this._onVisibilityChangeCB}
+    get onIntersectionChangeCB() {return this._onIntersectionChangeCB}
     get onResizeCB() {return this._onResizeCB}
     get onScrollCB() {return this._onScrollCB}
     get maxTime() {return this.#maxTime}
@@ -4163,6 +4283,7 @@ export class Canvas {
     get mouseMoveThrottlingDelay() {return this._mouseMoveThrottlingDelay}
     get dimensions() {return [[0,0],this.size]}
     get hasBeenStarted() {return Boolean(this.timeStamp)}
+    get mobileScrollingState() {return this.#mobileScrollingState}
 
 	set id(id) {this._id = id}
 	set loopingCB(loopingCB) {this._loopingCB = loopingCB}
@@ -4174,10 +4295,10 @@ export class Canvas {
         this.#maxTime = this.#getMaxTime(fpsLimit)
     }
     set onVisibilityChangeCB(onVisibilityChangeCB) {
-        this.#visibilityChangeLastState = this._state
+        this.#visibilityChangeLastState[0] = this._state
         this._onVisibilityChangeCB = (isVisible, CVS, e)=>{
-            if (!isVisible) this.#visibilityChangeLastState = this._state
-            if (this.#visibilityChangeLastState==1) {
+            if (!isVisible) this.#visibilityChangeLastState[0] = this._state
+            if (this.#visibilityChangeLastState[0]==1) {
                 if (isVisible) {
                     this.startLoop()
                     this.resetReferences()
@@ -4186,11 +4307,28 @@ export class Canvas {
             if (CDEUtils.isFunction(onVisibilityChangeCB)) onVisibilityChangeCB(isVisible, CVS, e)
         }
     }
+    set onIntersectionChangeCB(onIntersectionChangeCB) {
+        if (onIntersectionChangeCB===undefined) this._onIntersectionChangeCB = null
+        else {
+            this.#visibilityChangeLastState[1] = this._state
+            this._onIntersectionChangeCB = (isVisible, CVS, e)=>{
+                if (!isVisible) this.#visibilityChangeLastState[1] = this._state
+                if (this.#visibilityChangeLastState[1]==Canvas.STATES.LOOPING) {
+                    if (isVisible) {
+                        this.startLoop()
+                        this.resetReferences()
+                    } else this.stopLoop()
+                }
+                if (CDEUtils.isFunction(onIntersectionChangeCB)) onIntersectionChangeCB(isVisible, CVS, e)
+            }
+        }
+    }
     set onResizeCB(onResize) {this._onResizeCB = onResize}
     set onScrollCB(onScrollCB) {this._onScrollCB = onScrollCB}
     set speedModifier(speedModifier) {this._speedModifier = speedModifier}
     set mouseMoveListenersOptimizationEnabled(enabled) {this._mouse._moveListenersOptimizationEnabled = enabled}
     set mouseMoveThrottlingDelay(mouseMoveThrottlingDelay) {this._mouseMoveThrottlingDelay = mouseMoveThrottlingDelay}
+    set mobileScrollingState(state) {this.#mobileScrollingState = state}
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -4218,22 +4356,44 @@ export class Anim {
         this._startTime = null // start time
         this._progress = 0     // animation progress
         this._playCount = 0    // how many time the animation has played
+        this._isReversed = false
     }
     
-    // progresses the animation 1 frame fowards (loops each frame) 
+    // progresses the animation 1 frame (loops each frame) 
     getFrame(time, deltaTime) {
-        const isInfinite = this._duration<0, duration = isInfinite?-this._duration:this._duration, startTime = this._startTime
+        const isInfinite = this._duration<0, duration = isInfinite?-this._duration:this._duration, startTime = this._startTime, reversed = this._isReversed
         if (!this._playCount || isInfinite) {
-            // SET START TIME
             if (!startTime) this._startTime = time
-            // PLAY ANIMATION
-            else if (time<startTime+duration) {
-                this._progress = this._easing((time-startTime)/duration)
+            else if (deltaTime >= 0 && time < startTime+duration) {
+                let elapsed = time-startTime, prog = this._easing((Math.abs(elapsed))/duration)
+                this._progress = reversed ? 1-prog : prog
                 this._animation(this._progress, this._playCount, deltaTime, this.progress)
+                if (reversed && elapsed > 0) {
+                    this._isReversed = false
+                    this._playCount++
+                }
+            } 
+            else if (deltaTime < 0 && time > startTime-duration) {
+                let reversedElapsed = startTime-time, prog = this._easing((Math.abs(reversedElapsed))/duration)
+                if (!reversed && reversedElapsed > 0) {
+                    this._isReversed = true
+                    this._playCount++
+                } 
+                if (this._easing((Math.abs(startTime-(time+deltaTime*1000)))/duration) > 1) {
+                    this._startTime=null
+                    this._animation(0, this._playCount++, deltaTime, 0)
+                } else {
+                    this._progress = this._isReversed ? 1-prog : prog
+                    this._animation(this._progress, this._playCount, deltaTime, this.progress)
+                }
             }
-            // REPEAT IF NEGATIVE DURATION
-            else if (isInfinite) this.reset(true, deltaTime)
-            // END
+            else if (isInfinite) {
+                if (!this._isReversed) this.reset(true, deltaTime)
+                else {
+                    this._startTime=null
+                    this._playCount++
+                }
+            }
             else this.end(deltaTime)
         }
     }
@@ -4241,7 +4401,7 @@ export class Anim {
     // ends the animation
     end(deltaTime) {
         this._animation(1, this._playCount++, deltaTime, 1)
-        if (CDEUtils.isFunction(this._endCB)) this._endCB()
+        if (CDEUtils.isFunction(this._endCB)) this._endCB(this)
     }
 
     // resets the animation
@@ -7782,8 +7942,8 @@ export class Dot extends _Obj {
     * } The 2 intersection points for the target and for the source
     */
    getLinearIntersectPoints(target=this._connections[0], targetPadding=target.radius??5, source=this, sourcePadding=this.radius??5) {
-       const [tx, ty] = target.pos??target, [sx, sy] = source.pos??source,
-           [a, b, lfn] = CDEUtils.getLinearFn([sx,sy], [tx,ty]), t_r = targetPadding**2, s_r = sourcePadding**2,
+       const pos1 = target.pos??target, tx = pos1[0], ty = pos1[1], pos2 = source.pos??source, sx = pos2[0], sy = pos2[1],
+           res = CDEUtils.getLinearFn_coords(sx, sy, tx, ty), a = res[0], b = res[1], lfn = res[2], t_r = targetPadding**2, s_r = sourcePadding**2,
            qA = (1+a**2)*2,
            s_qB = -(2*a*(b-sy)-2*sx),
            s_qD = Math.sqrt(s_qB**2-(4*(qA/2)*((b-sy)**2+sx**2-s_r))),

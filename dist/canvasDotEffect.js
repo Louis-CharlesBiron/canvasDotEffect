@@ -713,6 +713,37 @@ class CanvasUtils {
     }
 
     /**
+     * Returns a callback allowing an object to move between it's current pos and a pos at a specific distance. This function should only be called once, but the returned callback, every frame inside a animation callback.
+     * @param {_BaseObj} obj: a _BaseObj inheritor instance
+     * @param {[distanceX, distanceY]?} distances: the X/Y distances to move the object to
+     * @param {Boolean?} isAdditive: whether the pos of the object is set in a relative or absolute manner 
+     * @returns a callback to be called by an animation
+     */
+    static getMovementOscillatorCB(obj, distances=[100,100], isAdditive=true) {
+        const distanceX = distances[0], distanceY = distances[1]
+
+        if (isAdditive) {
+            let lastProg
+            return (prog, i)=>{
+                const dirProg = i%2 ? 1-prog : prog
+                if (lastProg==null) lastProg = dirProg
+                
+                const newProg = dirProg-lastProg
+                if (distanceX) obj.x += distanceX*newProg
+                if (distanceY) obj.y += distanceY*newProg
+                lastProg = dirProg
+            }
+        } else {
+            const ix = obj.x, iy = obj.y
+            return (prog, i)=>{
+                const dirProg = i%2 ? 1-prog : prog
+                if (distanceX) obj.x = ix+distanceX*dirProg
+                if (distanceY) obj.y = iy+distanceY*dirProg
+            }
+        }
+    }
+
+    /**
      * Generic function to rotate the gradient of an object
      * @param {_BaseObj} obj: a _BaseObj inheritor instance
      * @param {Number?} duration: the duration of a full animation cycle
@@ -4333,9 +4364,7 @@ class Anim {
     getFrame(time, deltaTime) {
         const isInfinite = this._duration<0, duration = isInfinite?-this._duration:this._duration, startTime = this._startTime, reversed = this._isReversed
         if (!this._playCount || isInfinite) {
-            // SET START TIME
             if (!startTime) this._startTime = time
-            // PLAY ANIMATION
             else if (deltaTime >= 0 && time < startTime+duration) {
                 let elapsed = time-startTime, prog = this._easing((Math.abs(elapsed))/duration)
                 this._progress = reversed ? 1-prog : prog
@@ -4359,9 +4388,13 @@ class Anim {
                     this._animation(this._progress, this._playCount, deltaTime, this.progress)
                 }
             }
-            // REPEAT IF NEGATIVE DURATION
-            else if (isInfinite && !this._isReversed) this.reset(true, deltaTime)
-            // END
+            else if (isInfinite) {
+                if (!this._isReversed) this.reset(true, deltaTime)
+                else {
+                    this._startTime=null
+                    this._playCount++
+                }
+            }
             else this.end(deltaTime)
         }
     }
@@ -4374,8 +4407,7 @@ class Anim {
 
     // resets the animation
     reset(isInfiniteReset, deltaTime) {
-        console.log("reset")
-        if (isInfiniteReset)this._animation(1, this._playCount++, deltaTime, 1)
+        if (isInfiniteReset) this._animation(1, this._playCount++, deltaTime, 1)
         else this._playCount = 0
         this._progress = 0
         this._startTime = null
