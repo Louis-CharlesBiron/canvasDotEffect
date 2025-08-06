@@ -188,6 +188,21 @@ class Shape extends _Obj {
     }
 
     /**
+     * Updates the activationMargin of all the shape's dots
+     * @param {Number | Boolean ?} activationMargin: the pixel margin amount from where the object remains active when outside the canvas visual bounds. If "true", the object will always remain active.
+     * @param {Boolean?} onlyReplaceDefaults: is true, it only sets the dots' activationMargin if it was not initialy set
+     */
+    setActivationMargin(activationMargin=this._activationMargin, onlyReplaceDefaults) {
+        this._activationMargin = activationMargin
+        const d_ll = this._dots.length
+        for (let i=0;i<d_ll;i++) {
+            const dot = this._dots[i]
+            if (onlyReplaceDefaults && dot.activationMargin===_BaseObj.DEFAULT_ACTIVATION_MARGIN) dot.activationMargin = activationMargin
+            else if (!onlyReplaceDefaults) dot.activationMargin = activationMargin
+        }
+    }
+
+    /**
      * Moves the shape and all its dots in specified direction at specified distance(force)
      * @param {Number} distance: the distance in pixels
      * @param {Number} deg: the degree representing the direction of the movement
