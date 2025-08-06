@@ -36,15 +36,16 @@ class Color {
 
     // updates the cached rgba value
     #updateCache() {
-        if (this._format == Color.FORMATS.GRADIENT || this._format == Color.FORMATS.PATTERN) this.#rgba = this.#hsv = []
+        const formats = Color.FORMATS, format = this._format
+        if (format==formats.GRADIENT || format==formats.PATTERN) this.#rgba = this.#hsv = []
         else {
-            this.#rgba = this._format !== Color.FORMATS.RGBA ? this.convertTo() : Color.#unlinkRGBA(this._color)
-            const rgba = this.#rgba, DDRP = Color.DEFAULT_DECIMAL_ROUNDING_POINT, round = CDEUtils.round
+            this.#rgba = format != formats.RGBA ? this.convertTo() : Color.#unlinkRGBA(this._color)
+            const rgba = this.#rgba, DDRP = Color.DEFAULT_DECIMAL_ROUNDING_POINT, round = CDEUtils.round, a = rgba[3]
             rgba[0] = round(rgba[0], DDRP)
             rgba[1] = round(rgba[1], DDRP)
             rgba[2] = round(rgba[2], DDRP)
-            rgba[3] = round(rgba[3], DDRP)
-            this.#hsv = Color.convertTo(this.#rgba, Color.FORMATS.HSV)
+            rgba[3] = a!=null ? round(a, DDRP) : 1
+            this.#hsv = Color.convertTo(rgba, formats.HSV)
         }
     }
 
@@ -124,11 +125,9 @@ class Color {
         return rgba ? [rgba[0], rgba[1], rgba[2], rgba[3]] : null
     }
 
-    // converts hsv to rbga (without default alpha)
+    // converts hsv to rbga (with default alpha)
     static #hsvToRgba(hsva) {
-        let hue = hsva[0], sat = hsva[1]/100, bright = hsva[2]/100,
-        chro = bright*sat, x = chro*(1-Math.abs(((hue/60)%2)-1)), dc = bright-chro,
-        r, g, b
+        let hue = hsva[0], sat = hsva[1]/100, bright = hsva[2]/100, chro = bright*sat, x = chro*(1-Math.abs(((hue/60)%2)-1)), dc = bright-chro, r, g, b
     
         if (0<=hue&&hue<60) {r=chro;g=x;b=0}
         else if (60<=hue&&hue<120) {r=x;g=chro;b=0}
@@ -142,13 +141,28 @@ class Color {
     
     // converts rbga to hex
     static #rgbaToHex(rgba) {
-        const hex = "#"+rgba.reduce((a,b,i)=>a+=(i&&!(i%3)?Math.round(b*255):b).toString(16).padStart(2,"0"),"")
-        return rgba[3]==1 ? hex.slice(0,7) : hex
+        let r = (rgba[0]|0).toString(16), g = (rgba[1]|0).toString(16), b = (rgba[2]|0).toString(16), a = rgba[3], hex = "#"+(r.length<2?"0"+r:r)+(g.length<2?"0"+g:g)+(b.length<2?"0"+b:b)
+        if (a!=1) {
+            const alpha = (Math.round(a*255)).toString(16)
+            hex += (alpha.length<2?"0"+alpha:alpha)
+        }
+        return hex
     }
 
     // converts hex to rgba
     static #hexToRgba(hex) {
-        return hex.padEnd(9, "F").match(/[a-z0-9]{2}/gi).reduce((a,b,i)=>a.concat(parseInt(b, 16)/(i&&!(i%3)?255:1)),[])
+        if (hex[0]!="#") hex = "#"+hex
+        const res = [], h_ll = hex.length-1, isShort = h_ll < 6, hasAlpha = h_ll==4||h_ll==8
+        if (isShort) for (let i=1;i<=h_ll;i++) {
+            let char1 = hex[i], v = parseInt(char1+char1, 16)
+            if (hasAlpha && i==h_ll) v = Math.round(v/255*100)/100
+            res.push(v)
+        } else for (let i=1;i<h_ll;i+=2) {
+            let v = parseInt(hex[i]+hex[i+1], 16)
+            if (hasAlpha && i+1==h_ll) v = Math.round(v/255*100)/100
+            res.push(v) 
+        }
+        return res
     }
 
     /**
@@ -173,11 +187,11 @@ class Color {
     
     /**
      * Formats a rgba array to a usable rgba value
-     * @param {[r,g,b,a]} arrayRgba: the rgba array to format
+     * @param {[r,g,b,a]} rgba: the rgba array to format
      * @returns a string containing the color as rgba format
      */
-    static formatRgba(arrayRgba) {
-        return Array.isArray(arrayRgba) ? `rgba(${arrayRgba[0]}, ${arrayRgba[1]}, ${arrayRgba[2]}, ${arrayRgba[3]})` : null
+    static formatRgba(rgba) {
+        return Array.isArray(rgba) ? `rgba(${rgba[0]??255}, ${rgba[1]??255}, ${rgba[2]??255}, ${rgba[3]??1})` : null
     }
 
     /**
