@@ -219,6 +219,15 @@ class Render {
     }
 
     /**
+     * Instanciates and returns a path containing svg data
+     * @param {String} data: SVG path data
+     * @returns a Path2D instance
+     */
+    static getFromSVGPath(data) {
+        return new Path2D(data)
+    }
+
+    /**
      * Creates and adds a new custom RenderStyles profile base on a given base profile
      * @param {RenderStyles} baseProfile: the RenderStyles instance to base the copy on
      * @returns a RenderStyles instance
