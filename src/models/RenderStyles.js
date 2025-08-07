@@ -167,7 +167,13 @@ class RenderStyles extends _HasColor {
         if (lineCap && currentStyles[4] !== lineCap) currentStyles[4] = ctx.lineCap = lineCap
     }
 
+    
+    [Symbol.toPrimitive]() {
+        return this.toString()
+    }
 
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "RenderStyles"}
     get id() {return this.id}
 	get render() {return this._render}
 	get lineWidth() {return this._lineWidth}

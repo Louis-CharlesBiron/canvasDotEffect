@@ -85,6 +85,12 @@ class FPSCounter {
         }
     }
 
+    [Symbol.toPrimitive]() {
+        return this.getFps()
+    }
+
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "FPSCounter"}
     get maxFps() {return this._maxFps-1}
     get averageSampleSize() {return this._averageSampleSize}
     get fpsRaw() {return this._times.length}

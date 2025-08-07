@@ -894,7 +894,15 @@ class Canvas {
     enableDefaultViewportIntersectionOptimizations() {
         this.onIntersectionChangeCB = null
     }
-    
+
+    [Symbol.toPrimitive](type) {
+        if (type=="number") return this.id
+        else if (type=="string") return this.id
+        return this.id
+    }
+
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "Canvas"}
 	get id() {return this._id}
 	get cvs() {return this._cvs}
 	get frame() {return this._frame}

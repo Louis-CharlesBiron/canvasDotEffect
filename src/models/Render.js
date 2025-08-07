@@ -683,6 +683,8 @@ class Render {
         }
     }
 
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "Render"}
 	get ctx() {return this._ctx}
 	get batchedStrokes() {return this._batchedStrokes}
 	get batchedFills() {return this._bactchedStandalones}

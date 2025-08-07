@@ -20,6 +20,8 @@ class _DynamicColor {
         this._value = null              // usable value as a fill/stroke style
     }
 
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "_DynamicColor"}
     get initPositions() {return this._initPositions}
     get positions() {return this._positions}
 	get rotation() {return this._rotation}

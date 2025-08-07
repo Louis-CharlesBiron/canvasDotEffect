@@ -426,6 +426,14 @@ class ImageDisplay extends _BaseObj {
         return "."+ImageDisplay.SUPPORTED_IMAGE_FORMATS.join(sep)+sep+ImageDisplay.SUPPORTED_VIDEO_FORMATS.join(sep)
     }
 
+    [Symbol.toPrimitive](type) {
+        if (type=="number") return this.id
+        else if (type=="string") return this.id
+        return this.id
+    }
+
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "ImageDisplay"}
 	get ctx() {return this._parent._ctx}
 	get size() {return this._size||[0,0]}
 	get size_() {return this._size?CDEUtils.unlinkArr2(this._size):[0,0]}
@@ -442,7 +450,6 @@ class ImageDisplay extends _BaseObj {
     get source() {return this._source}
 	get sourceCroppingPositions() {return this._sourceCroppingPositions}
     get errorCB() {return this._errorCB}
-    get instanceOf() {return "ImageDisplay"}
 
     get paused() {return this._source?.paused}
     get playbackRate() {return this._source?.playbackRate}

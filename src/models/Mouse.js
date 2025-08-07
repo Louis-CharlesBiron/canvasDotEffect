@@ -230,6 +230,8 @@ class Mouse {
         else return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
     }
 
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "Mouse"}
     get ctx() {return this._ctx}
 	get valid() {return this._valid}
 	get x() {return this._x}

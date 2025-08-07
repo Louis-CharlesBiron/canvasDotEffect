@@ -218,6 +218,14 @@ class Dot extends _Obj {
         return super.getBounds(positions, padding, (scale[0]!=scale[1]&&(scale[0]!=1||scale[1]!=1))?rotation:0, scale, super.getCenter(positions))
     }
 
+    [Symbol.toPrimitive](type) {
+        if (type=="number") return this.id
+        else if (type=="string") return this.id
+        return this.id
+    }
+
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "Dot"}
     get ctx() {return this.cvs.ctx}
     get cvs() {return this._parent.parent||this._parent}
     get render() {return this.cvs.render}
@@ -241,7 +249,6 @@ class Dot extends _Obj {
     get relativePos() {return super.relativePos}
     get radius() {return this._radius}
     get cachedPath() {return this._cachedPath}
-    get instanceOf() {return "Dot"}
 
     set x(x) {
         x = CDEUtils.round(x, _BaseObj.POSITION_PRECISION)

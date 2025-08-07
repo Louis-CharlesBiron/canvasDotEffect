@@ -239,6 +239,14 @@ class TextDisplay extends _BaseObj {
         TextStyles.loadCustomFont(src, fontFaceName, fontFaceDescriptors, readyCB, errorCB)
     }
 
+    [Symbol.toPrimitive](type) {
+        if (type=="number") return this.id
+        else if (type=="string") return this.id
+        return this.id
+    }
+
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "TextDisplay"}
     get ctx() {return this._parent.ctx}
     get render() {return this._parent.render}
 	get text() {return this._text+""}
@@ -252,7 +260,6 @@ class TextDisplay extends _BaseObj {
     get lineCount() {return this.#lineCount}
     get width() {return this.trueSize[0]}
     get height() {return this.trueSize[1]}
-    get instanceOf() {return "TextDisplay"}
 
 	set text(text) {
         const lastYScale = this._scale[1]

@@ -52,6 +52,8 @@ class TypingDevice {
         return Boolean(this._keysPressed.length)
     }
 
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "TypingDevice"}
     get keysPressedRaw() {return this._keysPressed}
     get keysPressed() {return this._keysPressed.map(v=>v.key)}
     get keyCodesPressed() {return this._keysPressed.map(v=>v.keyCode)}

@@ -272,8 +272,13 @@ class Color {
         return colorValue
     }
 
-    // returns the usable value of the color
-    get color() {
+    [Symbol.toPrimitive]() {
+        return this.color
+    }
+
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "Color"}
+    get color() {// returns the usable value of the color
         const formats = Color.FORMATS, format = this._format
         if (format == formats.GRADIENT || format == formats.PATTERN) return this._color.value
         else return Color.formatRgba(this.#rgba)

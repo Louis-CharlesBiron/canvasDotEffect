@@ -229,6 +229,13 @@ class Pattern extends _DynamicColor {
         return ImageDisplay.loadCapture(resolution, cursor, frameRate, mediaSource)
     }
 
+    
+    [Symbol.toPrimitive]() {
+        return this.value
+    }
+
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "Pattern"}
     get id() {return this._id}
 	get render() {return this._render}
 	get source() {return this._source}

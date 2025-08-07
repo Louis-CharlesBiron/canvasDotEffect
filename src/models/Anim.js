@@ -80,6 +80,14 @@ class Anim {
         this._startTime = null
     }
 
+    [Symbol.toPrimitive](type) {
+        if (type=="number") return this.id
+        else if (type=="string") return this.id
+        return this.id
+    }
+
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "Anim"}
     get id() {return this._id}
     get animation() {return this._animation}
 	get duration() {return this._duration}

@@ -67,6 +67,8 @@ class _Obj extends _BaseObj {
         return super.getBounds(positions, padding, rotation, scale, centerPos)
     }
 
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "_Obj"}
     get radius() {return this._radius}
     get initRadius() {return this._initRadius}
 

@@ -97,14 +97,20 @@ class FilledShape extends Shape {
         return this.initialized ? filledShape : null
     }
 
+    [Symbol.toPrimitive](type) {
+        if (type=="number") return this.id
+        else if (type=="string") return this.id
+        return this.id
+    }
+
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "FilledShape"}
     get fillColorObject() {return this._fillColor}
     get fillColorRaw() {return this._fillColor.colorRaw}
     get fillColor() {return this._fillColor.color}
     get initFillColor() {return this._initFillColor}
 	get path() {return this._path}
 	get dynamicUpdates() {return this._dynamicUpdates}
-    get instanceOf() {return "FilledShape"}
-
 
     set fillColor(fillColor) {
         const fc = this._fillColor

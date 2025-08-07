@@ -151,7 +151,13 @@ class Gradient extends _DynamicColor {
         
         return Gradient.getCanvasGradient(ctx, positions, colorStops, type, +rotation)
     }
+    
+    [Symbol.toPrimitive]() {
+        return this.toString()
+    }
 
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "Gradient"}
     get ctx() {return this._ctx}
     get type() {return this._type}
 	get colorStops() {return this._colorStops}

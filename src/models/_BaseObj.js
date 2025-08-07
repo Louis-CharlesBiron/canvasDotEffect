@@ -403,6 +403,8 @@ class _BaseObj extends _HasColor {
         }
     }
 
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "_BaseObj"}
 	get id() {return this._id}
     get x() {return this._pos[0]}
     get y() {return this._pos[1]}

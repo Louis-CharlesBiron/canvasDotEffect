@@ -631,6 +631,14 @@ class AudioDisplay extends _BaseObj {
         }
     }
 
+    [Symbol.toPrimitive](type) {
+        if (type=="number") return this.id
+        else if (type=="string") return this.id
+        return this.id
+    }
+
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "AudioDisplay"}
     get source() {return this._source}
 	get binCB() {return this._binCB}
 	get sampleCount() {return this._sampleCount}
@@ -651,7 +659,6 @@ class AudioDisplay extends _BaseObj {
     get bufferLength() {return this.#buffer_ll}
     get transformableRaw() {return this._transformable}
     get transformable() {return Boolean(this._transformable)}
-    get instanceOf() {return "AudioDisplay"}
 
     get video() {return this._source}
     get image() {return this._source}

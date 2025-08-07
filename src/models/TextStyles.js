@@ -206,6 +206,12 @@ class TextStyles {
         return [style, variant, weight, size, family].filter(Boolean).join(" ")
     }
 
+    [Symbol.toPrimitive]() {
+        return this.toString()
+    }
+
+    get [Symbol.toStringTag]() {return this.instanceOf}
+    get instanceOf() {return "TextStyles"}
     get id() {return this.id}
     get render() {return this._render}
 	get font() {return this._font}
