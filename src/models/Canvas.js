@@ -59,9 +59,9 @@ class Canvas {
      * @param {HTMLCanvasElement | OffscreenCanvas} cvs: the html canvas element or an OffscreenCanvas instance to link to
      * @param {Function?} loopingCB: a function called along with the loop() function. (deltatime)=>{...}
      * @param {Number?} fpsLimit: the maximal frames per second cap. Defaults to V-Sync
-     * @param {HTMLElement?} cvsFrame: if defined and if "cvs" is an HTML canvas, sets this element as the parent of the canvas element
+     * @param {HTMLElement?} cvsFrame: if defined and if "cvs" is an HTML canvas, sets this element as the reference parent of the canvas element
      * @param {Object?} settings: an object containing the canvas settings
-     * @param {Boolean} willReadFrequently: whether the getImageData optimizations are enabled
+     * @param {Boolean?} willReadFrequently: whether the getImageData optimizations are enabled
      */
     constructor(cvs, loopingCB, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
         this._id = Canvas.CANVAS_ID_GIVER++                               // Canvas instance id
@@ -78,7 +78,7 @@ class Canvas {
             Canvas.#DOM_CANVAS_INTERSECTION_OBSERVER.observe(this._cvs)
             Canvas.#DOM_CANVAS_LINKS.set(this._cvs, this)
         }
-        this._ctx = this._cvs.getContext("2d", {willReadFrequently})  // canvas context
+        this._ctx = this._cvs.getContext("2d", {willReadFrequently:willReadFrequently??false})// canvas context
         this._settings = this.updateSettings(settings||Canvas.DEFAULT_CTX_SETTINGS)// set context settings
         this._els = {refs:[], defs:[]}                                // arrs of objects to .draw() | refs (source): [Object that contains drawable obj], defs: [regular drawable objects]
         this._state = 0                                               // canvas drawing loop state. 0:off, 1:on, 2:awaiting stop
@@ -101,6 +101,22 @@ class Canvas {
         this._render = new Render(this._ctx)                           // render instance
         this._anims = []                                               // current animations
         this._mouseMoveThrottlingDelay = Canvas.DEFAULT_MOUSE_MOVE_THROTTLE_DELAY// mouse move throttling delay
+    }
+
+    /**
+     * Creates and instantiates a canvas in the specified targetElement
+     * @param {HTMLElement?} targetElement: the html element to create the canvas in
+     * @param {Function?} loopingCB: a function called along with the loop() function. (deltatime)=>{...}
+     * @param {Number?} fpsLimit: the maximal frames per second cap. Defaults to V-Sync
+     * @param {HTMLElement?} cvsFrame: if defined, sets this element as the reference parent of the canvas element
+     * @param {Object?} settings: an object containing the canvas settings
+     * @param {Boolean?} willReadFrequently: whether the getImageData optimizations are enabled
+     * @returns the created Canvas instance
+     */
+    static create(targetElement=null, loopingCB, fpsLimit=null, cvsFrame, settings=Canvas.DEFAULT_CTX_SETTINGS, willReadFrequently=false) {
+        const canvasEl = document.createElement("canvas")
+        ;(targetElement||document.documentElement).appendChild(canvasEl)
+        return new Canvas(canvasEl, loopingCB, fpsLimit, cvsFrame, settings, willReadFrequently)
     }
 
     // sets css styles on the canvas and the parent
