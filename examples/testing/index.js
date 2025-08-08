@@ -356,3 +356,26 @@ CVS.start()
 Canvas.addOnLoadCallback((e, cvs)=>{
     console.log("LOADED")
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let a = createButton(CVS)

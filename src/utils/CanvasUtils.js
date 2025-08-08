@@ -334,6 +334,49 @@ class CanvasUtils {
     }
 
     /**
+     * Creates a simple button
+     * @param {Canvas} CVS: the canvas instance to use
+     * @param {String?} text: the button's text
+     * @param {[x,y]?} pos: the center pos of the button
+     * @param {Function?} onClickCB: function called on button click
+     * @param {String | [r,g,b,a] | Color?} fillColor: the fill color of the button
+     * @param {String | [r,g,b,a] | Color?} textColor: the text color of the button
+     * @param {[paddingX, paddingY]?} padding: the vertical and horizontal padding of the button
+     * @param {Function?} onHoverCB: function called on button enter/leave
+     * @param {Boolean?} disableDefaultEffects: if true, disable all default visual effects
+     * @returns the button as a FilledShape and a TextDisplay: [FilledShape, TextDisplay]
+     */
+    static createButton(CVS, text="Button", pos=CVS.getCenter(), onClickCB=null, fillColor="aliceblue", textColor="black", padding=[20, 30], onHoverCB=null, disableDefaultEffects=false) {
+        const textDisplay = new TextDisplay(text, [0,0], textColor, null, null, null, self=>{
+            const [width, height] = self.trueSize, w = width/2+padding[1]/2, h = height/2+padding[0]/2,
+                button = CVS.add(new FilledShape(fillColor, true, pos, [new Dot([-w,-h]),new Dot([w,-h]),new Dot([w,h]),new Dot([-w,h])], 0, fillColor, null, null, null, null, null, null, true)),
+                brightnesses = {default:100, hover:85, click:70},
+                
+            hoverHandler=(isHover)=>{
+                if (!disableDefaultEffects) {
+                    button.fillColorObject.brightness = isHover ? brightnesses.hover : brightnesses.default
+                    CVS.setCursorStyle(isHover ? Canvas.CURSOR_STYLES.POINTER : Canvas.CURSOR_STYLES.DEFAULT)                
+                }
+                if (CDEUtils.isFunction(onHoverCB)) onHoverCB(isHover, button, self)
+            },
+            clickHandler=(isDown)=>{
+                if (!disableDefaultEffects) button.fillColorObject.brightness = isDown ? brightnesses.click : brightnesses.hover
+                if (isDown && CDEUtils.isFunction(onClickCB)) onClickCB(button, self)
+            }
+
+            CVS.mouse.addListener(button, Mouse.LISTENER_TYPES.DOWN, ()=>clickHandler(true))
+            CVS.mouse.addListener(button, Mouse.LISTENER_TYPES.UP, ()=>clickHandler(false))
+            CVS.mouse.addListener(button, Mouse.LISTENER_TYPES.ENTER, ()=>hoverHandler(true))
+            CVS.mouse.addListener(button, Mouse.LISTENER_TYPES.LEAVE, ()=>hoverHandler(false))
+
+            return button
+        }, null, self=>self.setupResults)
+        
+        CVS.add(textDisplay)
+        return [textDisplay.setupResults, textDisplay]
+    }
+
+    /**
      * Provides generic follow paths
      */
     static FOLLOW_PATHS = {
