@@ -252,7 +252,7 @@ class Render {
     /**
      * Queues a path to be stroked in batch at the end of the current frame
      * @param {Path2D} path: the path to batch
-     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either be a rgba array or a RenderStyles instance
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either a rgba array or a RenderStyles instance
      * @param {[filter, compositeOperation, opacity]?} forceVisualEffects: the filter, composite operation and opacity effects to apply
      */
     batchStroke(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
@@ -266,7 +266,7 @@ class Render {
     /**
      * Queues a path to be filled in batch at the end of the current frame
      * @param {Path2D} path: the path to batch
-     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either be a rgba array or a RenderStyles instance
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either a rgba array or a RenderStyles instance
      * @param {[filter, compositeOperation, opacity]?} forceVisualEffects: the filter, composite operation and opacity effects to apply
      */
     batchFill(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
@@ -331,7 +331,7 @@ class Render {
     /**
      * Directly strokes a path on the canvas
      * @param {Path2D} path: the path to batch
-     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either be a rgba array or a RenderStyles instance
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either a rgba array or a RenderStyles instance
      * @param {[filter, compositeOperation, opacity]?} forceVisualEffects: the filter, composite operation and opacity effects to apply
      */
     stroke(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
@@ -348,7 +348,7 @@ class Render {
     /**
      * Directly fills a path on the canvas
      * @param {Path2D} path: the path to batch
-     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either be a rgba array or a RenderStyles instance
+     * @param {RenderStyles | [r,g,b,a]?} renderStyles: either a rgba array or a RenderStyles instance
      * @param {[filter, compositeOperation, opacity]?} forceVisualEffects: the filter, composite operation and opacity effects to apply
      */
     fill(path, renderStyles=Color.DEFAULT_RGBA, forceVisualEffects=[]) {
