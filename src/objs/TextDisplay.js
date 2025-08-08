@@ -239,10 +239,13 @@ class TextDisplay extends _BaseObj {
         TextStyles.loadCustomFont(src, fontFaceName, fontFaceDescriptors, readyCB, errorCB)
     }
 
-    [Symbol.toPrimitive](type) {
-        if (type=="number") return this.id
-        else if (type=="string") return this.id
+    [Symbol.toPrimitive]() {
         return this.id
+    }
+
+    *[Symbol.iterator]() {
+        const text = this.getTextValue(), t_ll = text.length
+        for (let i=0;i<t_ll;i++) yield text[i]
     }
 
     get [Symbol.toStringTag]() {return this.instanceOf}

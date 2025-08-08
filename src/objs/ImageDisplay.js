@@ -426,9 +426,7 @@ class ImageDisplay extends _BaseObj {
         return "."+ImageDisplay.SUPPORTED_IMAGE_FORMATS.join(sep)+sep+ImageDisplay.SUPPORTED_VIDEO_FORMATS.join(sep)
     }
 
-    [Symbol.toPrimitive](type) {
-        if (type=="number") return this.id
-        else if (type=="string") return this.id
+    [Symbol.toPrimitive]() {
         return this.id
     }
 

@@ -80,9 +80,7 @@ class Anim {
         this._startTime = null
     }
 
-    [Symbol.toPrimitive](type) {
-        if (type=="number") return this.id
-        else if (type=="string") return this.id
+    [Symbol.toPrimitive]() {
         return this.id
     }
 

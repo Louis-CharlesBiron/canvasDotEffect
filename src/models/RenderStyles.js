@@ -172,6 +172,11 @@ class RenderStyles extends _HasColor {
         return this.toString()
     }
 
+    *[Symbol.iterator]() {
+        const styles = this.getStyles(), s_ll = styles.length
+        for (let i=0;i<s_ll;i++) yield styles[i]
+    }
+
     get [Symbol.toStringTag]() {return this.instanceOf}
     get instanceOf() {return "RenderStyles"}
     get id() {return this.id}

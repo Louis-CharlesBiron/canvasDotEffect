@@ -276,6 +276,11 @@ class Color {
         return this.color
     }
 
+    *[Symbol.iterator]() {
+        const rgba = this.#rgba
+        for (let i=0;i<4;i++) yield rgba[i]
+    }
+
     get [Symbol.toStringTag]() {return this.instanceOf}
     get instanceOf() {return "Color"}
     get color() {// returns the usable value of the color

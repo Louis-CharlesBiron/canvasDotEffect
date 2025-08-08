@@ -895,10 +895,13 @@ class Canvas {
         this.onIntersectionChangeCB = null
     }
 
-    [Symbol.toPrimitive](type) {
-        if (type=="number") return this.id
-        else if (type=="string") return this.id
+    [Symbol.toPrimitive]() {
         return this.id
+    }
+
+    *[Symbol.iterator]() {
+        const els = this.allEls, e_ll = els.length
+        for (let i=0;i<e_ll;i++) yield els[i]
     }
 
     get [Symbol.toStringTag]() {return this.instanceOf}

@@ -156,6 +156,11 @@ class Gradient extends _DynamicColor {
         return this.toString()
     }
 
+    *[Symbol.iterator]() {
+        const colorStops = this._colorStops, c_ll = colorStops.length
+        for (let i=0;i<c_ll;i++) yield colorStops[i]
+    }
+
     get [Symbol.toStringTag]() {return this.instanceOf}
     get instanceOf() {return "Gradient"}
     get ctx() {return this._ctx}

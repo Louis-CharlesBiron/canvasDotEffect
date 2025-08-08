@@ -631,10 +631,13 @@ class AudioDisplay extends _BaseObj {
         }
     }
 
-    [Symbol.toPrimitive](type) {
-        if (type=="number") return this.id
-        else if (type=="string") return this.id
+    [Symbol.toPrimitive]() {
         return this.id
+    }
+
+    *[Symbol.iterator]() {
+        const data = this.#data, d_ll = data.length
+        for (let i=0;i<d_ll;i++) yield data[i]
     }
 
     get [Symbol.toStringTag]() {return this.instanceOf}

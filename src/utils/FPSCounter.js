@@ -4,7 +4,7 @@ class FPSCounter {
 
     /**
      * Allows to get the current frames per second.
-     * To use: either getFpsRaw for raw fps, AND/OR getFps for averaged fps
+     * To use: either getFpsRaw for raw fps, AND/OR getFps for a smoother fps display
      * @param {Number?} averageSampleSize: the sample size used to calculate the current fps average
      */
     constructor(averageSampleSize) {
@@ -87,6 +87,11 @@ class FPSCounter {
 
     [Symbol.toPrimitive]() {
         return this.getFps()
+    }
+
+    *[Symbol.iterator]() {
+        const times = this._times, t_ll = times.length
+        for (let i=0;i<t_ll;i++) yield times[i]
     }
 
     get [Symbol.toStringTag]() {return this.instanceOf}

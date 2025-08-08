@@ -52,6 +52,11 @@ class TypingDevice {
         return Boolean(this._keysPressed.length)
     }
 
+    *[Symbol.iterator]() {
+        const keyPressed = this._keysPressed, k_ll = keyPressed.length
+        for (let i=0;i<k_ll;i++) yield keyPressed[i]
+    }
+
     get [Symbol.toStringTag]() {return this.instanceOf}
     get instanceOf() {return "TypingDevice"}
     get keysPressedRaw() {return this._keysPressed}

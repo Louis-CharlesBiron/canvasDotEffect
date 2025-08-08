@@ -446,10 +446,13 @@ class Shape extends _Obj {
         return this.initialized ? shape : null
     }
 
-    [Symbol.toPrimitive](type) {
-        if (type=="number") return this.id
-        else if (type=="string") return this.id
+    [Symbol.toPrimitive]() {
         return this.id
+    }
+
+    *[Symbol.iterator]() {
+        const dots = this._dots, d_ll = dots.length
+        for (let i=0;i<d_ll;i++) yield dots[i]
     }
 
     get [Symbol.toStringTag]() {return this.instanceOf}

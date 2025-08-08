@@ -218,10 +218,13 @@ class Dot extends _Obj {
         return super.getBounds(positions, padding, (scale[0]!=scale[1]&&(scale[0]!=1||scale[1]!=1))?rotation:0, scale, super.getCenter(positions))
     }
 
-    [Symbol.toPrimitive](type) {
-        if (type=="number") return this.id
-        else if (type=="string") return this.id
+    [Symbol.toPrimitive]() {
         return this.id
+    }
+
+    *[Symbol.iterator]() {
+        const connections = this._connections, c_ll = connections.length
+        for (let i=0;i<c_ll;i++) yield connections[i]
     }
 
     get [Symbol.toStringTag]() {return this.instanceOf}
