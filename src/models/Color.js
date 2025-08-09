@@ -102,7 +102,12 @@ class Color {
         else if (outputFormat==formats.HSV) return Color.convertTo(randomRGBA, formats.HSV)
         else return randomRGBA
     }
-
+    
+    // create a separate copy of an RGBA array
+    static #unlinkRGBA(rgba) {
+        return rgba ? [rgba[0], rgba[1], rgba[2], rgba[3]] : null
+    }
+    
     // converts rbga to hsv (without alpha)
     static #rgbaToHsv(rgba) {
         let r = rgba[0]/255, g = rgba[1]/255, b = rgba[2]/255,
@@ -120,14 +125,9 @@ class Color {
         return [hue, max&&(diff/max)*100, max*100]
     }
 
-    // create a separate copy of an RGBA array
-    static #unlinkRGBA(rgba) {
-        return rgba ? [rgba[0], rgba[1], rgba[2], rgba[3]] : null
-    }
-
     // converts hsv to rbga (with default alpha)
-    static #hsvToRgba(hsva) {
-        let hue = hsva[0], sat = hsva[1]/100, bright = hsva[2]/100, chro = bright*sat, x = chro*(1-Math.abs(((hue/60)%2)-1)), dc = bright-chro, r, g, b
+    static #hsvToRgba(hsv) {
+        let hue = hsv[0], sat = hsv[1]/100, bright = hsv[2]/100, chro = bright*sat, x = chro*(1-Math.abs(((hue/60)%2)-1)), dc = bright-chro, r, g, b
     
         if (0<=hue&&hue<60) {r=chro;g=x;b=0}
         else if (60<=hue&&hue<120) {r=x;g=chro;b=0}
@@ -180,9 +180,69 @@ class Color {
         Color.CSS_COLOR_TO_RGBA_CONVERTIONS[color] ? formats.TEXT: null
     }
 
-    // ajust color values to Color instances
-    static adjust(color) {
+    /**
+     * Uniquifies a color to a unique Color instance
+     * @param {String | [r,g,b,a] | Color} color: a color definition
+     * @returns a unique Color instance
+     */
+    static uniquify(color) {
         return color instanceof Color ? color.isChannel?color:color.duplicate() : new Color(color)
+    }
+
+    /**
+     * Adds specific values to a rgba array
+     * @param {[r,g,b,a]} rgba: the rgba array to modify
+     * @param {Number?} rValue: the red value to add
+     * @param {Number?} gValue: the green value to add
+     * @param {Number?} bValue: the blue value to add
+     * @param {Number?} aValue: the alpha value to add
+     * @returns an updated rgba array
+     */
+    static rgbaAdd(rgba, rValue=0, gValue=0, bValue=0, aValue=0) {
+        const c = (v, isAlpha)=>CDEUtils.clamp(v, 0, isAlpha?1:255)
+        return [c(rgba[0]+(rValue||0)), c(rgba[1]+(gValue||0)), c(rgba[2]+(bValue||0)), c(rgba[3]+(aValue||0), true)]
+    }
+
+    /**
+     * Adds a value to a each value of a rgba array (except alpha)
+     * @param {[r,g,b,a]} rgba: the rgba array to modify
+     * @param {Number?} value: the value to add
+     * @returns an updated rgba array
+     */
+    static rgbaAddAll(rgba, value=0) {
+        const c = (v, isAlpha)=>CDEUtils.clamp(v, 0, isAlpha?1:255)
+        return [c(rgba[0]+(value||0)), c(rgba[1]+(value||0)), c(rgba[2]+(value||0)), rgba[3]]
+    }
+
+    /**
+     * Sets specific values of a rgba array
+     * @param {[r,g,b,a]} rgba: the rgba array to modify
+     * @param {Number?} rValue: the new red value
+     * @param {Number?} gValue: the new green value
+     * @param {Number?} bValue: the new blue value
+     * @param {Number?} aValue: the new alpha value
+     * @returns an updated rgba array
+     */
+    static rgbaSet(rgba, rValue, gValue, bValue, aValue) {
+        const c = (v, isAlpha)=>CDEUtils.clamp(v, 0, isAlpha?1:255)
+        return [c(rValue??rgba[0]??0), c(gValue??rgba[1]??0), c(bValue??rgba[2]??0), c(aValue??rgba[3]??1, true)]
+    }
+
+    /**
+     * Updates a rgba array by hsv modifications
+     * @param {[r,g,b,a]} rgba: the rgba array to modify
+     * @param {Number?} hueValue: the hue value to add
+     * @param {Number?} saturationValue: the saturation value to add
+     * @param {Number?} brightnessValue: the brightness value to add
+     * @returns an updated rgba array
+     */
+    static rgbaHsvAdd(rgba, hueValue, saturationValue, brightnessValue) {
+        const hsv = Color.#rgbaToHsv(rgba)
+        hsv[0] = ((hsv[0]+(hueValue??0))%360)||0
+        hsv[1] = (CDEUtils.clamp((hsv[1]+(saturationValue??0)), 0, 100))||0
+        hsv[2] = (CDEUtils.clamp((hsv[2]+(brightnessValue??0)), 0, 100))||0
+
+        return Color.rgbaSet(Color.#hsvToRgba(hsv), null, null, null, rgba[3])
     }
     
     /**

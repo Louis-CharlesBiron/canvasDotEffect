@@ -27,7 +27,7 @@ class Gradient extends _DynamicColor {
         ) 
         this._ctx = ctx.ctx??ctx                 // canvas context
         this._type = type||Gradient.DEFAULT_TYPE // type of gradient
-        this._colorStops = colorStops.map(([stop, color])=>[stop, Color.adjust(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
+        this._colorStops = colorStops.map(([stop, color])=>[stop, Color.uniquify(color)]) // ex: [[0..1, Color], [0.5, Color], [1, Color]]
         this.update()
     }
 
@@ -168,7 +168,7 @@ class Gradient extends _DynamicColor {
 	get colorStops() {return this._colorStops}
 
 	set colorStops(_colorStops) {
-        this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.adjust(color)])
+        this._colorStops = _colorStops.map(([stop, color])=>[stop, Color.uniquify(color)])
         if (!this.isDynamic) this.update()
     }
     set type(type) {

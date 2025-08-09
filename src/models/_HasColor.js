@@ -46,7 +46,7 @@ class _HasColor {
             }
 
             if (c instanceof Color) c.color = color
-            else this._color = Color.adjust(color)
+            else this._color = Color.uniquify(color)
         }
     }
     set r(r) {this._color.r = r}

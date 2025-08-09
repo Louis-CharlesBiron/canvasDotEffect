@@ -122,7 +122,7 @@ class FilledShape extends Shape {
 
             
             if (fc instanceof Color) fc.color = fillColor
-            else this._fillColor = Color.adjust(fillColor)
+            else this._fillColor = Color.uniquify(fillColor)
         }
     }
 	set dynamicUpdates(_dynamicUpdates) {return this._dynamicUpdates = _dynamicUpdates}
