@@ -14,7 +14,9 @@
     },
     "type": "module",
     "main": "canvasDotEffect.min.js",
+    "module": "cde.min.js",
     "browser": "canvasDotEffect.min.js",
+    "types": "dts/cde.d.ts",
     "files": [
         "cde.min.js",
         "canvasDotEffect.min.js",
@@ -25,10 +27,20 @@
         "bins/openDocumentation.min.js",
         "bins/global.min.js",
         "readme.md",
-        "LICENSE"
+        "LICENSE",
+        "dts/canvasDotEffect.d.ts",
+        "dts/cde.d.ts"
     ],
     "exports": {
-        "import": "./cde.min.js"
+        ".": {
+            "import": "./cde.min.js",
+            "require": "./canvasDotEffect.min.js",
+            "types": "./dts/cde.d.ts"
+        },
+        "./canvasDotEffect": {
+            "require": "./canvasDotEffect.min.js",
+            "types": "./dts/canvasDotEffect.d.ts"
+        }
     },
     "bin": {
         "cdejs": "./bins/global.min.js", 

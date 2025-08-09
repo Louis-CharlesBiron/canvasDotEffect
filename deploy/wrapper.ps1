@@ -49,6 +49,9 @@ $mergedCodeESM = $mergedCodeESM.Trim()
 $toMinifyPath = New-Item "$dist\canvasDotEffect.js" -Value "// CanvasDotEffect UMD - v$version`n$mergedCode" -Force
 $toMinifyPathESM = New-Item "$dist\cde.js" -Value "// CanvasDotEffect ESM - v$version`n$mergedCodeESM" -Force
 
+#CREATE .D.TS FILES
+npx tsc
+
 #CREATE MINIFIED MERGED FILE
 if (-not (Test-Path $terser)) {
     Set-Location $deploy

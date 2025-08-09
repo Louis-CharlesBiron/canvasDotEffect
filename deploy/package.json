@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "terser": "^5.37.0"
+    "terser": "^5.37.0",
+    "typescript": "^5.9.2"
   }
 }

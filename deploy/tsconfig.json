@@ -1,0 +1,9 @@
+{
+  "include": ["../dist/canvasDotEffect.js", "../dist/cde.js"],
+  "compilerOptions": {
+    "allowJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "../dist/dts"
+  }
+}
