@@ -834,9 +834,9 @@ declare class Color {
         HEX: string;
         HSV: string;
     }, randomizeAlpha?: boolean, rRange?: any[], gRange?: any[], bRange?: any[], aRange?: any[]): string | number[] | [r, g, b, a] | Color;
-    static #rgbaToHsv(rgba: any): number[];
     static #unlinkRGBA(rgba: any): any[];
-    static #hsvToRgba(hsva: any): number[];
+    static #rgbaToHsv(rgba: any): number[];
+    static #hsvToRgba(hsv: any): number[];
     static #rgbaToHex(rgba: any): string;
     static #hexToRgba(hex: any): number[];
     /**
@@ -844,7 +844,48 @@ declare class Color {
      * @param {String | [r,g,b,a] | Color} color: the color definition
      */
     static getFormat(color: string | [r, g, b, a] | Color): string;
-    static adjust(color: any): Color;
+    /**
+     * Uniquifies a color to a unique Color instance
+     * @param {String | [r,g,b,a] | Color} color: a color definition
+     * @returns a unique Color instance
+     */
+    static uniquify(color: string | [r, g, b, a] | Color): Color;
+    /**
+     * Adds specific values to a rgba array
+     * @param {[r,g,b,a]} rgba: the rgba array to modify
+     * @param {Number?} rValue: the red value to add
+     * @param {Number?} gValue: the green value to add
+     * @param {Number?} bValue: the blue value to add
+     * @param {Number?} aValue: the alpha value to add
+     * @returns an updated rgba array
+     */
+    static rgbaAdd(rgba: [r, g, b, a], rValue?: number | null, gValue?: number | null, bValue?: number | null, aValue?: number | null): number[];
+    /**
+     * Adds a value to a each value of a rgba array (except alpha)
+     * @param {[r,g,b,a]} rgba: the rgba array to modify
+     * @param {Number?} value: the value to add
+     * @returns an updated rgba array
+     */
+    static rgbaAddAll(rgba: [r, g, b, a], value?: number | null): any[];
+    /**
+     * Sets specific values of a rgba array
+     * @param {[r,g,b,a]} rgba: the rgba array to modify
+     * @param {Number?} rValue: the new red value
+     * @param {Number?} gValue: the new green value
+     * @param {Number?} bValue: the new blue value
+     * @param {Number?} aValue: the new alpha value
+     * @returns an updated rgba array
+     */
+    static rgbaSet(rgba: [r, g, b, a], rValue: number | null, gValue: number | null, bValue: number | null, aValue: number | null): number[];
+    /**
+     * Updates a rgba array by hsv modifications
+     * @param {[r,g,b,a]} rgba: the rgba array to modify
+     * @param {Number?} hueValue: the hue value to add
+     * @param {Number?} saturationValue: the saturation value to add
+     * @param {Number?} brightnessValue: the brightness value to add
+     * @returns an updated rgba array
+     */
+    static rgbaHsvAdd(rgba: [r, g, b, a], hueValue: number | null, saturationValue: number | null, brightnessValue: number | null): number[];
     /**
      * Formats a rgba array to a usable rgba value
      * @param {[r,g,b,a]} rgba: the rgba array to format
