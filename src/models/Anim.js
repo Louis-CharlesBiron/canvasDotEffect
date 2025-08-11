@@ -9,14 +9,14 @@ class Anim {
 
     /**
      * Allows the creation of smooth progress based animations 
-     * @param {Function} animationCB: a function called each frame containing the animation code. (clampedProgress, playCount, progress)=>{...}
+     * @param {Function} animationCB: a function called each frame containing the animation code. (progress, playCount, deltaTime clampedProgress)=>{...}
      * @param {Number?} duration: the animation duration in miliseconds. Negative numbers make the animation loop infinitely
      * @param {Function?} easing: the easing function used. (x)=>{return y} 
      * @param {Function?} endCB: a function called upon the anim end
      */
     constructor(animationCB, duration, easing, endCB) {
         this._id = Anim.#ANIM_ID_GIVER++                 // animation id
-        this._animation = animationCB                    // the main animation (clampedProgress, playCount, progress)=>
+        this._animation = animationCB                    // the main animation (progress, playCount, deltaTime clampedProgress)=>{...}
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
         this._easing = easing||Anim.linear               // easing function (x)=>
         this._endCB = endCB                              // function called when animation is over
@@ -96,10 +96,11 @@ class Anim {
 	get progressRaw() {return this._progress}
 	get playCount() {return this._playCount}
 
-	set animation(_animation) {return this._animation = _animation}
-	set duration(_duration) {return this._duration = _duration}
-	set easing(_easing) {return this._easing = _easing}
-	set endCB(_endCB) {return this._endCB = _endCB}
+	set startTime(startTime) {this._startTime = startTime}
+	set animation(_animation) {this._animation = _animation}
+	set duration(_duration) {this._duration = _duration}
+	set easing(_easing) {this._easing = _easing}
+	set endCB(_endCB) {this._endCB = _endCB}
 
     // Easings from: https://easings.net/
     static easeInSine=x=>1-Math.cos(x*Math.PI/2)
