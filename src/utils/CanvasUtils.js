@@ -377,6 +377,31 @@ class CanvasUtils {
     }
 
     /**
+     * 
+     TODO
+
+     maybe accept an existing obj as a parameter to make it collidable
+
+     make it small and optimized, it has to "stack" with other collisions to all work together
+     make collision logic
+     make a show hitboxes option
+     make a enable/disable
+
+     */
+
+    /**
+     * 
+     * @param {_BaseObj | [[x1,y1], [x2,y2]]} positions: 
+     * @param {Function?} onCollisionCB: (collisionDirection)=>
+     */
+    static createCollision(positions, onCollisionCB, disableHitbox) {
+        let obj = positions
+        if (Array.isArray(positions)) {}
+
+
+    }
+
+    /**
      * Provides generic follow paths
      */
     static FOLLOW_PATHS = {
