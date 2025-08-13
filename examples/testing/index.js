@@ -360,22 +360,8 @@ Canvas.addOnLoadCallback((e, cvs)=>{
 
 
 
+const cols = CanvasUtils.getCollisionCB([[800,300],[800,700]], 0, a=>console.log("C", a), a=>console.log("---ENTER---", a), a=>console.log("---EXIT---", a), true)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-let a = CanvasUtils.createButton(CVS)
+CanvasUtils.createEmptyObj(CVS, null, ()=>{
+    cols(CVS.mouse.pos)
+})
