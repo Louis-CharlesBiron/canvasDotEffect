@@ -67,6 +67,52 @@ class CDEUtils {
     }
 
     /**
+     * Normalizes a value between 0..1 according to a range
+     * @param {Number} value: a value between min and max
+     * @param {Number} min: the bottom threshold of the range
+     * @param {Number} max: the top threshold of the range 
+     * @returns a number between 0 and 1
+     */
+    static normalize(value, min, max) {
+        return (value-min)/(max-min)
+    }
+
+    /**
+     * Returns whether the turn from pos1 to pos3 is counter-clockwise
+     * @param {[x,y]} pos1: a pos
+     * @param {[x,y]} pos2: another pos
+     * @param {[x,y]} pos3: another pos
+     */
+    static ccw(pos1, pos2, pos3) {
+        return (pos3[1]-pos1[1])*(pos2[0]-pos1[0])>(pos2[1]-pos1[1])*(pos3[0]-pos1[0])
+    }
+
+    /**
+     * Returns whether the turn from pos1 to pos3 is counter-clockwise
+     * @param {Number} x1: the x value of the pos1
+     * @param {Number} y1: the y value of the pos1
+     * @param {Number} x2: the x value of the pos2
+     * @param {Number} y2: the y value of the pos2
+     * @param {Number} x3: the x value of the pos3
+     * @param {Number} y3: the y value of the pos3
+     */
+    static ccw_coords(x1, y1, x2, y2, x3, y3) {
+        return (y3-y1)*(x2-x1)>(y2-y1)*(x3-x1)
+    }
+
+    /**
+     * Returns whether the line between pos1/pos2 and the line between linePos1/linePos2 intersect
+     * @param {[x,y]} pos1: the start pos delimiting the first line
+     * @param {[x,y]} pos2: the end pos delimiting the first line
+     * @param {[x,y]} linePos1: the start pos delimiting the second line
+     * @param {[x,y]} linePos2: the end pos delimiting the second line
+     */
+    static hasLinearIntersection(pos1, pos2, linePos1, linePos2) {
+        const ccw = CDEUtils.ccw_coords, x1 = pos1[0], y1 = pos1[1], x2 = pos2[0], y2 = pos2[1], lx1 = linePos1[0], ly1 = linePos1[1], lx2 = linePos2[0], ly2 = linePos2[1]
+        return ccw(x1, y1, lx1, ly1, lx2, ly2) != ccw(x2, y2, lx1, ly1, lx2, ly2) && ccw(x1, y1, x2, y2, lx1, ly1) != ccw(x1, y1, x2, y2, lx2, ly2)
+    }
+
+    /**
      * Returns whether a value is defined
      * @param {*} value: the value to check
      * @returns whether the value is defined
