@@ -327,7 +327,10 @@ class Shape extends _Obj {
      */
     isWithinAccurate(pos) {
         const dots = this._dots, d_ll = dots.length
-        if (d_ll > 2) return this.ctx.isPointInPath(this.getBoundsAccurate(), pos[0], pos[1])
+        if (d_ll > 2) {
+            const viewPos = this.cvs.viewPos
+            return this.ctx.isPointInPath(this.getBoundsAccurate(), pos[0]+viewPos[0], pos[1]+viewPos[1])
+        }
         return false
     }
 

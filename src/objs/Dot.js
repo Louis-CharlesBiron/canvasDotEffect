@@ -176,7 +176,8 @@ class Dot extends _Obj {
      * @returns whether the provided pos is inside the Dot
      */
     isWithinAccurate(pos, axisPadding, rotation, scale) {
-        return this.ctx.isPointInPath(this.getBoundsAccurate(axisPadding, rotation, scale), pos[0], pos[1])
+        const viewPos = this.cvs.viewPos
+        return this.ctx.isPointInPath(this.getBoundsAccurate(axisPadding, rotation, scale), pos[0]+viewPos[0], pos[1]+viewPos[1])
     }
 
     // returns the raw a minimal rectangular area containing all of the Dot (no scale/rotation)

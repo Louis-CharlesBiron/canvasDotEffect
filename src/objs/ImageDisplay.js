@@ -311,7 +311,8 @@ class ImageDisplay extends _BaseObj {
      * @returns whether the provided pos is inside the display
      */
     isWithinAccurate(pos, padding, rotation, scale) {
-        return this.ctx.isPointInPath(this.getBoundsAccurate(padding, rotation, scale), pos[0], pos[1])
+        const viewPos = this.cvs.viewPos
+        return this.ctx.isPointInPath(this.getBoundsAccurate(padding, rotation, scale), pos[0]+viewPos[0], pos[1]+viewPos[1])
     }
 
     // returns the raw a minimal rectangular area containing all of the image (no scale/rotation)

@@ -225,8 +225,11 @@ class Mouse {
      * @returns whether "pos" is inside "positions"
      */
     isWithin(pos, positions, isPath2D) {
-        const [x,y]=pos
-        if (isPath2D) return this._ctx.isPointInPath(positions, pos[0], pos[1])
+        const x=pos[0], y=pos[1]
+        if (isPath2D) {
+            const viewPos = this._viewPos
+            return this._ctx.isPointInPath(positions, pos[0]+viewPos[0], pos[1]+viewPos[1])
+        }
         else return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
     }
 

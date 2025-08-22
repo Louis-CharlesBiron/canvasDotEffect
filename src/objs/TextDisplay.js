@@ -160,7 +160,8 @@ class TextDisplay extends _BaseObj {
      * @returns whether the provided pos is inside the display
      */
     isWithinAccurate(pos, paddingX, rotation, scale) {
-        return this.ctx.isPointInPath(this.getBoundsAccurate(paddingX, rotation, scale), pos[0], pos[1])
+        const viewPos = this.cvs.viewPos
+        return this.ctx.isPointInPath(this.getBoundsAccurate(paddingX, rotation, scale), pos[0]+viewPos[0], pos[1]+viewPos[1])
     }
     
     // returns the raw a minimal rectangular area containing all of the text (no scale/rotation)
