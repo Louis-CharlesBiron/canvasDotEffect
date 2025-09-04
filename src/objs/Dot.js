@@ -31,7 +31,7 @@ class Dot extends _Obj {
             }
 
             if (this._radius && (this.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
-                const ctx = render.ctx, scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")!==-1)||this._rotation
+                const ctx = render.ctx, scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")+1)||this._rotation
 
                 if (hasTransforms) {
                     let viewPos
