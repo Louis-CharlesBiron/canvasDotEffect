@@ -438,6 +438,10 @@ class ImageDisplay extends _BaseObj {
 	get size_() {return this._size?CDEUtils.unlinkArr2(this._size):[0,0]}
     get width() {return this._size[0]}
     get height() {return this._size[1]}
+    get top() {return this._pos[1]}
+    get bottom() {return this._pos[1]+this.height}
+    get left() {return this._pos[0]}
+    get right() {return this._pos[0]+this.width}
     get trueSize() {
         const size = this.size
         return [Math.abs(size[0]*this._scale[0]), Math.abs(size[1]*this._scale[1])]

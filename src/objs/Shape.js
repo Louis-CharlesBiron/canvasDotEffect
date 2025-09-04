@@ -480,6 +480,18 @@ class Shape extends _Obj {
     get thirdDot() {return this._dots[2]}
     get lastDot() {return CDEUtils.getLast(this._dots, 0)}
     get asSource() {return this._dots}
+    get top() {return CDEUtils.getMinMax(this._dots, "y")[0]}
+    get bottom() {return CDEUtils.getMinMax(this._dots, "y")[1]}
+    get height() {
+        const topBottom = CDEUtils.getMinMax(this._dots, "y")
+        return topBottom[1]-topBottom[0]
+    }
+    get left() {return CDEUtils.getMinMax(this._dots, "x")[0]}
+    get right() {return CDEUtils.getMinMax(this._dots, "x")[1]}
+    get width() {
+        const leftRight = CDEUtils.getMinMax(this._dots, "x")
+        return leftRight[1]-leftRight[0]
+    }
 
     set dots(ratioPos) {this._ratioPos = ratioPos}
     set ratioPos(ratioPos) {this._ratioPos = ratioPos}

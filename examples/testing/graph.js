@@ -110,7 +110,7 @@ let aasdasd = new Shape([600,100],[
 })
 CVS.add(aasdasd)
 
-let text = new TextDisplay("yoman test", [200, 600], "lime")
+let text = new TextDisplay("yoman test\nyoman\ntest", [200, 600], "lime")
 CVS.add(text)
 
 
