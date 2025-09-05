@@ -662,6 +662,18 @@ class AudioDisplay extends _BaseObj {
     get bufferLength() {return this.#buffer_ll}
     get transformableRaw() {return this._transformable}
     get transformable() {return Boolean(this._transformable)}
+    get top() {return this.#getRectBounds()[0][1]}
+    get bottom() {return this.#getRectBounds()[1][1]}
+    get height() {
+        const bounds = this.#getRectBounds()
+        return bounds[1][1]-bounds[0][1]
+    }
+    get left() {return this.#getRectBounds()[0][0]}
+    get right() {return this.#getRectBounds()[1][0]}
+    get width() {
+        const bounds = this.#getRectBounds()
+        return bounds[1][0]-bounds[0][0]
+    }
 
     get video() {return this._source}
     get image() {return this._source}
