@@ -36,8 +36,8 @@ class Grid extends Shape {
 
         this._keys = keys+""||Grid.DEFAULT_KEYS             // keys to convert to source's values as a string
         this._gaps = gaps??Grid.DEFAULT_GAPS                // [x, y] gap length within the dots
-        this._spacing = spacing??Grid.DEFAULT_SPACING(this) // gap length between symbols
         this._source = source?? Grid.DEFAULT_SOURCE         // symbols' source
+        this._spacing = spacing??Grid.DEFAULT_SPACING(this) // gap length between symbols
     }
 
     initialize() {
