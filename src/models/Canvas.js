@@ -530,7 +530,7 @@ class Canvas {
      * Moves the camera view center to a specific x/y value
      * @param {[x,y]} pos: the pos to move the center of the camera view to
      */
-       centerViewAt(pos) {
+    centerViewAt(pos) {
         this.moveViewAt([-pos[0]+this.width/2, -pos[1]+this.height/2])
     }
 

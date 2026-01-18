@@ -189,14 +189,14 @@ class Mouse {
      * Updates an existing listener
      * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
      * @param {Number} id: listener's id 
-     * @param {canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
+     * @param {Canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
      * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (mousePos, obj, mouse)=>
      * @param {Boolean} useAccurateBounds: If true, uses the obj's accurate bounds calculation
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
      */
     updateListener(type, id, newObj, newCallback, useAccurateBounds, forceStaticPositions=false) {
         const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[3]==(id?.[3]??id))]
-        if (newObj) listener[0] = forceStaticPositions?((useAccurateBounds && obj.getBoundsAccurate) ? obj.getBoundsAccurate() : obj.getBounds()) : obj
+        if (newObj) listener[0] = forceStaticPositions?((useAccurateBounds && newObj.getBoundsAccurate) ? newObj.getBoundsAccurate() : newObj.getBounds()) : newObj
         if (newCallback) listener[1] = newCallback
         if (CDEUtils.isDefined(useAccurateBounds)) listener[2] = useAccurateBounds
     }

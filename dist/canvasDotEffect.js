@@ -1,4 +1,4 @@
-// CanvasDotEffect UMD - v1.3.0
+// CanvasDotEffect UMD - v1.3.1
 'use strict';
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -66,6 +66,52 @@ class CDEUtils {
         let a_ll = arr.length, total=0
         for (let i=0;i<a_ll;i++) total+=arr[i]
         return total/a_ll
+    }
+
+    /**
+     * Normalizes a value between 0..1 according to a range
+     * @param {Number} value: a value between min and max
+     * @param {Number} min: the bottom threshold of the range
+     * @param {Number} max: the top threshold of the range 
+     * @returns a number between 0 and 1
+     */
+    static normalize(value, min, max) {
+        return (value-min)/(max-min)
+    }
+
+    /**
+     * Returns whether the turn from pos1 to pos3 is counter-clockwise
+     * @param {[x,y]} pos1: a pos
+     * @param {[x,y]} pos2: another pos
+     * @param {[x,y]} pos3: another pos
+     */
+    static ccw(pos1, pos2, pos3) {
+        return (pos3[1]-pos1[1])*(pos2[0]-pos1[0])>(pos2[1]-pos1[1])*(pos3[0]-pos1[0])
+    }
+
+    /**
+     * Returns whether the turn from pos1 to pos3 is counter-clockwise
+     * @param {Number} x1: the x value of the pos1
+     * @param {Number} y1: the y value of the pos1
+     * @param {Number} x2: the x value of the pos2
+     * @param {Number} y2: the y value of the pos2
+     * @param {Number} x3: the x value of the pos3
+     * @param {Number} y3: the y value of the pos3
+     */
+    static ccw_coords(x1, y1, x2, y2, x3, y3) {
+        return (y3-y1)*(x2-x1)>(y2-y1)*(x3-x1)
+    }
+
+    /**
+     * Returns whether the line between pos1/pos2 and the line between linePos1/linePos2 intersect
+     * @param {[x,y]} pos1: the start pos delimiting the first line
+     * @param {[x,y]} pos2: the end pos delimiting the first line
+     * @param {[x,y]} linePos1: the start pos delimiting the second line
+     * @param {[x,y]} linePos2: the end pos delimiting the second line
+     */
+    static hasLinearIntersection(pos1, pos2, linePos1, linePos2) {
+        const ccw = CDEUtils.ccw_coords, x1 = pos1[0], y1 = pos1[1], x2 = pos2[0], y2 = pos2[1], lx1 = linePos1[0], ly1 = linePos1[1], lx2 = linePos2[0], ly2 = linePos2[1]
+        return ccw(x1, y1, lx1, ly1, lx2, ly2) != ccw(x2, y2, lx1, ly1, lx2, ly2) && ccw(x1, y1, x2, y2, lx1, ly1) != ccw(x1, y1, x2, y2, lx2, ly2)
     }
 
     /**
@@ -919,6 +965,50 @@ class CanvasUtils {
         
         CVS.add(textDisplay)
         return [textDisplay.setupResults, textDisplay]
+    }
+
+    /**
+     * Creates a callback that detects when a pos intersects with the area defined by "positions"
+     * @param {_BaseObj | [[x1,y1], [x2,y2]]} positions: either a _BaseObj inheritor instance or a positions array defining the area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the area
+     * @param {Function?} onCollisionCB: Function called each frame the pos is inside the area. (collisionDirection)=>{...}
+     * @param {Function?} onCollisionEnterCB: Function called once each time a collision is detected. (collisionDirection)=>{...}
+     * @param {Function?} onCollisionExitCB: Function called once each time a collision is ended. (collisionDirection)=>{...}
+     * @param {boolean?} disableCornerDetection: If true, prevents 'collisionDirection' in collision callbacks to contain more than more direction when colliding with corners
+     * @returns a callback that checks for collision
+     */
+    static getCollisionCB(positions, padding=null, onCollisionCB, onCollisionEnterCB, onCollisionExitCB, disableCornerDetection) {
+        const bounds = positions instanceof  _BaseObj ? positions.getBounds() : positions, isTop = 1<<0, isRight = 1<<1, isBottom = 1<<2, isLeft = 1<<3, all = (1<<4)-1, hasCB = CDEUtils.isFunction(onCollisionCB), hasEnterCB = CDEUtils.isFunction(onCollisionEnterCB), hasExitCB = CDEUtils.isFunction(onCollisionExitCB)
+
+        if (padding) {
+            padding = typeof padding=="number" ? [padding, padding, padding, padding] : [padding[0],padding[1]??padding[0], padding[2]??padding[0], padding[3]??padding[1]]
+            bounds[0][0] -= padding[3]
+            bounds[0][1] -= padding[0]
+            bounds[2][0] += padding[1]
+            bounds[2][1] -= padding[0]
+            bounds[1][0] += padding[1]
+            bounds[1][1] += padding[2]
+            bounds[3][0] -= padding[3]
+            bounds[3][1] += padding[2]
+        }
+
+        let lastNotCollidingDirection = 0, hasCollision = false
+        return (pos)=>{
+            const x = pos[0], y = pos[1], collisions = ((y>=bounds[0][1])&&isTop) + ((x<=bounds[1][0])&&isRight) + ((y<=bounds[1][1])&&isBottom) + ((x>=bounds[0][0])&&isLeft) 
+            if (collisions==all) {
+                if (hasEnterCB && !hasCollision) onCollisionEnterCB(lastNotCollidingDirection)
+                hasCollision = true
+                if (hasCB) onCollisionCB(lastNotCollidingDirection)
+            } else {
+                lastNotCollidingDirection = collisions^all
+                if (disableCornerDetection) {
+                    if (lastNotCollidingDirection == isTop+isRight || lastNotCollidingDirection == isTop+isLeft) lastNotCollidingDirection = isTop
+                    else if (lastNotCollidingDirection == isBottom+isRight || lastNotCollidingDirection == isBottom+isLeft) lastNotCollidingDirection = isBottom
+                }
+                if (hasExitCB && hasCollision) onCollisionExitCB(lastNotCollidingDirection)
+                hasCollision = false
+            }
+        }
     }
 
     /**
@@ -2272,14 +2362,14 @@ class Mouse {
      * Updates an existing listener
      * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
      * @param {Number} id: listener's id 
-     * @param {canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
+     * @param {Canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
      * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (mousePos, obj, mouse)=>
      * @param {Boolean} useAccurateBounds: If true, uses the obj's accurate bounds calculation
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
      */
     updateListener(type, id, newObj, newCallback, useAccurateBounds, forceStaticPositions=false) {
         const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[3]==(id?.[3]??id))]
-        if (newObj) listener[0] = forceStaticPositions?((useAccurateBounds && obj.getBoundsAccurate) ? obj.getBoundsAccurate() : obj.getBounds()) : obj
+        if (newObj) listener[0] = forceStaticPositions?((useAccurateBounds && newObj.getBoundsAccurate) ? newObj.getBoundsAccurate() : newObj.getBounds()) : newObj
         if (newCallback) listener[1] = newCallback
         if (CDEUtils.isDefined(useAccurateBounds)) listener[2] = useAccurateBounds
     }
@@ -2308,8 +2398,11 @@ class Mouse {
      * @returns whether "pos" is inside "positions"
      */
     isWithin(pos, positions, isPath2D) {
-        const [x,y]=pos
-        if (isPath2D) return this._ctx.isPointInPath(positions, pos[0], pos[1])
+        const x=pos[0], y=pos[1]
+        if (isPath2D) {
+            const viewPos = this._viewPos
+            return this._ctx.isPointInPath(positions, pos[0]+viewPos[0], pos[1]+viewPos[1])
+        }
         else return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
     }
 
@@ -4053,6 +4146,25 @@ class Canvas {
     }
 
     /**
+     * Moves the camera view center to a specific x/y value
+     * @param {[x,y]} pos: the pos to move the center of the camera view to
+     */
+    centerViewAt(pos) {
+        this.moveViewAt([-pos[0]+this.width/2, -pos[1]+this.height/2])
+    }
+
+    /**
+     * Smoothly moves the camera view center to the provided pos, in set time
+     * @param {[x,y]} pos: the pos to move the center of the camera view to
+     * @param {Number?} time: the move time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @returns the created Anim instance
+     */
+    centerViewTo(pos, time=null, easing=null) {
+        this.moveViewTo([-pos[0]+this.width/2, -pos[1]+this.height/2], time, easing)
+    }
+
+    /**
      * Adds an animation to play
      * @param {Anim} anim: the Anim instance containing the animation
      * @returns the provided Anim instance
@@ -4551,14 +4663,14 @@ class Anim {
 
     /**
      * Allows the creation of smooth progress based animations 
-     * @param {Function} animationCB: a function called each frame containing the animation code. (clampedProgress, playCount, progress)=>{...}
+     * @param {Function} animationCB: a function called each frame containing the animation code. (progress, playCount, deltaTime clampedProgress)=>{...}
      * @param {Number?} duration: the animation duration in miliseconds. Negative numbers make the animation loop infinitely
      * @param {Function?} easing: the easing function used. (x)=>{return y} 
      * @param {Function?} endCB: a function called upon the anim end
      */
     constructor(animationCB, duration, easing, endCB) {
         this._id = Anim.#ANIM_ID_GIVER++                 // animation id
-        this._animation = animationCB                    // the main animation (clampedProgress, playCount, progress)=>
+        this._animation = animationCB                    // the main animation (progress, playCount, deltaTime clampedProgress)=>{...}
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
         this._easing = easing||Anim.linear               // easing function (x)=>
         this._endCB = endCB                              // function called when animation is over
@@ -4638,10 +4750,11 @@ class Anim {
 	get progressRaw() {return this._progress}
 	get playCount() {return this._playCount}
 
-	set animation(_animation) {return this._animation = _animation}
-	set duration(_duration) {return this._duration = _duration}
-	set easing(_easing) {return this._easing = _easing}
-	set endCB(_endCB) {return this._endCB = _endCB}
+	set startTime(startTime) {this._startTime = startTime}
+	set animation(_animation) {this._animation = _animation}
+	set duration(_duration) {this._duration = _duration}
+	set easing(_easing) {this._easing = _easing}
+	set endCB(_endCB) {this._endCB = _endCB}
 
     // Easings from: https://easings.net/
     static easeInSine=x=>1-Math.cos(x*Math.PI/2)
@@ -5854,6 +5967,18 @@ class AudioDisplay extends _BaseObj {
     get bufferLength() {return this.#buffer_ll}
     get transformableRaw() {return this._transformable}
     get transformable() {return Boolean(this._transformable)}
+    get top() {return this.#getRectBounds()[0][1]}
+    get bottom() {return this.#getRectBounds()[1][1]}
+    get height() {
+        const bounds = this.#getRectBounds()
+        return bounds[1][1]-bounds[0][1]
+    }
+    get left() {return this.#getRectBounds()[0][0]}
+    get right() {return this.#getRectBounds()[1][0]}
+    get width() {
+        const bounds = this.#getRectBounds()
+        return bounds[1][0]-bounds[0][0]
+    }
 
     get video() {return this._source}
     get image() {return this._source}
@@ -6215,7 +6340,8 @@ class ImageDisplay extends _BaseObj {
      * @returns whether the provided pos is inside the display
      */
     isWithinAccurate(pos, padding, rotation, scale) {
-        return this.ctx.isPointInPath(this.getBoundsAccurate(padding, rotation, scale), pos[0], pos[1])
+        const viewPos = this.cvs.viewPos
+        return this.ctx.isPointInPath(this.getBoundsAccurate(padding, rotation, scale), pos[0]+viewPos[0], pos[1]+viewPos[1])
     }
 
     // returns the raw a minimal rectangular area containing all of the image (no scale/rotation)
@@ -6341,6 +6467,10 @@ class ImageDisplay extends _BaseObj {
 	get size_() {return this._size?CDEUtils.unlinkArr2(this._size):[0,0]}
     get width() {return this._size[0]}
     get height() {return this._size[1]}
+    get top() {return this._pos[1]}
+    get bottom() {return this._pos[1]+this.height}
+    get left() {return this._pos[0]}
+    get right() {return this._pos[0]+this.width}
     get trueSize() {
         const size = this.size
         return [Math.abs(size[0]*this._scale[0]), Math.abs(size[1]*this._scale[1])]
@@ -6563,7 +6693,8 @@ class TextDisplay extends _BaseObj {
      * @returns whether the provided pos is inside the display
      */
     isWithinAccurate(pos, paddingX, rotation, scale) {
-        return this.ctx.isPointInPath(this.getBoundsAccurate(paddingX, rotation, scale), pos[0], pos[1])
+        const viewPos = this.cvs.viewPos
+        return this.ctx.isPointInPath(this.getBoundsAccurate(paddingX, rotation, scale), pos[0]+viewPos[0], pos[1]+viewPos[1])
     }
     
     // returns the raw a minimal rectangular area containing all of the text (no scale/rotation)
@@ -6666,6 +6797,10 @@ class TextDisplay extends _BaseObj {
     get lineCount() {return this.#lineCount}
     get width() {return this.trueSize[0]}
     get height() {return this.trueSize[1]}
+    get top() {return this._pos[1]-this.lineHeight/2}
+    get bottom() {return this._pos[1]+this.lineHeight*this.lineCount-this.lineHeight/2}
+    get left() {return this._pos[0]-this._size[0]/2}
+    get right() {return this._pos[0]+this._size[0]/2}
 
 	set text(text) {
         const lastYScale = this._scale[1]
@@ -7449,7 +7584,10 @@ class Shape extends _Obj {
      */
     isWithinAccurate(pos) {
         const dots = this._dots, d_ll = dots.length
-        if (d_ll > 2) return this.ctx.isPointInPath(this.getBoundsAccurate(), pos[0], pos[1])
+        if (d_ll > 2) {
+            const viewPos = this.cvs.viewPos
+            return this.ctx.isPointInPath(this.getBoundsAccurate(), pos[0]+viewPos[0], pos[1]+viewPos[1])
+        }
         return false
     }
 
@@ -7599,6 +7737,18 @@ class Shape extends _Obj {
     get thirdDot() {return this._dots[2]}
     get lastDot() {return CDEUtils.getLast(this._dots, 0)}
     get asSource() {return this._dots}
+    get top() {return CDEUtils.getMinMax(this._dots, "y")[0]}
+    get bottom() {return CDEUtils.getMinMax(this._dots, "y")[1]}
+    get height() {
+        const topBottom = CDEUtils.getMinMax(this._dots, "y")
+        return topBottom[1]-topBottom[0]
+    }
+    get left() {return CDEUtils.getMinMax(this._dots, "x")[0]}
+    get right() {return CDEUtils.getMinMax(this._dots, "x")[1]}
+    get width() {
+        const leftRight = CDEUtils.getMinMax(this._dots, "x")
+        return leftRight[1]-leftRight[0]
+    }
 
     set dots(ratioPos) {this._ratioPos = ratioPos}
     set ratioPos(ratioPos) {this._ratioPos = ratioPos}
@@ -7952,8 +8102,8 @@ class Grid extends Shape {
 
         this._keys = keys+""||Grid.DEFAULT_KEYS             // keys to convert to source's values as a string
         this._gaps = gaps??Grid.DEFAULT_GAPS                // [x, y] gap length within the dots
-        this._spacing = spacing??Grid.DEFAULT_SPACING(this) // gap length between symbols
         this._source = source?? Grid.DEFAULT_SOURCE         // symbols' source
+        this._spacing = spacing??Grid.DEFAULT_SPACING(this) // gap length between symbols
     }
 
     initialize() {
@@ -8163,7 +8313,7 @@ class Dot extends _Obj {
             }
 
             if (this._radius && (this.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
-                const ctx = render.ctx, scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")!==-1)||this._rotation
+                const ctx = render.ctx, scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")+1)||this._rotation
 
                 if (hasTransforms) {
                     let viewPos
@@ -8308,7 +8458,8 @@ class Dot extends _Obj {
      * @returns whether the provided pos is inside the Dot
      */
     isWithinAccurate(pos, axisPadding, rotation, scale) {
-        return this.ctx.isPointInPath(this.getBoundsAccurate(axisPadding, rotation, scale), pos[0], pos[1])
+        const viewPos = this.cvs.viewPos
+        return this.ctx.isPointInPath(this.getBoundsAccurate(axisPadding, rotation, scale), pos[0]+viewPos[0], pos[1]+viewPos[1])
     }
 
     // returns the raw a minimal rectangular area containing all of the Dot (no scale/rotation)
