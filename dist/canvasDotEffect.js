@@ -1,4 +1,4 @@
-// CanvasDotEffect UMD - v1.3.1
+// CanvasDotEffect UMD - v1.3.2
 'use strict';
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -3539,7 +3539,7 @@ class RenderStyles extends _HasColor {
      */
     apply(color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
         const ctx = this.#ctx, colorValue = Color.getColorValue(color), currentStyles = this._render.currentCtxStyles, currentCtxVisuals = this._render.currentCtxVisuals
-        if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
+        if (color && (currentCtxVisuals[0] !== colorValue || ctx.strokeStyle !== colorValue)) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
         if (filter && currentCtxVisuals[1] !== filter) currentCtxVisuals[1] = ctx.filter = filter
         if (compositeOperation && currentCtxVisuals[2] !== compositeOperation) currentCtxVisuals[2] = ctx.globalCompositeOperation = compositeOperation
         if (opacity!=null && currentCtxVisuals[3] !== opacity) currentCtxVisuals[3] = ctx.globalAlpha = opacity
@@ -3570,7 +3570,7 @@ class RenderStyles extends _HasColor {
      */
     static apply(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         const ctx = render.ctx, colorValue = color&&Color.getColorValue(color), currentStyles = render.currentCtxStyles, currentCtxVisuals = render.currentCtxVisuals
-        if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
+        if (color && (currentCtxVisuals[0] !== colorValue || ctx.strokeStyle !== colorValue)) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
         if (filter && currentCtxVisuals[1] !== filter) currentCtxVisuals[1] = ctx.filter = filter
         if (compositeOperation && currentCtxVisuals[2] !== compositeOperation) currentCtxVisuals[2] = ctx.globalCompositeOperation = compositeOperation
         if (opacity!=null && currentCtxVisuals[3] !== opacity) currentCtxVisuals[3] = ctx.globalAlpha = opacity
