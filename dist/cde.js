@@ -716,8 +716,10 @@ export class CanvasUtils {
                 mouse.holdValue.draggedObjId = dot.id
                 mouseup = true
                 if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
-                dot.x = mouse.x
-                dot.y = mouse.y
+                if (mouse.valid) {
+                    dot.x = mouse.x
+                    dot.y = mouse.y
+                }
             } else if (mouseup) {
                 mouse.holdValue.draggedObjId = null
                 mouseup = false
@@ -727,8 +729,10 @@ export class CanvasUtils {
             if (mouse.clicked && dist < pickableRadius) {
                 mouseup = true
                 if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
-                dot.x = mouse.x
-                dot.y = mouse.y
+                if (mouse.valid) {
+                    dot.x = mouse.x
+                    dot.y = mouse.y
+                }
             } else if (mouseup) {
                 mouseup = false
                 dragAnim = dot.addForce(Math.min(CDEUtils.mod(Math.min(mouse.speed,3000), ratio)/4, 300), mouse.dir, 750+ratio*1200, Anim.easeOutQuad)
@@ -2278,8 +2282,9 @@ export class Mouse {
         this._valid = true
         this._rawX = x
         this._rawY = y
-        this._x = x-offset[0]
-        this._y = y-offset[1]
+        const zoom = offset[2]
+        this._x = Math.round((x-offset[0])/zoom)
+        this._y = Math.round((y-offset[1])/zoom)
 
         if (this._moveListenersOptimizationEnabled) {
             this.checkListeners(Mouse.LISTENER_TYPES.ENTER)
@@ -3708,6 +3713,7 @@ export class Canvas {
         this._fixedTimeStamp = null                                   // fixed timestamp in ms
         this._windowListeners = this.#initWindowListeners()           // [onresize, onvisibilitychange, onscroll, onload]
         this._viewPos = [0,0]                                         // context view offset
+        this._zoom = 1                                                // context view zoom
         if (!this.isOffscreenCanvas) {
             const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
             this.setSize(frameCBR.width, frameCBR.height)              // init size
@@ -3872,8 +3878,8 @@ export class Canvas {
 
     // updates the calculated canvas offset in the page
     updateOffset() {
-        const {width, height, x, y} = this._cvs.getBoundingClientRect()
-        return this._offset = [Math.round((x+width)-this.width)+this._viewPos[0], Math.round((y+height)-this.height)+this._viewPos[1]]
+        const {width, height, x, y} = this._cvs.getBoundingClientRect(), zoom = this._zoom
+        return this._offset = [Math.round((x+width)-this.width)+this._viewPos[0], Math.round((y+height)-this.height)+this._viewPos[1], zoom]
     }
 
     // main loop, runs every frame
@@ -4013,9 +4019,9 @@ export class Canvas {
      * @param {Number?} y2: the y value of the bottom-right corner
      */
     clear(x=0, y=0, x2=this.width, y2=this.height) {
-        if (this._viewPos[0] || this._viewPos[1]) {
+        if (this._viewPos[0] || this._viewPos[1] || this._zoom !== 1) {
             this.save()
-            this.resetTransformations()
+            this.ctx.setTransform(1,0,0,1,0,0)
             this._ctx.clearRect(x, y, x2, y2)
             this.restore()
         } else this._ctx.clearRect(x, y, x2, y2)
@@ -4068,10 +4074,21 @@ export class Canvas {
     }
 
     /**
-     * Discards all current context transformations
+     * Discards all current context transformations (except for zoom by default)
      */
-    resetTransformations() {
-        this.ctx.setTransform(1,0,0,1,0,0)
+    resetTransformations(force) {
+        if (force) {
+            this._zoom = 1
+            this._viewPos = [0,0]
+        }
+        this.ctx.setTransform(this._zoom,0,0,this._zoom,this._viewPos[0],this._viewPos[1])
+    }
+
+    /**
+     *  Applies all current context transformations
+     */
+    setTransformations(zoom=this._zoom, viewPos=this._viewPos) {
+        this.ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
     }
 
     /**
@@ -4142,6 +4159,27 @@ export class Canvas {
                 this.#mouseMovements()
             }, time, easing))
         }
+    }
+
+    /**
+     * Moves the camera view to a specific x/y value with zoom
+     * @param {[x,y]} pos: the pos to move the camera view to
+     * @param {Number} zoom: the zoom factor
+     */
+    zoomAtPos(pos, zoom) {
+        const oldZoom = this._zoom, viewPos = this._viewPos, [x,y] = pos
+        this._zoom = zoom
+
+        viewPos[0] = x-(x-viewPos[0])/oldZoom*zoom
+        viewPos[1] = y-(y-viewPos[1])/oldZoom*zoom
+
+        this.updateOffset()
+        if (this._mouse.x != null && this._mouse.y != null) {
+            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
+            this.#mouseMovements()
+        }
+
+        this.setTransformations()
     }
 
     /**
@@ -4491,8 +4529,11 @@ export class Canvas {
      * @param {Number?} padding: the padding applied to the results
      */
     isWithin(pos, padding=0) {
-        const viewPos = this._viewPos
-        return pos[0] >= -padding-viewPos[0] && pos[0] <= this.#cachedSize[0]+padding-viewPos[0] && pos[1] >= -padding-viewPos[1] && pos[1] <= this.#cachedSize[1]+padding-viewPos[1]
+        const viewPos = this._viewPos, zoom = this._zoom, vx = viewPos[0], vy = viewPos[1]
+        return pos[0] >= -vx/zoom-padding &&
+               pos[0] <= (this.#cachedSize[0]-vx)/zoom+padding &&
+               pos[1] >= -vy/zoom-padding &&
+               pos[1] <= (this.#cachedSize[1]-vy)/zoom+padding
     }
 
     /**
@@ -4596,6 +4637,7 @@ export class Canvas {
     get onScrollCB() {return this._onScrollCB}
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
+    get zoom() {return this._zoom}
     get render() {return this._render}
     get speedModifier() {return this._speedModifier}
     get anims() {return this._anims}
@@ -5402,11 +5444,12 @@ export class AudioDisplay extends _BaseObj {
         if (this.initialized) {
             const ctx = render.ctx, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling, data = this.#data
 
-            let viewPos
+            let viewPos, zoom
             if (this._transformable) {
                 if (hasTransforms) {
-                    const cx = this._pos[0], cy = this._pos[1]
-                    viewPos = this.parent.viewPos
+                    const cx = this._pos[0], cy = this._pos[1], parent = this.parent
+                    viewPos = parent.viewPos
+                    zoom = parent.zoom
                     ctx.translate(cx, cy)
                     if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                     if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -5422,7 +5465,7 @@ export class AudioDisplay extends _BaseObj {
                 if (newAcc) accumulator = newAcc
             }
 
-            if (this._transformable && hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
+            if (this._transformable && hasTransforms) ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
         }
         super.draw(time, deltaTime)
     }
@@ -6099,10 +6142,11 @@ export class ImageDisplay extends _BaseObj {
 
             const ctx = render.ctx, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
 
-            let viewPos
+            let viewPos, zoom
             if (hasTransforms) {
-                const cx = this.centerX, cy = this.centerY
-                viewPos = this.parent.viewPos
+                const cx = this.centerX, cy = this.centerY, parent = this.parent
+                viewPos = parent.viewPos
+                zoom = parent.zoom
                 ctx.translate(cx, cy)
                 if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                 if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -6112,7 +6156,7 @@ export class ImageDisplay extends _BaseObj {
             if (source instanceof HTMLCanvasElement) render.drawLateImage(source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
             else render.drawImage(source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
 
-            if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
+            if (hasTransforms) ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
         }
         super.draw(time, deltaTime)
     }
@@ -6582,10 +6626,11 @@ export class TextDisplay extends _BaseObj {
             if ((this.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
                 const ctx = render.ctx, hasScaling = this._scale[0]!=1||this._scale[1]!=1, hasTransforms = this._rotation||hasScaling, textValue = this.getTextValue()
 
-                let viewPos
+                let viewPos, zoom
                 if (hasTransforms) {
-                    const cx = this._pos[0], cy = this._pos[1]
-                    viewPos = this.parent.viewPos
+                    const cx = this._pos[0], cy = this._pos[1], parent = this.parent
+                    viewPos = parent.viewPos
+                    zoom = parent.zoom
                     ctx.translate(cx, cy)
                     if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                     if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -6595,7 +6640,7 @@ export class TextDisplay extends _BaseObj {
                 if (this._drawMethod=="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeight, this.visualEffects)
                 else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeight, this.visualEffects)
                 
-                if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
+                if (hasTransforms) ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
             }
         }
 
@@ -8315,10 +8360,11 @@ export class Dot extends _Obj {
                 const ctx = render.ctx, scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")+1)||this._rotation
 
                 if (hasTransforms) {
-                    let viewPos
+                    let viewPos, zoom
                     if (hasScaling) {
-                        const x = this._pos[0], y = this._pos[1]
-                        viewPos = this.cvs.viewPos
+                        const x = this._pos[0], y = this._pos[1], cvs = this.cvs
+                        viewPos = cvs.viewPos
+                        zoom = cvs.zoom
                         ctx.translate(x, y)
                         if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                         ctx.scale(scaleX, scaleY)
@@ -8326,7 +8372,7 @@ export class Dot extends _Obj {
                     }
 
                     render.fill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
-                    if (hasScaling) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
+                    if (hasScaling) ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
                 } else render.batchFill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
             }
         } else {

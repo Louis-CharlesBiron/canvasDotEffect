@@ -153,6 +153,7 @@ DvDfy(YO)
 //DvDfy(YO4)
 //DvDfy(YO5)
 //DvDfy(YO6)
+document.onwheel=e=>CVS.zoomAtPos(CVS.mouse.rawPos,CVS.zoom+=e.deltaY<0?.1:-.1)
 
 
 

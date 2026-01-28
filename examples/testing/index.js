@@ -3,7 +3,7 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(1?canvas:new OffscreenCanv
     if (fpsDisplay.textContent !== fps) fpsDisplay.textContent = fps
     mouseSpeed.textContent = CVS?.mouse?.speed?.toFixed(2)+" px/sec"
     mouseAngle.textContent = CVS?.mouse?.dir?.toFixed(2)+" deg"
-}, null)
+}, 60)
 
 debugPlay.onclick=()=>CVS.start()
 debugStop.onclick=()=>CVS.stop()
@@ -189,7 +189,7 @@ for (let i = 0;i<20;i++) {
     t.playAnim(new Anim(prog=>{
         t.rotation = -360*prog
     },-22500))
-    CVS.add(t)
+    //CVS.add(t)
 }
 
 
@@ -307,6 +307,8 @@ let aa = new Shape([100,100], [new Dot([-50, -50]),
 })
 CVS.add(aa)*/
 
+document.onwheel=e=>CVS.zoomAtPos(CVS.mouse.rawPos,CVS.zoom+=e.deltaY<0?.1:-.1)
+
 Canvas.loadSVGFilter(`<svg>
     <filter id="turbulence">
       <feTurbulence type="turbulence" baseFrequency="0.01 0.02" numOctaves="1" result="NOISE"></feTurbulence>
@@ -315,6 +317,7 @@ Canvas.loadSVGFilter(`<svg>
     </filter>
    </svg>`, "f")
 
+CVS.add(draggableDotTester)
 CVS.add(aud)
 CVS.add(test)
 CVS.add(testText2)
@@ -325,18 +328,17 @@ CVS.add(filledShapeTester)
 CVS.add(testMore)
 CVS.add(test2)
 CVS.add(le)
-CVS.add(draggableDotTester)
 CVS.add(animTester)
 CVS.add(generationTester)
 CVS.add(imageTester)
 
 
-let dupelicateTester = le.duplicate()
-for (let i=0;i<3;i++) {
-    CVS.add(dupelicateTester)
-    dupelicateTester.moveBy([100, 100])
-    dupelicateTester = dupelicateTester.duplicate()
-}
+//let dupelicateTester = le.duplicate()
+//for (let i=0;i<3;i++) {
+//    CVS.add(dupelicateTester)
+//    dupelicateTester.moveBy([100, 100])
+//    dupelicateTester = dupelicateTester.duplicate()
+//}
 
 
 CanvasUtils.createDrawingBoard(CVS, [[800, 300], [1200, 700]], new RenderStyles(CVS.render, "red", null, null, null, 5, 10), 1)

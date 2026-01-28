@@ -106,8 +106,9 @@ class Mouse {
         this._valid = true
         this._rawX = x
         this._rawY = y
-        this._x = x-offset[0]
-        this._y = y-offset[1]
+        const zoom = offset[2]
+        this._x = Math.round((x-offset[0])/zoom)
+        this._y = Math.round((y-offset[1])/zoom)
 
         if (this._moveListenersOptimizationEnabled) {
             this.checkListeners(Mouse.LISTENER_TYPES.ENTER)

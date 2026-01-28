@@ -34,10 +34,11 @@ class Dot extends _Obj {
                 const ctx = render.ctx, scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")+1)||this._rotation
 
                 if (hasTransforms) {
-                    let viewPos
+                    let viewPos, zoom
                     if (hasScaling) {
-                        const x = this._pos[0], y = this._pos[1]
-                        viewPos = this.cvs.viewPos
+                        const x = this._pos[0], y = this._pos[1], cvs = this.cvs
+                        viewPos = cvs.viewPos
+                        zoom = cvs.zoom
                         ctx.translate(x, y)
                         if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                         ctx.scale(scaleX, scaleY)
@@ -45,7 +46,7 @@ class Dot extends _Obj {
                     }
 
                     render.fill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
-                    if (hasScaling) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
+                    if (hasScaling) ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
                 } else render.batchFill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
             }
         } else {

@@ -71,10 +71,11 @@ class ImageDisplay extends _BaseObj {
 
             const ctx = render.ctx, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
 
-            let viewPos
+            let viewPos, zoom
             if (hasTransforms) {
-                const cx = this.centerX, cy = this.centerY
-                viewPos = this.parent.viewPos
+                const cx = this.centerX, cy = this.centerY, parent = this.parent
+                viewPos = parent.viewPos
+                zoom = parent.zoom
                 ctx.translate(cx, cy)
                 if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                 if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -84,7 +85,7 @@ class ImageDisplay extends _BaseObj {
             if (source instanceof HTMLCanvasElement) render.drawLateImage(source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
             else render.drawImage(source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
 
-            if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
+            if (hasTransforms) ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
         }
         super.draw(time, deltaTime)
     }

@@ -3226,6 +3226,7 @@ declare class Canvas {
         removeOnloadListener: () => void;
     };
     _viewPos: number[];
+    _zoom: number;
     _offset: any;
     _typingDevice: TypingDevice;
     _mouse: Mouse;
@@ -3286,9 +3287,13 @@ declare class Canvas {
      */
     resetReferences(): void;
     /**
-     * Discards all current context transformations
+     * Discards all current context transformations (except for zoom by default)
      */
-    resetTransformations(): void;
+    resetTransformations(force: any): void;
+    /**
+     *  Applies all current context transformations
+     */
+    setTransformations(zoom?: number, viewPos?: number[]): void;
     /**
      * Moves the camera view to a specific x/y value
      * @param {[x,y]} pos: the pos to move the camera view to
@@ -3308,6 +3313,12 @@ declare class Canvas {
      * @returns the created Anim instance
      */
     moveViewTo(pos: [x, y], time?: number | null, easing?: Function | null, initPos?: [x, y]): Anim;
+    /**
+     * Moves the camera view to a specific x/y value with zoom
+     * @param {[x,y]} pos: the pos to move the camera view to
+     * @param {Number} zoom: the zoom factor
+     */
+    zoomAtPos(pos: any, zoom: number): void;
     /**
      * Moves the camera view center to a specific x/y value
      * @param {[x,y]} pos: the pos to move the center of the camera view to
@@ -3513,6 +3524,7 @@ declare class Canvas {
     get onScrollCB(): any;
     get maxTime(): any;
     get viewPos(): number[];
+    get zoom(): number;
     get render(): Render;
     set speedModifier(speedModifier: number);
     get speedModifier(): number;

@@ -126,8 +126,10 @@ class CanvasUtils {
                 mouse.holdValue.draggedObjId = dot.id
                 mouseup = true
                 if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
-                dot.x = mouse.x
-                dot.y = mouse.y
+                if (mouse.valid) {
+                    dot.x = mouse.x
+                    dot.y = mouse.y
+                }
             } else if (mouseup) {
                 mouse.holdValue.draggedObjId = null
                 mouseup = false
@@ -137,8 +139,10 @@ class CanvasUtils {
             if (mouse.clicked && dist < pickableRadius) {
                 mouseup = true
                 if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
-                dot.x = mouse.x
-                dot.y = mouse.y
+                if (mouse.valid) {
+                    dot.x = mouse.x
+                    dot.y = mouse.y
+                }
             } else if (mouseup) {
                 mouseup = false
                 dragAnim = dot.addForce(Math.min(CDEUtils.mod(Math.min(mouse.speed,3000), ratio)/4, 300), mouse.dir, 750+ratio*1200, Anim.easeOutQuad)
