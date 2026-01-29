@@ -450,6 +450,14 @@ class Canvas {
         this.refs.filter(ref=>ref.fragile).forEach(r=>r.reset())
     }
 
+    #dynamicMouseOffsetUpdate() {
+        this.updateOffset()
+        if (this._mouse.x != null && this._mouse.y != null) {
+            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
+            this.#mouseMovements()
+        }
+    }
+
     /**
      * Discards all current context transformations (except for zoom by default)
      */
@@ -458,7 +466,9 @@ class Canvas {
             this._zoom = 1
             this._viewPos = [0,0]
         }
+        
         this.ctx.setTransform(this._zoom,0,0,this._zoom,this._viewPos[0],this._viewPos[1])
+        this.#dynamicMouseOffsetUpdate()
     }
 
     /**
@@ -473,17 +483,11 @@ class Canvas {
      * @param {[x,y]} pos: the pos to move the camera view to
      */
     moveViewAt(pos) {
-        let [x, y] = pos
-        this.resetTransformations()
-        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
-        this._viewPos[0] = x
-        this._viewPos[1] = y
-        
-        this.updateOffset()
-        if (this._mouse.x != null && this._mouse.y != null) {
-            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-            this.#mouseMovements()
-        }
+        this._viewPos[0] = pos[0]
+        this._viewPos[1] = pos[1]
+
+        this.setTransformations()
+        this.#dynamicMouseOffsetUpdate()
     }
 
     /**
@@ -491,16 +495,11 @@ class Canvas {
      * @param {[x,y]} pos: the x/y values to move the camera view by
      */
     moveViewBy(pos) {
-        let [x, y] = pos
-        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
-        this._viewPos[0] += x
-        this._viewPos[1] += y
+        this._viewPos[0] += pos[0]
+        this._viewPos[1] += pos[1]
 
-        this.updateOffset()
-        if (this._mouse.x != null && this._mouse.y != null) {
-            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-            this.#mouseMovements()
-        }
+        this.setTransformations()
+        this.#dynamicMouseOffsetUpdate()
     }
 
     /**
@@ -524,16 +523,14 @@ class Canvas {
         if (fdx || fdy) {
             return this.playAnim(new Anim((prog)=>{
                 const nx = ix+fdx*prog, ny = iy+fdy*prog, dx = nx-lx, dy = ny-ly
-                this._ctx.translate(dx,dy)
 
                 this._viewPos[0] += dx
                 this._viewPos[1] += dy
                 lx = nx
                 ly = ny
 
-                this.updateOffset()
-                this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-                this.#mouseMovements()
+                this.setTransformations()
+                this.#dynamicMouseOffsetUpdate()
             }, time, easing))
         }
     }
@@ -550,15 +547,9 @@ class Canvas {
         viewPos[0] = x-(x-viewPos[0])/oldZoom*zoom
         viewPos[1] = y-(y-viewPos[1])/oldZoom*zoom
 
-        this.updateOffset()
-        if (this._mouse.x != null && this._mouse.y != null) {
-            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-            this.#mouseMovements()
-        }
-
+        this.#dynamicMouseOffsetUpdate()
         this.setTransformations()
     }
-
     /**
      * Moves the camera view center to a specific x/y value
      * @param {[x,y]} pos: the pos to move the center of the camera view to

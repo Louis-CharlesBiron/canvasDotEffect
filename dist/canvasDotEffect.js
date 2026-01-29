@@ -2186,7 +2186,8 @@ class Mouse {
     static DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
     static #LISTENER_ID_GIVER = 0
     static LISTENER_TYPES = {CLICK:0, DOWN:0, UP:1, MAIN_DOWN:0, MAIN_UP:1, MIDDLE_DOWN:2, MIDDLE_UP:3, RIGHT_DOWN:4, RIGHT_UP:5, EXTRA_FOWARD_DOWN:6, EXTRA_FOWARD_UP:7, EXTRA_BACK_DOWN:8, EXTRA_BACK_UP:9, MOVE:10, ENTER:11, LEAVE:12, EXIT:12}
-    
+    static BUTTON_TYPES = {LEFT:0, MIDDLE:1, RIGHT:2, EXTRA_BACK:3, EXTRA_FOWARD:4}
+
     #lastX = null // previous x value of the mouse on the canvas, updated each frame
     #lastY = null // previous y value of the mouse on the canvas, updated each frame
     #wasWithin = []
@@ -2240,24 +2241,24 @@ class Mouse {
 
     // given an mouse event, sets the current mouse active buttons
     updateMouseClicks(e) {
-        const isMouseDownEvent = e.type=="mousedown"||e.type=="touchstart", TYPES = Mouse.LISTENER_TYPES
-        if (e.button==0) {
+        const isMouseDownEvent = e.type=="mousedown"||e.type=="touchstart", TYPES = Mouse.LISTENER_TYPES, BUTTONS = Mouse.BUTTON_TYPES
+        if (e.button === BUTTONS.LEFT) {
             this._clicked = isMouseDownEvent
             this.checkListeners(isMouseDownEvent?TYPES.MAIN_DOWN:TYPES.MAIN_UP)
         }
-        else if (e.button==1) {
+        else if (e.button === BUTTONS.MIDDLE) {
             this._scrollClicked = isMouseDownEvent
             this.checkListeners(isMouseDownEvent?TYPES.MIDDLE_DOWN:TYPES.MIDDLE_UP)
         }
-        else if (e.button==2) {
+        else if (e.button === BUTTONS.RIGHT) {
             this._rightClicked = isMouseDownEvent
             this.checkListeners(isMouseDownEvent?TYPES.RIGHT_DOWN:TYPES.RIGHT_UP)
         }
-        else if (e.button==3) {
+        else if (e.button === BUTTONS.EXTRA_BACK) {
             this._extraBackClicked = isMouseDownEvent
             this.checkListeners(isMouseDownEvent?TYPES.EXTRA_BACK_DOWN:TYPES.EXTRA_BACK_UP)
         }
-        else if (e.button==4) {
+        else if (e.button === BUTTONS.EXTRA_FOWARD) {
             this._extraForwardClicked = isMouseDownEvent
             this.checkListeners(isMouseDownEvent?TYPES.EXTRA_FOWARD_DOWN:TYPES.EXTRA_FOWARD_UP)
         }
@@ -4074,6 +4075,14 @@ class Canvas {
         this.refs.filter(ref=>ref.fragile).forEach(r=>r.reset())
     }
 
+    #dynamicMouseOffsetUpdate() {
+        this.updateOffset()
+        if (this._mouse.x != null && this._mouse.y != null) {
+            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
+            this.#mouseMovements()
+        }
+    }
+
     /**
      * Discards all current context transformations (except for zoom by default)
      */
@@ -4082,7 +4091,9 @@ class Canvas {
             this._zoom = 1
             this._viewPos = [0,0]
         }
+        
         this.ctx.setTransform(this._zoom,0,0,this._zoom,this._viewPos[0],this._viewPos[1])
+        this.#dynamicMouseOffsetUpdate()
     }
 
     /**
@@ -4097,17 +4108,11 @@ class Canvas {
      * @param {[x,y]} pos: the pos to move the camera view to
      */
     moveViewAt(pos) {
-        let [x, y] = pos
-        this.resetTransformations()
-        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
-        this._viewPos[0] = x
-        this._viewPos[1] = y
-        
-        this.updateOffset()
-        if (this._mouse.x != null && this._mouse.y != null) {
-            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-            this.#mouseMovements()
-        }
+        this._viewPos[0] = pos[0]
+        this._viewPos[1] = pos[1]
+
+        this.setTransformations()
+        this.#dynamicMouseOffsetUpdate()
     }
 
     /**
@@ -4115,16 +4120,11 @@ class Canvas {
      * @param {[x,y]} pos: the x/y values to move the camera view by
      */
     moveViewBy(pos) {
-        let [x, y] = pos
-        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
-        this._viewPos[0] += x
-        this._viewPos[1] += y
+        this._viewPos[0] += pos[0]
+        this._viewPos[1] += pos[1]
 
-        this.updateOffset()
-        if (this._mouse.x != null && this._mouse.y != null) {
-            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-            this.#mouseMovements()
-        }
+        this.setTransformations()
+        this.#dynamicMouseOffsetUpdate()
     }
 
     /**
@@ -4148,16 +4148,14 @@ class Canvas {
         if (fdx || fdy) {
             return this.playAnim(new Anim((prog)=>{
                 const nx = ix+fdx*prog, ny = iy+fdy*prog, dx = nx-lx, dy = ny-ly
-                this._ctx.translate(dx,dy)
 
                 this._viewPos[0] += dx
                 this._viewPos[1] += dy
                 lx = nx
                 ly = ny
 
-                this.updateOffset()
-                this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-                this.#mouseMovements()
+                this.setTransformations()
+                this.#dynamicMouseOffsetUpdate()
             }, time, easing))
         }
     }
@@ -4174,15 +4172,9 @@ class Canvas {
         viewPos[0] = x-(x-viewPos[0])/oldZoom*zoom
         viewPos[1] = y-(y-viewPos[1])/oldZoom*zoom
 
-        this.updateOffset()
-        if (this._mouse.x != null && this._mouse.y != null) {
-            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-            this.#mouseMovements()
-        }
-
+        this.#dynamicMouseOffsetUpdate()
         this.setTransformations()
     }
-
     /**
      * Moves the camera view center to a specific x/y value
      * @param {[x,y]} pos: the pos to move the center of the camera view to

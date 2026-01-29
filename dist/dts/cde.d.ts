@@ -1411,6 +1411,13 @@ export class Mouse {
         LEAVE: number;
         EXIT: number;
     };
+    static BUTTON_TYPES: {
+        LEFT: number;
+        MIDDLE: number;
+        RIGHT: number;
+        EXTRA_BACK: number;
+        EXTRA_FOWARD: number;
+    };
     /**
      * Represents the user's mouse. Automatically instantiated by a Canvas instance
      * @param {CanvasRenderingContext2D} ctx: the canvas context to link to
@@ -3295,12 +3302,12 @@ export class Canvas {
      * Moves the camera view to a specific x/y value
      * @param {[x,y]} pos: the pos to move the camera view to
      */
-    moveViewAt(pos: any): void;
+    moveViewAt(pos: [x, y]): void;
     /**
      * Moves the camera view by specified x/y values
      * @param {[x,y]} pos: the x/y values to move the camera view by
      */
-    moveViewBy(pos: any): void;
+    moveViewBy(pos: [x, y]): void;
     /**
      * Smoothly moves the camera view to the provided pos, in set time
      * @param {[x,y]} pos: the pos to move the camera view to
