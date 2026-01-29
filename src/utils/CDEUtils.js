@@ -33,7 +33,7 @@ class CDEUtils {
      * Returns a random number within the min and max range
      * @param {Number} min: the minimal possible value (included)
      * @param {Number} max: the maximal possible value (included)
-     * @param {Number?} decimals: the decimal point. (Defaults to integers)
+     * @param {Number?} decimals: the decimal point. (Defaults to 0 (integers))
      * @returns the generated number
      */
     static random(min, max, decimals=0) {
@@ -45,13 +45,24 @@ class CDEUtils {
     }
 
     /**
-     * Clamps a number between the min and max 
+     * Truncates a number to a specific decimal point
+     * @param {Number} num: the number to truncate
+     * @param {Number?} decimals: the decimal point to cut off. (Defaults to 6)
+     * @returns the truncated number
+     */
+    static truncateDecimals(num, decimals=6) {
+        const factor = 10**decimals
+        return Math.trunc(num*factor)/factor
+    }
+
+    /**
+     * Clamps a number between the min and max (inclusive)
      * @param {Number} num: the number to clamp
      * @param {Number?} min: the minimal value 
      * @param {Number?} max: the maximal value
-     * @returns 
+     * @returns the clamped number
      */
-    static clamp(num, min=Infinity, max=Infinity) {
+    static clamp(num, min=-Infinity, max=Infinity) {
         return num < min ? min : num > max ? max : num
     }
 

@@ -21,16 +21,23 @@ declare class CDEUtils {
      * Returns a random number within the min and max range
      * @param {Number} min: the minimal possible value (included)
      * @param {Number} max: the maximal possible value (included)
-     * @param {Number?} decimals: the decimal point. (Defaults to integers)
+     * @param {Number?} decimals: the decimal point. (Defaults to 0 (integers))
      * @returns the generated number
      */
     static random(min: number, max: number, decimals?: number | null): number;
     /**
-     * Clamps a number between the min and max
+     * Truncates a number to a specific decimal point
+     * @param {Number} num: the number to truncate
+     * @param {Number?} decimals: the decimal point to cut off. (Defaults to 6)
+     * @returns the truncated number
+     */
+    static truncateDecimals(num: number, decimals?: number | null): number;
+    /**
+     * Clamps a number between the min and max (inclusive)
      * @param {Number} num: the number to clamp
      * @param {Number?} min: the minimal value
      * @param {Number?} max: the maximal value
-     * @returns
+     * @returns the clamped number
      */
     static clamp(num: number, min?: number | null, max?: number | null): number;
     /**
@@ -1369,6 +1376,9 @@ declare class TypingDevice {
         BROWSER_SEARCH: string;
         BROWSER_FAVORITES: string;
         BROWSER_HOME: string;
+    };
+    static KEY_GROUPS: {
+        NATIVE_ZOOM_KEYS: string[];
     };
     _keysPressed: any[];
     setDown(e: any): void;
@@ -3155,6 +3165,11 @@ declare class Canvas {
      * @returns the created Canvas instance
      */
     static create(targetElement: HTMLElement | null, loopingCB: Function | null, fpsLimit: number | null, cvsFrame: HTMLElement | null, settings?: any | null, willReadFrequently?: boolean | null): Canvas;
+    /**
+     * Prevents all native zooming shortcuts (Both with on mouse and keyboard)
+     * @param {Function?} callback Custom callback called with a number from -1 to 1 representing the zoom direction and the device on a zoom attempt. (zoomDirection, isMouse)=>{}
+     */
+    static preventNativeZoom(callback: Function | null): void;
     /**
      * Returns the Canvas instance linked to the provided HTML canvas element
      * @param {HTMLCanvasElement} cvs: an HTML canvas element

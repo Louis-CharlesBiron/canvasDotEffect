@@ -120,6 +120,27 @@ class Canvas {
         return new Canvas(canvasEl, loopingCB, fpsLimit, cvsFrame, settings, willReadFrequently)
     }
 
+    /**
+     * Prevents all native zooming shortcuts (Both with on mouse and keyboard)
+     * @param {Function?} callback Custom callback called with a number from -1 to 1 representing the zoom direction and the device on a zoom attempt. (zoomDirection, isMouse)=>{}
+     */
+    static preventNativeZoom(callback) {
+        const hasCallback = CDEUtils.isFunction(callback)
+        document.addEventListener("wheel", e=>{
+            if (e.ctrlKey||e.metaKey) {
+                e.preventDefault()
+                if (hasCallback) callback(Math.sign(e.deltaY), true)
+            }
+        }, {passive: false})
+        document.addEventListener("keydown", e=>{
+            const k = e.key
+            if (TypingDevice.KEY_GROUPS.NATIVE_ZOOM_KEYS.includes(k) && (e.ctrlKey||e.metaKey)) {
+                e.preventDefault()
+                if (hasCallback) callback(k==="-" ? 1 : -1, false)
+            }
+        })
+    }
+
     // sets css styles on the canvas and the parent
     #initStyles() {
         const style = document.createElement("style")
