@@ -71,7 +71,6 @@ const [aaa, bbb] = createButton("My custom button", CVS.getCenter(), (button, te
 })
 
 
-// todo possibly optimize / abstract
 const sizeX = 25, sizeY = 50
 
 const tester = new FilledShape("red", true, CVS.getCenter(), [new Dot([-sizeX,-sizeY]),new Dot([sizeX,-sizeY]),new Dot([sizeX,sizeY]),new Dot([-sizeX,sizeY])], 3, _, _, _, _, obj=>{// setupCB
@@ -170,3 +169,12 @@ CVS.setKeyUp()
 
 // START
 CVS.start()
+
+
+
+
+const aID = CVS.typingDevice.addListener(1, ["Q", "E"], (t, k)=>console.log("ONCE", k), TypingDevice.TRIGGER_TYPES.ONCE)
+const bID = CVS.typingDevice.addListener(1, ["A", "D"], (t, k)=>console.log("NORMAL", k), TypingDevice.TRIGGER_TYPES.DEFAULT_REPEATING)
+const cID = CVS.typingDevice.addListener(1, ["Z", "C"], (t, k)=>console.log("SLOW", k), TypingDevice.TRIGGER_TYPES.SLOW_REPEATING)
+const dID = CVS.typingDevice.addListener(1, ["U", "O"], (t, k)=>console.log("MEDIUM", k), TypingDevice.TRIGGER_TYPES.MEDIUM_REPEATING)
+const eID = CVS.typingDevice.addListener(1, ["J", "L"], (t, k)=>console.log("FAST", k), TypingDevice.TRIGGER_TYPES.FAST_REPEATING)

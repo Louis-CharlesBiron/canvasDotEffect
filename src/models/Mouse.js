@@ -4,10 +4,11 @@
 //
 
 class Mouse {
+    static #LISTENER_ID_GIVER = 0
+    static #ID_INDEX = 3
     static DEFAULT_MOUSE_DECELERATION = 0.8
     static DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1
     static DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
-    static #LISTENER_ID_GIVER = 0
     static LISTENER_TYPES = {CLICK:0, DOWN:0, UP:1, MAIN_DOWN:0, MAIN_UP:1, MIDDLE_DOWN:2, MIDDLE_UP:3, RIGHT_DOWN:4, RIGHT_UP:5, EXTRA_FOWARD_DOWN:6, EXTRA_FOWARD_UP:7, EXTRA_BACK_DOWN:8, EXTRA_BACK_UP:9, MOVE:10, ENTER:11, LEAVE:12, EXIT:12}
     static BUTTON_TYPES = {LEFT:0, MIDDLE:1, RIGHT:2, EXTRA_BACK:3, EXTRA_FOWARD:4}
 
@@ -143,7 +144,7 @@ class Mouse {
         const hasAccurateBounds = useAccurateBounds&&obj.getBoundsAccurate, listener = [forceStaticPositions?(hasAccurateBounds?obj.getBoundsAccurate():obj.getBounds()):obj, callback, hasAccurateBounds, Mouse.#LISTENER_ID_GIVER++]
         if (!this._listeners[type]) this._listeners[type] = []
         this._listeners[type].push(listener)
-        return listener[3]
+        return listener[Mouse.#ID_INDEX]
     }
 
     // checks conditions for every listeners of a certain type, if valid, calls the listeners callback as such: (mousePos, obj, mouse)=>
@@ -164,12 +165,12 @@ class Mouse {
                     if (this._moveListenersOptimizationEnabled) {
                         if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this._lastPos):obj.isWithin(this._lastPos))) || (isStaticBounds && this.isWithin(this._lastPos, obj, isPath2D)))==validation) callback(mousePos, obj, this)
                     } else {
-                        const wasWithin = this.#wasWithin[typedListener[3]]
+                        const wasWithin = this.#wasWithin[typedListener[Mouse.#ID_INDEX]]
                         if (!wasWithin && nowWithin) {
-                            this.#wasWithin[typedListener[3]] = true
+                            this.#wasWithin[typedListener[Mouse.#ID_INDEX]] = true
                             if (validation==2) callback(mousePos, obj, this)
                         } else if (!nowWithin && wasWithin) {
-                            this.#wasWithin[typedListener[3]] = false
+                            this.#wasWithin[typedListener[Mouse.#ID_INDEX]] = false
                             if (validation==1) callback(mousePos, obj, this)
                         }
                     }
@@ -197,7 +198,7 @@ class Mouse {
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
      */
     updateListener(type, id, newObj, newCallback, useAccurateBounds, forceStaticPositions=false) {
-        const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[3]==(id?.[3]??id))]
+        const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[Mouse.#ID_INDEX]==(id?.[Mouse.#ID_INDEX]??id))]
         if (newObj) listener[0] = forceStaticPositions?((useAccurateBounds && newObj.getBoundsAccurate) ? newObj.getBoundsAccurate() : newObj.getBounds()) : newObj
         if (newCallback) listener[1] = newCallback
         if (CDEUtils.isDefined(useAccurateBounds)) listener[2] = useAccurateBounds
@@ -209,7 +210,7 @@ class Mouse {
      * @param {Number | String} id: Either the listener's id or * to remove all listeners of this type 
      */
     removeListener(type, id) {
-        this._listeners[type] = id=="*"?[]:this._listeners[type].filter(l=>l[3]!==(id?.[3]??id))
+        this._listeners[type] = id=="*"?[]:this._listeners[type].filter(l=>l[Mouse.#ID_INDEX]!==(id?.[Mouse.#ID_INDEX]??id))
     }
 
     /**

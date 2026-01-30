@@ -124,6 +124,17 @@ class CDEUtils {
     }
 
     /**
+     * Defines an interval, but without delay on the first call
+     * @param {Number} ms Interval delay
+     * @param {Function} callback Interval's callback
+     * @returns setInterval id
+     */
+    static noDelayInterval(ms, callback) {
+        callback()
+        return setInterval(callback, ms)
+    }
+
+    /**
      * Returns whether a value is defined
      * @param {*} value: the value to check
      * @returns whether the value is defined

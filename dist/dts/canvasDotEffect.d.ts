@@ -80,6 +80,13 @@ declare class CDEUtils {
      */
     static hasLinearIntersection(pos1: [x, y], pos2: [x, y], linePos1: [x, y], linePos2: [x, y]): boolean;
     /**
+     * Defines an interval, but without delay on the first call
+     * @param {Number} ms Interval delay
+     * @param {Function} callback Interval's callback
+     * @returns setInterval id
+     */
+    static noDelayInterval(ms: number, callback: Function): number;
+    /**
      * Returns whether a value is defined
      * @param {*} value: the value to check
      * @returns whether the value is defined
@@ -1246,6 +1253,8 @@ declare class GridAssets {
     };
 }
 declare class TypingDevice {
+    static #LISTENER_ID_GIVER: number;
+    static #ID_INDEX: number;
     static KEYS: {
         A: string;
         B: string;
@@ -1380,7 +1389,59 @@ declare class TypingDevice {
     static KEY_GROUPS: {
         NATIVE_ZOOM_KEYS: string[];
     };
+    static LISTENER_TYPES: {
+        DOWN: number;
+        UP: number;
+    };
+    static TRIGGER_TYPES: {
+        DEFAULT_REPEATING: number;
+        ONCE: number;
+        SLOW_REPEATING: number;
+        MEDIUM_REPEATING: number;
+        FAST_REPEATING: number;
+    };
+    static #MOD_REPEATING: number;
+    static #REPEATING_DELAYS: any[];
     _keysPressed: any[];
+    _listeners: any[];
+    /**
+     * Adds a custom keyboard event listener
+     * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
+     * @param {String | Array} keys: One or multiple keys to listen to
+     * @param {Function} callback: a custom function called upon event trigger. (typingDevice, keyPressed)=>
+     * @param {TypingDevice.TRIGGER_TYPE?} triggerType: Defines the trigger frequency (only for DOWN)
+     * @returns The listener id
+     */
+    addListener(type: {
+        DOWN: number;
+        UP: number;
+    }, keys: string | any[], callback: Function, triggerType?: TypingDevice.TRIGGER_TYPE | null): any;
+    /**
+     * Updates an existing listener
+     * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
+     * @param {Number} id: listener's id
+     * @param {String? | Array?} newKeys: if provided, updates the listeners's keys to this value
+     * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (typingDevice, keyPressed)=>
+     * @param {TypingDevice.TRIGGER_TYPE?} triggerType: if provided, updates the listeners's trigger type to this value (only for DOWN)
+     */
+    updateListener(type: {
+        DOWN: number;
+        UP: number;
+    }, id: number, newKeys: any, newCallback: Function | null, newTriggerType: any): void;
+    checkListeners(type: any): void;
+    /**
+     * Removes one or all exisiting listeners of a certain type
+     * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
+     * @param {Number | String} id: Either the listener's id or * to remove all listeners of this type
+     */
+    removeListener(type: {
+        DOWN: number;
+        UP: number;
+    }, id: number | string): void;
+    /**
+     * Removes all existing listeners
+     */
+    removeAllListeners(): void;
     setDown(e: any): void;
     setUp(e: any): void;
     /**
@@ -1398,12 +1459,14 @@ declare class TypingDevice {
     set keysPressed(keysPressed: any[]);
     get keysPressed(): any[];
     get keyCodesPressed(): any[];
+    #private;
 }
 declare class Mouse {
+    static #LISTENER_ID_GIVER: number;
+    static #ID_INDEX: number;
     static DEFAULT_MOUSE_DECELERATION: number;
     static DEFAULT_MOUSE_MOVE_TRESHOLD: number;
     static DEFAULT_MOUSE_ANGULAR_DECELERATION: number;
-    static #LISTENER_ID_GIVER: number;
     static LISTENER_TYPES: {
         CLICK: number;
         DOWN: number;

@@ -167,7 +167,10 @@ class Canvas {
             if (this.hasBeenStarted && (this._fpsLimit >= 25 || this._state==Canvas.STATES.STOPPED)) this.drawSingleFrame()
             if (CDEUtils.isFunction(this._onResizeCB)) this._onResizeCB(this.size, this, e)
         },
-        onvisibilitychange=e=>this._onVisibilityChangeCB(!document.hidden, this, e),
+        onvisibilitychange=e=>{
+            this._typingDevice._keysPressed = []
+            this._onVisibilityChangeCB(!document.hidden, this, e)
+        },
         onscroll=e=>{
           const scrollX = window.scrollX, scrollY = window.scrollY, mouseX =  this._mouse.x, mouseY = this._mouse.y
           this.updateOffset()
