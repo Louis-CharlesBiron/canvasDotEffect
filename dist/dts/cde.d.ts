@@ -1406,7 +1406,7 @@ export class TypingDevice {
      * Adds a custom keyboard event listener
      * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
      * @param {String | Array} keys: One or multiple keys to listen to
-     * @param {Function} callback: a custom function called upon event trigger. (typingDevice, keyPressed)=>
+     * @param {Function} callback: a custom function called upon event trigger. (typingDevice, e, keyPressed)=>
      * @param {TypingDevice.TRIGGER_TYPE?} triggerType: Defines the trigger frequency (only for DOWN)
      * @returns The listener id
      */
@@ -1419,14 +1419,13 @@ export class TypingDevice {
      * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
      * @param {Number} id: listener's id
      * @param {String? | Array?} newKeys: if provided, updates the listeners's keys to this value
-     * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (typingDevice, keyPressed)=>
+     * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (typingDevice, e, keyPressed)=>
      * @param {TypingDevice.TRIGGER_TYPE?} triggerType: if provided, updates the listeners's trigger type to this value (only for DOWN)
      */
     updateListener(type: {
         DOWN: number;
         UP: number;
     }, id: number, newKeys: any, newCallback: Function | null, newTriggerType: any): void;
-    checkListeners(type: any): void;
     /**
      * Removes one or all exisiting listeners of a certain type
      * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES

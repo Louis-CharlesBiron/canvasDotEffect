@@ -33,7 +33,7 @@ class TypingDevice {
      * Adds a custom keyboard event listener
      * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
      * @param {String | Array} keys: One or multiple keys to listen to
-     * @param {Function} callback: a custom function called upon event trigger. (typingDevice, keyPressed)=>
+     * @param {Function} callback: a custom function called upon event trigger. (typingDevice, e, keyPressed)=>
      * @param {TypingDevice.TRIGGER_TYPE?} triggerType: Defines the trigger frequency (only for DOWN)
      * @returns The listener id
      */
@@ -49,7 +49,7 @@ class TypingDevice {
      * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
      * @param {Number} id: listener's id 
      * @param {String? | Array?} newKeys: if provided, updates the listeners's keys to this value
-     * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (typingDevice, keyPressed)=>
+     * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (typingDevice, e, keyPressed)=>
      * @param {TypingDevice.TRIGGER_TYPE?} triggerType: if provided, updates the listeners's trigger type to this value (only for DOWN)
      */
     updateListener(type, id, newKeys, newCallback, newTriggerType) {
@@ -59,8 +59,8 @@ class TypingDevice {
         if (CDEUtils.isDefined(newTriggerType)) listener[2] = newTriggerType
     }
 
-    // checks conditions for every listeners of a certain type, if valid, calls the listeners callback as such: (typingDevice, keyPressed)=>
-    checkListeners(type) {
+    // checks conditions for every listeners of a certain type, if valid, calls the listeners callback as such: (typingDevice, e, keyPressed)=>
+    #checkListeners(type, e) {
         const typedListeners = this._listeners[type], typedListeners_ll = typedListeners?.length
         if (typedListeners_ll) {
             const TYPES = TypingDevice.LISTENER_TYPES
@@ -73,16 +73,16 @@ class TypingDevice {
                     if (triggerType === TypingDevice.TRIGGER_TYPES.ONCE && !alreadyActivated) {
                         if (!downStates[triggerType]) downStates[triggerType] = []
                         downStates[triggerType][id] = [keys, true]
-                        callback(this, this.keysPressed)
+                        callback(this, e, this.keysPressed)
                     } else if (triggerType & TypingDevice.#MOD_REPEATING && !alreadyActivated) {
                         if (!downStates[triggerType]) downStates[triggerType] = []
                         downStates[triggerType][id] = [
                             keys, 
-                            CDEUtils.noDelayInterval(TypingDevice.#REPEATING_DELAYS[triggerType], ()=>callback(this, this.keysPressed))
+                            CDEUtils.noDelayInterval(TypingDevice.#REPEATING_DELAYS[triggerType], ()=>callback(this, e, this.keysPressed))
                         ]
-                    } else if (triggerType === TypingDevice.TRIGGER_TYPES.DEFAULT_REPEATING) callback(this, this.keysPressed)
+                    } else if (triggerType === TypingDevice.TRIGGER_TYPES.DEFAULT_REPEATING) callback(this, e, this.keysPressed)
                 }
-                else if (type===TYPES.UP && keys.includes(this.#lastPressedKey) && !this.isDown(this.#lastPressedKey)) callback(this, this.#lastPressedKey)
+                else if (type===TYPES.UP && keys.includes(this.#lastPressedKey) && !this.isDown(this.#lastPressedKey)) callback(this, e, this.#lastPressedKey)
             }
         }
     }
@@ -113,7 +113,7 @@ class TypingDevice {
     setDown(e) {
         const key = e.key?.toUpperCase()
         if (key && !this.isDown(key)) this._keysPressed.push({key, keyCode:e.keyCode})
-        this.checkListeners(TypingDevice.LISTENER_TYPES.DOWN)
+        this.#checkListeners(TypingDevice.LISTENER_TYPES.DOWN, e)
     }
 
     // sets a key as up based on a keyup event
@@ -146,7 +146,7 @@ class TypingDevice {
             }
         }
 
-        this.checkListeners(TypingDevice.LISTENER_TYPES.UP)
+        this.#checkListeners(TypingDevice.LISTENER_TYPES.UP, e)
     }
 
     /**

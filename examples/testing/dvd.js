@@ -173,8 +173,10 @@ CVS.start()
 
 
 
-const aID = CVS.typingDevice.addListener(1, ["Q", "E"], (t, k)=>console.log("ONCE", k), TypingDevice.TRIGGER_TYPES.ONCE)
-const bID = CVS.typingDevice.addListener(1, ["A", "D"], (t, k)=>console.log("NORMAL", k), TypingDevice.TRIGGER_TYPES.DEFAULT_REPEATING)
-const cID = CVS.typingDevice.addListener(1, ["Z", "C"], (t, k)=>console.log("SLOW", k), TypingDevice.TRIGGER_TYPES.SLOW_REPEATING)
-const dID = CVS.typingDevice.addListener(1, ["U", "O"], (t, k)=>console.log("MEDIUM", k), TypingDevice.TRIGGER_TYPES.MEDIUM_REPEATING)
-const eID = CVS.typingDevice.addListener(1, ["J", "L"], (t, k)=>console.log("FAST", k), TypingDevice.TRIGGER_TYPES.FAST_REPEATING)
+const aID = CVS.typingDevice.addListener(0, ["Q", "E"], (t, k)=>console.log("ONCE", k), TypingDevice.TRIGGER_TYPES.ONCE)
+const bID = CVS.typingDevice.addListener(0, ["A", "D"], (t, k)=>console.log("NORMAL", k), TypingDevice.TRIGGER_TYPES.DEFAULT_REPEATING)
+const cID = CVS.typingDevice.addListener(0, ["Z", "C"], (t, k)=>console.log("SLOW", k), TypingDevice.TRIGGER_TYPES.SLOW_REPEATING)
+const dID = CVS.typingDevice.addListener(0, ["U", "O"], (t, k)=>console.log("MEDIUM", k), TypingDevice.TRIGGER_TYPES.MEDIUM_REPEATING)
+const eID = CVS.typingDevice.addListener(0, ["J", "L"], (t, k)=>console.log("FAST", k), TypingDevice.TRIGGER_TYPES.FAST_REPEATING)
+
+console.log(aID, bID, cID, dID, eID)
