@@ -168,7 +168,7 @@ class Canvas {
             if (CDEUtils.isFunction(this._onResizeCB)) this._onResizeCB(this.size, this, e)
         },
         onvisibilitychange=e=>{
-            this._typingDevice._keysPressed = []
+            this._typingDevice.clearPressed()
             this._onVisibilityChangeCB(!document.hidden, this, e)
         },
         onscroll=e=>{
@@ -186,20 +186,29 @@ class Canvas {
           const callbacks = Canvas.#ON_LOAD_CALLBACKS, cb_ll = callbacks?.length
           if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e, this)
           Canvas.#ON_LOAD_CALLBACKS = null
+        },
+        onBlur=()=>{
+            this._typingDevice.clearPressed()
         }
 
         if (!this.isOffscreenCanvas) {
             window.addEventListener("resize", onresize)
             window.addEventListener("visibilitychange", onvisibilitychange)
             window.addEventListener("scroll", onscroll)
+            window.addEventListener("blur", onBlur)
         }
         window.addEventListener("load", onLoad)
-        return this.isOffscreenCanvas ? {removeOnloadListener:()=>window.removeEventListener("load", onLoad)} : {
-            removeOnreziseListener:()=>window.removeEventListener("resize", onresize),
-            removeOnvisibilitychangeListener:()=>window.removeEventListener("visibilitychange", onvisibilitychange),
-            removeOnscrollListener:()=>window.removeEventListener("scroll", onscroll),
-            removeOnloadListener:()=>window.removeEventListener("load", onLoad)
-        }
+        return this.isOffscreenCanvas ?
+            {
+                removeOnloadListener:()=>window.removeEventListener("load", onLoad)
+            } : 
+            {
+                removeOnreziseListener:()=>window.removeEventListener("resize", onresize),
+                removeOnvisibilitychangeListener:()=>window.removeEventListener("visibilitychange", onvisibilitychange),
+                removeOnscrollListener:()=>window.removeEventListener("scroll", onscroll),
+                removeOnBlurListener:()=>window.removeEventListener("blur", onBlur),
+                removeOnloadListener:()=>window.removeEventListener("load", onLoad)
+            }
     }
 
     /**

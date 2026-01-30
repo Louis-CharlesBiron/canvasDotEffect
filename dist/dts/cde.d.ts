@@ -1451,6 +1451,7 @@ export class TypingDevice {
      * @returns whether any key is pressed
      */
     hasKeysDown(): boolean;
+    clearPressed(): void;
     get instanceOf(): string;
     get keysPressedRaw(): any[];
     set keysPressed(keysPressed: any[]);
@@ -3300,10 +3301,12 @@ export class Canvas {
         removeOnreziseListener?: undefined;
         removeOnvisibilitychangeListener?: undefined;
         removeOnscrollListener?: undefined;
+        removeOnBlurListener?: undefined;
     } | {
         removeOnreziseListener: () => void;
         removeOnvisibilitychangeListener: () => void;
         removeOnscrollListener: () => void;
+        removeOnBlurListener: () => void;
         removeOnloadListener: () => void;
     };
     _viewPos: number[];
@@ -3576,10 +3579,12 @@ export class Canvas {
         removeOnreziseListener?: undefined;
         removeOnvisibilitychangeListener?: undefined;
         removeOnscrollListener?: undefined;
+        removeOnBlurListener?: undefined;
     } | {
         removeOnreziseListener: () => void;
         removeOnvisibilitychangeListener: () => void;
         removeOnscrollListener: () => void;
+        removeOnBlurListener: () => void;
         removeOnloadListener: () => void;
     };
     get timeStamp(): any;

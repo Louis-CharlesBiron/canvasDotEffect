@@ -176,6 +176,10 @@ class TypingDevice {
         return Boolean(this._keysPressed.length)
     }
 
+    clearPressed() {
+        this._keysPressed = []
+    }
+
     *[Symbol.iterator]() {
         const keyPressed = this._keysPressed, k_ll = keyPressed.length
         for (let i=0;i<k_ll;i++) yield keyPressed[i]
