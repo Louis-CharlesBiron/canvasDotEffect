@@ -43,7 +43,7 @@
         }
     },
     "bin": {
-        "cdejs": "./bins/global.min.js", 
+        "cdejs": "./bins/global.min.js",
         "cdejs-template": "./bins/createProjectTemplate.min.js",
         "cdejs-t": "./bins/createProjectTemplate.min.js",
         "cdejs-browser-template": "./bins/createBrowserProjectTemplate.min.js",

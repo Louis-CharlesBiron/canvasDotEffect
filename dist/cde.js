@@ -2422,6 +2422,11 @@ export class Mouse {
         this._y = Infinity
         this._rawX = Infinity
         this._rawY = Infinity
+        this._clicked = false
+        this._rightClicked = false
+        this._scrollClicked = false
+        this._extraForwardClicked = false
+        this._extraBackClicked = false 
     }
     
     /**
@@ -3778,7 +3783,7 @@ export class RenderStyles extends _HasColor {
 // Please don't use or credit this code as your own.
 //
 
-const CDE_CANVAS_TIMEOUT_FUNCTION = window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.msRequestAnimationFrame||function(fn){window.setTimeout(()=>fn(performance.now()),1000/60)}
+const CDE_CANVAS_TIMEOUT_FUNCTION = window?.requestAnimationFrame||window?.webkitRequestAnimationFrame||window?.mozRequestAnimationFrame||window?.msRequestAnimationFrame||function(fn){window?.setTimeout(()=>fn(performance.now()),1000/60)}
 
 export class Canvas {
     static DOMParser = new DOMParser()

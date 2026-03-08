@@ -96,6 +96,11 @@ class Mouse {
         this._y = Infinity
         this._rawX = Infinity
         this._rawY = Infinity
+        this._clicked = false
+        this._rightClicked = false
+        this._scrollClicked = false
+        this._extraForwardClicked = false
+        this._extraBackClicked = false 
     }
     
     /**
