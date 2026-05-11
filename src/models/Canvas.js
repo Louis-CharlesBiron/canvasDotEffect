@@ -3,7 +3,7 @@
 // Please don't use or credit this code as your own.
 //
 
-const CDE_CANVAS_TIMEOUT_FUNCTION = window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.msRequestAnimationFrame||function(fn){window.setTimeout(()=>fn(performance.now()),1000/60)}
+const CDE_CANVAS_TIMEOUT_FUNCTION = window?.requestAnimationFrame||window?.webkitRequestAnimationFrame||window?.mozRequestAnimationFrame||window?.msRequestAnimationFrame||function(fn){window?.setTimeout(()=>fn(performance.now()),1000/60)}
 
 class Canvas {
     static DOMParser = new DOMParser()
@@ -90,6 +90,7 @@ class Canvas {
         this._fixedTimeStamp = null                                   // fixed timestamp in ms
         this._windowListeners = this.#initWindowListeners()           // [onresize, onvisibilitychange, onscroll, onload]
         this._viewPos = [0,0]                                         // context view offset
+        this._zoom = 1                                                // context view zoom
         if (!this.isOffscreenCanvas) {
             const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
             this.setSize(frameCBR.width, frameCBR.height)              // init size
@@ -119,6 +120,27 @@ class Canvas {
         return new Canvas(canvasEl, loopingCB, fpsLimit, cvsFrame, settings, willReadFrequently)
     }
 
+    /**
+     * Prevents all native zooming shortcuts (Both with on mouse and keyboard)
+     * @param {Function?} callback Custom callback called with a number from -1 to 1 representing the zoom direction and the device on a zoom attempt. (zoomDirection, isMouse)=>{}
+     */
+    static preventNativeZoom(callback) {
+        const hasCallback = CDEUtils.isFunction(callback)
+        document.addEventListener("wheel", e=>{
+            if (e.ctrlKey||e.metaKey) {
+                e.preventDefault()
+                if (hasCallback) callback(Math.sign(e.deltaY), true)
+            }
+        }, {passive: false})
+        document.addEventListener("keydown", e=>{
+            const k = e.key
+            if (TypingDevice.KEY_GROUPS.NATIVE_ZOOM_KEYS.includes(k) && (e.ctrlKey||e.metaKey)) {
+                e.preventDefault()
+                if (hasCallback) callback(k==="-" ? 1 : -1, false)
+            }
+        })
+    }
+
     // sets css styles on the canvas and the parent
     #initStyles() {
         const style = document.createElement("style")
@@ -145,7 +167,10 @@ class Canvas {
             if (this.hasBeenStarted && (this._fpsLimit >= 25 || this._state==Canvas.STATES.STOPPED)) this.drawSingleFrame()
             if (CDEUtils.isFunction(this._onResizeCB)) this._onResizeCB(this.size, this, e)
         },
-        onvisibilitychange=e=>this._onVisibilityChangeCB(!document.hidden, this, e),
+        onvisibilitychange=e=>{
+            this._typingDevice.clearPressed()
+            this._onVisibilityChangeCB(!document.hidden, this, e)
+        },
         onscroll=e=>{
           const scrollX = window.scrollX, scrollY = window.scrollY, mouseX =  this._mouse.x, mouseY = this._mouse.y
           this.updateOffset()
@@ -161,20 +186,29 @@ class Canvas {
           const callbacks = Canvas.#ON_LOAD_CALLBACKS, cb_ll = callbacks?.length
           if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e, this)
           Canvas.#ON_LOAD_CALLBACKS = null
+        },
+        onBlur=()=>{
+            this._typingDevice.clearPressed()
         }
 
         if (!this.isOffscreenCanvas) {
             window.addEventListener("resize", onresize)
             window.addEventListener("visibilitychange", onvisibilitychange)
             window.addEventListener("scroll", onscroll)
+            window.addEventListener("blur", onBlur)
         }
         window.addEventListener("load", onLoad)
-        return this.isOffscreenCanvas ? {removeOnloadListener:()=>window.removeEventListener("load", onLoad)} : {
-            removeOnreziseListener:()=>window.removeEventListener("resize", onresize),
-            removeOnvisibilitychangeListener:()=>window.removeEventListener("visibilitychange", onvisibilitychange),
-            removeOnscrollListener:()=>window.removeEventListener("scroll", onscroll),
-            removeOnloadListener:()=>window.removeEventListener("load", onLoad)
-        }
+        return this.isOffscreenCanvas ?
+            {
+                removeOnloadListener:()=>window.removeEventListener("load", onLoad)
+            } : 
+            {
+                removeOnreziseListener:()=>window.removeEventListener("resize", onresize),
+                removeOnvisibilitychangeListener:()=>window.removeEventListener("visibilitychange", onvisibilitychange),
+                removeOnscrollListener:()=>window.removeEventListener("scroll", onscroll),
+                removeOnBlurListener:()=>window.removeEventListener("blur", onBlur),
+                removeOnloadListener:()=>window.removeEventListener("load", onLoad)
+            }
     }
 
     /**
@@ -254,8 +288,8 @@ class Canvas {
 
     // updates the calculated canvas offset in the page
     updateOffset() {
-        const {width, height, x, y} = this._cvs.getBoundingClientRect()
-        return this._offset = [Math.round((x+width)-this.width)+this._viewPos[0], Math.round((y+height)-this.height)+this._viewPos[1]]
+        const {width, height, x, y} = this._cvs.getBoundingClientRect(), zoom = this._zoom
+        return this._offset = [Math.round((x+width)-this.width)+this._viewPos[0], Math.round((y+height)-this.height)+this._viewPos[1], zoom]
     }
 
     // main loop, runs every frame
@@ -395,9 +429,9 @@ class Canvas {
      * @param {Number?} y2: the y value of the bottom-right corner
      */
     clear(x=0, y=0, x2=this.width, y2=this.height) {
-        if (this._viewPos[0] || this._viewPos[1]) {
+        if (this._viewPos[0] || this._viewPos[1] || this._zoom !== 1) {
             this.save()
-            this.resetTransformations()
+            this.ctx.setTransform(1,0,0,1,0,0)
             this._ctx.clearRect(x, y, x2, y2)
             this.restore()
         } else this._ctx.clearRect(x, y, x2, y2)
@@ -449,11 +483,32 @@ class Canvas {
         this.refs.filter(ref=>ref.fragile).forEach(r=>r.reset())
     }
 
+    #dynamicMouseOffsetUpdate() {
+        this.updateOffset()
+        if (this._mouse.x != null && this._mouse.y != null) {
+            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
+            this.#mouseMovements()
+        }
+    }
+
     /**
-     * Discards all current context transformations
+     * Discards all current context transformations (except for zoom by default)
      */
-    resetTransformations() {
-        this.ctx.setTransform(1,0,0,1,0,0)
+    resetTransformations(force) {
+        if (force) {
+            this._zoom = 1
+            this._viewPos = [0,0]
+        }
+        
+        this.ctx.setTransform(this._zoom,0,0,this._zoom,this._viewPos[0],this._viewPos[1])
+        this.#dynamicMouseOffsetUpdate()
+    }
+
+    /**
+     *  Applies all current context transformations
+     */
+    setTransformations(zoom=this._zoom, viewPos=this._viewPos) {
+        this.ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
     }
 
     /**
@@ -461,17 +516,11 @@ class Canvas {
      * @param {[x,y]} pos: the pos to move the camera view to
      */
     moveViewAt(pos) {
-        let [x, y] = pos
-        this.resetTransformations()
-        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
-        this._viewPos[0] = x
-        this._viewPos[1] = y
-        
-        this.updateOffset()
-        if (this._mouse.x != null && this._mouse.y != null) {
-            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-            this.#mouseMovements()
-        }
+        this._viewPos[0] = pos[0]
+        this._viewPos[1] = pos[1]
+
+        this.setTransformations()
+        this.#dynamicMouseOffsetUpdate()
     }
 
     /**
@@ -479,16 +528,11 @@ class Canvas {
      * @param {[x,y]} pos: the x/y values to move the camera view by
      */
     moveViewBy(pos) {
-        let [x, y] = pos
-        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
-        this._viewPos[0] += x
-        this._viewPos[1] += y
+        this._viewPos[0] += pos[0]
+        this._viewPos[1] += pos[1]
 
-        this.updateOffset()
-        if (this._mouse.x != null && this._mouse.y != null) {
-            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-            this.#mouseMovements()
-        }
+        this.setTransformations()
+        this.#dynamicMouseOffsetUpdate()
     }
 
     /**
@@ -512,25 +556,38 @@ class Canvas {
         if (fdx || fdy) {
             return this.playAnim(new Anim((prog)=>{
                 const nx = ix+fdx*prog, ny = iy+fdy*prog, dx = nx-lx, dy = ny-ly
-                this._ctx.translate(dx,dy)
 
                 this._viewPos[0] += dx
                 this._viewPos[1] += dy
                 lx = nx
                 ly = ny
 
-                this.updateOffset()
-                this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-                this.#mouseMovements()
+                this.setTransformations()
+                this.#dynamicMouseOffsetUpdate()
             }, time, easing))
         }
     }
 
     /**
+     * Moves the camera view to a specific x/y value with zoom
+     * @param {[x,y]} pos: the pos to move the camera view to
+     * @param {Number} zoom: the zoom factor
+     */
+    zoomAtPos(pos, zoom) {
+        const oldZoom = this._zoom, viewPos = this._viewPos, [x,y] = pos
+        this._zoom = zoom
+
+        viewPos[0] = x-(x-viewPos[0])/oldZoom*zoom
+        viewPos[1] = y-(y-viewPos[1])/oldZoom*zoom
+
+        this.#dynamicMouseOffsetUpdate()
+        this.setTransformations()
+    }
+    /**
      * Moves the camera view center to a specific x/y value
      * @param {[x,y]} pos: the pos to move the center of the camera view to
      */
-       centerViewAt(pos) {
+    centerViewAt(pos) {
         this.moveViewAt([-pos[0]+this.width/2, -pos[1]+this.height/2])
     }
 
@@ -873,8 +930,11 @@ class Canvas {
      * @param {Number?} padding: the padding applied to the results
      */
     isWithin(pos, padding=0) {
-        const viewPos = this._viewPos
-        return pos[0] >= -padding-viewPos[0] && pos[0] <= this.#cachedSize[0]+padding-viewPos[0] && pos[1] >= -padding-viewPos[1] && pos[1] <= this.#cachedSize[1]+padding-viewPos[1]
+        const viewPos = this._viewPos, zoom = this._zoom, vx = viewPos[0], vy = viewPos[1]
+        return pos[0] >= -vx/zoom-padding &&
+               pos[0] <= (this.#cachedSize[0]-vx)/zoom+padding &&
+               pos[1] >= -vy/zoom-padding &&
+               pos[1] <= (this.#cachedSize[1]-vy)/zoom+padding
     }
 
     /**
@@ -978,6 +1038,7 @@ class Canvas {
     get onScrollCB() {return this._onScrollCB}
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
+    get zoom() {return this._zoom}
     get render() {return this._render}
     get speedModifier() {return this._speedModifier}
     get anims() {return this._anims}

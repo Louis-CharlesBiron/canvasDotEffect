@@ -1,4 +1,4 @@
-// CanvasDotEffect UMD - v1.3.0
+// CanvasDotEffect UMD - v1.3.2
 'use strict';
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
@@ -35,7 +35,7 @@ class CDEUtils {
      * Returns a random number within the min and max range
      * @param {Number} min: the minimal possible value (included)
      * @param {Number} max: the maximal possible value (included)
-     * @param {Number?} decimals: the decimal point. (Defaults to integers)
+     * @param {Number?} decimals: the decimal point. (Defaults to 0 (integers))
      * @returns the generated number
      */
     static random(min, max, decimals=0) {
@@ -47,13 +47,24 @@ class CDEUtils {
     }
 
     /**
-     * Clamps a number between the min and max 
+     * Truncates a number to a specific decimal point
+     * @param {Number} num: the number to truncate
+     * @param {Number?} decimals: the decimal point to cut off. (Defaults to 6)
+     * @returns the truncated number
+     */
+    static truncateDecimals(num, decimals=6) {
+        const factor = 10**decimals
+        return Math.trunc(num*factor)/factor
+    }
+
+    /**
+     * Clamps a number between the min and max (inclusive)
      * @param {Number} num: the number to clamp
      * @param {Number?} min: the minimal value 
      * @param {Number?} max: the maximal value
-     * @returns 
+     * @returns the clamped number
      */
-    static clamp(num, min=Infinity, max=Infinity) {
+    static clamp(num, min=-Infinity, max=Infinity) {
         return num < min ? min : num > max ? max : num
     }
 
@@ -66,6 +77,63 @@ class CDEUtils {
         let a_ll = arr.length, total=0
         for (let i=0;i<a_ll;i++) total+=arr[i]
         return total/a_ll
+    }
+
+    /**
+     * Normalizes a value between 0..1 according to a range
+     * @param {Number} value: a value between min and max
+     * @param {Number} min: the bottom threshold of the range
+     * @param {Number} max: the top threshold of the range 
+     * @returns a number between 0 and 1
+     */
+    static normalize(value, min, max) {
+        return (value-min)/(max-min)
+    }
+
+    /**
+     * Returns whether the turn from pos1 to pos3 is counter-clockwise
+     * @param {[x,y]} pos1: a pos
+     * @param {[x,y]} pos2: another pos
+     * @param {[x,y]} pos3: another pos
+     */
+    static ccw(pos1, pos2, pos3) {
+        return (pos3[1]-pos1[1])*(pos2[0]-pos1[0])>(pos2[1]-pos1[1])*(pos3[0]-pos1[0])
+    }
+
+    /**
+     * Returns whether the turn from pos1 to pos3 is counter-clockwise
+     * @param {Number} x1: the x value of the pos1
+     * @param {Number} y1: the y value of the pos1
+     * @param {Number} x2: the x value of the pos2
+     * @param {Number} y2: the y value of the pos2
+     * @param {Number} x3: the x value of the pos3
+     * @param {Number} y3: the y value of the pos3
+     */
+    static ccw_coords(x1, y1, x2, y2, x3, y3) {
+        return (y3-y1)*(x2-x1)>(y2-y1)*(x3-x1)
+    }
+
+    /**
+     * Returns whether the line between pos1/pos2 and the line between linePos1/linePos2 intersect
+     * @param {[x,y]} pos1: the start pos delimiting the first line
+     * @param {[x,y]} pos2: the end pos delimiting the first line
+     * @param {[x,y]} linePos1: the start pos delimiting the second line
+     * @param {[x,y]} linePos2: the end pos delimiting the second line
+     */
+    static hasLinearIntersection(pos1, pos2, linePos1, linePos2) {
+        const ccw = CDEUtils.ccw_coords, x1 = pos1[0], y1 = pos1[1], x2 = pos2[0], y2 = pos2[1], lx1 = linePos1[0], ly1 = linePos1[1], lx2 = linePos2[0], ly2 = linePos2[1]
+        return ccw(x1, y1, lx1, ly1, lx2, ly2) != ccw(x2, y2, lx1, ly1, lx2, ly2) && ccw(x1, y1, x2, y2, lx1, ly1) != ccw(x1, y1, x2, y2, lx2, ly2)
+    }
+
+    /**
+     * Defines an interval, but without delay on the first call
+     * @param {Number} ms Interval delay
+     * @param {Function} callback Interval's callback
+     * @returns setInterval id
+     */
+    static noDelayInterval(ms, callback) {
+        callback()
+        return setInterval(callback, ms)
     }
 
     /**
@@ -671,8 +739,10 @@ class CanvasUtils {
                 mouse.holdValue.draggedObjId = dot.id
                 mouseup = true
                 if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
-                dot.x = mouse.x
-                dot.y = mouse.y
+                if (mouse.valid) {
+                    dot.x = mouse.x
+                    dot.y = mouse.y
+                }
             } else if (mouseup) {
                 mouse.holdValue.draggedObjId = null
                 mouseup = false
@@ -682,8 +752,10 @@ class CanvasUtils {
             if (mouse.clicked && dist < pickableRadius) {
                 mouseup = true
                 if (dot?.currentBacklogAnim?.id == dragAnim?.id && dragAnim) dragAnim.end()
-                dot.x = mouse.x
-                dot.y = mouse.y
+                if (mouse.valid) {
+                    dot.x = mouse.x
+                    dot.y = mouse.y
+                }
             } else if (mouseup) {
                 mouseup = false
                 dragAnim = dot.addForce(Math.min(CDEUtils.mod(Math.min(mouse.speed,3000), ratio)/4, 300), mouse.dir, 750+ratio*1200, Anim.easeOutQuad)
@@ -919,6 +991,50 @@ class CanvasUtils {
         
         CVS.add(textDisplay)
         return [textDisplay.setupResults, textDisplay]
+    }
+
+    /**
+     * Creates a callback that detects when a pos intersects with the area defined by "positions"
+     * @param {_BaseObj | [[x1,y1], [x2,y2]]} positions: either a _BaseObj inheritor instance or a positions array defining the area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the area
+     * @param {Function?} onCollisionCB: Function called each frame the pos is inside the area. (collisionDirection)=>{...}
+     * @param {Function?} onCollisionEnterCB: Function called once each time a collision is detected. (collisionDirection)=>{...}
+     * @param {Function?} onCollisionExitCB: Function called once each time a collision is ended. (collisionDirection)=>{...}
+     * @param {boolean?} disableCornerDetection: If true, prevents 'collisionDirection' in collision callbacks to contain more than more direction when colliding with corners
+     * @returns a callback that checks for collision
+     */
+    static getCollisionCB(positions, padding=null, onCollisionCB, onCollisionEnterCB, onCollisionExitCB, disableCornerDetection) {
+        const bounds = positions instanceof  _BaseObj ? positions.getBounds() : positions, isTop = 1<<0, isRight = 1<<1, isBottom = 1<<2, isLeft = 1<<3, all = (1<<4)-1, hasCB = CDEUtils.isFunction(onCollisionCB), hasEnterCB = CDEUtils.isFunction(onCollisionEnterCB), hasExitCB = CDEUtils.isFunction(onCollisionExitCB)
+
+        if (padding) {
+            padding = typeof padding=="number" ? [padding, padding, padding, padding] : [padding[0],padding[1]??padding[0], padding[2]??padding[0], padding[3]??padding[1]]
+            bounds[0][0] -= padding[3]
+            bounds[0][1] -= padding[0]
+            bounds[2][0] += padding[1]
+            bounds[2][1] -= padding[0]
+            bounds[1][0] += padding[1]
+            bounds[1][1] += padding[2]
+            bounds[3][0] -= padding[3]
+            bounds[3][1] += padding[2]
+        }
+
+        let lastNotCollidingDirection = 0, hasCollision = false
+        return (pos)=>{
+            const x = pos[0], y = pos[1], collisions = ((y>=bounds[0][1])&&isTop) + ((x<=bounds[1][0])&&isRight) + ((y<=bounds[1][1])&&isBottom) + ((x>=bounds[0][0])&&isLeft) 
+            if (collisions==all) {
+                if (hasEnterCB && !hasCollision) onCollisionEnterCB(lastNotCollidingDirection)
+                hasCollision = true
+                if (hasCB) onCollisionCB(lastNotCollidingDirection)
+            } else {
+                lastNotCollidingDirection = collisions^all
+                if (disableCornerDetection) {
+                    if (lastNotCollidingDirection == isTop+isRight || lastNotCollidingDirection == isTop+isLeft) lastNotCollidingDirection = isTop
+                    else if (lastNotCollidingDirection == isBottom+isRight || lastNotCollidingDirection == isBottom+isLeft) lastNotCollidingDirection = isBottom
+                }
+                if (hasExitCB && hasCollision) onCollisionExitCB(lastNotCollidingDirection)
+                hasCollision = false
+            }
+        }
     }
 
     /**
@@ -2016,29 +2132,153 @@ class GridAssets {
 }
 // JS
 // Canvas Dot Effect by Louis-Charles Biron
-// Please don"t use or credit this code as your own.
+// Please don't use or credit this code as your own.
 //
 
 class TypingDevice {
+    static #LISTENER_ID_GIVER = 0
+    static #ID_INDEX = 3
     static KEYS = {A:"A", B:"B", C:"C", D:"D", E:"E", F:"F", G:"G", H:"H", I:"I", J:"J", K:"K", L:"L", M:"M", N:"N", O:"O", P:"P", Q:"Q", R:"R", S:"S", T:"T", U:"U", V:"V", W:"W", X:"X", Y:"Y", Z:"Z", DIGIT_0:"0", DIGIT_1:"1", DIGIT_2:"2", DIGIT_3:"3", DIGIT_4:"4", DIGIT_5:"5", DIGIT_6:"6", DIGIT_7:"7", DIGIT_8:"8", DIGIT_9:"9", SPACE:" ", ENTER:"ENTER", TAB:"TAB", BACKSPACE:"BACKSPACE", ESCAPE:"ESCAPE", SHIFT:"SHIFT", CONTROL:"CONTROL", ALT:"ALT", ALT_GRAPH:"ALTGRAPH", META:"META", CAPS_LOCK:"CAPSLOCK", CONTEXT_MENU:"CONTEXTMENU", ARROW_UP:"ARROWUP", ARROW_DOWN:"ARROWDOWN", ARROW_LEFT:"ARROWLEFT", ARROW_RIGHT:"ARROWRIGHT", HOME:"HOME", END:"END", PAGE_UP:"PAGEUP", PAGE_DOWN:"PAGEDOWN", INSERT:"INSERT", DELETE:"DELETE", F1:"F1", F2:"F2", F3:"F3", F4:"F4", F5:"F5", F6:"F6", F7:"F7", F8:"F8", F9:"F9", F10:"F10", F11:"F11", F12:"F12", F13:"F13", F14:"F14", F15:"F15", F16:"F16", F17:"F17", F18:"F18", F19:"F19", F20:"F20", F21:"F21", F22:"F22", F23:"F23", F24:"F24", NUMPAD_0:"NUMPAD0", NUMPAD_1:"NUMPAD1", NUMPAD_2:"NUMPAD2", NUMPAD_3:"NUMPAD3", NUMPAD_4:"NUMPAD4", NUMPAD_5:"NUMPAD5", NUMPAD_6:"NUMPAD6", NUMPAD_7:"NUMPAD7", NUMPAD_8:"NUMPAD8", NUMPAD_9:"NUMPAD9", NUMPAD_ADD:"NUMPADADD", NUMPAD_SUBTRACT:"NUMPADSUBTRACT", NUMPAD_MULTIPLY:"NUMPADMULTIPLY", NUMPAD_DIVIDE:"NUMPADDIVIDE", NUMPAD_DECIMAL:"NUMPADDECIMAL", NUMPAD_ENTER:"NUMPADENTER", PAUSE:"PAUSE", PRINT_SCREEN:"PRINTSCREEN", SCROLL_LOCK:"SCROLLLOCK", NUM_LOCK:"NUMLOCK", LAUNCH_APPLICATION_1:"LAUNCHAPPLICATION1", LAUNCH_APPLICATION_2:"LAUNCHAPPLICATION2", BRACKET_LEFT:"BRACKETLEFT", BRACKET_RIGHT:"BRACKETRIGHT", SEMICOLON:"SEMICOLON", QUOTE:"QUOTE", COMMA:"COMMA", PERIOD:"PERIOD", SLASH:"SLASH", BACKSLASH:"BACKSLASH", EQUAL:"EQUAL", MINUS:"MINUS", BACKQUOTE:"BACKQUOTE", AUDIO_VOLUME_UP:"AUDIOVOLUMEUP", AUDIO_VOLUME_DOWN:"AUDIOVOLUMEDOWN", AUDIO_VOLUME_MUTE:"AUDIOVOLUMEMUTE", MEDIA_PLAY_PAUSE:"MEDIAPLAYPAUSE", MEDIA_NEXT_TRACK:"MEDIANEXTTRACK", MEDIA_PREVIOUS_TRACK:"MEDIAPREVIOUSTRACK", MEDIA_STOP:"MEDIASTOP", BROWSER_BACK:"BROWSERBACK", BROWSER_FORWARD:"BROWSERFORWARD", BROWSER_REFRESH:"BROWSERREFRESH", BROWSER_STOP:"BROWSERSTOP", BROWSER_SEARCH:"BROWSERSEARCH", BROWSER_FAVORITES:"BROWSERFAVORITES", BROWSER_HOME:"BROWSERHOME"}
-   
+    static KEY_GROUPS = {NATIVE_ZOOM_KEYS: ["-","+","="]}
+    static LISTENER_TYPES = {DOWN:0, UP:1}
+    static TRIGGER_TYPES = {DEFAULT_REPEATING:0, ONCE:1<<0, SLOW_REPEATING:1<<1, MEDIUM_REPEATING:1<<2, FAST_REPEATING:1<<4}
+    static #MOD_REPEATING = TypingDevice.TRIGGER_TYPES.SLOW_REPEATING|TypingDevice.TRIGGER_TYPES.MEDIUM_REPEATING|TypingDevice.TRIGGER_TYPES.FAST_REPEATING
+    static #REPEATING_DELAYS = []
+    static {
+        TypingDevice.#REPEATING_DELAYS[TypingDevice.TRIGGER_TYPES.SLOW_REPEATING] = 1000/10
+        TypingDevice.#REPEATING_DELAYS[TypingDevice.TRIGGER_TYPES.MEDIUM_REPEATING] = 1000/30
+        TypingDevice.#REPEATING_DELAYS[TypingDevice.TRIGGER_TYPES.FAST_REPEATING] = 1000/60
+    }
+
+    #triggerStates = []
+    #lastPressedKey = null
+
     /**
      * Represents the user's keyboard. Automatically instantiated by a Canvas instance
      */
     constructor() {
         this._keysPressed = [] // Current keys pressed (down)
+        this._listeners = []   // List of all current listeners
+    }
+
+    /**
+     * Adds a custom keyboard event listener
+     * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
+     * @param {String | Array} keys: One or multiple keys to listen to
+     * @param {Function} callback: a custom function called upon event trigger. (typingDevice, e, keyPressed)=>
+     * @param {TypingDevice.TRIGGER_TYPE?} triggerType: Defines the trigger frequency (only for DOWN)
+     * @returns The listener id
+     */
+    addListener(type, keys, callback, triggerType=TypingDevice.TRIGGER_TYPES.DEFAULT_REPEATING) {
+        const listener = [keys, callback, triggerType, TypingDevice.#LISTENER_ID_GIVER++]
+        if (!this._listeners[type]) this._listeners[type] = []
+        this._listeners[type].push(listener)
+        return listener[TypingDevice.#ID_INDEX]
+    }
+
+    /**
+     * Updates an existing listener
+     * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
+     * @param {Number} id: listener's id 
+     * @param {String? | Array?} newKeys: if provided, updates the listeners's keys to this value
+     * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (typingDevice, e, keyPressed)=>
+     * @param {TypingDevice.TRIGGER_TYPE?} triggerType: if provided, updates the listeners's trigger type to this value (only for DOWN)
+     */
+    updateListener(type, id, newKeys, newCallback, newTriggerType) {
+        const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[TypingDevice.#ID_INDEX]==(id?.[TypingDevice.#ID_INDEX]??id))]
+        if (newKeys) listener[0] = newKeys
+        if (newCallback) listener[1] = newCallback
+        if (CDEUtils.isDefined(newTriggerType)) listener[2] = newTriggerType
+    }
+
+    // checks conditions for every listeners of a certain type, if valid, calls the listeners callback as such: (typingDevice, e, keyPressed)=>
+    #checkListeners(type, e) {
+        const typedListeners = this._listeners[type], typedListeners_ll = typedListeners?.length
+        if (typedListeners_ll) {
+            const TYPES = TypingDevice.LISTENER_TYPES
+            for (let i=0;i<typedListeners_ll;i++) {
+                const [keys, callback, triggerType, id] = typedListeners[i]
+                if (type===TYPES.DOWN && this.isDown(keys)) {
+                    if (!this.#triggerStates[type]) this.#triggerStates[type] = []
+                    const downStates = this.#triggerStates[type], alreadyActivated = this.#triggerStates[type]?.[triggerType]?.[id]?.[1]
+                    
+                    if (triggerType === TypingDevice.TRIGGER_TYPES.ONCE && !alreadyActivated) {
+                        if (!downStates[triggerType]) downStates[triggerType] = []
+                        downStates[triggerType][id] = [keys, true]
+                        callback(this, e, this.keysPressed)
+                    } else if (triggerType & TypingDevice.#MOD_REPEATING && !alreadyActivated) {
+                        if (!downStates[triggerType]) downStates[triggerType] = []
+                        downStates[triggerType][id] = [
+                            keys, 
+                            CDEUtils.noDelayInterval(TypingDevice.#REPEATING_DELAYS[triggerType], ()=>callback(this, e, this.keysPressed))
+                        ]
+                    } else if (triggerType === TypingDevice.TRIGGER_TYPES.DEFAULT_REPEATING) callback(this, e, this.keysPressed)
+                }
+                else if (type===TYPES.UP && keys.includes(this.#lastPressedKey) && !this.isDown(this.#lastPressedKey)) callback(this, e, this.#lastPressedKey)
+            }
+        }
+    }
+
+    /**
+     * Removes one or all exisiting listeners of a certain type 
+     * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
+     * @param {Number | String} id: Either the listener's id or * to remove all listeners of this type 
+     */
+    removeListener(type, id) {
+        const isAll = id === "*"
+        this._listeners[type] = isAll ? [] : this._listeners[type].filter(l=>l[TypingDevice.#ID_INDEX]!==(id?.[TypingDevice.#ID_INDEX]??id))
+        if (isAll) this.#triggerStates[type] = []
+        else this.#triggerStates[type].forEach(x=>{
+            if (x[id]) delete x[id]
+        })
+    }
+
+    /**
+     * Removes all existing listeners
+     */
+    removeAllListeners() {
+        this._listeners = []
+        this.#triggerStates = []
     }
 
     // sets a key as down based on a keydown event
     setDown(e) {
         const key = e.key?.toUpperCase()
         if (key && !this.isDown(key)) this._keysPressed.push({key, keyCode:e.keyCode})
+        this.#checkListeners(TypingDevice.LISTENER_TYPES.DOWN, e)
     }
 
     // sets a key as up based on a keyup event
     setUp(e) {
         const key = e.key?.toUpperCase()
-        if (key && this.isDown(key)) this._keysPressed = this._keysPressed.filter(v=>v.key!==key)
+        if (key && this.isDown(key)) {
+            this.#lastPressedKey = key
+            this._keysPressed = this._keysPressed.filter(v=>v.key!==key)
+        }
+
+        if (this.#triggerStates.length) {
+            const downStates = this.#triggerStates[TypingDevice.LISTENER_TYPES.DOWN], s_ll = Object.values(TypingDevice.TRIGGER_TYPES).length
+            for (let i=1;i<(1<<s_ll);i*=2) {
+                const triggerStates = downStates[i]
+                if (triggerStates?.length) {
+                    if (i === TypingDevice.TRIGGER_TYPES.ONCE) {
+                        triggerStates.forEach(x=>{
+                            if (!this.isDown(x[0])) x[1] = false
+                        })
+                    }
+                    else if (i & TypingDevice.#MOD_REPEATING) {
+                        triggerStates.forEach(x=>{
+                            if (!this.isDown(x[0])) {
+                                clearInterval(x[1])
+                                x[1] = null
+                            }
+                        })
+                    }
+                }
+            }
+        }
+
+        this.#checkListeners(TypingDevice.LISTENER_TYPES.UP, e)
     }
 
     /**
@@ -2068,6 +2308,10 @@ class TypingDevice {
         return Boolean(this._keysPressed.length)
     }
 
+    clearPressed() {
+        this._keysPressed = []
+    }
+
     *[Symbol.iterator]() {
         const keyPressed = this._keysPressed, k_ll = keyPressed.length
         for (let i=0;i<k_ll;i++) yield keyPressed[i]
@@ -2087,12 +2331,14 @@ class TypingDevice {
 //
 
 class Mouse {
+    static #LISTENER_ID_GIVER = 0
+    static #ID_INDEX = 3
     static DEFAULT_MOUSE_DECELERATION = 0.8
     static DEFAULT_MOUSE_MOVE_TRESHOLD = 0.1
     static DEFAULT_MOUSE_ANGULAR_DECELERATION = 0.2
-    static #LISTENER_ID_GIVER = 0
     static LISTENER_TYPES = {CLICK:0, DOWN:0, UP:1, MAIN_DOWN:0, MAIN_UP:1, MIDDLE_DOWN:2, MIDDLE_UP:3, RIGHT_DOWN:4, RIGHT_UP:5, EXTRA_FOWARD_DOWN:6, EXTRA_FOWARD_UP:7, EXTRA_BACK_DOWN:8, EXTRA_BACK_UP:9, MOVE:10, ENTER:11, LEAVE:12, EXIT:12}
-    
+    static BUTTON_TYPES = {LEFT:0, MIDDLE:1, RIGHT:2, EXTRA_BACK:3, EXTRA_FOWARD:4}
+
     #lastX = null // previous x value of the mouse on the canvas, updated each frame
     #lastY = null // previous y value of the mouse on the canvas, updated each frame
     #wasWithin = []
@@ -2146,24 +2392,24 @@ class Mouse {
 
     // given an mouse event, sets the current mouse active buttons
     updateMouseClicks(e) {
-        const isMouseDownEvent = e.type=="mousedown"||e.type=="touchstart", TYPES = Mouse.LISTENER_TYPES
-        if (e.button==0) {
+        const isMouseDownEvent = e.type=="mousedown"||e.type=="touchstart", TYPES = Mouse.LISTENER_TYPES, BUTTONS = Mouse.BUTTON_TYPES
+        if (e.button === BUTTONS.LEFT) {
             this._clicked = isMouseDownEvent
             this.checkListeners(isMouseDownEvent?TYPES.MAIN_DOWN:TYPES.MAIN_UP)
         }
-        else if (e.button==1) {
+        else if (e.button === BUTTONS.MIDDLE) {
             this._scrollClicked = isMouseDownEvent
             this.checkListeners(isMouseDownEvent?TYPES.MIDDLE_DOWN:TYPES.MIDDLE_UP)
         }
-        else if (e.button==2) {
+        else if (e.button === BUTTONS.RIGHT) {
             this._rightClicked = isMouseDownEvent
             this.checkListeners(isMouseDownEvent?TYPES.RIGHT_DOWN:TYPES.RIGHT_UP)
         }
-        else if (e.button==3) {
+        else if (e.button === BUTTONS.EXTRA_BACK) {
             this._extraBackClicked = isMouseDownEvent
             this.checkListeners(isMouseDownEvent?TYPES.EXTRA_BACK_DOWN:TYPES.EXTRA_BACK_UP)
         }
-        else if (e.button==4) {
+        else if (e.button === BUTTONS.EXTRA_FOWARD) {
             this._extraForwardClicked = isMouseDownEvent
             this.checkListeners(isMouseDownEvent?TYPES.EXTRA_FOWARD_DOWN:TYPES.EXTRA_FOWARD_UP)
         }
@@ -2177,6 +2423,11 @@ class Mouse {
         this._y = Infinity
         this._rawX = Infinity
         this._rawY = Infinity
+        this._clicked = false
+        this._rightClicked = false
+        this._scrollClicked = false
+        this._extraForwardClicked = false
+        this._extraBackClicked = false 
     }
     
     /**
@@ -2189,8 +2440,9 @@ class Mouse {
         this._valid = true
         this._rawX = x
         this._rawY = y
-        this._x = x-offset[0]
-        this._y = y-offset[1]
+        const zoom = offset[2]
+        this._x = Math.round((x-offset[0])/zoom)
+        this._y = Math.round((y-offset[1])/zoom)
 
         if (this._moveListenersOptimizationEnabled) {
             this.checkListeners(Mouse.LISTENER_TYPES.ENTER)
@@ -2224,7 +2476,7 @@ class Mouse {
         const hasAccurateBounds = useAccurateBounds&&obj.getBoundsAccurate, listener = [forceStaticPositions?(hasAccurateBounds?obj.getBoundsAccurate():obj.getBounds()):obj, callback, hasAccurateBounds, Mouse.#LISTENER_ID_GIVER++]
         if (!this._listeners[type]) this._listeners[type] = []
         this._listeners[type].push(listener)
-        return listener[3]
+        return listener[Mouse.#ID_INDEX]
     }
 
     // checks conditions for every listeners of a certain type, if valid, calls the listeners callback as such: (mousePos, obj, mouse)=>
@@ -2245,12 +2497,12 @@ class Mouse {
                     if (this._moveListenersOptimizationEnabled) {
                         if ((nowWithin*2)+((!isStaticBounds && (hasAccurateBounds?obj.isWithinAccurate(this._lastPos):obj.isWithin(this._lastPos))) || (isStaticBounds && this.isWithin(this._lastPos, obj, isPath2D)))==validation) callback(mousePos, obj, this)
                     } else {
-                        const wasWithin = this.#wasWithin[typedListener[3]]
+                        const wasWithin = this.#wasWithin[typedListener[Mouse.#ID_INDEX]]
                         if (!wasWithin && nowWithin) {
-                            this.#wasWithin[typedListener[3]] = true
+                            this.#wasWithin[typedListener[Mouse.#ID_INDEX]] = true
                             if (validation==2) callback(mousePos, obj, this)
                         } else if (!nowWithin && wasWithin) {
-                            this.#wasWithin[typedListener[3]] = false
+                            this.#wasWithin[typedListener[Mouse.#ID_INDEX]] = false
                             if (validation==1) callback(mousePos, obj, this)
                         }
                     }
@@ -2272,14 +2524,14 @@ class Mouse {
      * Updates an existing listener
      * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
      * @param {Number} id: listener's id 
-     * @param {canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
+     * @param {Canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
      * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (mousePos, obj, mouse)=>
      * @param {Boolean} useAccurateBounds: If true, uses the obj's accurate bounds calculation
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object 
      */
     updateListener(type, id, newObj, newCallback, useAccurateBounds, forceStaticPositions=false) {
-        const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[3]==(id?.[3]??id))]
-        if (newObj) listener[0] = forceStaticPositions?((useAccurateBounds && obj.getBoundsAccurate) ? obj.getBoundsAccurate() : obj.getBounds()) : obj
+        const listener = this._listeners[type][this._listeners[type].findIndex(l=>l[Mouse.#ID_INDEX]==(id?.[Mouse.#ID_INDEX]??id))]
+        if (newObj) listener[0] = forceStaticPositions?((useAccurateBounds && newObj.getBoundsAccurate) ? newObj.getBoundsAccurate() : newObj.getBounds()) : newObj
         if (newCallback) listener[1] = newCallback
         if (CDEUtils.isDefined(useAccurateBounds)) listener[2] = useAccurateBounds
     }
@@ -2290,7 +2542,7 @@ class Mouse {
      * @param {Number | String} id: Either the listener's id or * to remove all listeners of this type 
      */
     removeListener(type, id) {
-        this._listeners[type] = id=="*"?[]:this._listeners[type].filter(l=>l[3]!==(id?.[3]??id))
+        this._listeners[type] = id=="*"?[]:this._listeners[type].filter(l=>l[Mouse.#ID_INDEX]!==(id?.[Mouse.#ID_INDEX]??id))
     }
 
     /**
@@ -2308,8 +2560,11 @@ class Mouse {
      * @returns whether "pos" is inside "positions"
      */
     isWithin(pos, positions, isPath2D) {
-        const [x,y]=pos
-        if (isPath2D) return this._ctx.isPointInPath(positions, pos[0], pos[1])
+        const x=pos[0], y=pos[1]
+        if (isPath2D) {
+            const viewPos = this._viewPos
+            return this._ctx.isPointInPath(positions, pos[0]+viewPos[0], pos[1]+viewPos[1])
+        }
         else return x >= positions[0][0] && x <= positions[1][0] && y >= positions[0][1] && y <= positions[1][1]
     }
 
@@ -3376,7 +3631,7 @@ class RenderStyles extends _HasColor {
      * @returns a separate copy of the profile
      */
     duplicate(render=this._render, color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
-        return new RenderStyles(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
+        return new RenderStyles(render, Color.uniquify(color), filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap)
     }
 
     /**
@@ -3446,7 +3701,7 @@ class RenderStyles extends _HasColor {
      */
     apply(color=this._color, filter=this._filter, compositeOperation=this._compositeOperation, opacity=this._opacity, lineWidth=this._lineWidth, lineDash=this._lineDash, lineDashOffset=this._lineDashOffset, lineJoin=this._lineJoin, lineCap=this._lineCap) {
         const ctx = this.#ctx, colorValue = Color.getColorValue(color), currentStyles = this._render.currentCtxStyles, currentCtxVisuals = this._render.currentCtxVisuals
-        if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
+        if (color && (currentCtxVisuals[0] !== colorValue || ctx.strokeStyle !== colorValue)) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
         if (filter && currentCtxVisuals[1] !== filter) currentCtxVisuals[1] = ctx.filter = filter
         if (compositeOperation && currentCtxVisuals[2] !== compositeOperation) currentCtxVisuals[2] = ctx.globalCompositeOperation = compositeOperation
         if (opacity!=null && currentCtxVisuals[3] !== opacity) currentCtxVisuals[3] = ctx.globalAlpha = opacity
@@ -3477,7 +3732,7 @@ class RenderStyles extends _HasColor {
      */
     static apply(render, color, filter, compositeOperation, opacity, lineWidth, lineDash, lineDashOffset, lineJoin, lineCap) {
         const ctx = render.ctx, colorValue = color&&Color.getColorValue(color), currentStyles = render.currentCtxStyles, currentCtxVisuals = render.currentCtxVisuals
-        if (color && currentCtxVisuals[0] !== colorValue) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
+        if (color && (currentCtxVisuals[0] !== colorValue || ctx.strokeStyle !== colorValue)) currentCtxVisuals[0] = ctx.strokeStyle = ctx.fillStyle = colorValue
         if (filter && currentCtxVisuals[1] !== filter) currentCtxVisuals[1] = ctx.filter = filter
         if (compositeOperation && currentCtxVisuals[2] !== compositeOperation) currentCtxVisuals[2] = ctx.globalCompositeOperation = compositeOperation
         if (opacity!=null && currentCtxVisuals[3] !== opacity) currentCtxVisuals[3] = ctx.globalAlpha = opacity
@@ -3529,7 +3784,7 @@ class RenderStyles extends _HasColor {
 // Please don't use or credit this code as your own.
 //
 
-const CDE_CANVAS_TIMEOUT_FUNCTION = window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.msRequestAnimationFrame||function(fn){window.setTimeout(()=>fn(performance.now()),1000/60)}
+const CDE_CANVAS_TIMEOUT_FUNCTION = window?.requestAnimationFrame||window?.webkitRequestAnimationFrame||window?.mozRequestAnimationFrame||window?.msRequestAnimationFrame||function(fn){window?.setTimeout(()=>fn(performance.now()),1000/60)}
 
 class Canvas {
     static DOMParser = new DOMParser()
@@ -3616,6 +3871,7 @@ class Canvas {
         this._fixedTimeStamp = null                                   // fixed timestamp in ms
         this._windowListeners = this.#initWindowListeners()           // [onresize, onvisibilitychange, onscroll, onload]
         this._viewPos = [0,0]                                         // context view offset
+        this._zoom = 1                                                // context view zoom
         if (!this.isOffscreenCanvas) {
             const frameCBR = this._frame?.getBoundingClientRect()??{width:Canvas.DEFAULT_CANVAS_WIDTH, height:Canvas.DEFAULT_CANVAS_HEIGHT}
             this.setSize(frameCBR.width, frameCBR.height)              // init size
@@ -3645,6 +3901,27 @@ class Canvas {
         return new Canvas(canvasEl, loopingCB, fpsLimit, cvsFrame, settings, willReadFrequently)
     }
 
+    /**
+     * Prevents all native zooming shortcuts (Both with on mouse and keyboard)
+     * @param {Function?} callback Custom callback called with a number from -1 to 1 representing the zoom direction and the device on a zoom attempt. (zoomDirection, isMouse)=>{}
+     */
+    static preventNativeZoom(callback) {
+        const hasCallback = CDEUtils.isFunction(callback)
+        document.addEventListener("wheel", e=>{
+            if (e.ctrlKey||e.metaKey) {
+                e.preventDefault()
+                if (hasCallback) callback(Math.sign(e.deltaY), true)
+            }
+        }, {passive: false})
+        document.addEventListener("keydown", e=>{
+            const k = e.key
+            if (TypingDevice.KEY_GROUPS.NATIVE_ZOOM_KEYS.includes(k) && (e.ctrlKey||e.metaKey)) {
+                e.preventDefault()
+                if (hasCallback) callback(k==="-" ? 1 : -1, false)
+            }
+        })
+    }
+
     // sets css styles on the canvas and the parent
     #initStyles() {
         const style = document.createElement("style")
@@ -3671,7 +3948,10 @@ class Canvas {
             if (this.hasBeenStarted && (this._fpsLimit >= 25 || this._state==Canvas.STATES.STOPPED)) this.drawSingleFrame()
             if (CDEUtils.isFunction(this._onResizeCB)) this._onResizeCB(this.size, this, e)
         },
-        onvisibilitychange=e=>this._onVisibilityChangeCB(!document.hidden, this, e),
+        onvisibilitychange=e=>{
+            this._typingDevice.clearPressed()
+            this._onVisibilityChangeCB(!document.hidden, this, e)
+        },
         onscroll=e=>{
           const scrollX = window.scrollX, scrollY = window.scrollY, mouseX =  this._mouse.x, mouseY = this._mouse.y
           this.updateOffset()
@@ -3687,20 +3967,29 @@ class Canvas {
           const callbacks = Canvas.#ON_LOAD_CALLBACKS, cb_ll = callbacks?.length
           if (cb_ll) for (let i=0;i<cb_ll;i++) callbacks[i](e, this)
           Canvas.#ON_LOAD_CALLBACKS = null
+        },
+        onBlur=()=>{
+            this._typingDevice.clearPressed()
         }
 
         if (!this.isOffscreenCanvas) {
             window.addEventListener("resize", onresize)
             window.addEventListener("visibilitychange", onvisibilitychange)
             window.addEventListener("scroll", onscroll)
+            window.addEventListener("blur", onBlur)
         }
         window.addEventListener("load", onLoad)
-        return this.isOffscreenCanvas ? {removeOnloadListener:()=>window.removeEventListener("load", onLoad)} : {
-            removeOnreziseListener:()=>window.removeEventListener("resize", onresize),
-            removeOnvisibilitychangeListener:()=>window.removeEventListener("visibilitychange", onvisibilitychange),
-            removeOnscrollListener:()=>window.removeEventListener("scroll", onscroll),
-            removeOnloadListener:()=>window.removeEventListener("load", onLoad)
-        }
+        return this.isOffscreenCanvas ?
+            {
+                removeOnloadListener:()=>window.removeEventListener("load", onLoad)
+            } : 
+            {
+                removeOnreziseListener:()=>window.removeEventListener("resize", onresize),
+                removeOnvisibilitychangeListener:()=>window.removeEventListener("visibilitychange", onvisibilitychange),
+                removeOnscrollListener:()=>window.removeEventListener("scroll", onscroll),
+                removeOnBlurListener:()=>window.removeEventListener("blur", onBlur),
+                removeOnloadListener:()=>window.removeEventListener("load", onLoad)
+            }
     }
 
     /**
@@ -3780,8 +4069,8 @@ class Canvas {
 
     // updates the calculated canvas offset in the page
     updateOffset() {
-        const {width, height, x, y} = this._cvs.getBoundingClientRect()
-        return this._offset = [Math.round((x+width)-this.width)+this._viewPos[0], Math.round((y+height)-this.height)+this._viewPos[1]]
+        const {width, height, x, y} = this._cvs.getBoundingClientRect(), zoom = this._zoom
+        return this._offset = [Math.round((x+width)-this.width)+this._viewPos[0], Math.round((y+height)-this.height)+this._viewPos[1], zoom]
     }
 
     // main loop, runs every frame
@@ -3921,9 +4210,9 @@ class Canvas {
      * @param {Number?} y2: the y value of the bottom-right corner
      */
     clear(x=0, y=0, x2=this.width, y2=this.height) {
-        if (this._viewPos[0] || this._viewPos[1]) {
+        if (this._viewPos[0] || this._viewPos[1] || this._zoom !== 1) {
             this.save()
-            this.resetTransformations()
+            this.ctx.setTransform(1,0,0,1,0,0)
             this._ctx.clearRect(x, y, x2, y2)
             this.restore()
         } else this._ctx.clearRect(x, y, x2, y2)
@@ -3975,11 +4264,32 @@ class Canvas {
         this.refs.filter(ref=>ref.fragile).forEach(r=>r.reset())
     }
 
+    #dynamicMouseOffsetUpdate() {
+        this.updateOffset()
+        if (this._mouse.x != null && this._mouse.y != null) {
+            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
+            this.#mouseMovements()
+        }
+    }
+
     /**
-     * Discards all current context transformations
+     * Discards all current context transformations (except for zoom by default)
      */
-    resetTransformations() {
-        this.ctx.setTransform(1,0,0,1,0,0)
+    resetTransformations(force) {
+        if (force) {
+            this._zoom = 1
+            this._viewPos = [0,0]
+        }
+        
+        this.ctx.setTransform(this._zoom,0,0,this._zoom,this._viewPos[0],this._viewPos[1])
+        this.#dynamicMouseOffsetUpdate()
+    }
+
+    /**
+     *  Applies all current context transformations
+     */
+    setTransformations(zoom=this._zoom, viewPos=this._viewPos) {
+        this.ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
     }
 
     /**
@@ -3987,17 +4297,11 @@ class Canvas {
      * @param {[x,y]} pos: the pos to move the camera view to
      */
     moveViewAt(pos) {
-        let [x, y] = pos
-        this.resetTransformations()
-        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
-        this._viewPos[0] = x
-        this._viewPos[1] = y
-        
-        this.updateOffset()
-        if (this._mouse.x != null && this._mouse.y != null) {
-            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-            this.#mouseMovements()
-        }
+        this._viewPos[0] = pos[0]
+        this._viewPos[1] = pos[1]
+
+        this.setTransformations()
+        this.#dynamicMouseOffsetUpdate()
     }
 
     /**
@@ -4005,16 +4309,11 @@ class Canvas {
      * @param {[x,y]} pos: the x/y values to move the camera view by
      */
     moveViewBy(pos) {
-        let [x, y] = pos
-        this._ctx.translate(x=(CDEUtils.isDefined(x)&&isFinite(x))?x:0,y=(CDEUtils.isDefined(y)&&isFinite(y))?y:0)
-        this._viewPos[0] += x
-        this._viewPos[1] += y
+        this._viewPos[0] += pos[0]
+        this._viewPos[1] += pos[1]
 
-        this.updateOffset()
-        if (this._mouse.x != null && this._mouse.y != null) {
-            this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-            this.#mouseMovements()
-        }
+        this.setTransformations()
+        this.#dynamicMouseOffsetUpdate()
     }
 
     /**
@@ -4038,18 +4337,50 @@ class Canvas {
         if (fdx || fdy) {
             return this.playAnim(new Anim((prog)=>{
                 const nx = ix+fdx*prog, ny = iy+fdy*prog, dx = nx-lx, dy = ny-ly
-                this._ctx.translate(dx,dy)
 
                 this._viewPos[0] += dx
                 this._viewPos[1] += dy
                 lx = nx
                 ly = ny
 
-                this.updateOffset()
-                this._mouse.updatePos(this._mouse.rawX, this._mouse.rawY, this._offset)
-                this.#mouseMovements()
+                this.setTransformations()
+                this.#dynamicMouseOffsetUpdate()
             }, time, easing))
         }
+    }
+
+    /**
+     * Moves the camera view to a specific x/y value with zoom
+     * @param {[x,y]} pos: the pos to move the camera view to
+     * @param {Number} zoom: the zoom factor
+     */
+    zoomAtPos(pos, zoom) {
+        const oldZoom = this._zoom, viewPos = this._viewPos, [x,y] = pos
+        this._zoom = zoom
+
+        viewPos[0] = x-(x-viewPos[0])/oldZoom*zoom
+        viewPos[1] = y-(y-viewPos[1])/oldZoom*zoom
+
+        this.#dynamicMouseOffsetUpdate()
+        this.setTransformations()
+    }
+    /**
+     * Moves the camera view center to a specific x/y value
+     * @param {[x,y]} pos: the pos to move the center of the camera view to
+     */
+    centerViewAt(pos) {
+        this.moveViewAt([-pos[0]+this.width/2, -pos[1]+this.height/2])
+    }
+
+    /**
+     * Smoothly moves the camera view center to the provided pos, in set time
+     * @param {[x,y]} pos: the pos to move the center of the camera view to
+     * @param {Number?} time: the move time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y} 
+     * @returns the created Anim instance
+     */
+    centerViewTo(pos, time=null, easing=null) {
+        this.moveViewTo([-pos[0]+this.width/2, -pos[1]+this.height/2], time, easing)
     }
 
     /**
@@ -4380,8 +4711,11 @@ class Canvas {
      * @param {Number?} padding: the padding applied to the results
      */
     isWithin(pos, padding=0) {
-        const viewPos = this._viewPos
-        return pos[0] >= -padding-viewPos[0] && pos[0] <= this.#cachedSize[0]+padding-viewPos[0] && pos[1] >= -padding-viewPos[1] && pos[1] <= this.#cachedSize[1]+padding-viewPos[1]
+        const viewPos = this._viewPos, zoom = this._zoom, vx = viewPos[0], vy = viewPos[1]
+        return pos[0] >= -vx/zoom-padding &&
+               pos[0] <= (this.#cachedSize[0]-vx)/zoom+padding &&
+               pos[1] >= -vy/zoom-padding &&
+               pos[1] <= (this.#cachedSize[1]-vy)/zoom+padding
     }
 
     /**
@@ -4485,6 +4819,7 @@ class Canvas {
     get onScrollCB() {return this._onScrollCB}
     get maxTime() {return this.#maxTime}
     get viewPos() {return this._viewPos}
+    get zoom() {return this._zoom}
     get render() {return this._render}
     get speedModifier() {return this._speedModifier}
     get anims() {return this._anims}
@@ -4551,14 +4886,14 @@ class Anim {
 
     /**
      * Allows the creation of smooth progress based animations 
-     * @param {Function} animationCB: a function called each frame containing the animation code. (clampedProgress, playCount, progress)=>{...}
+     * @param {Function} animationCB: a function called each frame containing the animation code. (progress, playCount, deltaTime clampedProgress)=>{...}
      * @param {Number?} duration: the animation duration in miliseconds. Negative numbers make the animation loop infinitely
      * @param {Function?} easing: the easing function used. (x)=>{return y} 
      * @param {Function?} endCB: a function called upon the anim end
      */
     constructor(animationCB, duration, easing, endCB) {
         this._id = Anim.#ANIM_ID_GIVER++                 // animation id
-        this._animation = animationCB                    // the main animation (clampedProgress, playCount, progress)=>
+        this._animation = animationCB                    // the main animation (progress, playCount, deltaTime clampedProgress)=>{...}
         this._duration = duration??Anim.DEFAULT_DURATION // duration in ms, negative values make the animation repeat infinitly
         this._easing = easing||Anim.linear               // easing function (x)=>
         this._endCB = endCB                              // function called when animation is over
@@ -4638,10 +4973,11 @@ class Anim {
 	get progressRaw() {return this._progress}
 	get playCount() {return this._playCount}
 
-	set animation(_animation) {return this._animation = _animation}
-	set duration(_duration) {return this._duration = _duration}
-	set easing(_easing) {return this._easing = _easing}
-	set endCB(_endCB) {return this._endCB = _endCB}
+	set startTime(startTime) {this._startTime = startTime}
+	set animation(_animation) {this._animation = _animation}
+	set duration(_duration) {this._duration = _duration}
+	set easing(_easing) {this._easing = _easing}
+	set endCB(_endCB) {this._endCB = _endCB}
 
     // Easings from: https://easings.net/
     static easeInSine=x=>1-Math.cos(x*Math.PI/2)
@@ -5290,11 +5626,12 @@ class AudioDisplay extends _BaseObj {
         if (this.initialized) {
             const ctx = render.ctx, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling, data = this.#data
 
-            let viewPos
+            let viewPos, zoom
             if (this._transformable) {
                 if (hasTransforms) {
-                    const cx = this._pos[0], cy = this._pos[1]
-                    viewPos = this.parent.viewPos
+                    const cx = this._pos[0], cy = this._pos[1], parent = this.parent
+                    viewPos = parent.viewPos
+                    zoom = parent.zoom
                     ctx.translate(cx, cy)
                     if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                     if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -5310,7 +5647,7 @@ class AudioDisplay extends _BaseObj {
                 if (newAcc) accumulator = newAcc
             }
 
-            if (this._transformable && hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
+            if (this._transformable && hasTransforms) ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
         }
         super.draw(time, deltaTime)
     }
@@ -5854,6 +6191,18 @@ class AudioDisplay extends _BaseObj {
     get bufferLength() {return this.#buffer_ll}
     get transformableRaw() {return this._transformable}
     get transformable() {return Boolean(this._transformable)}
+    get top() {return this.#getRectBounds()[0][1]}
+    get bottom() {return this.#getRectBounds()[1][1]}
+    get height() {
+        const bounds = this.#getRectBounds()
+        return bounds[1][1]-bounds[0][1]
+    }
+    get left() {return this.#getRectBounds()[0][0]}
+    get right() {return this.#getRectBounds()[1][0]}
+    get width() {
+        const bounds = this.#getRectBounds()
+        return bounds[1][0]-bounds[0][0]
+    }
 
     get video() {return this._source}
     get image() {return this._source}
@@ -5975,10 +6324,11 @@ class ImageDisplay extends _BaseObj {
 
             const ctx = render.ctx, hasScaling = this._scale[0]!==1||this._scale[1]!==1, hasTransforms = this._rotation||hasScaling
 
-            let viewPos
+            let viewPos, zoom
             if (hasTransforms) {
-                const cx = this.centerX, cy = this.centerY
-                viewPos = this.parent.viewPos
+                const cx = this.centerX, cy = this.centerY, parent = this.parent
+                viewPos = parent.viewPos
+                zoom = parent.zoom
                 ctx.translate(cx, cy)
                 if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                 if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -5988,7 +6338,7 @@ class ImageDisplay extends _BaseObj {
             if (source instanceof HTMLCanvasElement) render.drawLateImage(source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
             else render.drawImage(source, this._pos, this._size, this._sourceCroppingPositions, this.visualEffects)
 
-            if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
+            if (hasTransforms) ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
         }
         super.draw(time, deltaTime)
     }
@@ -6215,7 +6565,8 @@ class ImageDisplay extends _BaseObj {
      * @returns whether the provided pos is inside the display
      */
     isWithinAccurate(pos, padding, rotation, scale) {
-        return this.ctx.isPointInPath(this.getBoundsAccurate(padding, rotation, scale), pos[0], pos[1])
+        const viewPos = this.cvs.viewPos
+        return this.ctx.isPointInPath(this.getBoundsAccurate(padding, rotation, scale), pos[0]+viewPos[0], pos[1]+viewPos[1])
     }
 
     // returns the raw a minimal rectangular area containing all of the image (no scale/rotation)
@@ -6341,6 +6692,10 @@ class ImageDisplay extends _BaseObj {
 	get size_() {return this._size?CDEUtils.unlinkArr2(this._size):[0,0]}
     get width() {return this._size[0]}
     get height() {return this._size[1]}
+    get top() {return this._pos[1]}
+    get bottom() {return this._pos[1]+this.height}
+    get left() {return this._pos[0]}
+    get right() {return this._pos[0]+this.width}
     get trueSize() {
         const size = this.size
         return [Math.abs(size[0]*this._scale[0]), Math.abs(size[1]*this._scale[1])]
@@ -6453,10 +6808,11 @@ class TextDisplay extends _BaseObj {
             if ((this.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
                 const ctx = render.ctx, hasScaling = this._scale[0]!=1||this._scale[1]!=1, hasTransforms = this._rotation||hasScaling, textValue = this.getTextValue()
 
-                let viewPos
+                let viewPos, zoom
                 if (hasTransforms) {
-                    const cx = this._pos[0], cy = this._pos[1]
-                    viewPos = this.parent.viewPos
+                    const cx = this._pos[0], cy = this._pos[1], parent = this.parent
+                    viewPos = parent.viewPos
+                    zoom = parent.zoom
                     ctx.translate(cx, cy)
                     if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                     if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -6466,7 +6822,7 @@ class TextDisplay extends _BaseObj {
                 if (this._drawMethod=="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeight, this.visualEffects)
                 else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeight, this.visualEffects)
                 
-                if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
+                if (hasTransforms) ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
             }
         }
 
@@ -6563,7 +6919,8 @@ class TextDisplay extends _BaseObj {
      * @returns whether the provided pos is inside the display
      */
     isWithinAccurate(pos, paddingX, rotation, scale) {
-        return this.ctx.isPointInPath(this.getBoundsAccurate(paddingX, rotation, scale), pos[0], pos[1])
+        const viewPos = this.cvs.viewPos
+        return this.ctx.isPointInPath(this.getBoundsAccurate(paddingX, rotation, scale), pos[0]+viewPos[0], pos[1]+viewPos[1])
     }
     
     // returns the raw a minimal rectangular area containing all of the text (no scale/rotation)
@@ -6666,6 +7023,10 @@ class TextDisplay extends _BaseObj {
     get lineCount() {return this.#lineCount}
     get width() {return this.trueSize[0]}
     get height() {return this.trueSize[1]}
+    get top() {return this._pos[1]-this.lineHeight/2}
+    get bottom() {return this._pos[1]+this.lineHeight*this.lineCount-this.lineHeight/2}
+    get left() {return this._pos[0]-this._size[0]/2}
+    get right() {return this._pos[0]+this._size[0]/2}
 
 	set text(text) {
         const lastYScale = this._scale[1]
@@ -7449,7 +7810,10 @@ class Shape extends _Obj {
      */
     isWithinAccurate(pos) {
         const dots = this._dots, d_ll = dots.length
-        if (d_ll > 2) return this.ctx.isPointInPath(this.getBoundsAccurate(), pos[0], pos[1])
+        if (d_ll > 2) {
+            const viewPos = this.cvs.viewPos
+            return this.ctx.isPointInPath(this.getBoundsAccurate(), pos[0]+viewPos[0], pos[1]+viewPos[1])
+        }
         return false
     }
 
@@ -7599,6 +7963,18 @@ class Shape extends _Obj {
     get thirdDot() {return this._dots[2]}
     get lastDot() {return CDEUtils.getLast(this._dots, 0)}
     get asSource() {return this._dots}
+    get top() {return CDEUtils.getMinMax(this._dots, "y")[0]}
+    get bottom() {return CDEUtils.getMinMax(this._dots, "y")[1]}
+    get height() {
+        const topBottom = CDEUtils.getMinMax(this._dots, "y")
+        return topBottom[1]-topBottom[0]
+    }
+    get left() {return CDEUtils.getMinMax(this._dots, "x")[0]}
+    get right() {return CDEUtils.getMinMax(this._dots, "x")[1]}
+    get width() {
+        const leftRight = CDEUtils.getMinMax(this._dots, "x")
+        return leftRight[1]-leftRight[0]
+    }
 
     set dots(ratioPos) {this._ratioPos = ratioPos}
     set ratioPos(ratioPos) {this._ratioPos = ratioPos}
@@ -7952,8 +8328,8 @@ class Grid extends Shape {
 
         this._keys = keys+""||Grid.DEFAULT_KEYS             // keys to convert to source's values as a string
         this._gaps = gaps??Grid.DEFAULT_GAPS                // [x, y] gap length within the dots
-        this._spacing = spacing??Grid.DEFAULT_SPACING(this) // gap length between symbols
         this._source = source?? Grid.DEFAULT_SOURCE         // symbols' source
+        this._spacing = spacing??Grid.DEFAULT_SPACING(this) // gap length between symbols
     }
 
     initialize() {
@@ -8163,13 +8539,14 @@ class Dot extends _Obj {
             }
 
             if (this._radius && (this.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
-                const ctx = render.ctx, scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")!==-1)||this._rotation
+                const ctx = render.ctx, scaleX = this._scale[0], scaleY = this._scale[1], hasScaling = scaleX!==1||scaleY!==1, hasTransforms = hasScaling||(this._visualEffects?.[0]?.indexOf("#")+1)||this._rotation
 
                 if (hasTransforms) {
-                    let viewPos
+                    let viewPos, zoom
                     if (hasScaling) {
-                        const x = this._pos[0], y = this._pos[1]
-                        viewPos = this.cvs.viewPos
+                        const x = this._pos[0], y = this._pos[1], cvs = this.cvs
+                        viewPos = cvs.viewPos
+                        zoom = cvs.zoom
                         ctx.translate(x, y)
                         if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                         ctx.scale(scaleX, scaleY)
@@ -8177,7 +8554,7 @@ class Dot extends _Obj {
                     }
 
                     render.fill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
-                    if (hasScaling) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
+                    if (hasScaling) ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
                 } else render.batchFill(this._cachedPath||Render.getArc(this._pos, this._radius), this._color, this.visualEffects)
             }
         } else {
@@ -8308,7 +8685,8 @@ class Dot extends _Obj {
      * @returns whether the provided pos is inside the Dot
      */
     isWithinAccurate(pos, axisPadding, rotation, scale) {
-        return this.ctx.isPointInPath(this.getBoundsAccurate(axisPadding, rotation, scale), pos[0], pos[1])
+        const viewPos = this.cvs.viewPos
+        return this.ctx.isPointInPath(this.getBoundsAccurate(axisPadding, rotation, scale), pos[0]+viewPos[0], pos[1]+viewPos[1])
     }
 
     // returns the raw a minimal rectangular area containing all of the Dot (no scale/rotation)

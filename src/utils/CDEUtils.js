@@ -33,7 +33,7 @@ class CDEUtils {
      * Returns a random number within the min and max range
      * @param {Number} min: the minimal possible value (included)
      * @param {Number} max: the maximal possible value (included)
-     * @param {Number?} decimals: the decimal point. (Defaults to integers)
+     * @param {Number?} decimals: the decimal point. (Defaults to 0 (integers))
      * @returns the generated number
      */
     static random(min, max, decimals=0) {
@@ -45,13 +45,24 @@ class CDEUtils {
     }
 
     /**
-     * Clamps a number between the min and max 
+     * Truncates a number to a specific decimal point
+     * @param {Number} num: the number to truncate
+     * @param {Number?} decimals: the decimal point to cut off. (Defaults to 6)
+     * @returns the truncated number
+     */
+    static truncateDecimals(num, decimals=6) {
+        const factor = 10**decimals
+        return Math.trunc(num*factor)/factor
+    }
+
+    /**
+     * Clamps a number between the min and max (inclusive)
      * @param {Number} num: the number to clamp
      * @param {Number?} min: the minimal value 
      * @param {Number?} max: the maximal value
-     * @returns 
+     * @returns the clamped number
      */
-    static clamp(num, min=Infinity, max=Infinity) {
+    static clamp(num, min=-Infinity, max=Infinity) {
         return num < min ? min : num > max ? max : num
     }
 
@@ -110,6 +121,17 @@ class CDEUtils {
     static hasLinearIntersection(pos1, pos2, linePos1, linePos2) {
         const ccw = CDEUtils.ccw_coords, x1 = pos1[0], y1 = pos1[1], x2 = pos2[0], y2 = pos2[1], lx1 = linePos1[0], ly1 = linePos1[1], lx2 = linePos2[0], ly2 = linePos2[1]
         return ccw(x1, y1, lx1, ly1, lx2, ly2) != ccw(x2, y2, lx1, ly1, lx2, ly2) && ccw(x1, y1, x2, y2, lx1, ly1) != ccw(x1, y1, x2, y2, lx2, ly2)
+    }
+
+    /**
+     * Defines an interval, but without delay on the first call
+     * @param {Number} ms Interval delay
+     * @param {Function} callback Interval's callback
+     * @returns setInterval id
+     */
+    static noDelayInterval(ms, callback) {
+        callback()
+        return setInterval(callback, ms)
     }
 
     /**

@@ -50,10 +50,11 @@ class TextDisplay extends _BaseObj {
             if ((this.a??1) > Color.OPACITY_VISIBILITY_THRESHOLD) {
                 const ctx = render.ctx, hasScaling = this._scale[0]!=1||this._scale[1]!=1, hasTransforms = this._rotation||hasScaling, textValue = this.getTextValue()
 
-                let viewPos
+                let viewPos, zoom
                 if (hasTransforms) {
-                    const cx = this._pos[0], cy = this._pos[1]
-                    viewPos = this.parent.viewPos
+                    const cx = this._pos[0], cy = this._pos[1], parent = this.parent
+                    viewPos = parent.viewPos
+                    zoom = parent.zoom
                     ctx.translate(cx, cy)
                     if (this._rotation) ctx.rotate(CDEUtils.toRad(this._rotation))
                     if (hasScaling) ctx.scale(this._scale[0], this._scale[1])
@@ -63,7 +64,7 @@ class TextDisplay extends _BaseObj {
                 if (this._drawMethod=="FILL") render.fillText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeight, this.visualEffects)
                 else render.strokeText(textValue, this._pos, this._color, this._textStyles, this._maxWidth, this._lineHeight, this.visualEffects)
                 
-                if (hasTransforms) ctx.setTransform(1,0,0,1,viewPos[0],viewPos[1])
+                if (hasTransforms) ctx.setTransform(zoom,0,0,zoom,viewPos[0],viewPos[1])
             }
         }
 

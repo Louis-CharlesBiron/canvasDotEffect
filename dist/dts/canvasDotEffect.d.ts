@@ -21,16 +21,23 @@ declare class CDEUtils {
      * Returns a random number within the min and max range
      * @param {Number} min: the minimal possible value (included)
      * @param {Number} max: the maximal possible value (included)
-     * @param {Number?} decimals: the decimal point. (Defaults to integers)
+     * @param {Number?} decimals: the decimal point. (Defaults to 0 (integers))
      * @returns the generated number
      */
     static random(min: number, max: number, decimals?: number | null): number;
     /**
-     * Clamps a number between the min and max
+     * Truncates a number to a specific decimal point
+     * @param {Number} num: the number to truncate
+     * @param {Number?} decimals: the decimal point to cut off. (Defaults to 6)
+     * @returns the truncated number
+     */
+    static truncateDecimals(num: number, decimals?: number | null): number;
+    /**
+     * Clamps a number between the min and max (inclusive)
      * @param {Number} num: the number to clamp
      * @param {Number?} min: the minimal value
      * @param {Number?} max: the maximal value
-     * @returns
+     * @returns the clamped number
      */
     static clamp(num: number, min?: number | null, max?: number | null): number;
     /**
@@ -39,6 +46,46 @@ declare class CDEUtils {
      * @returns the average
      */
     static avg(arr: number[]): number;
+    /**
+     * Normalizes a value between 0..1 according to a range
+     * @param {Number} value: a value between min and max
+     * @param {Number} min: the bottom threshold of the range
+     * @param {Number} max: the top threshold of the range
+     * @returns a number between 0 and 1
+     */
+    static normalize(value: number, min: number, max: number): number;
+    /**
+     * Returns whether the turn from pos1 to pos3 is counter-clockwise
+     * @param {[x,y]} pos1: a pos
+     * @param {[x,y]} pos2: another pos
+     * @param {[x,y]} pos3: another pos
+     */
+    static ccw(pos1: [x, y], pos2: [x, y], pos3: [x, y]): boolean;
+    /**
+     * Returns whether the turn from pos1 to pos3 is counter-clockwise
+     * @param {Number} x1: the x value of the pos1
+     * @param {Number} y1: the y value of the pos1
+     * @param {Number} x2: the x value of the pos2
+     * @param {Number} y2: the y value of the pos2
+     * @param {Number} x3: the x value of the pos3
+     * @param {Number} y3: the y value of the pos3
+     */
+    static ccw_coords(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number): boolean;
+    /**
+     * Returns whether the line between pos1/pos2 and the line between linePos1/linePos2 intersect
+     * @param {[x,y]} pos1: the start pos delimiting the first line
+     * @param {[x,y]} pos2: the end pos delimiting the first line
+     * @param {[x,y]} linePos1: the start pos delimiting the second line
+     * @param {[x,y]} linePos2: the end pos delimiting the second line
+     */
+    static hasLinearIntersection(pos1: [x, y], pos2: [x, y], linePos1: [x, y], linePos2: [x, y]): boolean;
+    /**
+     * Defines an interval, but without delay on the first call
+     * @param {Number} ms Interval delay
+     * @param {Function} callback Interval's callback
+     * @returns setInterval id
+     */
+    static noDelayInterval(ms: number, callback: Function): number;
     /**
      * Returns whether a value is defined
      * @param {*} value: the value to check
@@ -476,6 +523,17 @@ declare class CanvasUtils {
      * @returns the button as a FilledShape and a TextDisplay: [FilledShape, TextDisplay]
      */
     static createButton(CVS: Canvas, text?: string | null, pos?: [x, y] | null, onClickCB?: Function | null, fillColor?: string | [r, g, b, a] | (Color | null), textColor?: string | [r, g, b, a] | (Color | null), padding?: [paddingX, paddingY] | null, onHoverCB?: Function | null, disableDefaultEffects?: boolean | null): any[];
+    /**
+     * Creates a callback that detects when a pos intersects with the area defined by "positions"
+     * @param {_BaseObj | [[x1,y1], [x2,y2]]} positions: either a _BaseObj inheritor instance or a positions array defining the area
+     * @param {Number | [paddingTop, paddingRight?, paddingBottom?, paddingLeft?] ?} padding: the padding applied to the area
+     * @param {Function?} onCollisionCB: Function called each frame the pos is inside the area. (collisionDirection)=>{...}
+     * @param {Function?} onCollisionEnterCB: Function called once each time a collision is detected. (collisionDirection)=>{...}
+     * @param {Function?} onCollisionExitCB: Function called once each time a collision is ended. (collisionDirection)=>{...}
+     * @param {boolean?} disableCornerDetection: If true, prevents 'collisionDirection' in collision callbacks to contain more than more direction when colliding with corners
+     * @returns a callback that checks for collision
+     */
+    static getCollisionCB(positions: _BaseObj | [[x1, y1], [x2, y2]], padding: number | ([paddingTop, paddingRight?, paddingBottom?, paddingLeft?] | null), onCollisionCB: Function | null, onCollisionEnterCB: Function | null, onCollisionExitCB: Function | null, disableCornerDetection: boolean | null): (pos: any) => void;
     /**
      * Provides generic follow paths
      */
@@ -1195,6 +1253,8 @@ declare class GridAssets {
     };
 }
 declare class TypingDevice {
+    static #LISTENER_ID_GIVER: number;
+    static #ID_INDEX: number;
     static KEYS: {
         A: string;
         B: string;
@@ -1326,7 +1386,61 @@ declare class TypingDevice {
         BROWSER_FAVORITES: string;
         BROWSER_HOME: string;
     };
+    static KEY_GROUPS: {
+        NATIVE_ZOOM_KEYS: string[];
+    };
+    static LISTENER_TYPES: {
+        DOWN: number;
+        UP: number;
+    };
+    static TRIGGER_TYPES: {
+        DEFAULT_REPEATING: number;
+        ONCE: number;
+        SLOW_REPEATING: number;
+        MEDIUM_REPEATING: number;
+        FAST_REPEATING: number;
+    };
+    static #MOD_REPEATING: number;
+    static #REPEATING_DELAYS: any[];
     _keysPressed: any[];
+    _listeners: any[];
+    /**
+     * Adds a custom keyboard event listener
+     * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
+     * @param {String | Array} keys: One or multiple keys to listen to
+     * @param {Function} callback: a custom function called upon event trigger. (typingDevice, e, keyPressed)=>
+     * @param {TypingDevice.TRIGGER_TYPE?} triggerType: Defines the trigger frequency (only for DOWN)
+     * @returns The listener id
+     */
+    addListener(type: {
+        DOWN: number;
+        UP: number;
+    }, keys: string | any[], callback: Function, triggerType?: TypingDevice.TRIGGER_TYPE | null): any;
+    /**
+     * Updates an existing listener
+     * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
+     * @param {Number} id: listener's id
+     * @param {String? | Array?} newKeys: if provided, updates the listeners's keys to this value
+     * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (typingDevice, e, keyPressed)=>
+     * @param {TypingDevice.TRIGGER_TYPE?} triggerType: if provided, updates the listeners's trigger type to this value (only for DOWN)
+     */
+    updateListener(type: {
+        DOWN: number;
+        UP: number;
+    }, id: number, newKeys: any, newCallback: Function | null, newTriggerType: any): void;
+    /**
+     * Removes one or all exisiting listeners of a certain type
+     * @param {TypingDevice.LISTENER_TYPES} type: One of TypingDevice.LISTENER_TYPES
+     * @param {Number | String} id: Either the listener's id or * to remove all listeners of this type
+     */
+    removeListener(type: {
+        DOWN: number;
+        UP: number;
+    }, id: number | string): void;
+    /**
+     * Removes all existing listeners
+     */
+    removeAllListeners(): void;
     setDown(e: any): void;
     setUp(e: any): void;
     /**
@@ -1339,17 +1453,20 @@ declare class TypingDevice {
      * @returns whether any key is pressed
      */
     hasKeysDown(): boolean;
+    clearPressed(): void;
     get instanceOf(): string;
     get keysPressedRaw(): any[];
     set keysPressed(keysPressed: any[]);
     get keysPressed(): any[];
     get keyCodesPressed(): any[];
+    #private;
 }
 declare class Mouse {
+    static #LISTENER_ID_GIVER: number;
+    static #ID_INDEX: number;
     static DEFAULT_MOUSE_DECELERATION: number;
     static DEFAULT_MOUSE_MOVE_TRESHOLD: number;
     static DEFAULT_MOUSE_ANGULAR_DECELERATION: number;
-    static #LISTENER_ID_GIVER: number;
     static LISTENER_TYPES: {
         CLICK: number;
         DOWN: number;
@@ -1368,6 +1485,13 @@ declare class Mouse {
         ENTER: number;
         LEAVE: number;
         EXIT: number;
+    };
+    static BUTTON_TYPES: {
+        LEFT: number;
+        MIDDLE: number;
+        RIGHT: number;
+        EXTRA_BACK: number;
+        EXTRA_FOWARD: number;
     };
     /**
      * Represents the user's mouse. Automatically instantiated by a Canvas instance
@@ -1425,7 +1549,7 @@ declare class Mouse {
      * Updates an existing listener
      * @param {LISTENER_TYPES} type: One of Mouse.LISTENER_TYPES
      * @param {Number} id: listener's id
-     * @param {canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
+     * @param {Canvas object | [[x1,y1],[x2,y2]]?} newObj: if provided, updates the listeners's obj to this value
      * @param {Function?} newCallback: if provided, updates the listeners's callback to this value. (mousePos, obj, mouse)=>
      * @param {Boolean} useAccurateBounds: If true, uses the obj's accurate bounds calculation
      * @param {Boolean} forceStaticPositions: If true, stores the obj positions statically, rather than the entire object
@@ -3105,6 +3229,11 @@ declare class Canvas {
      */
     static create(targetElement: HTMLElement | null, loopingCB: Function | null, fpsLimit: number | null, cvsFrame: HTMLElement | null, settings?: any | null, willReadFrequently?: boolean | null): Canvas;
     /**
+     * Prevents all native zooming shortcuts (Both with on mouse and keyboard)
+     * @param {Function?} callback Custom callback called with a number from -1 to 1 representing the zoom direction and the device on a zoom attempt. (zoomDirection, isMouse)=>{}
+     */
+    static preventNativeZoom(callback: Function | null): void;
+    /**
      * Returns the Canvas instance linked to the provided HTML canvas element
      * @param {HTMLCanvasElement} cvs: an HTML canvas element
      * @returns the Canvas instance linked, if any
@@ -3175,13 +3304,16 @@ declare class Canvas {
         removeOnreziseListener?: undefined;
         removeOnvisibilitychangeListener?: undefined;
         removeOnscrollListener?: undefined;
+        removeOnBlurListener?: undefined;
     } | {
         removeOnreziseListener: () => void;
         removeOnvisibilitychangeListener: () => void;
         removeOnscrollListener: () => void;
+        removeOnBlurListener: () => void;
         removeOnloadListener: () => void;
     };
     _viewPos: number[];
+    _zoom: number;
     _offset: any;
     _typingDevice: TypingDevice;
     _mouse: Mouse;
@@ -3242,19 +3374,23 @@ declare class Canvas {
      */
     resetReferences(): void;
     /**
-     * Discards all current context transformations
+     * Discards all current context transformations (except for zoom by default)
      */
-    resetTransformations(): void;
+    resetTransformations(force: any): void;
+    /**
+     *  Applies all current context transformations
+     */
+    setTransformations(zoom?: number, viewPos?: number[]): void;
     /**
      * Moves the camera view to a specific x/y value
      * @param {[x,y]} pos: the pos to move the camera view to
      */
-    moveViewAt(pos: any): void;
+    moveViewAt(pos: [x, y]): void;
     /**
      * Moves the camera view by specified x/y values
      * @param {[x,y]} pos: the x/y values to move the camera view by
      */
-    moveViewBy(pos: any): void;
+    moveViewBy(pos: [x, y]): void;
     /**
      * Smoothly moves the camera view to the provided pos, in set time
      * @param {[x,y]} pos: the pos to move the camera view to
@@ -3264,6 +3400,25 @@ declare class Canvas {
      * @returns the created Anim instance
      */
     moveViewTo(pos: [x, y], time?: number | null, easing?: Function | null, initPos?: [x, y]): Anim;
+    /**
+     * Moves the camera view to a specific x/y value with zoom
+     * @param {[x,y]} pos: the pos to move the camera view to
+     * @param {Number} zoom: the zoom factor
+     */
+    zoomAtPos(pos: any, zoom: number): void;
+    /**
+     * Moves the camera view center to a specific x/y value
+     * @param {[x,y]} pos: the pos to move the center of the camera view to
+     */
+    centerViewAt(pos: [x, y]): void;
+    /**
+     * Smoothly moves the camera view center to the provided pos, in set time
+     * @param {[x,y]} pos: the pos to move the center of the camera view to
+     * @param {Number?} time: the move time in miliseconds
+     * @param {Function?} easing: the easing function used. (x)=>{return y}
+     * @returns the created Anim instance
+     */
+    centerViewTo(pos: [x, y], time?: number | null, easing?: Function | null): void;
     /**
      * Adds an animation to play
      * @param {Anim} anim: the Anim instance containing the animation
@@ -3427,10 +3582,12 @@ declare class Canvas {
         removeOnreziseListener?: undefined;
         removeOnvisibilitychangeListener?: undefined;
         removeOnscrollListener?: undefined;
+        removeOnBlurListener?: undefined;
     } | {
         removeOnreziseListener: () => void;
         removeOnvisibilitychangeListener: () => void;
         removeOnscrollListener: () => void;
+        removeOnBlurListener: () => void;
         removeOnloadListener: () => void;
     };
     get timeStamp(): any;
@@ -3456,6 +3613,7 @@ declare class Canvas {
     get onScrollCB(): any;
     get maxTime(): any;
     get viewPos(): number[];
+    get zoom(): number;
     get render(): Render;
     set speedModifier(speedModifier: number);
     get speedModifier(): number;
@@ -3508,7 +3666,7 @@ declare class Anim {
     static linear: (x: any) => any;
     /**
      * Allows the creation of smooth progress based animations
-     * @param {Function} animationCB: a function called each frame containing the animation code. (clampedProgress, playCount, progress)=>{...}
+     * @param {Function} animationCB: a function called each frame containing the animation code. (progress, playCount, deltaTime clampedProgress)=>{...}
      * @param {Number?} duration: the animation duration in miliseconds. Negative numbers make the animation loop infinitely
      * @param {Function?} easing: the easing function used. (x)=>{return y}
      * @param {Function?} endCB: a function called upon the anim end
@@ -3536,6 +3694,7 @@ declare class Anim {
     get easing(): Function;
     set endCB(_endCB: Function);
     get endCB(): Function;
+    set startTime(startTime: any);
     get startTime(): any;
     get progress(): number;
     get progressRaw(): number;
@@ -4231,6 +4390,12 @@ declare class AudioDisplay extends _BaseObj {
     get transformableRaw(): number;
     set transformable(transformable: boolean);
     get transformable(): boolean;
+    get top(): number;
+    get bottom(): number;
+    get height(): number;
+    get left(): number;
+    get right(): number;
+    get width(): number;
     get video(): string | {
         FILE_PATH: string;
         DYNAMIC: string;
@@ -4836,6 +5001,10 @@ declare class ImageDisplay extends _BaseObj {
     get width(): any;
     set height(height: any);
     get height(): any;
+    get top(): number;
+    get bottom(): any;
+    get left(): number;
+    get right(): any;
     get trueSize(): number[];
     set naturalSize(naturalSize: any);
     get naturalSize(): any;
@@ -4982,6 +5151,10 @@ declare class TextDisplay extends _BaseObj {
     get lineCount(): any;
     get width(): number;
     get height(): number;
+    get top(): number;
+    get bottom(): number;
+    get left(): number;
+    get right(): number;
     #private;
 }
 declare class _DynamicColor {
@@ -5448,6 +5621,12 @@ declare class Shape extends _Obj {
     get thirdDot(): any;
     get lastDot(): any;
     get asSource(): any[];
+    get top(): number;
+    get bottom(): number;
+    get height(): number;
+    get left(): number;
+    get right(): number;
+    get width(): number;
     _lastDotsPos: any;
     #private;
 }
@@ -5681,8 +5860,8 @@ declare class Grid extends Shape {
     constructor(keys: string, gaps: [gapX, gapY] | null, spacing: number | null, source: any | null, pos: [x, y] | null, radius: number | null, color: Color | string | ([r, g, b, a] | null), limit: number | null, drawEffectCB: Function | null, ratioPosCB: Function | null, setupCB: Function | null, loopCB: Function | null, anchorPos: [x, y] | Function | (_BaseObj | null), activationMargin: number | (boolean | null), fragile: boolean | null);
     _keys: string;
     _gaps: number[] | [gapX, gapY];
-    _spacing: any;
     _source: any;
+    _spacing: any;
     /**
      * Creates a formation of symbols
      * @param {String?} keys: keys to convert to source's values as a string

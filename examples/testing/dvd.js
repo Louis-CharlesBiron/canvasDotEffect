@@ -71,7 +71,6 @@ const [aaa, bbb] = createButton("My custom button", CVS.getCenter(), (button, te
 })
 
 
-// todo possibly optimize / abstract
 const sizeX = 25, sizeY = 50
 
 const tester = new FilledShape("red", true, CVS.getCenter(), [new Dot([-sizeX,-sizeY]),new Dot([sizeX,-sizeY]),new Dot([sizeX,sizeY]),new Dot([-sizeX,sizeY])], 3, _, _, _, _, obj=>{// setupCB
@@ -153,6 +152,7 @@ DvDfy(YO)
 //DvDfy(YO4)
 //DvDfy(YO5)
 //DvDfy(YO6)
+document.onwheel=e=>CVS.zoomAtPos(CVS.mouse.rawPos,CVS.zoom+=e.deltaY<0?.1:-.1)
 
 
 
@@ -169,3 +169,14 @@ CVS.setKeyUp()
 
 // START
 CVS.start()
+
+
+
+
+const aID = CVS.typingDevice.addListener(0, ["Q", "E"], (t, k)=>console.log("ONCE", k), TypingDevice.TRIGGER_TYPES.ONCE)
+const bID = CVS.typingDevice.addListener(0, ["A", "D"], (t, k)=>console.log("NORMAL", k), TypingDevice.TRIGGER_TYPES.DEFAULT_REPEATING)
+const cID = CVS.typingDevice.addListener(0, ["Z", "C"], (t, k)=>console.log("SLOW", k), TypingDevice.TRIGGER_TYPES.SLOW_REPEATING)
+const dID = CVS.typingDevice.addListener(0, ["U", "O"], (t, k)=>console.log("MEDIUM", k), TypingDevice.TRIGGER_TYPES.MEDIUM_REPEATING)
+const eID = CVS.typingDevice.addListener(0, ["J", "L"], (t, k)=>console.log("FAST", k), TypingDevice.TRIGGER_TYPES.FAST_REPEATING)
+
+console.log(aID, bID, cID, dID, eID)

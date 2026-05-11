@@ -5,6 +5,7 @@ const fpsCounter = new FPSCounter(), CVS = new Canvas(1?canvas:new OffscreenCanv
     mouseAngle.textContent = CVS?.mouse?.dir?.toFixed(2)+" deg"
 }, 60)
 
+document.onwheel=e=>CVS.zoomAtPos(CVS.mouse.rawPos,CVS.zoom+=e.deltaY<0?.1:-.1)
 
 // DECLARE OBJS
 const _=null, normalColorTester = new Color("white")
